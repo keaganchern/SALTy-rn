@@ -1,0 +1,43 @@
+# Makefile for Bitwuzla-based symbolic execution tests
+
+CXX = c++
+CXXFLAGS = -std=c++17 -Wall -g -O2
+INCLUDES = -I$(PWD)/src -I/usr/local/include -I/opt/homebrew/Cellar/gmp/6.3.0/include
+LDFLAGS = -L/usr/local/lib
+LIBS = -lbitwuzla
+
+# Source files
+SRC_DIR = src
+TEST_BITWUZLA = test_xnn_symbolic_bitwuzla.cpp
+
+# Assembly files (NEON and RISC-V implementations)
+ASM_NEON = XNN_1_neon.s
+ASM_RISCV = XNN_1_riscv.s
+
+# Object files
+OBJ_NEON = XNN_1_neon.o
+OBJ_RISCV = XNN_1_riscv.o
+
+# Output binary
+TARGET_BITWUZLA = test_xnn_symbolic_bitwuzla
+
+.PHONY: all clean bitwuzla
+
+all: bitwuzla
+
+bitwuzla: $(TARGET_BITWUZLA)
+
+$(TARGET_BITWUZLA): $(TEST_BITWUZLA) $(OBJ_NEON) $(OBJ_RISCV)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $@ $^ $(LDFLAGS) $(LIBS)
+
+$(OBJ_NEON): $(ASM_NEON)
+	$(CXX) -c -o $@ $<
+
+$(OBJ_RISCV): $(ASM_RISCV)
+	$(CXX) -c -o $@ $<
+
+clean:
+	rm -f $(TARGET_BITWUZLA) $(OBJ_NEON) $(OBJ_RISCV)
+
+run: $(TARGET_BITWUZLA)
+	./$(TARGET_BITWUZLA)

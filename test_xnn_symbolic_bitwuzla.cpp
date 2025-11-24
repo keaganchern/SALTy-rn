@@ -1,13 +1,13 @@
-#include "neon_symbolic/neon_symbolic.hpp"
-#include "riscv_symbolic/riscv_symbolic.hpp"
-#include "neon_symbolic/memory.hpp"
-#include "riscv_symbolic/memory.hpp"
-#include "symbolic_common_bitwuzla.hpp"
-#include "symbolic_helpers.hpp"
+#include "src/neon_symbolic_bitwuzla/neon_symbolic.hpp"
+#include "src/riscv_symbolic_bitwuzla/riscv_symbolic.hpp"
+#include "src/neon_symbolic_bitwuzla/memory.hpp"
+#include "src/riscv_symbolic_bitwuzla/memory.hpp"
+#include "src/symbolic_common_bitwuzla.hpp"
 #include <iostream>
 #include <vector>
 #include <cstdint>
 #include <array>
+#include <chrono>
 
 struct xnn_qs8_add_minmax_params {
     struct {
@@ -40,65 +40,59 @@ void xnn_qs8_vadd_minmax_ukernel__rvv_u1v(
     const struct xnn_qs8_add_minmax_params* params);
 }
 
-// Bitwuzla wrappers for compatibility with CVC5-based symbolic types
-class BitwuzlaTermWrapper {
-private:
-    BitwuzlaTerm term;
-    Bitwuzla* bitwuzla;
-
-public:
-    BitwuzlaTermWrapper(Bitwuzla* bv, const BitwuzlaTerm& t) : term(t), bitwuzla(bv) {}
-
-    BitwuzlaTerm getTerm() const { return term; }
-    Bitwuzla* getSolver() const { return bitwuzla; }
-};
-
-// Adapter functions to convert between CVC5 Term and Bitwuzla BitwuzlaTerm
-inline BitwuzlaTerm cvc5_to_bitwuzla_term(const Term& cvc5_term, Bitwuzla* bitwuzla) {
-    // This is a placeholder - in reality, you'd need to rebuild the term tree
-    // For now, we'll handle this at the symbolic type level
-    return BitwuzlaTerm();
-}
-
-inline void populateNEONMemory8x16(const int8_t* ptr, const std::vector<BitwuzlaTerm>& symbolic_values, size_t offset = 0) {
+inline void populateNEONMemory8x16(const int8_t* ptr, const std::vector<bitwuzla::Term>& symbolic_values) {
     uintptr_t addr = reinterpret_cast<uintptr_t>(ptr);
-
     // NEON processes 16 elements at a time
     for (size_t i = 0; i < symbolic_values.size(); i += 16) {
-        std::array<BitwuzlaTerm, 16> lanes;
+        std::array<bitwuzla::Term, 16> lanes;
         for (size_t j = 0; j < 16 && (i + j) < symbolic_values.size(); j++) {
             lanes[j] = symbolic_values[i + j];
         }
         for (size_t j = (symbolic_values.size() - i); j < 16; j++) {
             lanes[j] = symbolic_values.back();
         }
-        // Note: This requires adapting the int8x16_t constructor to work with BitwuzlaTerm
-        // g_neon_memory_i8x16[addr + i].push_back(int8x16_t(g_symbolic_bitwuzla, lanes));
+        g_neon_memory_i8x16[addr + i].push_back(int8x16_t(g_symbolic_tm, lanes));
     }
 }
 
-// Helper to populate RISC-V memory with int8 symbolic inputs
-inline void populateRISCVMemory8(const int8_t* ptr, const std::vector<BitwuzlaTerm>& symbolic_values) {
+inline void populateRISCVMemory8(const int8_t* ptr, const std::vector<bitwuzla::Term>& symbolic_values) {
     uintptr_t addr = reinterpret_cast<uintptr_t>(ptr);
-
     // RISC-V can process all elements at once (variable length)
-    // Note: This requires adapting the vint8m1_t constructor to work with BitwuzlaTerm
-    // g_riscv_memory_i8[addr].push_back(vint8m1_t(g_symbolic_bitwuzla, symbolic_values));
+    g_riscv_memory_i8[addr].push_back(vint8m1_t(g_symbolic_tm, symbolic_values));
 }
 
 int main() {
-    // Initialize Bitwuzla
-    Options options;
-    Bitwuzla bitwuzla(options);
-    g_symbolic_bitwuzla = &bitwuzla;
+    auto total_start = std::chrono::high_resolution_clock::now();
 
-    std::cout << "NOTE: This Bitwuzla version requires updating the symbolic NEON/RISC-V types" << std::endl;
-    std::cout << "      to work with BitwuzlaTerm instead of CVC5 Term." << std::endl;
-    std::cout << "      The main difference is in the API for creating terms and solving." << std::endl;
-    std::cout << std::endl;
+    // Initialize Bitwuzla
+    auto init_start = std::chrono::high_resolution_clock::now();
+    bitwuzla::TermManager tm;
+    bitwuzla::Options options;
+
+    // Enable model production to get values from the solver
+    options.set(bitwuzla::Option::PRODUCE_MODELS, true);
+
+    // Set a timeout (in milliseconds) to prevent hanging
+    options.set(bitwuzla::Option::BV_SOLVER, "bitblast"); 
+    options.set(bitwuzla::Option::REWRITE_LEVEL, 2);
+    options.set(bitwuzla::Option::SAT_SOLVER, "cadical");  // or "kissat"
+
+    // Enable more aggressive preprocessing
+    options.set(bitwuzla::Option::PREPROCESS, true);
+
+    bitwuzla::Bitwuzla bitwuzla(tm, options);
+    g_symbolic_tm = &tm;
+    g_symbolic_bitwuzla = &bitwuzla;
+    auto init_end = std::chrono::high_resolution_clock::now();
+
+    std::cout << "Testing XNNPACK NEON vs RISC-V equivalence (Bitwuzla)" << std::endl;
+    std::cout << "Initialization time: "
+              << std::chrono::duration_cast<std::chrono::milliseconds>(init_end - init_start).count()
+              << " ms" << std::endl;
 
     // Test parameters
-    const size_t batch = 16;  // Test with 4 int8_t elements
+    // Start with smaller batch size for faster solving
+    const size_t batch = 16;  // Test with 8 int8_t elements (16 takes too long, 4 too small for NEON)
 
     // Allocate arrays
     int8_t input_a[batch] = {0};
@@ -107,25 +101,27 @@ int main() {
     int8_t output_riscv[batch] = {0};
 
     // Clear memory before each run
+    auto setup_start = std::chrono::high_resolution_clock::now();
     SymbolicNEONHelpers::clearMemory();
     SymbolicRISCVHelpers::clearMemory();
 
     // Setup symbolic inputs for int8_t arrays
-    BitwuzlaSort bv8_sort = bitwuzla.mk_bv_sort(8);
-    std::vector<BitwuzlaTerm> symbolic_a, symbolic_b;
+    bitwuzla::Sort bv8_sort = tm.mk_bv_sort(8);
+    std::vector<bitwuzla::Term> symbolic_a, symbolic_b;
     symbolic_a.reserve(batch);
     symbolic_b.reserve(batch);
 
     for (size_t i = 0; i < batch; i++) {
-        symbolic_a.push_back(bitwuzla.mk_const(bv8_sort, ("a_" + std::to_string(i)).c_str()));
-        symbolic_b.push_back(bitwuzla.mk_const(bv8_sort, ("b_" + std::to_string(i)).c_str()));
+        symbolic_a.push_back(tm.mk_const(bv8_sort, ("a_" + std::to_string(i))));
+        symbolic_b.push_back(tm.mk_const(bv8_sort, ("b_" + std::to_string(i))));
     }
 
-    // Note: The following would need the symbolic types to be updated
-    // populateNEONMemory8x16(input_a, symbolic_a);
-    // populateNEONMemory8x16(input_b, symbolic_b);
-    // populateRISCVMemory8(input_a, symbolic_a);
-    // populateRISCVMemory8(input_b, symbolic_b);
+    populateNEONMemory8x16(input_a, symbolic_a);
+    populateNEONMemory8x16(input_b, symbolic_b);
+
+    populateRISCVMemory8(input_a, symbolic_a);
+    populateRISCVMemory8(input_b, symbolic_b);
+    auto setup_end = std::chrono::high_resolution_clock::now();
 
     // Setup params struct with concrete test values
     struct xnn_qs8_add_minmax_params params;
@@ -141,28 +137,80 @@ int main() {
 
     std::cout << "Testing XNNPACK NEON vs RISC-V equivalence (Bitwuzla)" << std::endl;
     std::cout << "Batch size: " << batch << " elements" << std::endl;
+    std::cout << "Setup time: "
+              << std::chrono::duration_cast<std::chrono::milliseconds>(setup_end - setup_start).count()
+              << " ms" << std::endl;
 
     g_current_params_ptr = nullptr;
 
-    // Note: These calls would work once the symbolic types are updated
-    // xnn_qs8_vadd_minmax_ukernel__neon_ld128_u16(
-    //     batch * sizeof(int8_t), input_a, input_b, output_neon, &params);
+    auto exec_start = std::chrono::high_resolution_clock::now();
+    xnn_qs8_vadd_minmax_ukernel__neon_ld128_u16(
+        batch * sizeof(int8_t), input_a, input_b, output_neon, &params);
 
-    // xnn_qs8_vadd_minmax_ukernel__rvv_u1v(
-    //     batch * sizeof(int8_t), input_a, input_b, output_riscv, &params);
+    xnn_qs8_vadd_minmax_ukernel__rvv_u1v(
+        batch * sizeof(int8_t), input_a, input_b, output_riscv, &params);
+    auto exec_end = std::chrono::high_resolution_clock::now();
 
-    std::vector<BitwuzlaTerm> neon_elements;
-    std::vector<BitwuzlaTerm> riscv_elements;
+    std::cout << "Symbolic execution time: "
+              << std::chrono::duration_cast<std::chrono::milliseconds>(exec_end - exec_start).count()
+              << " ms" << std::endl;
 
-    // Note: Collecting results would happen here after execution
-    // For now, create dummy symbolic values to demonstrate the solving API
-    for (size_t i = 0; i < batch; i++) {
-        neon_elements.push_back(bitwuzla.mk_const(bv8_sort, ("neon_" + std::to_string(i)).c_str()));
-        riscv_elements.push_back(bitwuzla.mk_const(bv8_sort, ("riscv_" + std::to_string(i)).c_str()));
+    std::vector<bitwuzla::Term> neon_elements;
+
+    // Collect NEON elements from all loop iterations
+    auto collect_start = std::chrono::high_resolution_clock::now();
+    // NEON processes 16 elements at a time in main loop, 8 elements in fallback
+    for (size_t i = 0; i < batch; ) {
+        // Try to get 16-element results first (main loop)
+        const auto* neon_results_16 = SymbolicNEONHelpers::getStoredResults8x16(output_neon + i);
+        if (neon_results_16 && !neon_results_16->empty()) {
+            const int8x16_t& neon_vec = neon_results_16->back();
+            size_t elements_to_take = std::min(static_cast<size_t>(16), batch - i);
+            for (size_t lane = 0; lane < elements_to_take; lane++) {
+                neon_elements.push_back(neon_vec.getLane(lane));
+            }
+            i += 16;
+        } else {
+            // Try 8-element results (fallback path)
+            const auto* neon_results_8 = SymbolicNEONHelpers::getStoredResults8x8(output_neon + i);
+            if (neon_results_8 && !neon_results_8->empty()) {
+                const int8x8_t& neon_vec = neon_results_8->back();
+                size_t elements_to_take = std::min(static_cast<size_t>(8), batch - i);
+                for (size_t lane = 0; lane < elements_to_take; lane++) {
+                    neon_elements.push_back(neon_vec.getLane(lane));
+                }
+                i += 8;
+            } else {
+                std::cerr << "ERROR: No NEON results stored at offset " << i << "!" << std::endl;
+                std::cerr << "  Tried int8x16_t at address " << (void*)(output_neon + i) << std::endl;
+                std::cerr << "  Tried int8x8_t at address " << (void*)(output_neon + i) << std::endl;
+                return 1;
+            }
+        }
     }
+
+    std::vector<bitwuzla::Term> riscv_elements;
+    const auto* riscv_results = SymbolicRISCVHelpers::getStoredResults8(output_riscv);
+
+    if (riscv_results && !riscv_results->empty()) {
+        for (size_t vec_idx = 0; vec_idx < riscv_results->size(); vec_idx++) {
+            const vint8m1_t& riscv_vec = (*riscv_results)[vec_idx];
+            for (size_t elem = 0; elem < riscv_vec.getVL(); elem++) {
+                riscv_elements.push_back(riscv_vec.getElement(elem));
+            }
+        }
+    } else {
+        std::cerr << "ERROR: No RISC-V results stored!" << std::endl;
+        return 1;
+    }
+
+    auto collect_end = std::chrono::high_resolution_clock::now();
 
     std::cout << "NEON collected " << neon_elements.size() << " elements" << std::endl;
     std::cout << "RISC-V collected " << riscv_elements.size() << " elements" << std::endl;
+    std::cout << "Collection time: "
+              << std::chrono::duration_cast<std::chrono::milliseconds>(collect_end - collect_start).count()
+              << " ms" << std::endl;
 
     if (neon_elements.size() != riscv_elements.size()) {
         std::cerr << "ERROR: Different number of elements! NEON: " << neon_elements.size()
@@ -171,24 +219,41 @@ int main() {
     }
 
     // Build equivalence formula using Bitwuzla API
-    std::vector<BitwuzlaTerm> all_equalities;
+    auto formula_start = std::chrono::high_resolution_clock::now();
+    std::vector<bitwuzla::Term> all_equalities;
     for (size_t i = 0; i < neon_elements.size(); i++) {
-        BitwuzlaTerm eq = bitwuzla.mk_term(
-            Kind::EQUAL,
+        bitwuzla::Term eq = tm.mk_term(
+            bitwuzla::Kind::EQUAL,
             {neon_elements[i], riscv_elements[i]}
         );
         all_equalities.push_back(eq);
     }
 
-    BitwuzlaTerm all_equal = bitwuzla.mk_term(Kind::AND, all_equalities);
-    BitwuzlaTerm not_equal = bitwuzla.mk_term(Kind::NOT, {all_equal});
+    bitwuzla::Term all_equal = tm.mk_term(bitwuzla::Kind::AND, all_equalities);
+
+    bitwuzla::Term not_equal = tm.mk_term(bitwuzla::Kind::NOT, {all_equal});
+    auto formula_end = std::chrono::high_resolution_clock::now();
+
+    std::cout << "Formula building time: "
+              << std::chrono::duration_cast<std::chrono::milliseconds>(formula_end - formula_start).count()
+              << " ms" << std::endl;
+
+    // Print formula statistics
+    std::cout << "\n=== Formula Statistics ===" << std::endl;
+    std::cout << "Number of terms in formula: " << bitwuzla.statistics()["terms"] << std::endl;
 
     std::cout << "\nAsserting: NOT(NEON_result == RISC-V_result)" << std::endl;
     std::cout << "Looking for counterexample where outputs differ..." << std::endl;
 
     // Assert and check satisfiability
+    auto solver_start = std::chrono::high_resolution_clock::now();
     bitwuzla.assert_formula(not_equal);
     Result result = bitwuzla.check_sat();
+    auto solver_end = std::chrono::high_resolution_clock::now();
+
+    std::cout << "Solver time: "
+              << std::chrono::duration_cast<std::chrono::milliseconds>(solver_end - solver_start).count()
+              << " ms" << std::endl;
 
     std::cout << "\nResult: ";
     if (result == Result::SAT) {
@@ -201,15 +266,30 @@ int main() {
             std::cout << "  a_" << i << " = " << bitwuzla.get_value(symbolic_a[i]) << std::endl;
             std::cout << "  b_" << i << " = " << bitwuzla.get_value(symbolic_b[i]) << std::endl;
         }
+        auto total_end = std::chrono::high_resolution_clock::now();
+        std::cout << "\n=== Timing Summary ===" << std::endl;
+        std::cout << "Total time: "
+                  << std::chrono::duration_cast<std::chrono::milliseconds>(total_end - total_start).count()
+                  << " ms" << std::endl;
         return 1;
     } else if (result == Result::UNSAT) {
         std::cout << "UNSAT" << std::endl;
         std::cout << "UNSAT: No counterexample found!" << std::endl;
         std::cout << "The implementations are equivalent!" << std::endl;
+        auto total_end = std::chrono::high_resolution_clock::now();
+        std::cout << "\n=== Timing Summary ===" << std::endl;
+        std::cout << "Total time: "
+                  << std::chrono::duration_cast<std::chrono::milliseconds>(total_end - total_start).count()
+                  << " ms" << std::endl;
         return 0;
     } else {
         std::cout << "UNKNOWN" << std::endl;
         std::cout << "UNKNOWN: Solver could not determine" << std::endl;
+        auto total_end = std::chrono::high_resolution_clock::now();
+        std::cout << "\n=== Timing Summary ===" << std::endl;
+        std::cout << "Total time: "
+                  << std::chrono::duration_cast<std::chrono::milliseconds>(total_end - total_start).count()
+                  << " ms" << std::endl;
         return 2;
     }
 }

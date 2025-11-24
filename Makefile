@@ -60,7 +60,9 @@ SYMBOLIC_BITWUZLA_OBJ = $(BUILD_DIR)/test_xnn_symbolic_bitwuzla.o
 SYMBOLIC_TEST_OBJS = $(SYMBOLIC_OBJ) $(NEON_OBJ) $(RISCV_OBJ)
 SYMBOLIC_TEST_TARGET = test_xnn_symbolic
 
-SYMBOLIC_BITWUZLA_TEST_OBJS = $(SYMBOLIC_BITWUZLA_OBJ) $(NEON_OBJ) $(RISCV_OBJ)
+NEON_BITWUZLA_OBJ = $(BUILD_DIR)/XNN_1_neon_bitwuzla.o
+RISCV_BITWUZLA_OBJ = $(BUILD_DIR)/XNN_1_rvv_bitwuzla.o
+SYMBOLIC_BITWUZLA_TEST_OBJS = $(SYMBOLIC_BITWUZLA_OBJ) $(NEON_BITWUZLA_OBJ) $(RISCV_BITWUZLA_OBJ)
 SYMBOLIC_BITWUZLA_TEST_TARGET = test_xnn_symbolic_bitwuzla
 
 # ============================================================================
@@ -121,6 +123,16 @@ $(SYMBOLIC_OBJ): $(SYMBOLIC_SRC)
 $(SYMBOLIC_BITWUZLA_OBJ): $(SYMBOLIC_BITWUZLA_SRC)
 	@echo "Compiling symbolic checking code (Bitwuzla): $(SYMBOLIC_BITWUZLA_SRC)"
 	$(CXX) $(CXXFLAGS) $(BITWUZLA_INCLUDE) -c $< -o $@
+
+# Compile NEON code for Bitwuzla (without CVC5 headers)
+$(NEON_BITWUZLA_OBJ): $(NEON_SRC)
+	@echo "Compiling NEON code for Bitwuzla: $(NEON_SRC)"
+	$(CXX) -std=c++17 -Wall -Wextra -O2 -DUSE_BITWUZLA -Isrc -IBenchmark/XNNPACK/src -IBenchmark/XNNPACK $(BITWUZLA_INCLUDE) -march=armv8-a+simd -c $< -o $@
+
+# Compile RISC-V code for Bitwuzla (without CVC5 headers)
+$(RISCV_BITWUZLA_OBJ): $(RISCV_SRC)
+	@echo "Compiling RISC-V code for Bitwuzla: $(RISCV_SRC)"
+	$(CXX) -std=c++17 -Wall -Wextra -O2 -DUSE_BITWUZLA -Isrc -IBenchmark/XNNPACK/src -IBenchmark/XNNPACK $(BITWUZLA_INCLUDE) -march=armv8-a+simd -c $< -o $@
 
 # Generic rule for building object files in build directory
 $(BUILD_DIR)/%.o: %.cpp

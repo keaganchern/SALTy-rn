@@ -10,7 +10,11 @@
 
 // Modified for symbolic execution
 #include <assert.h>
+#ifdef USE_BITWUZLA
+#include "../src/riscv_symbolic_bitwuzla/riscv_symbolic.hpp"
+#else
 #include "../src/riscv_symbolic/riscv_symbolic.hpp"
+#endif
 #include "../src/xnn_minimal.h"
 
 extern "C" {

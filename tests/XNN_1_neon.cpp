@@ -9,7 +9,11 @@
 // LICENSE file in the root directory of this source tree.
 
 // Modified for symbolic execution
+#ifdef USE_BITWUZLA
+#include "../src/neon_symbolic_bitwuzla/neon_symbolic.hpp"
+#else
 #include "../src/neon_symbolic/neon_symbolic.hpp"
+#endif
 #include "../src/xnn_minimal.h"
 #include <assert.h>
 #include <stddef.h>
@@ -23,6 +27,7 @@ void xnn_qs8_vadd_minmax_ukernel__neon_ld128_u16(
     const int8_t* input_b,
     int8_t* output,
     const struct xnn_qs8_add_minmax_params* params) XNN_OOB_READS
+    
 {
   assert(batch != 0);
   assert(batch % sizeof(int8_t) == 0);
