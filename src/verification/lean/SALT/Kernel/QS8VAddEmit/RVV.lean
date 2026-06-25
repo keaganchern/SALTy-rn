@@ -1,50 +1,27 @@
-/- RVV kernel model for qs8-vadd (binary elementwise, via List.zipWith).
-   Reference: kernels/target/qs8-vadd.c
-   Only the vssra (right-shift) path is modeled, since WellFormedParams
-   forces shift.toNat ≤ 31 (non-negative). -/
 import SALT.Intrinsics.RVV
 import SALT.Core.Tactic
 import SALT.Kernel.QS8.Params
 
-namespace SALT.Kernel.QS8VAdd.RVV
+namespace SALT.Kernel.QS8VAddEmit.RVV
 
 open SALT
 open SALT.Core
 open SALT.Intrinsics.RVV
 open SALT.Kernel.QS8
-
-/-- RVV pipeline for one (a, b) input pair.
-    Pipeline (from kernels/target/qs8-vadd.c):
-      1. vwsub_vx:     xa = sext16(a) - sext16(a_zero_point)
-      2. vwsub_vx:     xb = sext16(b) - sext16(b_zero_point)
-      3. vsext_vf2:    xa32 = sext32(xa)
-      4. vsext_vf2:    xb32 = sext32(xb)
-      5. vmul_vx:      acc = xa32 * a_multiplier
-      6. vmacc_vx:     acc = acc + b_multiplier * xb32
-      7. vssra_vx_rnu: acc = rvvRoundingShiftRight(acc, shift)
-      8. vnclip_wx:    acc16 = signedClamp(acc, 16)
-      9. vsadd_vx:     acc16 = signedSatAdd(acc16, output_zero_point)
-     10. vnclip_wx:    out8 = signedClamp(acc16, 8)
-     11. vmax_vx:      out8 = signedMax(out8, output_min)
-     12. vmin_vx:      out8 = signedMin(out8, output_max) -/
 def rvvElemFn (p : QS8AddMinmaxParams) (a b : BitVec 8) : BitVec 8 :=
-  let xa : BitVec 16 := (sext a 16) - (sext p.a_zero_point 16)
-  let xb : BitVec 16 := (sext b 16) - (sext p.b_zero_point 16)
-  let xa32 : BitVec 32 := sext xa 32
-  let xb32 : BitVec 32 := sext xb 32
-  let acc : BitVec 32 := xa32 * p.a_multiplier
-  let acc := acc + xb32 * p.b_multiplier
-  let acc := (BVShiftOp.roundShr .rvvRnu).eval acc p.shift.toNat
-  let acc16 : BitVec 16 := signedClamp acc 16
-  let acc16 := signedSatAdd acc16 p.output_zero_point
-  let out8 : BitVec 8 := signedClamp acc16 8
-  clamp out8 p.output_min p.output_max
+  let xa : BitVec 16 := ((sext a 16) - (sext p.a_zero_point 16))
+  let xb : BitVec 16 := ((sext b 16) - (sext p.b_zero_point 16))
+  let xa32 : BitVec 32 := (sext xa 32)
+  let xb32 : BitVec 32 := (sext xb 32)
+  let acc : BitVec 32 := (xa32 * p.a_multiplier)
+  let acc : BitVec 32 := (acc + (xb32 * p.b_multiplier))
+  let acc : BitVec 32 := ((BVShiftOp.roundShr .rvvRnu).eval acc p.shift.toNat)
+  let acc16 : BitVec 16 := (signedClamp acc 16)
+  let acc16 : BitVec 16 := (signedSatAdd acc16 p.output_zero_point)
+  let out8 : BitVec 8 := (signedClamp acc16 8)
+  (bvSignedMin (bvSignedMax out8 p.output_min) p.output_max)
 
-/-- RVV iteration built from list-level intrinsic combinators, mirroring
-    kernels/target/qs8-vadd.c. `h_len` (equal-length inputs) is propagated to
-    the cross-vector call site (vmacc_vx). -/
-def rvvPipelineFromIntrinsics (p : QS8AddMinmaxParams)
-    (chunk_a chunk_b : List (BitVec 8))
+def rvvPipelineFromIntrinsics (p : QS8AddMinmaxParams) (chunk_a chunk_b : List (BitVec 8))
     (h_len : chunk_a.length = chunk_b.length := by simp) : List (BitVec 8) :=
   let vxa := vwsub_vx chunk_a p.a_zero_point
   let vxb := vwsub_vx chunk_b p.b_zero_point
@@ -61,16 +38,21 @@ def rvvPipelineFromIntrinsics (p : QS8AddMinmaxParams)
   vmin_vx vout p.output_max
 
 set_option maxHeartbeats 1600000 in
-/-- The intrinsic-composed pipeline equals `List.zipWith rvvElemFn` on
-    equal-length chunks. -/
-theorem rvvPipeline_eq_zipWith (p : QS8AddMinmaxParams)
-    (chunk_a chunk_b : List (BitVec 8))
+theorem rvvPipeline_eq_zipWith (p : QS8AddMinmaxParams) (chunk_a chunk_b : List (BitVec 8))
     (h_len : chunk_a.length = chunk_b.length) :
     rvvPipelineFromIntrinsics p chunk_a chunk_b (h_len := h_len) =
-    List.zipWith (rvvElemFn p) chunk_a chunk_b := by
+    List.zipWith (rvvElemFn p ) chunk_a chunk_b := by
   unfold rvvPipelineFromIntrinsics
-  simp_core_unfold [vwsub_vx, vsext_vf2, vmul_vx, vmacc_vx, vssra_vx_rnu,
-    vnclip_wx_i16, vnclip_wx_i8, vsadd_vx, vmax_vx, vmin_vx,
+  simp_core_unfold [vwsub_vx,
+    vsext_vf2,
+    vmul_vx,
+    vmacc_vx,
+    vssra_vx_rnu,
+    vnclip_wx_i16,
+    vnclip_wx_i8,
+    vsadd_vx,
+    vmax_vx,
+    vmin_vx,
     zipWith_replicate_right,
     List.map_map]
   induction chunk_a generalizing chunk_b with
@@ -82,25 +64,17 @@ theorem rvvPipeline_eq_zipWith (p : QS8AddMinmaxParams)
       simp only [List.zipWith, List.map, List.cons.injEq]
       exact ⟨rfl, ih tb (by simpa using h_len)⟩
 
-/-- Loop body: one chunk pair through the intrinsic-composed pipeline. -/
-def rvvIteration (p : QS8AddMinmaxParams)
-    (chunk_a chunk_b : List (BitVec 8))
+
+def rvvIteration (p : QS8AddMinmaxParams) (chunk_a chunk_b : List (BitVec 8))
     (h_len : chunk_a.length = chunk_b.length := by simp) : List (BitVec 8) :=
   rvvPipelineFromIntrinsics p chunk_a chunk_b (h_len := h_len)
 
-/-- One iteration equals `List.zipWith (rvvElemFn p)`. -/
-theorem rvvIteration_eq_zipWith (p : QS8AddMinmaxParams)
-    (chunk_a chunk_b : List (BitVec 8))
+theorem rvvIteration_eq_zipWith (p : QS8AddMinmaxParams) (chunk_a chunk_b : List (BitVec 8))
     (h_len : chunk_a.length = chunk_b.length) :
     rvvIteration p chunk_a chunk_b h_len =
-    List.zipWith (rvvElemFn p) chunk_a chunk_b :=
-  rvvPipeline_eq_zipWith p chunk_a chunk_b h_len
+      List.zipWith (rvvElemFn p) chunk_a chunk_b := rvvPipeline_eq_zipWith p chunk_a chunk_b h_len
 
-/-- RVV loop: min(remaining, vlmax) elements per iteration from both arrays;
-    vl adjusts to the remaining length, so no tail handling is needed.
-    Models the C loop `while (batch > 0) { vl = vsetvl(batch); ... }`. -/
-def rvvLoop (p : QS8AddMinmaxParams)
-    (input_a input_b : List (BitVec 8))
+def rvvLoop (p : QS8AddMinmaxParams) (input_a input_b : List (BitVec 8))
     (vlmax : Nat) (h_vlmax : vlmax > 0 := by omega)
     (h_len : input_a.length = input_b.length := by assumption) : List (BitVec 8) :=
   match h_a : input_a with
@@ -119,15 +93,13 @@ def rvvLoop (p : QS8AddMinmaxParams)
         (h_len := by simp [List.length_drop, h_xs_eq])
 termination_by input_a.length
 decreasing_by
-  simp [List.length_drop]
-  omega
+  simp [List.length_drop]; omega
 
-theorem rvvLoop_eq_zipWith (p : QS8AddMinmaxParams)
-    (input_a input_b : List (BitVec 8))
+theorem rvvLoop_eq_zipWith (p : QS8AddMinmaxParams) (input_a input_b : List (BitVec 8))
     (h_len : input_a.length = input_b.length)
     (vlmax : Nat) (h_vlmax : vlmax > 0) :
     rvvLoop p input_a input_b vlmax h_vlmax h_len =
-    List.zipWith (rvvElemFn p) input_a input_b := by
+      List.zipWith (rvvElemFn p) input_a input_b := by
   suffices ∀ (n : Nat) (xs ys : List (BitVec 8))
       (h : xs.length = ys.length), xs.length ≤ n →
       rvvLoop p xs ys vlmax h_vlmax h = List.zipWith (rvvElemFn p) xs ys from
@@ -162,4 +134,4 @@ theorem rvvLoop_eq_zipWith (p : QS8AddMinmaxParams)
         exact zipWith_take_append_drop (rvvElemFn p) (hd :: tl) (hd' :: tl')
           (min (hd :: tl).length vlmax) h_eq
 
-end SALT.Kernel.QS8VAdd.RVV
+end SALT.Kernel.QS8VAddEmit.RVV

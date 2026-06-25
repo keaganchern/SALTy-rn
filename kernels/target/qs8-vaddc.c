@@ -32,7 +32,7 @@ void test_rvv(
     vint32m8_t vbias_vec = __riscv_vmv_v_x_i32m8(vbias_val, vl);
     vint32m8_t vacc = __riscv_vmacc_vx_i32m8(vbias_vec, params->scalar.a_multiplier, vxa32, vl);
 
-    vacc = __riscv_vsra_vx_i32m8(vacc, params->scalar.shift, vl);  // BUG: truncates instead of rounding
+    vacc = __riscv_vssra_vx_i32m8(vacc, params->scalar.shift, __RISCV_VXRM_RNU, vl);
 
     vint16m4_t vacc16 = __riscv_vnclip_wx_i16m4(vacc, 0, __RISCV_VXRM_RNU, vl);
     vacc16 = __riscv_vsadd_vx_i16m4(vacc16, (int16_t)params->scalar.output_zero_point, vl);

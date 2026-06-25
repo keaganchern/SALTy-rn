@@ -1,48 +1,27 @@
-/- NEON kernel model for qs8-vadd (binary elementwise, via List.zipWith).
-   Reference: kernels/source/qs8-vadd.c -/
 import SALT.Intrinsics.Neon
 import SALT.Core.Tactic
 import SALT.Kernel.QS8.Params
 
-namespace SALT.Kernel.QS8VAdd.Neon
+namespace SALT.Kernel.QS8VAddParsed.Neon
 
 open SALT
 open SALT.Core
 open SALT.Intrinsics.Neon
 open SALT.Kernel.QS8
-
-/-- NEON pipeline for one (a, b) input pair.
-    Pipeline (from kernels/source/qs8-vadd.c):
-      1. vsubl_s8:    xa = sext16(a) - sext16(a_zero_point)
-      2. vsubl_s8:    xb = sext16(b) - sext16(b_zero_point)
-      3. vmovl_s16:   xa32 = sext32(xa)
-      4. vmovl_s16:   xb32 = sext32(xb)
-      5. vmulq_s32:   acc = xa32 * a_multiplier
-      6. vmlaq_s32:   acc = acc + xb32 * b_multiplier
-      7. vrshlq_s32:  acc = neonRoundingShiftRight(acc, shift)
-      8. vqmovn_s32:  acc16 = signedClamp(acc, 16)
-      9. vqaddq_s16:  acc16 = signedSatAdd(acc16, output_zero_point)
-     10. vqmovn_s16:  out8 = signedClamp(acc16, 8)
-     11. vmax_s8:     out8 = signedMax(out8, output_min)
-     12. vmin_s8:     out8 = signedMin(out8, output_max) -/
 def neonElemFn (p : QS8AddMinmaxParams) (a b : BitVec 8) : BitVec 8 :=
-  let xa : BitVec 16 := (sext a 16) - (sext p.a_zero_point 16)
-  let xb : BitVec 16 := (sext b 16) - (sext p.b_zero_point 16)
-  let xa32 : BitVec 32 := sext xa 32
-  let xb32 : BitVec 32 := sext xb 32
-  let acc : BitVec 32 := xa32 * p.a_multiplier
-  let acc := acc + xb32 * p.b_multiplier
-  let acc := (BVShiftOp.roundShr .neon).eval acc p.shift.toNat
-  let acc16 : BitVec 16 := signedClamp acc 16
-  let acc16 := signedSatAdd acc16 p.output_zero_point
-  let out8 : BitVec 8 := signedClamp acc16 8
-  clamp out8 p.output_min p.output_max
+  let xa : BitVec 16 := ((sext a 16) - (sext p.a_zero_point 16))
+  let xb : BitVec 16 := ((sext b 16) - (sext p.b_zero_point 16))
+  let xa32 : BitVec 32 := (sext xa 32)
+  let xb32 : BitVec 32 := (sext xb 32)
+  let acc : BitVec 32 := (xa32 * p.a_multiplier)
+  let acc : BitVec 32 := (acc + (xb32 * p.b_multiplier))
+  let acc : BitVec 32 := ((BVShiftOp.roundShr .neon).eval acc p.shift.toNat)
+  let acc16 : BitVec 16 := (signedClamp acc 16)
+  let acc16 : BitVec 16 := (signedSatAdd acc16 p.output_zero_point)
+  let out8 : BitVec 8 := (signedClamp acc16 8)
+  (bvSignedMin (bvSignedMax out8 p.output_min) p.output_max)
 
-/-- NEON iteration built from list-level intrinsic combinators, mirroring
-    kernels/source/qs8-vadd.c. `h_len` (equal-length inputs) is propagated to
-    the cross-vector call sites (vsubl_s8 on b, vmlaq_s32). -/
-def neonPipelineFromIntrinsics (p : QS8AddMinmaxParams)
-    (chunk_a chunk_b : List (BitVec 8))
+def neonPipelineFromIntrinsics (p : QS8AddMinmaxParams) (chunk_a chunk_b : List (BitVec 8))
     (h_len : chunk_a.length = chunk_b.length := by simp) : List (BitVec 8) :=
   let va_zp := List.replicate chunk_a.length p.a_zero_point
   let vb_zp := List.replicate chunk_b.length p.b_zero_point
@@ -61,19 +40,23 @@ def neonPipelineFromIntrinsics (p : QS8AddMinmaxParams)
   vmin_s8 vout p.output_max
 
 set_option maxHeartbeats 1600000 in
-/-- The intrinsic-composed pipeline equals `List.zipWith neonElemFn` on
-    equal-length chunks. -/
-theorem neonPipeline_eq_zipWith (p : QS8AddMinmaxParams)
-    (chunk_a chunk_b : List (BitVec 8))
+theorem neonPipeline_eq_zipWith (p : QS8AddMinmaxParams) (chunk_a chunk_b : List (BitVec 8))
     (h_len : chunk_a.length = chunk_b.length) :
     neonPipelineFromIntrinsics p chunk_a chunk_b (h_len := h_len) =
-    List.zipWith (neonElemFn p) chunk_a chunk_b := by
+    List.zipWith (neonElemFn p ) chunk_a chunk_b := by
   unfold neonPipelineFromIntrinsics
-  simp_core_unfold [vsubl_s8, vmovl_s16, vmulq_s32, vmlaq_s32, vrshlq_s32,
-    vqmovn_s32, vqmovn_s16, vqaddq_s16, vmax_s8, vmin_s8,
+  simp_core_unfold [vsubl_s8,
+    vmovl_s16,
+    vmulq_s32,
+    vmlaq_s32,
+    vrshlq_s32,
+    vqmovn_s32,
+    vqmovn_s16,
+    vqaddq_s16,
+    vmax_s8,
+    vmin_s8,
     zipWith_replicate_right,
     List.map_map]
-  -- Fuse map+zipWith+map into a single zipWith.
   induction chunk_a generalizing chunk_b with
   | nil => simp [List.zipWith]
   | cons ha ta ih =>
@@ -83,24 +66,17 @@ theorem neonPipeline_eq_zipWith (p : QS8AddMinmaxParams)
       simp only [List.zipWith, List.map, List.cons.injEq]
       exact ⟨rfl, ih tb (by simpa using h_len)⟩
 
-/-- Loop body: one chunk pair through the intrinsic-composed pipeline. -/
-def neonIteration (p : QS8AddMinmaxParams)
-    (chunk_a chunk_b : List (BitVec 8))
+
+def neonIteration (p : QS8AddMinmaxParams) (chunk_a chunk_b : List (BitVec 8))
     (h_len : chunk_a.length = chunk_b.length := by simp) : List (BitVec 8) :=
   neonPipelineFromIntrinsics p chunk_a chunk_b (h_len := h_len)
 
-/-- One iteration equals `List.zipWith (neonElemFn p)`. -/
-theorem neonIteration_eq_zipWith (p : QS8AddMinmaxParams)
-    (chunk_a chunk_b : List (BitVec 8))
+theorem neonIteration_eq_zipWith (p : QS8AddMinmaxParams) (chunk_a chunk_b : List (BitVec 8))
     (h_len : chunk_a.length = chunk_b.length) :
     neonIteration p chunk_a chunk_b h_len =
-    List.zipWith (neonElemFn p) chunk_a chunk_b :=
-  neonPipeline_eq_zipWith p chunk_a chunk_b h_len
+      List.zipWith (neonElemFn p) chunk_a chunk_b := neonPipeline_eq_zipWith p chunk_a chunk_b h_len
 
-/-- NEON loop: 8 elements per iteration from both arrays; tail pads to 8 and
-    keeps the first `input_a.length` results. -/
-def neonLoop (p : QS8AddMinmaxParams)
-    (input_a input_b : List (BitVec 8))
+def neonLoop (p : QS8AddMinmaxParams) (input_a input_b : List (BitVec 8))
     (h_len : input_a.length = input_b.length := by simp) : List (BitVec 8) :=
   if input_a.length ≥ 8 then
     neonIteration p (input_a.take 8) (input_b.take 8)
@@ -108,22 +84,20 @@ def neonLoop (p : QS8AddMinmaxParams)
     neonLoop p (input_a.drop 8) (input_b.drop 8)
       (h_len := by simp [List.length_drop, h_len])
   else if input_a.length > 0 then
-    let padded_a := input_a ++ List.replicate (8 - input_a.length) (BitVec.ofNat 8 0)
-    let padded_b := input_b ++ List.replicate (8 - input_b.length) (BitVec.ofNat 8 0)
-    (neonIteration p padded_a padded_b
-      (h_len := by simp [padded_a, padded_b, h_len])).take input_a.length
-  else
-    []
+    let pad_a := input_a ++ List.replicate (8 - input_a.length) (BitVec.ofNat 8 0)
+    let pad_b := input_b ++ List.replicate (8 - input_b.length) (BitVec.ofNat 8 0)
+    (neonIteration p pad_a pad_b
+      (h_len := by simp [pad_a, pad_b, h_len])).take input_a.length
+  else []
 termination_by input_a.length
 decreasing_by
   simp_all
   omega
 
-theorem neonLoop_eq_zipWith (p : QS8AddMinmaxParams)
-    (input_a input_b : List (BitVec 8))
+theorem neonLoop_eq_zipWith (p : QS8AddMinmaxParams) (input_a input_b : List (BitVec 8))
     (h_len : input_a.length = input_b.length) :
     neonLoop p input_a input_b h_len =
-    List.zipWith (neonElemFn p) input_a input_b := by
+      List.zipWith (neonElemFn p) input_a input_b := by
   suffices ∀ (n : Nat) (xs ys : List (BitVec 8))
       (h : xs.length = ys.length), xs.length ≤ n →
       neonLoop p xs ys h = List.zipWith (neonElemFn p) xs ys from
@@ -146,8 +120,7 @@ theorem neonLoop_eq_zipWith (p : QS8AddMinmaxParams)
       unfold neonLoop
       simp only [List.length_cons]
       split
-      · -- length ≥ 8
-        simp only [neonIteration_eq_zipWith]
+      · simp only [neonIteration_eq_zipWith]
         have h_drop_eq : ((hd :: tl).drop 8).length = (ys.drop 8).length := by
           simp only [List.length_drop, h_eq]
         have h_drop_le : ((hd :: tl).drop 8).length ≤ m := by
@@ -156,11 +129,10 @@ theorem neonLoop_eq_zipWith (p : QS8AddMinmaxParams)
         rw [ih _ _ h_drop_eq h_drop_le]
         exact zipWith_take_append_drop (neonElemFn p) (hd :: tl) ys 8 h_eq
       · split
-        · -- 0 < length < 8
-          simp only [neonIteration_eq_zipWith]
+        · simp only [neonIteration_eq_zipWith]
           have : (tl.length + 1) = (hd :: tl).length := by simp
           rw [this]
           exact zipWith_append_take (neonElemFn p) (hd :: tl) _ ys _ h_eq
         · omega
 
-end SALT.Kernel.QS8VAdd.Neon
+end SALT.Kernel.QS8VAddParsed.Neon

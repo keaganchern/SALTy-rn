@@ -1,16 +1,11 @@
-import SALT.Intrinsics.Neon
-import SALT.Intrinsics.RVV
+import SALT.Basic
 import Std.Tactic.BVDecide
 
 namespace SALT.Proof.RoundingEquiv
 
-open SALT.Intrinsics.Neon
-open SALT.Intrinsics.RVV
+open SALT
 
--- ============================================================================
--- Rounding shift equivalence
--- ============================================================================
-
+-- NEON and RVV rounding shifts agree for shift ≤ 31.
 theorem rounding_shift_equiv (x : BitVec 32) (shift : Nat)
     (h_bound : shift ≤ 31) :
     neonRoundingShiftRight x shift = rvvRoundingShiftRight x shift := by

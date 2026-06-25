@@ -1,24 +1,21 @@
-/- NEON/RVV equivalence theorem for qs8-vaddc. -/
-import SALT.Kernel.QS8VAddC.Neon
-import SALT.Kernel.QS8VAddC.RVV
+import SALT.Kernel.QS8VAddCParsedFull.Neon
+import SALT.Kernel.QS8VAddCParsedFull.RVV
 import SALT.Core.Tactic
 import SALT.Kernel.Class
+import SALT.Kernel.QS8.Params
 
-namespace SALT.Kernel.QS8VAddC.Equivalence
+namespace SALT.Kernel.QS8VAddCParsedFull.Equivalence
 
 open SALT
-open SALT.Kernel.QS8
-open SALT.Kernel.QS8VAddC.Neon
-open SALT.Kernel.QS8VAddC.RVV
-open SALT.Intrinsics.Neon
-open SALT.Intrinsics.RVV
+open SALT.Kernel.QS8VAddCParsedFull.Neon
+open SALT.Kernel.QS8VAddCParsedFull.RVV
 open SALT.Kernel.Class
+open SALT.Kernel.QS8
 
-/-- Per-element equivalence of the NEON and RVV element functions. -/
-theorem elem_equiv
-    (p : QS8AddMinmaxParams) (hwf : WellFormedParams p)
+theorem elem_equiv (p : QS8AddMinmaxParams) (hwf : WellFormedParams p)
     (bias : BitVec 32) (x : BitVec 8) :
-    neonElemFn p bias x = rvvElemFn p bias x := by
+    Neon.neonElemFn p bias x =
+    RVV.rvvElemFn p bias x := by
   have h_shift_bound : p.shift.toNat ≤ 31 := hwf.2.1
   elem_equiv_tac [Neon.neonElemFn, RVV.rvvElemFn, h_shift_bound]
 
@@ -26,12 +23,12 @@ theorem computeBias_eq (p : QS8AddMinmaxParams) (input_b : BitVec 8) :
     Neon.computeBias p input_b = RVV.computeBias p input_b := by
   rfl
 
-theorem qs8_vaddc_equiv
-    (p : QS8AddMinmaxParams) (hwf : WellFormedParams p)
-    (input_b : BitVec 8) (input_a : List (BitVec 8))
+theorem qs8vaddcparsedfull_equiv (p : QS8AddMinmaxParams) (hwf : WellFormedParams p)
+    (input_b : BitVec 8)
+    (x : List (BitVec 8))
     (vlmax : Nat) (h_vlmax : vlmax > 0) :
-    neonLoop p (Neon.computeBias p input_b) input_a =
-    rvvLoop p (RVV.computeBias p input_b) input_a vlmax :=
+    Neon.neonLoop p (Neon.computeBias p input_b) x =
+    RVV.rvvLoop p (RVV.computeBias p input_b) x vlmax :=
   BinaryBroadcast.kernel_equiv
     (neonLoop := Neon.neonLoop p)
     (rvvLoop := fun bias xs => RVV.rvvLoop p bias xs vlmax)
@@ -43,6 +40,6 @@ theorem qs8_vaddc_equiv
     (h_rvv_spec := fun bias xs => RVV.rvvLoop_eq_map p bias xs vlmax h_vlmax)
     (h_bias := computeBias_eq p)
     (h_elem := elem_equiv p hwf)
-    input_b input_a
+    input_b x
 
-end SALT.Kernel.QS8VAddC.Equivalence
+end SALT.Kernel.QS8VAddCParsedFull.Equivalence
