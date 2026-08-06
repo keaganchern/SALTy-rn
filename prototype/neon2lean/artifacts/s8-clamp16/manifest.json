@@ -7,9 +7,9 @@
     "version": "Apple clang version 17.0.0 (clang-1700.0.13.3)"
   },
   "extractor": {
-    "byte_length": 25398,
+    "byte_length": 27250,
     "path": "prototype/neon2lean/tools/extract_s8_clamp16.py",
-    "sha256": "e128a0dfa2ad19e1371e3e93ef1b2bfd6eb4abbd00381b79785ed9b19097b1b9"
+    "sha256": "876fad195fd481a79579ef6675d1443b2f8fc4101b8ff347dd624f2c926ffe1d"
   },
   "facade": {
     "byte_length": 848,
@@ -18,7 +18,7 @@
   },
   "operation_registry_id": "saltyrn.s8-clamp16.integer.v1",
   "schema_version": 1,
-  "trust_boundary": "A fail-closed Clang AST frontend emitted typed IR data for a restricted C subset. Lean rechecks registry, reference order, coverage, and execution. Clang/C and intrinsic-to-ISA adequacy remain external bridges.",
+  "trust_boundary": "An audited restricted Clang AST frontend emitted typed IR data. Unsupported selected-function-body shapes fail extraction. Lean rechecks registry, reference order, coverage, and execution. Clang/C and intrinsic-to-ISA adequacy remain external bridges.",
   "units": {
     "neon": {
       "artifact": {

@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Lower the supported s8-clamp16 C subset to typed semantic IR data.
 
-The frontend is deliberately small and fail closed. It accepts straight-line
-load/splat/min/max/store statements and one RVV strip-mined loop. Supported
+The frontend is deliberately small and accepts only an audited restricted shape:
+straight-line load/splat/min/max/store statements and one RVV strip-mined loop.
+Unsupported shapes in the selected function bodies fail extraction. Supported
 intrinsic mutations are lowered to different operation spellings rather than
 being rejected because they no longer match the expected theorem.
 """
@@ -52,6 +53,13 @@ NODE_KINDS = {
 
 IMPLICIT_CASTS = {"FunctionToPointerDecay", "IntegralCast", "LValueToRValue"}
 FLOAT_RE = re.compile(r"(?<![A-Za-z0-9_])(?:float|double|_Float\d+|__fp16|half)(?![A-Za-z0-9_])")
+UNSUPPORTED_QUALIFIER_RE = re.compile(
+    r"(?<![A-Za-z0-9_])(?:volatile|restrict|_Atomic)(?![A-Za-z0-9_])"
+)
+INCLUDE_DIRECTIVE_RE = re.compile(r"(?m)^[ \t]*#[ \t]*include\b[^\r\n]*")
+QUOTE_INCLUDE_RE = re.compile(
+    r'^[ \t]*#[ \t]*include[ \t]+"([^"\r\n]+)"[ \t]*$'
+)
 
 OPS: dict[str, dict[str, Any]] = {
     "vld1q_s8": {
@@ -209,6 +217,30 @@ def repo_path(path: Path, repo_root: Path) -> str:
         raise ExtractError(f"artifact is outside repository root: {path}") from error
 
 
+def validate_facade_include(source: Path, facade: Path, role: str) -> None:
+    require(
+        source.parent == facade.parent,
+        f"{role}: source must be in the same directory as facade",
+    )
+    try:
+        text = source.read_text(encoding="utf-8")
+    except UnicodeDecodeError as error:
+        raise ExtractError(f"{role}: source is not valid UTF-8") from error
+    directives = INCLUDE_DIRECTIVE_RE.findall(text)
+    require(len(directives) == 1, f"{role}: expected exactly one include directive")
+    match = QUOTE_INCLUDE_RE.fullmatch(directives[0])
+    require(match is not None, f"{role}: facade must use a direct quote include")
+    include_path = Path(match.group(1))
+    require(
+        not include_path.is_absolute() and include_path.parent == Path("."),
+        f"{role}: facade include must name a same-directory file",
+    )
+    require(
+        (source.parent / include_path).resolve() == facade,
+        f"{role}: quote include does not resolve to the supplied facade",
+    )
+
+
 def run_clang(clang: str, repo_root: Path, source: Path, include_dir: Path) -> tuple[Node, bytes]:
     relative_source = repo_path(source, repo_root)
     relative_include = repo_path(include_dir, repo_root)
@@ -255,6 +287,12 @@ def audit_node(node: Node, role: str) -> None:
                 text = value.get(key)
                 if isinstance(text, str):
                     require(not FLOAT_RE.search(text), f"{role}: floating type {text!r}")
+                    qualifier = UNSUPPORTED_QUALIFIER_RE.search(text)
+                    if qualifier is not None:
+                        raise ExtractError(
+                            f"{role}: unsupported type qualifier "
+                            f"{qualifier.group(0)!r} in {text!r}"
+                        )
     if kind == "CallExpr":
         name = function_name(node)
         require(name in OPS, f"{role}: unsupported call spelling {name}")
@@ -562,6 +600,8 @@ def main() -> int:
         require(clang is not None, f"clang executable not found: {args.clang}")
         for path in (neon, rvv, facade):
             require(path.is_file(), f"missing input: {path}")
+        validate_facade_include(neon, facade, "neon")
+        validate_facade_include(rvv, facade, "rvv")
 
         neon_ast, neon_preprocessed = run_clang(clang, repo_root, neon, facade.parent)
         rvv_ast, rvv_preprocessed = run_clang(clang, repo_root, rvv, facade.parent)
@@ -574,9 +614,10 @@ def main() -> int:
             "schema_version": 1,
             "operation_registry_id": "saltyrn.s8-clamp16.integer.v1",
             "trust_boundary": (
-                "A fail-closed Clang AST frontend emitted typed IR data for a restricted C subset. "
-                "Lean rechecks registry, reference order, coverage, and execution. Clang/C and "
-                "intrinsic-to-ISA adequacy remain external bridges."
+                "An audited restricted Clang AST frontend emitted typed IR data. Unsupported "
+                "selected-function-body shapes fail extraction. Lean rechecks registry, reference "
+                "order, coverage, and execution. Clang/C and intrinsic-to-ISA adequacy remain "
+                "external bridges."
             ),
             "clang": {
                 "name": "clang",

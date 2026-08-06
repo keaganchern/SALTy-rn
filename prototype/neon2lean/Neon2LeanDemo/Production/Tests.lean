@@ -284,6 +284,9 @@ example : selfReferenceKernel.hasSingleBlockUseOrder = false := by
 
 def u64 : ValueTag := .scalar (.int 64 .unsigned)
 
+example : u64 = rvvActiveVLType := by
+  rfl
+
 def i8m8 : ValueTag := .vector (.scalable .m8) (.int 8 .signed)
 
 def rvvI8M8Parameters : List Parameter :=
@@ -300,8 +303,8 @@ def mismatchedRVVOperation : Operation :=
       { architecture := .rvv
         family := .integer
         spelling := "__riscv_vmax_vx_i8m8" }
-    operandNodes := [2, 3]
-    operandTypes := [i8m8, i8]
+    operandNodes := [2, 3, 1]
+    operandTypes := [i8m8, i8, u64]
     resultType := some i8m8
     rvvConfig := some { sew := 64, lmul := .mf8, activeVLNode := 1 }
     source := sampleRange }
@@ -323,9 +326,9 @@ def rvvI8M8DescriptorRegistry : TrustedOperationRegistry
       some
         { architecture := .rvv
           family := .integer
-          operandTypes := [i8m8, i8]
+          operandTypes := [i8m8, i8, u64]
           resultType := some i8m8
-          rvvConfigShape := some { sew := 8, lmul := .m8 }
+          rvvConfigShape := some { sew := 8, lmul := .m8, activeVLOperandIndex := 2 }
           opcode := .unavailable
           effect := .pure }
   | _ => none
@@ -334,7 +337,7 @@ example :
     mismatchedRVVKernel.checkIntegerOnly rvvI8M8DescriptorRegistry =
       .error
         (.rvvConfigMismatch 4 "__riscv_vmax_vx_i8m8"
-          { sew := 8, lmul := .m8 }
+          { sew := 8, lmul := .m8, activeVLOperandIndex := 2 }
           { sew := 64, lmul := .mf8, activeVLNode := 1 }) := by
   rfl
 
@@ -350,6 +353,49 @@ def matchingRVVKernel : KernelIR :=
          source := sampleRange }] }
 
 example : matchingRVVKernel.checkIntegerOnly rvvI8M8DescriptorRegistry = .ok () := by
+  rfl
+
+def wrongActiveVLNodeKernel : KernelIR :=
+  { matchingRVVKernel with
+    name := "wrong-active-vl-node"
+    parameters :=
+      matchingRVVKernel.parameters ++
+        [{ nodeId := 5, name := "unrelated-vl", valueType := u64,
+           origin := .function, source := sampleRange }]
+    blocks :=
+      [{ blockId := 0
+         operations :=
+           [{ mismatchedRVVOperation with
+              rvvConfig := some { sew := 8, lmul := .m8, activeVLNode := 5 } }]
+         successors := []
+         source := sampleRange }] }
+
+example :
+    wrongActiveVLNodeKernel.checkIntegerOnly rvvI8M8DescriptorRegistry =
+      .error (.rvvActiveVLNodeMismatch 4 "__riscv_vmax_vx_i8m8" 1 5) := by
+  rfl
+
+def wrongActiveVLTypeKernel : KernelIR :=
+  { matchingRVVKernel with
+    name := "wrong-active-vl-type"
+    parameters :=
+      matchingRVVKernel.parameters ++
+        [{ nodeId := 5, name := "wrong-typed-vl", valueType := i8,
+           origin := .function, source := sampleRange }]
+    blocks :=
+      [{ blockId := 0
+         operations :=
+           [{ mismatchedRVVOperation with
+              rvvConfig := some { sew := 8, lmul := .m8, activeVLNode := 5 } }]
+         successors := []
+         source := sampleRange }] }
+
+example : wrongActiveVLTypeKernel.hasWellFormedReferenceShape = false := by
+  decide
+
+example :
+    wrongActiveVLTypeKernel.checkIntegerOnly rvvI8M8DescriptorRegistry =
+      .error .malformedKernelIR := by
   rfl
 
 end Neon2LeanDemo.Production.Tests

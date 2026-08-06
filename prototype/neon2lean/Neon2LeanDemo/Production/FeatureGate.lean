@@ -6,6 +6,8 @@ namespace Neon2LeanDemo.Production
 structure RVVConfigShape where
   sew : Nat
   lmul : LMUL
+  /-- Operand position that supplies the operation's active `vl` SSA value. -/
+  activeVLOperandIndex : Nat
   deriving BEq, DecidableEq, Repr
 
 def RVVConfigShape.matches (expected : RVVConfigShape) (actual : RVVVectorConfig) : Bool :=
@@ -66,6 +68,10 @@ inductive IntegerGateFailure where
   | malformedRVVConfig (nodeId : Nat) (config : RVVVectorConfig)
   | rvvConfigMismatch (nodeId : Nat) (spelling : String)
       (expected : RVVConfigShape) (actual : RVVVectorConfig)
+  | malformedRVVActiveVLOperand (nodeId : Nat) (spelling : String)
+      (operandIndex : Nat)
+  | rvvActiveVLNodeMismatch (nodeId : Nat) (spelling : String)
+      (expectedNode actualNode : Nat)
   deriving BEq, DecidableEq, Repr
 
 private def checkIntegerType (site : String) (valueType : ValueTag) :
@@ -102,9 +108,24 @@ private def checkRVVConfig (operation : Operation) (descriptor : OperationDescri
   | some _, none => throw (.missingRVVConfig operation.nodeId operation.operation.spelling)
   | none, some _ => throw (.unexpectedRVVConfig operation.nodeId operation.operation.spelling)
   | some expected, some config =>
-      if config.isWellFormed then
+      if config.isWellFormed then do
         unless expected.matches config do
           throw (.rvvConfigMismatch operation.nodeId operation.operation.spelling expected config)
+        match operation.operandNodes[expected.activeVLOperandIndex]?,
+            operation.operandTypes[expected.activeVLOperandIndex]? with
+        | some activeVLOperandNode, some activeVLOperandType =>
+            unless activeVLOperandType == rvvActiveVLType do
+              throw
+                (.malformedRVVActiveVLOperand operation.nodeId operation.operation.spelling
+                  expected.activeVLOperandIndex)
+            unless config.activeVLNode == activeVLOperandNode do
+              throw
+                (.rvvActiveVLNodeMismatch operation.nodeId operation.operation.spelling
+                  activeVLOperandNode config.activeVLNode)
+        | _, _ =>
+            throw
+              (.malformedRVVActiveVLOperand operation.nodeId operation.operation.spelling
+                expected.activeVLOperandIndex)
       else
         throw (.malformedRVVConfig operation.nodeId config)
   | none, none => pure ()

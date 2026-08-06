@@ -20,7 +20,7 @@ def sourceEnvelope : ArtifactEnvelope :=
     headers := [{ role := .header, path := "prototype/neon2lean/cases/s8-clamp16/intrinsics_facade.h", byteLength := 848, sha256 := { hex := "e9dbc6937389a9b4401c43faeeecd81e93b3e3094ab51817b4f7f45401330e8b" } }]
     build := { frontendName := "clang", frontendVersion := "Apple clang version 17.0.0 (clang-1700.0.13.3)", targetTriple := "x86_64-unknown-linux-gnu", languageStandard := "c11", abi := "parse-facade-only", endianness := .little, defines := [], includePaths := ["prototype/neon2lean/cases/s8-clamp16"], compilerFlags := ["-Werror", "-fno-color-diagnostics"] }
     extractorName := "prototype/neon2lean/tools/extract_s8_clamp16.py"
-    extractorVersion := "e128a0dfa2ad19e1371e3e93ef1b2bfd6eb4abbd00381b79785ed9b19097b1b9"
+    extractorVersion := "876fad195fd481a79579ef6675d1443b2f8fc4101b8ff347dd624f2c926ffe1d"
     coverage :=
       { translationUnitSha256 := { hex := "5d318164e5aecb0791cecc5ac445e7cecf102606f237d86ca4815ea6b8ba51a2" }
         functionName := "s8_clamp16_neon"
@@ -118,7 +118,7 @@ def targetEnvelope : ArtifactEnvelope :=
     headers := [{ role := .header, path := "prototype/neon2lean/cases/s8-clamp16/intrinsics_facade.h", byteLength := 848, sha256 := { hex := "e9dbc6937389a9b4401c43faeeecd81e93b3e3094ab51817b4f7f45401330e8b" } }]
     build := { frontendName := "clang", frontendVersion := "Apple clang version 17.0.0 (clang-1700.0.13.3)", targetTriple := "x86_64-unknown-linux-gnu", languageStandard := "c11", abi := "parse-facade-only", endianness := .little, defines := [], includePaths := ["prototype/neon2lean/cases/s8-clamp16"], compilerFlags := ["-Werror", "-fno-color-diagnostics"] }
     extractorName := "prototype/neon2lean/tools/extract_s8_clamp16.py"
-    extractorVersion := "e128a0dfa2ad19e1371e3e93ef1b2bfd6eb4abbd00381b79785ed9b19097b1b9"
+    extractorVersion := "876fad195fd481a79579ef6675d1443b2f8fc4101b8ff347dd624f2c926ffe1d"
     coverage :=
       { translationUnitSha256 := { hex := "a928f87b00757a508249de130a1366a2abfd6c0dec5c4840d91d1ac1d88f56b0" }
         functionName := "s8_clamp16_rvv"

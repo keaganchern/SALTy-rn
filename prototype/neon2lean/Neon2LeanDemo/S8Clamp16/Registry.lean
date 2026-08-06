@@ -73,7 +73,7 @@ def registry : TrustedOperationRegistry
           family := .memory
           operandTypes := [.pointer, u64]
           resultType := some scalableM1
-          rvvConfigShape := some { sew := 8, lmul := .m1 }
+          rvvConfigShape := some { sew := 8, lmul := .m1, activeVLOperandIndex := 1 }
           opcode := .rvvLoadS8M1
           effect := .read }
   | "__riscv_vmax_vx_i8m1" =>
@@ -82,7 +82,7 @@ def registry : TrustedOperationRegistry
           family := .integer
           operandTypes := [scalableM1, i8, u64]
           resultType := some scalableM1
-          rvvConfigShape := some { sew := 8, lmul := .m1 }
+          rvvConfigShape := some { sew := 8, lmul := .m1, activeVLOperandIndex := 2 }
           opcode := .rvvSignedMaxScalarS8M1
           effect := .pure }
   | "__riscv_vmin_vx_i8m1" =>
@@ -91,7 +91,7 @@ def registry : TrustedOperationRegistry
           family := .integer
           operandTypes := [scalableM1, i8, u64]
           resultType := some scalableM1
-          rvvConfigShape := some { sew := 8, lmul := .m1 }
+          rvvConfigShape := some { sew := 8, lmul := .m1, activeVLOperandIndex := 2 }
           opcode := .rvvSignedMinScalarS8M1
           effect := .pure }
   | "__riscv_vse8_v_i8m1" =>
@@ -100,7 +100,7 @@ def registry : TrustedOperationRegistry
           family := .memory
           operandTypes := [.pointer, scalableM1, u64]
           resultType := none
-          rvvConfigShape := some { sew := 8, lmul := .m1 }
+          rvvConfigShape := some { sew := 8, lmul := .m1, activeVLOperandIndex := 2 }
           opcode := .rvvStoreS8M1
           effect := .write }
   | _ => none

@@ -103,12 +103,14 @@ def main() -> int:
     project = repo_root / "prototype/neon2lean"
 
     try:
+        # The regression compiles temporary generated modules that import the project library.
+        # Build those dependencies first so the documented command works from a fresh checkout.
+        run(["lake", "build"], project)
         run(
             [sys.executable, str(project / "tools/test_s8_clamp16.py"),
              "--repo-root", str(repo_root), "--clang", args.clang],
             repo_root,
         )
-        run(["lake", "build"], project)
         scan_lean_sources(project)
         audit_axioms(project)
     except (CheckError, OSError) as error:

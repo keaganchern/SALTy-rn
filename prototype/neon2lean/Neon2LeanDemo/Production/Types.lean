@@ -57,6 +57,9 @@ def ValueTag.isScalableVector : ValueTag → Bool
   | .vector (.scalable _) _ => true
   | _ => false
 
+/-- Active-`vl` type for the current canonical 64-bit parse facade. -/
+def rvvActiveVLType : ValueTag := .scalar (.int 64 .unsigned)
+
 /-- Zero-bit integers and zero-lane vectors are rejected at the schema boundary. -/
 def ScalarTag.WellFormed : ScalarTag → Prop
   | .int bits _ => 0 < bits

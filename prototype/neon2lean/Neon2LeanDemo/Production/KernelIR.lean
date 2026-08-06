@@ -93,9 +93,7 @@ private def Operation.hasValidReferences (operation : Operation) (ir : KernelIR)
     (match operation.rvvConfig with
     | none => true
     | some config =>
-        match ir.valueType? config.activeVLNode with
-        | some (.scalar (.int _ _)) => true
-        | _ => false)
+        ir.valueType? config.activeVLNode == some rvvActiveVLType)
 
 private def Operation.hasWellFormedTypes (operation : Operation) : Bool :=
   operation.operandTypes.all ValueTag.isWellFormed &&

@@ -1,7 +1,8 @@
 # Typed Neon/RVV-to-Lean prototype
 
-This RFC prototype explores a fail-closed path from restricted C/intrinsic
-programs to Lean:
+This RFC prototype explores an audited translation path for a restricted
+C/intrinsic subset. Unsupported AST shapes and call spellings in the selected
+kernel function bodies fail extraction:
 
 ```text
 pinned C translation units
@@ -30,6 +31,18 @@ integer-only.
 
 The frontend emits data, not theorem bodies. Lean owns the operation registry,
 interpreter, contracts, observations, and final theorem statements.
+
+## Reading guide
+
+1. Start with `cases/s8-clamp16/neon.c` and `rvv.c` for the restricted C pair.
+2. Compare `artifacts/s8-clamp16/manifest.json` with
+   `Neon2LeanDemo/S8Clamp16/Generated.lean` to see the emitted envelope, IR, and
+   control data.
+3. Read `Neon2LeanDemo/S8Clamp16/Registry.lean` and
+   `Neon2LeanDemo/Production/Interpreter.lean` for the reviewed operation
+   mapping and executable Lean semantics.
+4. Finish with `Neon2LeanDemo/S8Clamp16/Proof.lean` and `Mutation.lean` for the
+   equivalence theorems and the negative semantic mutation.
 
 ## Generated `s8-clamp16` slice
 

@@ -120,6 +120,71 @@ def main() -> int:
                 "checked Lean data is stale",
             )
 
+            binding_dir = tmp / "facade-binding"
+            binding_dir.mkdir()
+            binding_neon = binding_dir / "neon.c"
+            binding_rvv = binding_dir / "rvv.c"
+            binding_facade = binding_dir / "intrinsics_facade.h"
+            shutil.copy2(neon, binding_neon)
+            shutil.copy2(rvv, binding_rvv)
+            shutil.copy2(facade, binding_facade)
+            decoy_dir = tmp / "decoy-facade"
+            decoy_dir.mkdir()
+            decoy_facade = decoy_dir / "intrinsics_facade.h"
+            decoy_facade.write_text(
+                facade.read_text(encoding="utf-8") + "\n/* decoy facade */\n",
+                encoding="utf-8",
+            )
+            binding_output = tmp / "facade-binding.json"
+            result = run(
+                extractor_command(
+                    repo_root, binding_neon, binding_rvv, decoy_facade,
+                    binding_output, args.clang
+                ),
+                repo_root,
+            )
+            require(result.returncode != 0, "decoy facade was accepted")
+            require("same directory as facade" in result.stderr, result.stderr)
+            require(not binding_output.exists(), "decoy facade produced an artifact")
+
+            qualifier_mutations = {
+                "volatile": ("const int8x16_t lower", "volatile int8x16_t lower"),
+                "restrict": (
+                    "const int8x16_t lower",
+                    "int8_t* restrict alias = output;\n  const int8x16_t lower",
+                ),
+                "atomic": ("const int8x16_t lower", "_Atomic(int8x16_t) lower"),
+            }
+            neon_source = neon.read_text(encoding="utf-8")
+            for qualifier_name, (original, replacement) in qualifier_mutations.items():
+                qualifier_dir = tmp / f"qualifier-{qualifier_name}"
+                qualifier_dir.mkdir()
+                qualifier_neon = qualifier_dir / "neon.c"
+                qualifier_rvv = qualifier_dir / "rvv.c"
+                qualifier_facade = qualifier_dir / "intrinsics_facade.h"
+                qualifier_source = neon_source.replace(original, replacement, 1)
+                require(
+                    qualifier_source != neon_source,
+                    f"{qualifier_name} mutation did not change the source",
+                )
+                qualifier_neon.write_text(qualifier_source, encoding="utf-8")
+                shutil.copy2(rvv, qualifier_rvv)
+                shutil.copy2(facade, qualifier_facade)
+                qualifier_output = tmp / f"qualifier-{qualifier_name}.json"
+                result = run(
+                    extractor_command(
+                        repo_root, qualifier_neon, qualifier_rvv, qualifier_facade,
+                        qualifier_output, args.clang
+                    ),
+                    repo_root,
+                )
+                require(result.returncode != 0, f"{qualifier_name} qualifier was accepted")
+                require("unsupported type qualifier" in result.stderr, result.stderr)
+                require(
+                    not qualifier_output.exists(),
+                    f"{qualifier_name} qualifier produced an artifact",
+                )
+
             mutation_dir = tmp / "mutation"
             mutation_dir.mkdir()
             mutated_neon = mutation_dir / "neon.c"
@@ -239,7 +304,8 @@ def main() -> int:
 
     print(
         "PASS: deterministic and cross-version semantic regeneration, "
-        "supported-mutation lowering, unknown/unsupported rejection, "
+        "facade/qualifier rejection, supported-mutation lowering, "
+        "unknown/unsupported rejection, "
         "malformed-manifest rejection"
     )
     return 0
