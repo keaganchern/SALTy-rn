@@ -39,21 +39,28 @@ interpreter, contracts, observations, and final theorem statements.
 - the RVV-style side strip-mines the same 16 bytes using a positive chunk
   schedule.
 
-The checked manifest binds all 47 Neon and 71 RVV function-body AST nodes to
-parameters, operations, or structured control. Lean rechecks source ranges,
-hashes, operation descriptors, types, registry identity, single-block use
-order, and bidirectional coverage before interpreting the generated programs.
+The checked manifest associates all 47 Neon and 71 RVV function-body AST nodes
+with parameters, operations, or structured control. Lean separately checks
+recorded digest consistency, operation descriptors, types, registry identity,
+single-block use order, and bidirectional coverage. The Python regeneration
+gate recomputes repository-file hashes. These binding checks and the execution
+theorems are adjacent checks, not one transitive theorem.
 
 `generated_success_under_contract` proves, for every positive partition of 16:
 
 - both generated programs execute successfully under the explicit contract;
-- their outputs and final memories are equal;
+- their configured output observations are equal;
 - memory outside the output range is preserved;
-- both write summaries contain exactly the 16 output addresses.
+- the transactional interpreter reports the 16 output addresses.
 
-`Mutation.lean` replaces the supported RVV min operation with a second max.
-Structural validation still succeeds, while Lean execution proves a concrete
-inequivalence.
+The separate `generated_memory_execution_equal` theorem proves equality of the
+complete modeled execution results. The write summary is derived from the
+interpreter's final modeled write, not a trace of physical intrinsic stores.
+
+The Python regression mutates the restricted RVV C input and checks that it
+lowers to distinct typed IR. Separately, `Mutation.lean` applies the
+corresponding min-to-max change to the checked target IR: structural validation
+still succeeds, while Lean execution proves a concrete inequivalence.
 
 ## Reproduction
 
@@ -66,6 +73,9 @@ python3 prototype/neon2lean/tools/check_e2e.py --repo-root .
 The gate checks semantic regeneration, supported and unsupported mutations,
 malformed manifests, the Lean build, forbidden proof tokens, and exported
 theorem axioms. Pass a different Clang executable with `--clang PATH`.
+
+This RFC does not install a repository CI workflow; `check_e2e.py` is currently
+a manual gate.
 
 Extraction uses the canonical parse target `x86_64-unknown-linux-gnu` and does
 not read platform headers. The manifest retains the exact producer Clang
