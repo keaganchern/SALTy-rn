@@ -1,0 +1,315 @@
+#!/usr/bin/env python3
+"""Regression checks for the generated s8-clamp16 semantic IR slice."""
+
+from __future__ import annotations
+
+import argparse
+import copy
+import json
+from pathlib import Path
+import shutil
+import subprocess
+import sys
+import tempfile
+
+
+def run(command: list[str], cwd: Path) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(command, cwd=cwd, text=True, capture_output=True, check=False)
+
+
+def require(condition: bool, message: str) -> None:
+    if not condition:
+        raise RuntimeError(message)
+
+
+def semantic_manifest(manifest: dict[str, object]) -> dict[str, object]:
+    result = copy.deepcopy(manifest)
+    clang = result.get("clang")
+    require(isinstance(clang, dict), "manifest has no clang provenance")
+    require(isinstance(clang.get("version"), str), "manifest has no clang version")
+    del clang["version"]
+    return result
+
+
+def extractor_command(repo_root: Path, neon: Path, rvv: Path, facade: Path,
+                      output: Path, clang: str) -> list[str]:
+    return [
+        sys.executable,
+        str(repo_root / "prototype/neon2lean/tools/extract_s8_clamp16.py"),
+        "--repo-root", str(repo_root),
+        "--neon", str(neon),
+        "--rvv", str(rvv),
+        "--facade", str(facade),
+        "--output", str(output),
+        "--clang", clang,
+    ]
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--repo-root", type=Path, default=Path.cwd())
+    parser.add_argument("--clang", default="clang")
+    args = parser.parse_args()
+    repo_root = args.repo_root.resolve()
+    case_dir = repo_root / "prototype/neon2lean/cases/s8-clamp16"
+    neon = case_dir / "neon.c"
+    rvv = case_dir / "rvv.c"
+    facade = case_dir / "intrinsics_facade.h"
+    checked_manifest = repo_root / "prototype/neon2lean/artifacts/s8-clamp16/manifest.json"
+    checked_lean = repo_root / "prototype/neon2lean/Neon2LeanDemo/S8Clamp16/Generated.lean"
+    emitter = repo_root / "prototype/neon2lean/tools/emit_s8_clamp16_lean.py"
+
+    try:
+        with tempfile.TemporaryDirectory(
+            prefix="s8-clamp16-regression-", dir=repo_root / "prototype/neon2lean"
+        ) as raw_tmp:
+            tmp = Path(raw_tmp)
+            baseline = tmp / "baseline.json"
+            repeated = tmp / "repeated.json"
+            for output in (baseline, repeated):
+                result = run(
+                    extractor_command(
+                        repo_root, neon, rvv, facade, output, args.clang
+                    ),
+                    repo_root,
+                )
+                require(result.returncode == 0, f"baseline extraction failed:\n{result.stderr}")
+            require(baseline.read_bytes() == repeated.read_bytes(), "extractor is not deterministic")
+            current_data = json.loads(baseline.read_text(encoding="utf-8"))
+            checked_data = json.loads(checked_manifest.read_text(encoding="utf-8"))
+            require(
+                semantic_manifest(current_data) == semantic_manifest(checked_data),
+                "checked semantic manifest is stale",
+            )
+            print(
+                "Clang provenance: "
+                f"checked={checked_data['clang']['version']!r}, "
+                f"current={current_data['clang']['version']!r}"
+            )
+
+            generated = tmp / "Generated.lean"
+            generated_again = tmp / "Generated-again.lean"
+            for output in (generated, generated_again):
+                result = run(
+                    [sys.executable, str(emitter), "--manifest", str(baseline), "--output", str(output)],
+                    repo_root,
+                )
+                require(result.returncode == 0, f"Lean emission failed:\n{result.stderr}")
+            require(generated.read_bytes() == generated_again.read_bytes(), "emitter is not deterministic")
+            result = run(
+                ["lake", "env", "lean", str(generated)],
+                repo_root / "prototype/neon2lean",
+            )
+            require(
+                result.returncode == 0,
+                f"current-host generated Lean data did not compile:\n"
+                f"{result.stdout}{result.stderr}",
+            )
+
+            checked_generated = tmp / "CheckedGenerated.lean"
+            result = run(
+                [
+                    sys.executable, str(emitter), "--manifest",
+                    str(checked_manifest), "--output", str(checked_generated),
+                ],
+                repo_root,
+            )
+            require(result.returncode == 0, f"checked Lean emission failed:\n{result.stderr}")
+            require(
+                checked_generated.read_bytes() == checked_lean.read_bytes(),
+                "checked Lean data is stale",
+            )
+
+            binding_dir = tmp / "facade-binding"
+            binding_dir.mkdir()
+            binding_neon = binding_dir / "neon.c"
+            binding_rvv = binding_dir / "rvv.c"
+            binding_facade = binding_dir / "intrinsics_facade.h"
+            shutil.copy2(neon, binding_neon)
+            shutil.copy2(rvv, binding_rvv)
+            shutil.copy2(facade, binding_facade)
+            decoy_dir = tmp / "decoy-facade"
+            decoy_dir.mkdir()
+            decoy_facade = decoy_dir / "intrinsics_facade.h"
+            decoy_facade.write_text(
+                facade.read_text(encoding="utf-8") + "\n/* decoy facade */\n",
+                encoding="utf-8",
+            )
+            binding_output = tmp / "facade-binding.json"
+            result = run(
+                extractor_command(
+                    repo_root, binding_neon, binding_rvv, decoy_facade,
+                    binding_output, args.clang
+                ),
+                repo_root,
+            )
+            require(result.returncode != 0, "decoy facade was accepted")
+            require("same directory as facade" in result.stderr, result.stderr)
+            require(not binding_output.exists(), "decoy facade produced an artifact")
+
+            qualifier_mutations = {
+                "volatile": ("const int8x16_t lower", "volatile int8x16_t lower"),
+                "restrict": (
+                    "const int8x16_t lower",
+                    "int8_t* restrict alias = output;\n  const int8x16_t lower",
+                ),
+                "atomic": ("const int8x16_t lower", "_Atomic(int8x16_t) lower"),
+            }
+            neon_source = neon.read_text(encoding="utf-8")
+            for qualifier_name, (original, replacement) in qualifier_mutations.items():
+                qualifier_dir = tmp / f"qualifier-{qualifier_name}"
+                qualifier_dir.mkdir()
+                qualifier_neon = qualifier_dir / "neon.c"
+                qualifier_rvv = qualifier_dir / "rvv.c"
+                qualifier_facade = qualifier_dir / "intrinsics_facade.h"
+                qualifier_source = neon_source.replace(original, replacement, 1)
+                require(
+                    qualifier_source != neon_source,
+                    f"{qualifier_name} mutation did not change the source",
+                )
+                qualifier_neon.write_text(qualifier_source, encoding="utf-8")
+                shutil.copy2(rvv, qualifier_rvv)
+                shutil.copy2(facade, qualifier_facade)
+                qualifier_output = tmp / f"qualifier-{qualifier_name}.json"
+                result = run(
+                    extractor_command(
+                        repo_root, qualifier_neon, qualifier_rvv, qualifier_facade,
+                        qualifier_output, args.clang
+                    ),
+                    repo_root,
+                )
+                require(result.returncode != 0, f"{qualifier_name} qualifier was accepted")
+                require("unsupported type qualifier" in result.stderr, result.stderr)
+                require(
+                    not qualifier_output.exists(),
+                    f"{qualifier_name} qualifier produced an artifact",
+                )
+
+            mutation_dir = tmp / "mutation"
+            mutation_dir.mkdir()
+            mutated_neon = mutation_dir / "neon.c"
+            mutated_rvv = mutation_dir / "rvv.c"
+            mutated_facade = mutation_dir / "intrinsics_facade.h"
+            shutil.copy2(neon, mutated_neon)
+            shutil.copy2(facade, mutated_facade)
+            mutated_rvv.write_text(
+                rvv.read_text(encoding="utf-8").replace(
+                    "__riscv_vmin_vx_i8m1(value, hi, vl)",
+                    "__riscv_vmax_vx_i8m1(value, hi, vl)",
+                    1,
+                ),
+                encoding="utf-8",
+            )
+            mutated_manifest = tmp / "mutated.json"
+            result = run(
+                extractor_command(
+                    repo_root, mutated_neon, mutated_rvv, mutated_facade,
+                    mutated_manifest, args.clang
+                ),
+                repo_root,
+            )
+            require(result.returncode == 0, f"supported mutation was rejected:\n{result.stderr}")
+            mutation = json.loads(mutated_manifest.read_text(encoding="utf-8"))
+            spellings = [
+                operation["spelling"]
+                for operation in mutation["units"]["rvv"]["ir"]["blocks"][0]["operations"]
+            ]
+            require(
+                spellings.count("__riscv_vmax_vx_i8m1") == 2
+                and "__riscv_vmin_vx_i8m1" not in spellings,
+                "supported mutation did not produce distinct semantic IR",
+            )
+            mutated_lean = tmp / "MutatedGenerated.lean"
+            result = run(
+                [sys.executable, str(emitter), "--manifest", str(mutated_manifest),
+                 "--output", str(mutated_lean)],
+                repo_root,
+            )
+            require(result.returncode == 0, f"mutated IR emission failed:\n{result.stderr}")
+            result = run(["lake", "env", "lean", str(mutated_lean)], repo_root / "prototype/neon2lean")
+            require(
+                result.returncode == 0,
+                f"mutated generated Lean data did not compile:\n{result.stdout}{result.stderr}",
+            )
+
+            unknown_dir = tmp / "unknown"
+            unknown_dir.mkdir()
+            unknown_neon = unknown_dir / "neon.c"
+            unknown_rvv = unknown_dir / "rvv.c"
+            unknown_facade = unknown_dir / "intrinsics_facade.h"
+            shutil.copy2(neon, unknown_neon)
+            shutil.copy2(rvv, unknown_rvv)
+            unknown_facade.write_text(
+                facade.read_text(encoding="utf-8")
+                + "\nvint8m1_t forbidden_op(vint8m1_t, int8_t, size_t);\n",
+                encoding="utf-8",
+            )
+            unknown_rvv.write_text(
+                rvv.read_text(encoding="utf-8").replace(
+                    "__riscv_vmin_vx_i8m1(value, hi, vl)", "forbidden_op(value, hi, vl)", 1
+                ),
+                encoding="utf-8",
+            )
+            unknown_output = tmp / "unknown.json"
+            result = run(
+                extractor_command(
+                    repo_root, unknown_neon, unknown_rvv, unknown_facade,
+                    unknown_output, args.clang
+                ),
+                repo_root,
+            )
+            require(result.returncode != 0, "unknown intrinsic was accepted")
+            require("unsupported call spelling" in result.stderr, result.stderr)
+            require(not unknown_output.exists(), "unknown intrinsic produced an artifact")
+
+            unsupported_dir = tmp / "unsupported"
+            unsupported_dir.mkdir()
+            unsupported_neon = unsupported_dir / "neon.c"
+            unsupported_rvv = unsupported_dir / "rvv.c"
+            unsupported_facade = unsupported_dir / "intrinsics_facade.h"
+            shutil.copy2(neon, unsupported_neon)
+            shutil.copy2(facade, unsupported_facade)
+            unsupported_rvv.write_text(
+                rvv.read_text(encoding="utf-8").replace(
+                    "    const size_t vl =", "    if (remaining == 1) remaining = 0;\n    const size_t vl =", 1
+                ),
+                encoding="utf-8",
+            )
+            unsupported_output = tmp / "unsupported.json"
+            result = run(
+                extractor_command(
+                    repo_root, unsupported_neon, unsupported_rvv, unsupported_facade,
+                    unsupported_output, args.clang
+                ),
+                repo_root,
+            )
+            require(result.returncode != 0, "unsupported AST was accepted")
+            require(not unsupported_output.exists(), "unsupported AST produced an artifact")
+
+            malformed = json.loads(baseline.read_text(encoding="utf-8"))
+            malformed["units"]["neon"]["artifact"]["byte_length"] = "0); #eval true"
+            malformed_path = tmp / "malformed.json"
+            malformed_path.write_text(json.dumps(malformed), encoding="utf-8")
+            malformed_output = tmp / "malformed.lean"
+            result = run(
+                [sys.executable, str(emitter), "--manifest", str(malformed_path),
+                 "--output", str(malformed_output)],
+                repo_root,
+            )
+            require(result.returncode != 0, "malformed numeric field was accepted")
+            require(not malformed_output.exists(), "malformed manifest produced Lean output")
+    except (OSError, RuntimeError, json.JSONDecodeError) as error:
+        print(f"FAIL: {error}", file=sys.stderr)
+        return 1
+
+    print(
+        "PASS: deterministic and cross-version semantic regeneration, "
+        "facade/qualifier rejection, supported-mutation lowering, "
+        "unknown/unsupported rejection, "
+        "malformed-manifest rejection"
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
