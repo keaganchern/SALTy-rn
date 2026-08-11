@@ -82,8 +82,15 @@ are the external evidence for that contract. `QS8VLReLU/Proof.lean` proves the
 generated 8-lane LReLU blocks equal for every 32-bit parameter representation;
 its contract-bound theorem records XNN's legal producer domain. The
 [LReLU multiplier construction](https://github.com/google/XNNPACK/blob/867d5a344790802ee067be62f572c2e2722bf6fb/src/microparams-init.c#L619-L646)
-provides the multiplier ranges. `QU8VAddMinmax/Models.lean` remains an executable
-translation artifact, not a proved pair.
+provides the multiplier ranges. `QU8VAddMinmax/Proof.lean` proves its generated
+8-lane blocks equal when the effective shift is at most 31. Its contract-bound
+entry point records the pinned producer's shift, multiplier, output-zero-point,
+and fixed clamp invariants. The
+[QU8 add parameter construction](https://github.com/google/XNNPACK/blob/867d5a344790802ee067be62f572c2e2722bf6fb/src/microparams-init.c#L830-L882)
+and XNN's validation of
+[QU8 zero points](https://github.com/google/XNNPACK/blob/867d5a344790802ee067be62f572c2e2722bf6fb/src/tensor.c#L50-L78)
+and [positive finite scales](https://github.com/google/XNNPACK/blob/867d5a344790802ee067be62f572c2e2722bf6fb/src/tensor.c#L318-L343)
+are the external evidence for those invariants.
 
 An unconstrained `qs8-vcvt` theorem is false at the qrdmulh
 `(-32768, -32768)` corner because the current RVV doubling sequence wraps before
@@ -94,8 +101,8 @@ first qrdmulh operand lies in `[-32640, 32640]`, so the exceptional pair is
 unreachable. The LReLU target instead narrows the exact 16-by-16 product with a
 shift of 15, so its value equality includes the signed-minimum multiplication
 corner without a parameter hypothesis. Both qrdmulh results omit architectural
-saturation flags. The dynamic QU8 shift still needs its reviewed effective-range
-contract.
+saturation flags. The QU8 proof likewise establishes lane values only; it does
+not relate Neon QC to RVV `vxsat` or model the persistent `vxrm` state.
 
 `SALT/Kernel/Schedule.lean` separately proves generic fixed-chunk/tail and
 positive-partition refinements to `List.map`/`List.zipWith` for arbitrary list
