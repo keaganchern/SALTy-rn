@@ -19,6 +19,9 @@ private def harnessParams : QS8CvtParams where
   multiplier := i32 192
   output_zero_point := i16 (-5)
 
+private def wrappingInput : List (BitVec 8) :=
+  List.replicate 8 (i8 (-128))
+
 example : WellFormedParams harnessParams := by
   unfold WellFormedParams
   decide
@@ -27,15 +30,18 @@ example : ¬ WellFormedParams wrappingCorner := by
   unfold WellFormedParams
   decide
 
-example : neonBlock8FromIntrinsics wrappingCorner [i8 (-128)] = [i8 127] := by
-  rfl
-
-example : rvvChunkFromIntrinsics wrappingCorner [i8 (-128)] = [i8 (-128)] := by
+example :
+    neonBlock8FromIntrinsics wrappingCorner wrappingInput =
+      List.replicate 8 (i8 127) := by
   rfl
 
 example :
-    neonBlock8FromIntrinsics wrappingCorner [i8 (-128)] ≠
-      rvvChunkFromIntrinsics wrappingCorner [i8 (-128)] := by
+    rvvChunkFromIntrinsics wrappingCorner wrappingInput = wrappingInput := by
+  rfl
+
+example :
+    neonBlock8FromIntrinsics wrappingCorner wrappingInput ≠
+      rvvChunkFromIntrinsics wrappingCorner wrappingInput := by
   decide
 
 end SALT.Test.QS8VCvt

@@ -128,11 +128,15 @@ PARAM_CONSTRAINTS = {
 # Restricts the solver to the valid domain for kernels proved with symbolic params.
 # ---------------------------------------------------------------------------
 PARAM_RANGES = {
+    # XNNPACK@867d5a3 bounds add multipliers by 2^21. The shift interval is
+    # intentionally the stronger verification domain; XNN constructs [12, 30].
     "qs8-vadd": {"a_zero_point": (-128, 127), "b_zero_point": (-128, 127),
-                 "a_multiplier": (1, 65535), "b_multiplier": (1, 65535), "shift": (0, 31),
+                 "a_multiplier": (1, 2097152), "b_multiplier": (1, 2097152),
+                 "shift": (0, 31),
                  "output_zero_point": (-128, 127), "output_min": (-128, 127), "output_max": (-128, 127)},
     "qs8-vaddc": {"a_zero_point": (-128, 127), "b_zero_point": (-128, 127),
-                  "a_multiplier": (1, 65535), "b_multiplier": (1, 65535), "shift": (0, 31),
+                  "a_multiplier": (1, 2097152), "b_multiplier": (1, 2097152),
+                  "shift": (0, 31),
                   "output_zero_point": (-128, 127), "output_min": (-128, 127), "output_max": (-128, 127)},
     "qs8-vmul": {"a_zero_point": (-128, 127), "b_zero_point": (-128, 127),
                  "output_zero_point": (-128, 127), "output_min": (-128, 127), "output_max": (-128, 127)},
@@ -147,10 +151,12 @@ PARAM_RANGES = {
     "qs8-vcvt": {"input_zero_point": (-128, 127), "multiplier": (1, 32768),
                  "output_zero_point": (-128, 127)},
     "qu8-vadd": {"a_zero_point": (0, 255), "b_zero_point": (0, 255),
-                 "a_multiplier": (1, 65535), "b_multiplier": (1, 65535), "shift": (0, 31),
+                 "a_multiplier": (1, 2097152), "b_multiplier": (1, 2097152),
+                 "shift": (0, 31),
                  "output_zero_point": (0, 255), "output_min": (0, 255), "output_max": (0, 255)},
     "qu8-vaddc": {"a_zero_point": (0, 255), "b_zero_point": (0, 255),
-                  "a_multiplier": (1, 65535), "b_multiplier": (1, 65535), "shift": (0, 31),
+                  "a_multiplier": (1, 2097152), "b_multiplier": (1, 2097152),
+                  "shift": (0, 31),
                   "output_zero_point": (0, 255), "output_min": (0, 255), "output_max": (0, 255)},
     "qu8-vmul": {"a_zero_point": (0, 255), "b_zero_point": (0, 255),
                  "output_zero_point": (0, 255), "output_min": (0, 255), "output_max": (0, 255)},

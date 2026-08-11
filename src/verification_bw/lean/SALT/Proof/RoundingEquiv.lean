@@ -82,4 +82,71 @@ theorem rounding_shift_equiv (x : BitVec 32) (shift : Nat)
       BitVec.toInt_eq_toNat_cond, Int.shiftRight_eq_div_pow, Nat.shiftLeft_eq] at *
   all_goals split <;> omega
 
+/-- The RVV bit-vector helper is the bit-vector encoding of the architectural
+    signed RNU shift result. -/
+theorem rvvRoundingShiftRight_eq_roundShiftSigned (x : BitVec 32) (shift : Nat) :
+    rvvRoundingShiftRight x shift =
+      BitVec.ofInt 32 (roundShiftSigned .rnu x shift) := by
+  by_cases h : shift = 0
+  · subst shift
+    simp [rvvRoundingShiftRight, roundShiftSigned, vxrmIncrement]
+  · simp only [rvvRoundingShiftRight, h, if_false, roundShiftSigned,
+      vxrmIncrement]
+    split
+    all_goals simp [BitVec.sshiftRight, BitVec.ofInt_add]
+
+private theorem neg_shift_truncate8 (shift : BitVec 32)
+    (hLower : 0 <= shift.toInt) (hUpper : shift.toInt <= 31) :
+    ((-shift).truncate 8).toInt = -shift.toInt := by
+  have hMsb : shift.msb = false := by
+    rw [BitVec.msb_eq_toInt]
+    simp only [decide_eq_false_iff_not]
+    omega
+  have hToNat : (shift.toNat : Int) = shift.toInt := by
+    symm
+    exact BitVec.toInt_eq_toNat_of_msb hMsb
+  have hTruncate : (shift.truncate 8).toInt = shift.toInt := by
+    rw [BitVec.truncate_eq_setWidth, BitVec.toInt_setWidth]
+    rw [Int.bmod_eq_of_le]
+    · exact hToNat
+    · omega
+    · change (shift.toNat : Int) < 128
+      rw [hToNat]
+      omega
+  change ((-shift).setWidth 8).toInt = -shift.toInt
+  rw [BitVec.setWidth_neg_of_le (x := shift) (w := 8) (v := 32) (by omega)]
+  rw [BitVec.toInt_neg_eq_of_msb]
+  exact congrArg Neg.neg hTruncate
+  rw [BitVec.msb_eq_toInt, hTruncate]
+  simp only [decide_eq_false_iff_not]
+  omega
+
+/-- A nonnegative effective count up to 31 has the same lane value when Neon
+    receives its negated signed vector count and RVV receives the positive RNU
+    shift count. -/
+theorem neonSignedShift_eq_rvvRnu (x shift : BitVec 32)
+    (hLower : 0 <= shift.toInt) (hUpper : shift.toInt <= 31) :
+    (let count := ((-shift).truncate 8).toInt
+      if count < 0 then neonRoundingShiftRight x (-count).toNat
+      else x.shiftLeft count.toNat) =
+      BitVec.ofInt 32 (roundShiftSigned .rnu x shift.toNat) := by
+  by_cases hZero : shift.toInt = 0
+  · have hShift : shift = 0 := by
+      apply BitVec.eq_of_toInt_eq
+      simpa using hZero
+    subst shift
+    simp [roundShiftSigned, vxrmIncrement]
+  · have hRaw := neg_shift_truncate8 shift hLower hUpper
+    have hMsb : shift.msb = false := by
+      rw [BitVec.msb_eq_toInt]
+      simp only [decide_eq_false_iff_not]
+      omega
+    have hNat : shift.toNat = shift.toInt.toNat :=
+      (BitVec.toNat_toInt_of_msb shift hMsb).symm
+    simp only [hRaw]
+    rw [if_pos (by omega)]
+    rw [Int.neg_neg, ← hNat]
+    rw [rounding_shift_equiv x shift.toNat (by omega)]
+    exact rvvRoundingShiftRight_eq_roundShiftSigned x shift.toNat
+
 end SALT.Proof.RoundingEquiv

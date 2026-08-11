@@ -16,3 +16,5 @@ import SALT.Generated.S8VClamp.Proof
 import SALT.Generated.QS8VCvt.Proof
 import SALT.Generated.QS8VLReLU.Proof
 import SALT.Generated.QU8VAddMinmax.Models
+import SALT.Test.QS8VCvt
+import SALT.Test.QS8VLReLU
