@@ -14,5 +14,5 @@ import SALT.Kernel.Schedule
 import SALT.Generated.QS8VAddMinmax.Proof
 import SALT.Generated.S8VClamp.Proof
 import SALT.Generated.QS8VCvt.Proof
-import SALT.Generated.QS8VLReLU.Models
+import SALT.Generated.QS8VLReLU.Proof
 import SALT.Generated.QU8VAddMinmax.Models

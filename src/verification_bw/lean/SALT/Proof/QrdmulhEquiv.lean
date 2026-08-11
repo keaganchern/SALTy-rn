@@ -15,6 +15,23 @@ private theorem rnu_round_shift_16 (x : BitVec 32) :
       BitVec.toInt_eq_toNat_cond, Int.shiftRight_eq_div_pow] at *
   all_goals split <;> omega
 
+private theorem rnu_round_shift_15 (x : BitVec 32) :
+    ((x.toInt + 16384) >>> 15) = roundShiftSigned .rnu x 15 := by
+  simp only [roundShiftSigned, vxrmIncrement, OfNat.ofNat, Nat.reduceSub]
+  split
+  all_goals
+    simp [BitVec.getLsbD, Nat.testBit_eq_decide_div_mod_eq,
+      BitVec.toInt_eq_toNat_cond, Int.shiftRight_eq_div_pow] at *
+  all_goals split <;> omega
+
+private theorem double_round_eq (q : Int) :
+    ((2 * q + 32768) >>> 16) = ((q + 16384) >>> 15) := by
+  simp only [Int.shiftRight_eq_div_pow]
+  have hNumerator : 2 * q + 32768 = 2 * (q + 16384) := by omega
+  rw [hNumerator]
+  change (2 * (q + 16384)) / (2 * 32768) = (q + 16384) / 32768
+  exact Int.mul_ediv_mul_of_pos (q + 16384) 32768 (by decide)
+
 private theorem doubled_product_no_wrap (a b : BitVec 16)
     (haLower : -32767 <= a.toInt) (haUpper : a.toInt <= 32767) :
     ((BitVec.ofInt 32 (a.toInt * b.toInt)).shiftLeft 1).toInt =
@@ -67,6 +84,28 @@ theorem sqrdmulh_eq_rvv_of_left_ne_min (a b : BitVec 16)
   rw [← rnu_round_shift_16]
   rw [hdoubled]
   rfl
+
+/-- Neon qrdmulh equals an RVV RNU narrow of the exact 16-by-16 product with a
+    shift of 15. Unlike the wrapping-double formulation, this identity also
+    covers the signed-minimum multiplication corner. This statement does not
+    model QC/vxsat. -/
+theorem sqrdmulh_eq_rvv_shift15 (a b : BitVec 16) :
+    sqrdmulh_s16 a b =
+      vnclipSigned 16 .rnu 15 (BitVec.ofInt 32 (a.toInt * b.toInt)) := by
+  have hLower := @BitVec.le_toInt_mul_toInt 16 a b
+  have hUpper := @BitVec.toInt_mul_toInt_le 16 a b
+  simp at hLower hUpper
+  simp only [sqrdmulh_s16, vnclipSigned, saturateSignedInt]
+  rw [← rnu_round_shift_15]
+  rw [BitVec.toInt_ofInt_eq_self (by omega) (by omega) (by omega)]
+  have hDouble : 2 * a.toInt * b.toInt = 2 * (a.toInt * b.toInt) := by
+    simp [Int.mul_assoc]
+  rw [hDouble]
+  change BitVec.ofInt 16
+      (max (-32768) (min ((2 * (a.toInt * b.toInt) + 32768) >>> 16) 32767)) =
+    BitVec.ofInt 16
+      (max (-32768) (min ((a.toInt * b.toInt + 16384) >>> 15) 32767))
+  rw [double_round_eq]
 
 /-- RDN with a zero shift is the RVV value-level counterpart of a signed
     saturating narrow. -/
