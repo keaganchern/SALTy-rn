@@ -196,6 +196,7 @@ ImmediateValue: TypeAlias = int | str
 class ImmediateConstraint:
     argument_index: int
     allowed_values: frozenset[ImmediateValue]
+    erased_from_semantics: bool = True
 
     def __post_init__(self) -> None:
         if self.argument_index < 0:
@@ -282,13 +283,15 @@ class SemanticIntrinsic:
                 raise SchemaError(
                     f"Lean argument index {argument.source_index} is outside arity {arity}"
                 )
-        constrained = {
-            constraint.argument_index for constraint in self.immediate_constraints
+        erased = {
+            constraint.argument_index
+            for constraint in self.immediate_constraints
+            if constraint.erased_from_semantics
         }
         expected_sources = tuple(
             index
             for index, parameter in enumerate(self.signature.parameters)
-            if index not in constrained and parameter.name != "vl"
+            if index not in erased and parameter.name != "vl"
         )
         actual_sources = tuple(
             argument.source_index for argument in self.lean_arguments

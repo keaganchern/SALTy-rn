@@ -154,6 +154,7 @@ def _registry_entry(spec: IntrinsicSpec) -> dict[str, Any]:
                 "allowed_values": sorted(
                     constraint.allowed_values, key=_immediate_sort_key
                 ),
+                "erased_from_semantics": constraint.erased_from_semantics,
             }
             for constraint in sorted(
                 spec.immediate_constraints, key=lambda constraint: constraint.argument_index
@@ -178,6 +179,35 @@ def _registry_entry(spec: IntrinsicSpec) -> dict[str, Any]:
     return record
 
 
+def _canonical_registry_payload(
+    name: str, registry: Mapping[str, IntrinsicSpec]
+) -> dict[str, Any]:
+    if not name:
+        raise RegistryInventoryError("registry name must not be empty")
+    entries = []
+    for spelling, spec in registry.items():
+        if spelling != spec.spelling:
+            raise RegistryInventoryError(
+                f"registry key {spelling!r} does not match entry {spec.spelling!r}"
+            )
+        entries.append(_registry_entry(spec))
+    entries.sort(key=lambda entry: (entry["architecture"], entry["spelling"]))
+    payload = {
+        "name": name,
+        "entry_count": len(entries),
+        "entries": entries,
+    }
+    return {**payload, "sha256": _sha256_bytes(payload)}
+
+
+def registry_content_digest(
+    name: str, registry: Mapping[str, IntrinsicSpec]
+) -> str:
+    """Hash an exact registry inventory without a kernel-specific size assumption."""
+
+    return _canonical_registry_payload(name, registry)["sha256"]
+
+
 def canonical_registry(
     registry: Mapping[str, IntrinsicSpec] = QS8_VADD_MINMAX_REGISTRY,
 ) -> dict[str, Any]:
@@ -188,20 +218,7 @@ def canonical_registry(
             f"qs8-vadd-minmax registry must contain exactly "
             f"{_EXPECTED_REGISTRY_SIZE} entries, got {len(registry)}"
         )
-    entries = []
-    for spelling, spec in registry.items():
-        if spelling != spec.spelling:
-            raise RegistryInventoryError(
-                f"registry key {spelling!r} does not match entry {spec.spelling!r}"
-            )
-        entries.append(_registry_entry(spec))
-    entries.sort(key=lambda entry: (entry["architecture"], entry["spelling"]))
-    payload = {
-        "name": "qs8-vadd-minmax-intrinsics",
-        "entry_count": len(entries),
-        "entries": entries,
-    }
-    return {**payload, "sha256": _sha256_bytes(payload)}
+    return _canonical_registry_payload("qs8-vadd-minmax-intrinsics", registry)
 
 
 def _range_record(
@@ -877,6 +894,7 @@ def bind_kernel(
                 "result_type": call.result_type,
                 "assigned_to": call.assigned_to,
                 "parent_control": call.parent_control,
+                "control_path": list(call.control_path),
                 "dependencies": list(call.dependencies),
                 "binding": binding_records[call.node_id],
                 "arguments": [

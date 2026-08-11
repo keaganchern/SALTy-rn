@@ -11,3 +11,7 @@ import SALT.Kernel.QS8VAdd.RVV
 import SALT.Kernel.QS8VAdd.Equivalence
 import SALT.Kernel.Schedule
 import SALT.Generated.QS8VAddMinmax.Proof
+import SALT.Generated.S8VClamp.Models
+import SALT.Generated.QS8VCvt.Models
+import SALT.Generated.QS8VLReLU.Models
+import SALT.Generated.QU8VAddMinmax.Models

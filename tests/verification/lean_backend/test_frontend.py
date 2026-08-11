@@ -9,6 +9,10 @@ from workflow.verification.lean_backend.frontend import (
     UnsupportedConstructError,
     parse_kernel,
 )
+from workflow.verification.lean_backend.profiles import (
+    FRONTEND_PROFILES,
+    QS8_VADD_MINMAX,
+)
 
 
 pytestmark = pytest.mark.skipif(shutil.which("clang") is None, reason="system clang required")
@@ -20,6 +24,86 @@ FACADE = (
     ROOT
     / "src/workflow/verification/lean_backend/facade/qs8_vadd_minmax.h"
 )
+
+
+@pytest.mark.parametrize(
+    ("kernel_name", "neon_call_count", "rvv_call_count"),
+    [
+        ("qs8-vadd-minmax", 93, 16),
+        ("s8-vclamp", 36, 5),
+        ("qs8-vcvt", 23, 11),
+        ("qs8-vlrelu", 30, 13),
+        ("qu8-vadd-minmax", 70, 21),
+    ],
+)
+def test_reviewed_profiles_parse_complete_kernel_pairs(
+    kernel_name: str,
+    neon_call_count: int,
+    rvv_call_count: int,
+) -> None:
+    pair = FRONTEND_PROFILES[kernel_name]
+
+    for directory, side, expected_count in (
+        ("source", pair.neon, neon_call_count),
+        ("target", pair.rvv, rvv_call_count),
+    ):
+        path = ROOT / "kernels" / directory / f"{kernel_name}.c"
+        result = parse_kernel(path, profile=side)
+        registered = {spec.spelling for spec in side.intrinsic_specs}
+        observed = {call.spelling for call in result.calls}
+
+        assert result.function_name == side.function_name
+        assert result.function_type == side.function_type
+        assert result.dialect == side.architecture.value
+        assert result.target_triple == side.target_triple
+        assert Path(result.facade_path) == side.facade_path.resolve()
+        assert len(result.calls) == expected_count
+        assert observed == registered
+        assert len(result.preprocessed_sha256) == 64
+
+
+def test_default_and_explicit_qs8_profiles_extract_identically() -> None:
+    assert parse_kernel(NEON).to_dict() == parse_kernel(
+        NEON, profile=QS8_VADD_MINMAX.neon
+    ).to_dict()
+    assert parse_kernel(RVV).to_dict() == parse_kernel(
+        RVV, profile=QS8_VADD_MINMAX.rvv
+    ).to_dict()
+
+
+def test_mismatched_kernel_profile_fails_closed() -> None:
+    source = ROOT / "kernels/source/s8-vclamp.c"
+    s8_facade = FRONTEND_PROFILES["s8-vclamp"].neon.facade_path
+
+    with pytest.raises(UnsupportedConstructError, match="kernel signature changed"):
+        parse_kernel(
+            source,
+            facade=s8_facade,
+            profile=FRONTEND_PROFILES["qs8-vcvt"].neon,
+        )
+
+
+def test_profile_binds_tail_assertions_to_their_control(
+    tmp_path: Path,
+) -> None:
+    pair = FRONTEND_PROFILES["qs8-vcvt"]
+    source = ROOT / "kernels/source/qs8-vcvt.c"
+    original = (
+        "  if XNN_UNLIKELY(batch != 0) {\n"
+        "    assert(batch >= 1 * sizeof(int8_t));\n"
+        "    assert(batch <= 7 * sizeof(int8_t));\n"
+    )
+    moved = (
+        "  assert(batch >= 1 * sizeof(int8_t));\n"
+        "  assert(batch <= 7 * sizeof(int8_t));\n"
+        "  if XNN_UNLIKELY(batch != 0) {\n"
+    )
+    mutated = source.read_text(encoding="utf-8").replace(original, moved, 1)
+    path = tmp_path / source.name
+    path.write_text(mutated, encoding="utf-8")
+
+    with pytest.raises(UnsupportedConstructError, match="kernel assertions changed"):
+        parse_kernel(path, profile=pair.neon)
 
 
 def test_extracts_typed_neon_calls_dataflow_and_control() -> None:

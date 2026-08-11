@@ -3,7 +3,7 @@
 This module deliberately does not interpret CVC5 terms and does not attempt to
 parse C itself.  It asks the system Clang executable for a typed JSON AST, then
 extracts exact intrinsic calls, syntactic variable dataflow, source ranges, and
-structured control nodes for the current ``qs8-vadd-minmax`` kernel pair.
+structured control nodes for one explicitly reviewed kernel-side profile.
 
 ``DefinitionFact`` versions order definition statements and connect uses within
 the extracted syntax.  They are not SSA/CFG semantics: this prototype does not
@@ -24,8 +24,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable, Iterator, Sequence
 
-from .registry import QS8_VADD_MINMAX_NEON_SPECS, QS8_VADD_MINMAX_RVV_SPECS
-from .schema import IntrinsicSpec, render_clang_function_type
+from .profiles import FrontendAssertion, FrontendSideProfile, QS8_VADD_MINMAX
 
 
 class FrontendError(RuntimeError):
@@ -78,6 +77,7 @@ class IntrinsicCall:
     dependencies: tuple[str, ...]
     assigned_to: str | None
     parent_control: str | None
+    control_path: tuple[str, ...]
     source: SourceRange
 
 
@@ -93,6 +93,7 @@ class DefinitionFact:
     value_call: str | None
     expression_text: str
     parent_control: str | None
+    control_path: tuple[str, ...]
     source: SourceRange
 
 
@@ -133,24 +134,9 @@ class KernelExtraction:
         return dataclasses.asdict(self)
 
 
-_FACADE = Path(__file__).with_name("facade") / "qs8_vadd_minmax.h"
-
-def _registry_tables(
-    specs: Sequence[IntrinsicSpec],
-) -> tuple[dict[str, int], dict[str, str]]:
-    arities = {
-        spec.spelling: len(spec.signature.parameters)
-        for spec in specs
-    }
-    signatures = {
-        spec.spelling: render_clang_function_type(spec.signature)
-        for spec in specs
-    }
-    return arities, signatures
-
-
-_NEON_ARITIES, _NEON_SIGNATURES = _registry_tables(QS8_VADD_MINMAX_NEON_SPECS)
-_RVV_ARITIES, _RVV_SIGNATURES = _registry_tables(QS8_VADD_MINMAX_RVV_SPECS)
+# Backward-compatible alias used by the first emitter. New callers should use a
+# profile's facade_path rather than importing this private name.
+_FACADE = QS8_VADD_MINMAX.neon.facade_path
 
 _ALLOWED_KINDS = {
     "BinaryOperator",
@@ -184,26 +170,6 @@ _ALLOWED_IMPLICIT_CASTS = {
     "LValueToRValue",
 }
 _FLOAT_TYPE_RE = re.compile(r"(^|[^A-Za-z0-9_])(float|double|_Float16)([^A-Za-z0-9_]|$)")
-_EXPECTED_FUNCTION_TYPE = (
-    "void (size_t, const int8_t *, const int8_t *, int8_t *, "
-    "const struct xnn_qs8_add_minmax_params *restrict)"
-)
-_EXPECTED_PARAMETERS = (
-    ("batch", "unsigned long"),
-    ("input_a", "const int8_t *"),
-    ("input_b", "const int8_t *"),
-    ("output", "int8_t *"),
-    ("params", "const struct xnn_qs8_add_minmax_params *restrict"),
-)
-_EXPECTED_ASSERTIONS = (
-    "assert(batch!=0);",
-    "assert(batch%sizeof(int8_t)==0);",
-    "assert(input_a!=NULL);",
-    "assert(input_b!=NULL);",
-    "assert(output!=NULL);",
-)
-
-
 def _sha256(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as stream:
@@ -487,7 +453,9 @@ def _member_path(node: dict[str, Any]) -> str | None:
     return None
 
 
-def _validate_kernel_signature(function: dict[str, Any]) -> None:
+def _validate_kernel_signature(
+    function: dict[str, Any], profile: FrontendSideProfile
+) -> None:
     function_name = str(function.get("name") or "")
     if function.get("mangledName") != function_name:
         raise UnsupportedConstructError(
@@ -508,9 +476,9 @@ def _validate_kernel_signature(function: dict[str, Any]) -> None:
             f"unsupported kernel declaration attributes {unexpected_children!r}"
         )
     function_type = str((function.get("type") or {}).get("qualType") or "")
-    if function_type != _EXPECTED_FUNCTION_TYPE:
+    if function_type != profile.function_type:
         raise UnsupportedConstructError(
-            f"kernel signature changed from {_EXPECTED_FUNCTION_TYPE!r} "
+            f"kernel signature changed from {profile.function_type!r} "
             f"to {function_type!r}"
         )
     parameters = tuple(
@@ -518,9 +486,9 @@ def _validate_kernel_signature(function: dict[str, Any]) -> None:
         for parameter in _children(function)
         if parameter.get("kind") == "ParmVarDecl"
     )
-    if parameters != _EXPECTED_PARAMETERS:
+    if parameters != profile.parameters:
         raise UnsupportedConstructError(
-            f"kernel parameters changed from {_EXPECTED_PARAMETERS!r} to {parameters!r}"
+            f"kernel parameters changed from {profile.parameters!r} to {parameters!r}"
         )
 
 
@@ -732,17 +700,22 @@ class _Extractor:
         source: _Source,
         function: dict[str, Any],
         allowed_calls: dict[str, int],
+        expected_assertions: tuple[FrontendAssertion, ...],
+        member_roots: frozenset[str],
     ) -> None:
         self.source = source
         self.function = function
         self.allowed_calls = allowed_calls
+        self.expected_assertions = expected_assertions
+        self.member_roots = member_roots
         self.calls: list[IntrinsicCall] = []
         self.definitions: list[DefinitionFact] = []
         self.controls: list[ControlFact] = []
         self._versions: dict[str, int] = {}
         self._current_values: dict[str, str] = {}
         self._call_by_id: dict[str, IntrinsicCall] = {}
-        self._assertions: list[str] = []
+        self._assertions: list[FrontendAssertion] = []
+        self._control_path: list[str] = []
 
     def extract(self) -> tuple[
         tuple[ParameterFact, ...],
@@ -771,9 +744,9 @@ class _Extractor:
             child for child in _children(self.function) if child.get("kind") == "CompoundStmt"
         )
         self._statement(body, None)
-        if tuple(self._assertions) != _EXPECTED_ASSERTIONS:
+        if tuple(self._assertions) != self.expected_assertions:
             raise UnsupportedConstructError(
-                f"kernel assertions changed from {_EXPECTED_ASSERTIONS!r} "
+                f"kernel assertions changed from {self.expected_assertions!r} "
                 f"to {tuple(self._assertions)!r}"
             )
         return (
@@ -816,6 +789,7 @@ class _Extractor:
                 value_call=root_call,
                 expression_text=self.source.snippet(node),
                 parent_control=parent_control,
+                control_path=tuple(self._control_path),
                 source=self.source.source_range(node),
             )
         )
@@ -829,9 +803,11 @@ class _Extractor:
             return self._call(node, parent_control)
         if kind == "MemberExpr":
             path = _member_path(node)
-            if not path or not path.startswith("params."):
+            if not path or "." not in path:
                 raise UnsupportedConstructError(f"unsupported member path {path!r}")
             base, members = path.split(".", 1)
+            if base not in self.member_roots:
+                raise UnsupportedConstructError(f"unsupported member path {path!r}")
             return _ExprValue((f"field:{self._current(base)}.{members}",))
         if kind == "DeclRefExpr":
             referenced = node.get("referencedDecl") or {}
@@ -911,6 +887,7 @@ class _Extractor:
             dependencies=_unique(direct_dependencies),
             assigned_to=None,
             parent_control=parent_control,
+            control_path=tuple(self._control_path),
             source=self.source.source_range(node),
         )
         self.calls.append(call)
@@ -1042,13 +1019,20 @@ class _Extractor:
             if len(children) not in {2, 3}:
                 raise UnsupportedConstructError("unsupported IfStmt shape")
             control_id = self._new_control(node, parent_control, children[0], None)
-            self._statement(children[1], control_id)
+            self._control_path.append(f"{control_id}:then")
+            try:
+                self._statement(children[1], control_id)
+            finally:
+                self._control_path.pop()
             if len(children) == 3:
-                self._statement(children[2], control_id)
+                self._control_path.append(f"{control_id}:else")
+                try:
+                    self._statement(children[2], control_id)
+                finally:
+                    self._control_path.pop()
             return
         if (
             kind == "ParenExpr"
-            and parent_control is None
             and self.source.snippet(node).strip() == "assert"
         ):
             if not _is_canonical_assert_noop(node):
@@ -1060,7 +1044,12 @@ class _Extractor:
             if line_end < 0:
                 line_end = len(self.source.text)
             invocation = self.source.text[source_range.begin_offset:line_end]
-            self._assertions.append(re.sub(r"\s+", "", invocation))
+            self._assertions.append(
+                FrontendAssertion(
+                    re.sub(r"\s+", "", invocation),
+                    parent_control,
+                )
+            )
             self._expression(node, parent_control)
             return
         if kind in {
@@ -1099,58 +1088,65 @@ def parse_kernel(
     function_name: str | None = None,
     clang: str = "clang",
     facade: str | Path | None = None,
+    profile: FrontendSideProfile | None = None,
 ) -> KernelExtraction:
     """Extract the supported typed body facts from one kernel translation unit.
 
-    ``function_name`` defaults to ``test_neon`` for a path under ``source`` and
-    ``test_rvv`` for a path under ``target``.  Callers may pass it explicitly
-    for temporary mutation tests.
+    New kernels must pass an explicit architecture-side ``profile``. For backward
+    compatibility, omitting it selects the ``qs8-vadd-minmax`` side from
+    ``function_name`` or a ``source``/``target`` path component. ``facade`` and
+    ``function_name`` remain overrides for focused mutation tests, but they do not
+    alter the profile's target, signatures, or accepted calls.
     """
 
     source_path = Path(path).resolve()
-    facade_path = Path(facade).resolve() if facade is not None else _FACADE.resolve()
     if not source_path.is_file():
         raise FrontendError(f"kernel source does not exist: {source_path}")
+
+    if profile is None:
+        if function_name == QS8_VADD_MINMAX.neon.function_name:
+            profile = QS8_VADD_MINMAX.neon
+        elif function_name == QS8_VADD_MINMAX.rvv.function_name:
+            profile = QS8_VADD_MINMAX.rvv
+        elif function_name is None:
+            path_parts = set(source_path.parts)
+            if "source" in path_parts:
+                profile = QS8_VADD_MINMAX.neon
+            elif "target" in path_parts:
+                profile = QS8_VADD_MINMAX.rvv
+        if profile is None:
+            raise UnsupportedConstructError(
+                "the default frontend profile requires test_neon/test_rvv or a "
+                "source/target path; pass an explicit profile for another kernel"
+            )
+
+    selected_function_name = function_name or profile.function_name
+    if selected_function_name != profile.function_name:
+        raise UnsupportedConstructError(
+            f"profile for {profile.function_name!r} cannot parse "
+            f"{selected_function_name!r}"
+        )
+    facade_path = (
+        Path(facade).resolve()
+        if facade is not None
+        else profile.facade_path.resolve()
+    )
     if not facade_path.is_file():
         raise FrontendError(f"parse facade does not exist: {facade_path}")
     _reject_source_preprocessor_directives(source_path)
 
-    if function_name is None:
-        path_parts = set(source_path.parts)
-        if "source" in path_parts:
-            function_name = "test_neon"
-        elif "target" in path_parts:
-            function_name = "test_rvv"
-
-    target_triples = {
-        "test_neon": "aarch64-none-elf",
-        "test_rvv": "riscv64-none-elf",
-    }
-    try:
-        target_triple = target_triples[function_name]
-    except KeyError as error:
-        raise UnsupportedConstructError(
-            "the restricted frontend requires test_neon or test_rvv before parsing"
-        ) from error
-
     ast, command, preprocess_command, clang_version, preprocessed_sha256 = _clang_ast(
-        source_path, facade_path, clang, target_triple
+        source_path, facade_path, clang, profile.target_triple
     )
-    function = _find_function(ast, source_path, function_name)
-    _validate_kernel_signature(function)
+    function = _find_function(ast, source_path, selected_function_name)
+    _validate_kernel_signature(function, profile)
     selected_name = str(function.get("name"))
-    if selected_name == "test_neon":
-        dialect = "neon"
-        allowed_calls = _NEON_ARITIES
-        expected_signatures = _NEON_SIGNATURES
-    elif selected_name == "test_rvv":
-        dialect = "rvv"
-        allowed_calls = _RVV_ARITIES
-        expected_signatures = _RVV_SIGNATURES
-    else:
+    if selected_name != profile.function_name:
         raise UnsupportedConstructError(
-            f"unsupported kernel function {selected_name!r}; expected test_neon or test_rvv"
+            f"profile expected function {profile.function_name!r}, got {selected_name!r}"
         )
+    allowed_calls = profile.arities
+    expected_signatures = profile.signatures
 
     declaration_ids = _facade_declaration_ids(ast, expected_signatures)
     reachable = _audit_function(
@@ -1158,7 +1154,11 @@ def parse_kernel(
     )
     source = _Source(source_path)
     parameters, calls, definitions, controls = _Extractor(
-        source, function, allowed_calls
+        source,
+        function,
+        allowed_calls,
+        profile.assertions,
+        profile.member_roots,
     ).extract()
 
     return KernelExtraction(
@@ -1169,13 +1169,13 @@ def parse_kernel(
         facade_sha256=_sha256(facade_path),
         clang_executable=clang,
         clang_version=clang_version,
-        target_triple=target_triple,
+        target_triple=profile.target_triple,
         clang_command=command,
         preprocess_command=preprocess_command,
         preprocessed_sha256=preprocessed_sha256,
         function_name=selected_name,
         function_type=_type_spelling(function),
-        dialect=dialect,
+        dialect=profile.architecture.value,
         parameters=parameters,
         calls=calls,
         definitions=definitions,

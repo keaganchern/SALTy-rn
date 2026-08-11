@@ -167,6 +167,24 @@ class RegistryCompletenessTests(unittest.TestCase):
                 ),
             )
 
+    def test_constrained_immediate_can_remain_semantic(self):
+        narrow = lookup_intrinsic("__riscv_vnclip_wx_i16m4")
+        shift, mode = narrow.immediate_constraints
+        semantic_shift = dataclasses.replace(
+            narrow,
+            immediate_constraints=(
+                dataclasses.replace(shift, erased_from_semantics=False),
+                mode,
+            ),
+            lean_arguments=(LeanArgument(0), LeanArgument(1)),
+        )
+
+        self.assertFalse(semantic_shift.immediate_constraints[0].erased_from_semantics)
+        self.assertEqual(
+            tuple(argument.source_index for argument in semantic_shift.lean_arguments),
+            (0, 1),
+        )
+
 
 class FailClosedTests(unittest.TestCase):
     def test_unknown_lookup_is_exact_case_sensitive_and_untrimmed(self):

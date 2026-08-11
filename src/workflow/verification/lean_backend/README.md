@@ -1,7 +1,7 @@
 # Restricted C-Intrinsic to Lean Backend
 
-This directory contains the first automatic Lean backend for the current
-`qs8-vadd-minmax` Neon/RVV pair. It does not consume CVC5 terms.
+This directory contains a restricted automatic Lean backend for five current
+integer Neon/RVV pairs. It does not consume CVC5 terms.
 
 ## Current Pipeline
 
@@ -15,12 +15,14 @@ pinned C source and target
   -> reviewed Lean bridge proof
 ```
 
-`schema.py` and `registry.py` define the supported types, exact C signatures,
-immediates, and corresponding `SALT.Intrinsics` definitions. `frontend.py`
+`schema.py`, `registry.py`, and `scaleup_catalog.py` define the supported types,
+exact C signatures, semantic immediates, and corresponding `SALT.Intrinsics`
+definitions. `profiles.py` fixes each pair's Clang parse contract. `frontend.py`
 extracts the selected C bodies. `binding.py` checks artifact freshness, call
-inventory, types, immediate values, operand provenance, and the reviewed control
-shape. `emit_lean.py` emits the two executable block models. Unknown or unmodeled
-calls, casts, operators, effects, directives, and control shapes are rejected.
+inventory, types, immediate values, operand provenance, and reviewed control
+facts. `emit_lean.py` handles the first golden case; `case_emit.py` handles the
+four scale-up block profiles. Unknown or unmodeled calls, casts, operators,
+effects, directives, and control shapes are rejected.
 
 Generate a manifest and the checked-in Lean models from the repository root:
 
@@ -44,11 +46,42 @@ Build the generated proof from `src/verification_bw/lean`:
 lake build SALT.Generated.QS8VAddMinmax.Proof
 ```
 
+Generate the four additional block-model pairs:
+
+```sh
+PYTHONPATH=src python3 -m workflow.verification.lean_backend.generate_cases \
+  --repository-root .
+
+# Deterministic freshness check without writing files.
+PYTHONPATH=src python3 -m workflow.verification.lean_backend.generate_cases \
+  --repository-root . --check
+```
+
+The generated set is:
+
+```text
+qs8-vadd-minmax   signed binary fixed-point add and clamp
+s8-vclamp        signed unary clamp (64-lane Neon main block)
+qs8-vcvt         signed widening, qrdmulh, rounding, and narrowing
+qs8-vlrelu       signed compare, mask/select, scaling, and narrowing
+qu8-vadd-minmax  unsigned binary arithmetic and a reviewed signed-shift branch
+```
+
 ## Established Boundary
 
-The generated Lean definitions independently execute the selected Neon 16-lane
-main block and one RVV active chunk. `Proof.lean` proves that these two block
-models are equal for well-formed parameters and two 16-lane inputs.
+The generated Lean definitions independently execute one selected Neon main
+block and one RVV active chunk. The original `QS8VAddMinmax/Proof.lean` proves
+its two block models equal for well-formed parameters and two 16-lane inputs.
+`S8VClamp/Proof.lean` additionally proves equality of the generated 64-lane
+Neon block and RVV chunk for inputs of length 64. The remaining generated
+modules are executable translation artifacts; a module is not called proved
+merely because both definitions typecheck.
+
+In particular, an unconstrained `qs8-vcvt` theorem is false at the qrdmulh
+`(-32768, -32768)` corner because the current RVV doubling sequence wraps before
+narrowing. The intended XNN parameter domain makes that pair unreachable, but
+those constraints must be part of any theorem. The dynamic QU8 shift also needs
+its reviewed effective-range contract.
 
 `SALT/Kernel/Schedule.lean` separately proves generic fixed-chunk/tail and
 positive-partition refinements to `List.map`/`List.zipWith` for arbitrary list

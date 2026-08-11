@@ -16,12 +16,14 @@ import hashlib
 import re
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Mapping
 
 from .frontend import _FACADE, ArgumentFact, IntrinsicCall, KernelExtraction
 from .registry import lookup_intrinsic
 from .schema import (
     Architecture,
     ImmediateConstraintError,
+    IntrinsicSpec,
     OperandTransform,
     ScheduleIntrinsic,
     SemanticIntrinsic,
@@ -95,13 +97,22 @@ def _checked_field_source(argument: ArgumentFact) -> tuple[str, bool]:
 
 
 class _BlockEmitter:
-    def __init__(self, extraction: KernelExtraction, architecture: Architecture) -> None:
+    def __init__(
+        self,
+        extraction: KernelExtraction,
+        architecture: Architecture,
+        *,
+        registry: Mapping[str, IntrinsicSpec] | None = None,
+        active_length: str | None = None,
+    ) -> None:
         if extraction.dialect != architecture.value:
             raise LeanEmissionError(
                 f"expected {architecture.value} extraction, got {extraction.dialect!r}"
             )
         self.extraction = extraction
         self.architecture = architecture
+        self.registry = registry
+        self.active_length = active_length
         self.calls_by_id = {call.node_id: call for call in extraction.calls}
         self.calls_by_value = {
             call.assigned_to: call
@@ -123,6 +134,25 @@ class _BlockEmitter:
                     definition.dependencies[0]
                 )
 
+    def _lookup_intrinsic(self, spelling: str) -> IntrinsicSpec:
+        if self.registry is None:
+            return lookup_intrinsic(spelling, self.architecture)
+        try:
+            spec = self.registry[spelling]
+        except KeyError as error:
+            raise LeanEmissionError(
+                f"no {self.architecture.value} registry entry for {spelling!r}"
+            ) from error
+        if spec.architecture is not self.architecture:
+            raise LeanEmissionError(
+                f"{spelling!r} belongs to {spec.architecture.value}, not "
+                f"{self.architecture.value}"
+            )
+        return spec
+
+    def _checked_field_source(self, argument: ArgumentFact) -> tuple[str, bool]:
+        return _checked_field_source(argument)
+
     def _call_for_dependency(self, dependency: str) -> IntrinsicCall:
         if dependency.startswith("call:"):
             call_id = dependency.removeprefix("call:")
@@ -138,6 +168,16 @@ class _BlockEmitter:
             ) from error
 
     def _resolve(self, argument: ArgumentFact) -> str:
+        if argument.constant_value is not None:
+            if argument.semantic_operations not in {
+                (),
+                (f"implicit-cast:IntegralCast:{argument.type_spelling}",),
+            }:
+                raise LeanEmissionError(
+                    f"constant {argument.source_text!r} has unsupported source operations "
+                    f"{argument.semantic_operations!r}"
+                )
+            return str(argument.constant_value)
         if argument.semantic_operations:
             raise LeanEmissionError(
                 f"source operations {argument.semantic_operations!r} around "
@@ -156,7 +196,7 @@ class _BlockEmitter:
     def _broadcast_scalar(self, argument: ArgumentFact, *, require_negated: bool) -> str:
         dependency = _single_dependency(argument)
         producer = self._call_for_dependency(dependency)
-        producer_spec = lookup_intrinsic(producer.spelling, self.architecture)
+        producer_spec = self._lookup_intrinsic(producer.spelling)
 
         while (
             isinstance(producer_spec, StructuralIntrinsic)
@@ -164,7 +204,7 @@ class _BlockEmitter:
         ):
             dependency = _single_dependency(producer.arguments[0])
             producer = self._call_for_dependency(dependency)
-            producer_spec = lookup_intrinsic(producer.spelling, self.architecture)
+            producer_spec = self._lookup_intrinsic(producer.spelling)
 
         if not (
             isinstance(producer_spec, StructuralIntrinsic)
@@ -177,7 +217,7 @@ class _BlockEmitter:
             )
 
         scalar_argument = producer.arguments[0]
-        scalar, is_negated = _checked_field_source(scalar_argument)
+        scalar, is_negated = self._checked_field_source(scalar_argument)
         if is_negated != require_negated:
             expectation = "negated broadcast" if require_negated else "plain broadcast"
             raise LeanEmissionError(
@@ -207,7 +247,11 @@ class _BlockEmitter:
             elif lean_argument.transform is OperandTransform.UNBROADCAST:
                 expression = self._broadcast_scalar(source, require_negated=False)
             elif lean_argument.transform is OperandTransform.TO_NAT:
-                expression = f"({self._resolve(source)}).toNat"
+                expression = (
+                    str(source.constant_value)
+                    if isinstance(source.constant_value, int)
+                    else f"({self._resolve(source)}).toNat"
+                )
             elif lean_argument.transform is OperandTransform.NEGATED_UNBROADCAST_TO_NAT:
                 expression = f"({self._broadcast_scalar(source, require_negated=True)}).toNat"
             else:
@@ -232,12 +276,15 @@ class _BlockEmitter:
             if not isinstance(spec.signature.result, VectorType):
                 raise LeanEmissionError(f"{call.spelling} has a non-vector broadcast result")
             lanes = spec.signature.result.fixed_lanes
-            if lanes is None:
-                raise LeanEmissionError(f"scalable broadcast {call.spelling} is unsupported")
-            scalar, is_negated = _checked_field_source(call.arguments[0])
+            if lanes is None and self.active_length is None:
+                raise LeanEmissionError(
+                    f"scalable broadcast {call.spelling} has no active-length binding"
+                )
+            scalar, is_negated = self._checked_field_source(call.arguments[0])
             if is_negated:
                 scalar = f"-{scalar}"
-            return f"List.replicate {lanes} ({scalar})"
+            length = str(lanes) if lanes is not None else self.active_length
+            return f"List.replicate {length} ({scalar})"
         if operation in {StructuralOp.TAKE_LOW, StructuralOp.TAKE_HIGH}:
             result = spec.signature.result
             if not isinstance(result, VectorType) or result.fixed_lanes is None:
@@ -264,7 +311,7 @@ class _BlockEmitter:
         )
 
     def emit_registered_call(self, call: IntrinsicCall) -> str | None:
-        spec = lookup_intrinsic(call.spelling, self.architecture)
+        spec = self._lookup_intrinsic(call.spelling)
         self._validate_immediates(call, spec)
         if isinstance(spec, SemanticIntrinsic):
             return self._bind_call(call, self._semantic_expression(call, spec))
