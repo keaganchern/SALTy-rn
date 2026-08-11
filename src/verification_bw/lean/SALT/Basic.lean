@@ -1,4 +1,4 @@
-import Mathlib.Tactic.Omega
+import Lean.Elab.Tactic.Omega
 
 namespace SALT
 

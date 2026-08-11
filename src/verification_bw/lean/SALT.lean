@@ -9,3 +9,5 @@ import SALT.Kernel.QS8VAddC.Equivalence
 import SALT.Kernel.QS8VAdd.Neon
 import SALT.Kernel.QS8VAdd.RVV
 import SALT.Kernel.QS8VAdd.Equivalence
+import SALT.Kernel.Schedule
+import SALT.Generated.QS8VAddMinmax.Proof

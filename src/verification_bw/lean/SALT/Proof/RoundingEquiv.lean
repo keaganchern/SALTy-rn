@@ -1,6 +1,5 @@
 import SALT.Intrinsics.Neon
 import SALT.Intrinsics.RVV
-import Std.Tactic.BVDecide
 
 namespace SALT.Proof.RoundingEquiv
 
@@ -11,16 +10,76 @@ open SALT.Intrinsics.RVV
 -- Rounding shift equivalence
 -- ============================================================================
 
+private theorem setWidth_ofInt_of_le {v w : Nat} (h : v ≤ w) (i : Int) :
+    (BitVec.ofInt w i).setWidth v = BitVec.ofInt v i := by
+  apply BitVec.eq_of_toNat_eq
+  simp only [BitVec.toNat_setWidth, BitVec.toNat_ofInt]
+  apply Int.ofNat_inj.mp
+  have hw : (2 ^ w : Int) ≠ 0 :=
+    Int.ofNat_ne_zero.mpr (Nat.ne_of_gt (Nat.two_pow_pos w))
+  have hv : (2 ^ v : Int) ≠ 0 :=
+    Int.ofNat_ne_zero.mpr (Nat.ne_of_gt (Nat.two_pow_pos v))
+  calc
+    ↑((i % (2 ^ w : Nat)).toNat % 2 ^ v) =
+        (↑(i % (2 ^ w : Nat)).toNat : Int) % (2 ^ v : Nat) := Int.natCast_emod _ _
+    _ = (i % (2 ^ w : Nat)) % (2 ^ v : Nat) := by
+      congr 1
+      exact Int.toNat_of_nonneg (Int.emod_nonneg i hw)
+    _ = i % (2 ^ v : Nat) :=
+      Int.emod_emod_of_dvd i (Int.ofNat_dvd.mpr (Nat.pow_dvd_pow 2 h))
+    _ = ↑(i % (2 ^ v : Nat)).toNat :=
+      (Int.toNat_of_nonneg (Int.emod_nonneg i hv)).symm
+
+private theorem neon_rounding_as_ofInt (x : BitVec 32) (shift : Nat)
+    (h_pos : 0 < shift) (h_bound : shift ≤ 31) :
+    neonRoundingShiftRight x shift =
+      BitVec.ofInt 32 ((x.toInt + (1 <<< (shift - 1) : Nat)) >>> shift) := by
+  simp only [neonRoundingShiftRight, if_neg (Nat.ne_of_gt h_pos)]
+  change BitVec.setWidth 32
+    ((BitVec.ofInt 64 x.toInt + BitVec.ofNat 64 (1 <<< (shift - 1))).sshiftRight shift) = _
+  rw [← BitVec.ofInt_natCast, ← BitVec.ofInt_add]
+  simp only [BitVec.sshiftRight]
+  have hx_lower := @BitVec.le_toInt 32 x
+  have hx_upper := @BitVec.toInt_lt 32 x
+  have hround : (1 <<< (shift - 1) : Nat) ≤ 2 ^ 30 := by
+    simpa [Nat.shiftLeft_eq] using
+      (Nat.pow_le_pow_right (n := 2) (by omega) (by omega : shift - 1 ≤ 30))
+  simp at hx_lower hx_upper
+  have hroundInt : (1 <<< (shift - 1) : Nat) ≤ (1073741824 : Int) := by omega
+  simp only [Nat.shiftLeft_eq, Nat.one_mul] at hroundInt ⊢
+  have hroundInt' : (2 : Int) ^ (shift - 1) ≤ 1073741824 := by
+    simpa only [← Int.natCast_pow] using hroundInt
+  have hroundNonneg : 0 ≤ (2 : Int) ^ (shift - 1) := Int.pow_nonneg (by omega)
+  rw [BitVec.toInt_ofInt_eq_self (by omega) (by simp; omega) (by simp; omega)]
+  exact setWidth_ofInt_of_le (by omega) _
+
 theorem rounding_shift_equiv (x : BitVec 32) (shift : Nat)
     (h_bound : shift ≤ 31) :
     neonRoundingShiftRight x shift = rvvRoundingShiftRight x shift := by
-  have h_cases : shift = 0 ∨ shift = 1 ∨ shift = 2 ∨ shift = 3 ∨ shift = 4 ∨
-    shift = 5 ∨ shift = 6 ∨ shift = 7 ∨ shift = 8 ∨ shift = 9 ∨ shift = 10 ∨
-    shift = 11 ∨ shift = 12 ∨ shift = 13 ∨ shift = 14 ∨ shift = 15 ∨ shift = 16 ∨
-    shift = 17 ∨ shift = 18 ∨ shift = 19 ∨ shift = 20 ∨ shift = 21 ∨ shift = 22 ∨
-    shift = 23 ∨ shift = 24 ∨ shift = 25 ∨ shift = 26 ∨ shift = 27 ∨ shift = 28 ∨
-    shift = 29 ∨ shift = 30 ∨ shift = 31 := by omega
-  rcases h_cases with h|h|h|h|h|h|h|h|h|h|h|h|h|h|h|h|h|h|h|h|h|h|h|h|h|h|h|h|h|h|h|h
-  all_goals (subst h; simp only [neonRoundingShiftRight, rvvRoundingShiftRight]; bv_decide)
+  by_cases h_zero : shift = 0
+  · subst h_zero
+    simp [neonRoundingShiftRight, rvvRoundingShiftRight]
+  have h_pos : 0 < shift := Nat.pos_of_ne_zero h_zero
+  rw [neon_rounding_as_ofInt x shift h_pos h_bound]
+  simp only [rvvRoundingShiftRight, if_neg h_zero]
+  have h_cases : shift = 1 ∨ shift = 2 ∨ shift = 3 ∨ shift = 4 ∨ shift = 5 ∨
+    shift = 6 ∨ shift = 7 ∨ shift = 8 ∨ shift = 9 ∨ shift = 10 ∨ shift = 11 ∨
+    shift = 12 ∨ shift = 13 ∨ shift = 14 ∨ shift = 15 ∨ shift = 16 ∨ shift = 17 ∨
+    shift = 18 ∨ shift = 19 ∨ shift = 20 ∨ shift = 21 ∨ shift = 22 ∨ shift = 23 ∨
+    shift = 24 ∨ shift = 25 ∨ shift = 26 ∨ shift = 27 ∨ shift = 28 ∨ shift = 29 ∨
+    shift = 30 ∨ shift = 31 := by omega
+  rcases h_cases with h|h|h|h|h|h|h|h|h|h|h|h|h|h|h|h|h|h|h|h|h|h|h|h|h|h|h|h|h|h|h
+  all_goals subst h
+  all_goals split
+  all_goals simp only [BitVec.sshiftRight]
+  all_goals first
+    | (change BitVec.ofInt 32 _ = BitVec.ofInt 32 _ + BitVec.ofInt 32 1
+       rw [← BitVec.ofInt_add]
+       congr 1)
+    | congr 1
+  all_goals
+    simp [BitVec.getLsbD, Nat.testBit_eq_decide_div_mod_eq,
+      BitVec.toInt_eq_toNat_cond, Int.shiftRight_eq_div_pow, Nat.shiftLeft_eq] at *
+  all_goals split <;> omega
 
 end SALT.Proof.RoundingEquiv
