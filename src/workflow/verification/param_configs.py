@@ -140,7 +140,8 @@ PARAM_RANGES = {
                   "output_zero_point": (-128, 127), "output_min": (-128, 127), "output_max": (-128, 127)},
     "qs8-vlrelu": {"input_zero_point": (-128, 127), "output_zero_point": (-128, 127),
                    "positive_multiplier": (1, 255), "negative_multiplier": (1, 255)},
-    "qs8-vcvt": {"input_zero_point": (-128, 127), "multiplier": (1, 65535),
+    # XNNPACK@867d5a3 constructs this Q8 multiplier in [1, 32768].
+    "qs8-vcvt": {"input_zero_point": (-128, 127), "multiplier": (1, 32768),
                  "output_zero_point": (-128, 127)},
     "qu8-vadd": {"a_zero_point": (0, 255), "b_zero_point": (0, 255),
                  "a_multiplier": (1, 65535), "b_multiplier": (1, 65535), "shift": (0, 31),

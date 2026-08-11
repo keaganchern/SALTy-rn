@@ -73,15 +73,23 @@ The generated Lean definitions independently execute one selected Neon main
 block and one RVV active chunk. The original `QS8VAddMinmax/Proof.lean` proves
 its two block models equal for well-formed parameters and two 16-lane inputs.
 `S8VClamp/Proof.lean` additionally proves equality of the generated 64-lane
-Neon block and RVV chunk for inputs of length 64. The remaining generated
-modules are executable translation artifacts; a module is not called proved
-merely because both definitions typecheck.
+Neon block and RVV chunk for inputs of length 64. `QS8VCvt/Proof.lean` proves
+the generated 8-lane conversion blocks equal under the parameter domain of the
+pinned `XNNPACK@867d5a344790802ee067be62f572c2e2722bf6fb` revision. The
+[zero-point checks](https://github.com/google/XNNPACK/blob/867d5a344790802ee067be62f572c2e2722bf6fb/src/tensor.c#L50-L70)
+and [conversion multiplier construction](https://github.com/google/XNNPACK/blob/867d5a344790802ee067be62f572c2e2722bf6fb/src/microparams-init.c#L1207-L1223)
+are the external evidence for that contract. The remaining generated modules
+are executable translation artifacts; a module is not called proved merely
+because both definitions typecheck.
 
-In particular, an unconstrained `qs8-vcvt` theorem is false at the qrdmulh
+An unconstrained `qs8-vcvt` theorem is false at the qrdmulh
 `(-32768, -32768)` corner because the current RVV doubling sequence wraps before
-narrowing. The intended XNN parameter domain makes that pair unreachable, but
-those constraints must be part of any theorem. The dynamic QU8 shift also needs
-its reviewed effective-range contract.
+narrowing. The proof uses the full XNN contract: signed 8-bit input/output zero
+points and a multiplier in `[1, 32768]`. The arithmetic step only needs the input
+zero-point bound: after subtracting an input byte and shifting by seven, the
+first qrdmulh operand lies in `[-32640, 32640]`, so the exceptional pair is
+unreachable. The dynamic QU8 shift still needs its reviewed effective-range
+contract.
 
 `SALT/Kernel/Schedule.lean` separately proves generic fixed-chunk/tail and
 positive-partition refinements to `List.map`/`List.zipWith` for arbitrary list
