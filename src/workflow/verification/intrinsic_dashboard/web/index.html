@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <title>SALTy-rn intrinsic verification</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">Skip to dashboard</a>
+
+    <header class="app-header">
+      <div>
+        <p class="product-label">SALTy-rn</p>
+        <h1>Intrinsic verification</h1>
+      </div>
+      <div class="sync-panel" aria-live="polite" aria-atomic="true">
+        <span id="connection-dot" class="connection-dot" aria-hidden="true"></span>
+        <div>
+          <strong id="connection-label">Connecting</strong>
+          <span id="last-updated">No response yet</span>
+        </div>
+        <button id="refresh-button" class="secondary-button" type="button">Refresh</button>
+      </div>
+    </header>
+
+    <div id="connection-banner" class="connection-banner" role="status" hidden></div>
+
+    <main id="main-content">
+      <section class="activity-section" aria-labelledby="activity-title">
+        <div class="section-heading">
+          <div>
+            <p class="section-kicker">Live queue</p>
+            <h2 id="activity-title">Agent activity</h2>
+          </div>
+          <span id="revision-label" class="revision-label">Revision unavailable</span>
+        </div>
+        <div id="agent-list" class="agent-list" aria-live="polite"></div>
+      </section>
+
+      <section class="table-controls" aria-labelledby="controls-title">
+        <h2 id="controls-title" class="sr-only">Table controls</h2>
+        <label class="search-field">
+          <span>Search</span>
+          <input id="search-input" type="search" autocomplete="off" placeholder="Intrinsic, local kernel, path">
+        </label>
+        <label>
+          <span>Status</span>
+          <select id="status-filter">
+            <option value="all">All statuses</option>
+            <option value="missing">Missing</option>
+            <option value="generated">Generated</option>
+            <option value="pending">Pending review</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+            <option value="stale">Stale</option>
+          </select>
+        </label>
+        <label>
+          <span>Rows</span>
+          <select id="page-size">
+            <option value="10">10</option>
+            <option value="25" selected>25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+        </label>
+      </section>
+
+      <aside class="claim-boundary" aria-label="Review claim boundary">
+        <strong>Review boundary</strong>
+        <span>Proof scope progresses cumulatively from a selected local block to an arbitrary-length value model and then a complete C function. Counts advance only after the exact policy-bound Lean check passes. Approval covers only the recorded scope; it does not automatically establish Arm ACLE, RISC-V ISA, C-memory, or compiled-binary adequacy.</span>
+      </aside>
+
+      <section class="data-section" aria-labelledby="neon-title">
+        <div class="section-heading table-section-heading">
+          <div>
+            <p class="section-kicker">Arm</p>
+            <h2 id="neon-title">Neon intrinsics</h2>
+          </div>
+          <div id="neon-counts" class="section-counts" aria-live="polite"></div>
+        </div>
+        <div class="table-shell" tabindex="0" role="region" aria-labelledby="neon-title">
+          <table>
+            <caption class="sr-only">Neon intrinsic translation and review status</caption>
+            <thead>
+              <tr>
+                <th scope="col">Intrinsic</th>
+                <th scope="col">Kernel group</th>
+                <th scope="col">Translation</th>
+                <th scope="col">Automation</th>
+                <th scope="col">Lean implementation</th>
+                <th scope="col">Review</th>
+                <th scope="col">Local SALTyRN programs</th>
+              </tr>
+            </thead>
+            <tbody id="neon-body"></tbody>
+          </table>
+        </div>
+        <nav id="neon-pagination" class="pagination" aria-label="Neon table pages"></nav>
+      </section>
+
+      <section class="data-section" aria-labelledby="rvv-title">
+        <div class="section-heading table-section-heading">
+          <div>
+            <p class="section-kicker">RISC-V</p>
+            <h2 id="rvv-title">RVV intrinsics</h2>
+          </div>
+          <div id="rvv-counts" class="section-counts" aria-live="polite"></div>
+        </div>
+        <div class="table-shell" tabindex="0" role="region" aria-labelledby="rvv-title">
+          <table>
+            <caption class="sr-only">RVV intrinsic translation and review status</caption>
+            <thead>
+              <tr>
+                <th scope="col">Intrinsic</th>
+                <th scope="col">Kernel group</th>
+                <th scope="col">Translation</th>
+                <th scope="col">Automation</th>
+                <th scope="col">Lean implementation</th>
+                <th scope="col">Review</th>
+                <th scope="col">Local SALTyRN programs</th>
+              </tr>
+            </thead>
+            <tbody id="rvv-body"></tbody>
+          </table>
+        </div>
+        <nav id="rvv-pagination" class="pagination" aria-label="RVV table pages"></nav>
+      </section>
+
+      <section class="data-section" aria-labelledby="files-title">
+        <div class="section-heading table-section-heading">
+          <div>
+            <p class="section-kicker">Claim scope and dependency gates</p>
+            <h2 id="files-title">Kernel proof claims</h2>
+          </div>
+          <div id="file-counts" class="section-counts" aria-live="polite"></div>
+        </div>
+        <div class="table-shell" tabindex="0" role="region" aria-labelledby="files-title">
+          <table class="files-table">
+            <caption class="sr-only">Kernel proof progress under each recorded claim scope</caption>
+            <thead>
+              <tr>
+                <th scope="col">Local kernel / file</th>
+                <th scope="col">Neon mapping / review</th>
+                <th scope="col">RVV mapping / review</th>
+                <th scope="col">Contract / spec</th>
+                <th scope="col">Lean proof file</th>
+                <th scope="col">Lean theorem check</th>
+                <th scope="col">Scope review</th>
+                <th scope="col">Missing</th>
+              </tr>
+            </thead>
+            <tbody id="files-body"></tbody>
+          </table>
+        </div>
+        <nav id="files-pagination" class="pagination" aria-label="Kernel proof claim table pages"></nav>
+      </section>
+    </main>
+  </body>
+</html>

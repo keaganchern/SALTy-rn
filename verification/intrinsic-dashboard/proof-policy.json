@@ -1,0 +1,69 @@
+{
+  "allowed_axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+  ],
+  "lean_project_sha256": "9cde9299648d9c05791c66fd61f5721816e7099d7467dceaf521e978b14269c3",
+  "cases": {
+    "qs8-vadd-minmax": {
+      "contract": {
+        "path": "src/verification_bw/lean/SALT/Kernel/QS8/Params.lean",
+        "sha256": "0689e81738b6637c10f39658a6bcb01e46bac06f833d69ac3e334b3e1f0827c9"
+      },
+      "module": "SALT.Generated.QS8VAddMinmax.Proof",
+      "proof_path": "src/verification_bw/lean/SALT/Generated/QS8VAddMinmax/Proof.lean",
+      "elaborated_type_sha256": "ad55d3e77b4059ce2d3db8fea41ceca7435375f9eef25c4d99c56faea4901deb",
+      "theorem": "SALT.Generated.QS8VAddMinmax.generated_block_equiv"
+    },
+    "s8-vclamp": {
+      "contract": {
+        "path": "src/verification_bw/lean/SALT/Kernel/S8VClamp/Contract.lean",
+        "sha256": "af0e54386b40d71ccc85fe58c0ab69354b7893b646560205251acc608dadcaaf"
+      },
+      "module": "SALT.Generated.S8VClamp.AllLengths",
+      "proof_path": "src/verification_bw/lean/SALT/Generated/S8VClamp/AllLengths.lean",
+      "elaborated_type_sha256": "963008377dfbb374ff3b2e2caa84e51e35d7d69649738e05dc4f5b7f59311bc0",
+      "theorem": "SALT.Generated.S8VClamp.allLengthsValueEqual"
+    },
+    "qs8-vcvt": {
+      "contract": {
+        "path": "src/verification_bw/lean/SALT/Kernel/QS8VCvt/Contract.lean",
+        "sha256": "bc342d3ab4aad65eb8bb344dad967c40efeaae33529ba48b5e7fe2f77aa489ad"
+      },
+      "module": "SALT.Generated.QS8VCvt.Proof",
+      "proof_path": "src/verification_bw/lean/SALT/Generated/QS8VCvt/Proof.lean",
+      "elaborated_type_sha256": "9e8fe5038878372906447fc7df6d87436798a9c0d673f081c7e6f61b3616af75",
+      "theorem": "SALT.Generated.QS8VCvt.generated_block_equal"
+    },
+    "qs8-vlrelu": {
+      "contract": {
+        "path": "src/verification_bw/lean/SALT/Kernel/QS8VLReLU/Contract.lean",
+        "sha256": "7f0b319091d3d32a14e983d243887c8bce13ac0f59c175c1d7ef2a14f10c9b8b"
+      },
+      "module": "SALT.Generated.QS8VLReLU.Proof",
+      "proof_path": "src/verification_bw/lean/SALT/Generated/QS8VLReLU/Proof.lean",
+      "elaborated_type_sha256": "811cc988822d6727ed2e4d6f5fa985fbd4ce10faca9e911c35da7ecb6672f169",
+      "theorem": "SALT.Generated.QS8VLReLU.generated_block_equal"
+    },
+    "qu8-vadd-minmax": {
+      "contract": {
+        "path": "src/verification_bw/lean/SALT/Kernel/QU8VAddMinmax/Contract.lean",
+        "sha256": "973e4033154f72bb4f3aabae701c339131bd5aa19e9c1a30a0686ca0a78eff86"
+      },
+      "module": "SALT.Generated.QU8VAddMinmax.Proof",
+      "proof_path": "src/verification_bw/lean/SALT/Generated/QU8VAddMinmax/Proof.lean",
+      "elaborated_type_sha256": "0eb75acbf31005255c3b037595bee3d2962f957452a9d6b81636bd3012c562ef",
+      "theorem": "SALT.Generated.QU8VAddMinmax.generated_block_equal"
+    }
+  },
+  "schema_version": 3,
+  "toolchain": {
+    "lake_sha256": "0e56506385ec20d56bffd7c031c4d48573ab5fdb74e5246ec8c45a220bebc68b",
+    "lake_version": "Lake version 5.0.0-src+98dc76e (Lean version 4.29.0)",
+    "lean_sha256": "2974847fff2e2621502841f4c2dbac4035b4847d6060a4f2087cbc0d04005e37",
+    "lean_version": "Lean (version 4.29.0, arm64-apple-darwin24.6.0, commit 98dc76e3c0a9b856c9b98726b713fb04fab16740, Release)",
+    "runtime_sha256": "12f040a3ae0262a09f4934e02ef7acdcab4c0a69f5ba5838133b9ee0f8e2c255",
+    "selector": "leanprover/lean4:v4.29.0"
+  }
+}

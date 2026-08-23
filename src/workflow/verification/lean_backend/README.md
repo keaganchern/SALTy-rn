@@ -11,7 +11,7 @@ pinned C source and target
   -> typed calls, dataflow, source ranges, and control facts
   -> exact intrinsic registry and fail-closed binding checks
   -> deterministic registry-bound manifest
-  -> independent executable Neon and RVV Lean block models
+  -> independent executable Neon and RVV Lean value models
   -> reviewed Lean bridge proof
 ```
 
@@ -46,7 +46,7 @@ Build the generated proof from `src/verification_bw/lean`:
 lake build SALT.Generated.QS8VAddMinmax.Proof
 ```
 
-Generate the four additional block-model pairs:
+Generate the four additional model pairs:
 
 ```sh
 PYTHONPATH=src python3 -m workflow.verification.lean_backend.generate_cases \
@@ -61,7 +61,7 @@ The generated set is:
 
 ```text
 qs8-vadd-minmax   signed binary fixed-point add and clamp
-s8-vclamp        signed unary clamp (64-lane Neon main block)
+s8-vclamp        signed unary clamp (generated 64/8/4/2/1 value schedule)
 qs8-vcvt         signed widening, qrdmulh, rounding, and narrowing
 qs8-vlrelu       signed compare, mask/select, scaling, and narrowing
 qu8-vadd-minmax  unsigned binary arithmetic and a reviewed signed-shift branch
@@ -69,11 +69,14 @@ qu8-vadd-minmax  unsigned binary arithmetic and a reviewed signed-shift branch
 
 ## Established Boundary
 
-The generated Lean definitions independently execute one selected Neon main
+Most generated Lean definitions independently execute one selected Neon main
 block and one RVV active chunk. The original `QS8VAddMinmax/Proof.lean` proves
 its two block models equal for well-formed parameters and two 16-lane inputs.
-`S8VClamp/Proof.lean` additionally proves equality of the generated 64-lane
-Neon block and RVV chunk for inputs of length 64. `QS8VCvt/Proof.lean` proves
+For `s8-vclamp`, the frontend validates and consumes all 36 Neon intrinsic calls
+and emits the 64-lane, 8-lane, and 4/2/1 live-prefix value paths.
+`S8VClamp/AllLengths.lean` proves that the generated Neon value schedule is
+equal to an RVV chunk model for every input length and every complete positive partition,
+under ordered clamp bounds. `QS8VCvt/Proof.lean` proves
 the generated 8-lane conversion blocks equal under the parameter domain of the
 pinned `XNNPACK@867d5a344790802ee067be62f572c2e2722bf6fb` revision. The
 [zero-point checks](https://github.com/google/XNNPACK/blob/867d5a344790802ee067be62f572c2e2722bf6fb/src/tensor.c#L50-L70)
@@ -104,16 +107,32 @@ corner without a parameter hypothesis. Both qrdmulh results omit architectural
 saturation flags. The QU8 proof likewise establishes lane values only; it does
 not relate Neon QC to RVV `vxsat` or model the persistent `vxrm` state.
 
-`SALT/Kernel/Schedule.lean` separately proves generic fixed-chunk/tail and
+`SALT/Kernel/Schedule.lean` proves generic fixed-chunk/tail and
 positive-partition refinements to `List.map`/`List.zipWith` for arbitrary list
-lengths. The current generated proof does not yet connect the complete Neon tail,
-C memory effects, or real `vsetvl` executions to those schedule theorems.
+lengths. The `s8-vclamp` adapter uses a little-endian live-prefix value
+abstraction for its lane stores. It does not establish C memory, alignment,
+aliasing, legal overreads, host endianness, or real `vsetvl`/ISA executions.
+The other scale-up cases remain selected-block results and do not yet connect
+their complete Neon tails to the schedule theorems.
 
-Therefore the result is generated Lean block-model equivalence. It is not yet a
-C-source observational-equivalence theorem, an intrinsic-to-ISA adequacy theorem,
-or a compiled-binary theorem.
+Therefore these are generated Lean value-model equivalence results; only the
+`s8-vclamp` result currently quantifies over arbitrary input lengths. They are
+not yet C-source observational-equivalence, intrinsic-to-ISA adequacy, or
+compiled-binary theorems.
 
 A smaller Chinese teaching example is available at
 `examples/s8-vmax-to-lean/README.zh-CN.md`. Its synthetic Neon/RVV C pair goes
 through this actual frontend and emitter and produces a checked local-block Lean
 model and proof; it is kept outside the five real-kernel generation set.
+
+## Intrinsic Coverage Dashboard
+
+`kernels/xnnpack-kernel-families.csv` is the fixed 107-family catalog shared by
+Keagan. It deliberately contains no generated or review status: kernel families,
+concrete C programs, intrinsic spellings, Lean mappings, and review attestations
+are different records.
+
+The local dashboard in `src/workflow/verification/intrinsic_dashboard/` inventories
+only the 40 local SALTyRN programs, projects the current restricted Lean registry,
+and reports hash-bound independent reviews. Registry presence or a checked Lean
+theorem is never presented as intrinsic semantic approval or C/ISA equivalence.
