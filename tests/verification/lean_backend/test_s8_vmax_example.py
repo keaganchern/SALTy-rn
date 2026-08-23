@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import shutil
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -78,3 +79,39 @@ def test_supported_neon_semantic_mutation_changes_model(tmp_path: Path):
     ).emitted.module_text
     assert changed != original
     assert "SALT.Intrinsics.Neon.vminq_s8" in changed
+
+
+@pytest.mark.skipif(shutil.which("lake") is None, reason="Lean Lake required")
+def test_example_lean_audit_checks_statement_and_mutation_witness():
+    lean_root = ROOT / "src/verification_bw/lean"
+    build = subprocess.run(
+        [
+            "lake",
+            "--rehash",
+            "--no-cache",
+            "build",
+            "SALT.Example.S8VMax.Audit",
+        ],
+        cwd=lean_root,
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert build.returncode == 0, build.stdout + build.stderr
+
+    check = subprocess.run(
+        [
+            "lake",
+            "env",
+            "lean",
+            "--trust=0",
+            "SALT/Example/S8VMax/Audit.lean",
+        ],
+        cwd=lean_root,
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert check.returncode == 0, check.stdout + check.stderr

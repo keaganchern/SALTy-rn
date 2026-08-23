@@ -23,6 +23,8 @@ output[i] = signedMax(input[i], threshold)
   frontend/emitter 实际生成的两份 implementation model。
 - [`Proof.lean`](../../src/verification_bw/lean/SALT/Example/S8VMax/Proof.lean)：
   人工审查的 refinement 和 equivalence proof。
+- [`Audit.lean`](../../src/verification_bw/lean/SALT/Example/S8VMax/Audit.lean)：
+  固定最终 theorem 类型，并检查一个 `vmaxq_s8 -> vminq_s8` 具体反例。
 
 ## 1. 原始 Neon 文件
 
@@ -237,11 +239,12 @@ PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src \
 python3 -m pytest -q -p no:cacheprovider \
   tests/verification/lean_backend/test_s8_vmax_example.py
 
-# Lean kernel 检查 proof
+# Lean kernel 检查 theorem 类型和 mutation witness
 cd src/verification_bw/lean
-lake env lean --trust=0 SALT/Example/S8VMax/Proof.lean
+lake env lean --trust=0 SALT/Example/S8VMax/Audit.lean
 ```
 
 将 Neon 的 `vmaxq_s8` 改成 registry 已支持的 `vminq_s8` 会生成不同的 Lean
-model；将指针步长 `input += 16` 改成 `input += 8` 则会被 frontend/emitter
-直接拒绝。
+model。`Audit.lean` 使用 `threshold = 0` 和 16 个值为 1 的 signed-byte lane
+证明该 mutation 与 RVV maximum model 不等。将指针步长 `input += 16` 改成
+`input += 8` 则会被 frontend/emitter 直接拒绝。
