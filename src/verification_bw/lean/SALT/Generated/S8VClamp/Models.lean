@@ -40,6 +40,57 @@ def neonBlock64FromIntrinsics (p : S8ClampParams)
   let vacc3_2 := SALT.Intrinsics.Neon.vminq_s8 (vacc3_1) (voutput_max_0)
   (vacc0_2) ++ (vacc1_2) ++ (vacc2_2) ++ (vacc3_2)
 
+/-- Generated value model of the source's reversed-order 8-lane block. -/
+def neonBlock8FromIntrinsics (p : S8ClampParams)
+    (input : List (BitVec 8)) : List (BitVec 8) :=
+  let vacc_0 := (input).take 8
+  let call_0019 := (List.replicate 16 ((p.max).truncate 8)).take 8
+  let vacc_1 := SALT.Intrinsics.Neon.vmin_s8_vec (vacc_0) (call_0019)
+  let call_0021 := (List.replicate 16 ((p.min).truncate 8)).take 8
+  let vacc_2 := SALT.Intrinsics.Neon.vmax_s8_vec (vacc_1) (call_0021)
+  vacc_2
+
+/-- Generated little-endian live-prefix value abstraction for the 4/2/1 stores.
+
+This definition does not establish C memory, alignment, aliasing, or endian adequacy.
+-/
+def neonPartialTailLivePrefixFromIntrinsics (p : S8ClampParams)
+    (loaded : List (BitVec 8)) (live : Nat) : List (BitVec 8) :=
+  let vacc_3 := (loaded).take 8
+  let call_0025 := (List.replicate 16 ((p.max).truncate 8)).take 8
+  let vacc_4 := SALT.Intrinsics.Neon.vmin_s8_vec (vacc_3) (call_0025)
+  let call_0027 := (List.replicate 16 ((p.min).truncate 8)).take 8
+  let vacc_5 := SALT.Intrinsics.Neon.vmax_s8_vec (vacc_4) (call_0027)
+  let call_0029 := vacc_5
+  let stored4 := if live.testBit 2 then (call_0029).take 4 else []
+  let vacc_6 := ((vacc_5 ++ vacc_5).drop 4).take 8
+  let after4 := if live.testBit 2 then vacc_6 else vacc_5
+  let call_0032 := after4
+  let stored2 := if live.testBit 1 then (call_0032).take 2 else []
+  let vacc_7 := ((after4 ++ after4).drop 2).take 8
+  let after2 := if live.testBit 1 then vacc_7 else after4
+  let stored1 := if live.testBit 0 then (after2).take 1 else []
+  (stored4) ++ (stored2) ++ (stored1)
+
+/-- Generated value-only lifting of the validated 64/8/4/2/1 control shape.
+
+The zero padding represents unobserved overread lanes, not a C-memory load.
+-/
+def neonValueLoopFromIntrinsics (p : S8ClampParams)
+    (input : List (BitVec 8)) : List (BitVec 8) :=
+  if input.length >= 64 then
+    neonBlock64FromIntrinsics p (input.take 64) ++
+      neonValueLoopFromIntrinsics p (input.drop 64)
+  else if input.length >= 8 then
+    neonBlock8FromIntrinsics p (input.take 8) ++
+      neonValueLoopFromIntrinsics p (input.drop 8)
+  else
+    let loaded := input ++
+      List.replicate (8 - input.length) (0 : BitVec 8)
+    neonPartialTailLivePrefixFromIntrinsics p loaded input.length
+termination_by input.length
+decreasing_by all_goals simp_all [List.length_drop]; omega
+
 def rvvChunkFromIntrinsics (p : S8ClampParams)
     (input : List (BitVec 8)) : List (BitVec 8) :=
   let vacc_0 := input

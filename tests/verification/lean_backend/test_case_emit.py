@@ -9,21 +9,34 @@ from workflow.verification.lean_backend.case_emit import (
     CaseEmissionError,
     emit_case_pair,
 )
+from workflow.verification.lean_backend.emit_lean import (
+    LeanEmissionError,
+    _BlockEmitter,
+)
 from workflow.verification.lean_backend.frontend import parse_kernel
 from workflow.verification.lean_backend.model_profiles import SCALE_UP_MODELS
 from workflow.verification.lean_backend.profiles import FRONTEND_PROFILES
 from workflow.verification.lean_backend.scaleup_catalog import SCALEUP_CATALOGS
+from workflow.verification.lean_backend.schema import Architecture
 
 
 ROOT = Path(__file__).resolve().parents[3]
 CASES = tuple(SCALE_UP_MODELS)
-pytestmark = pytest.mark.skipif(shutil.which("clang") is None, reason="system clang required")
+pytestmark = pytest.mark.skipif(
+    shutil.which("clang") is None, reason="system clang required"
+)
 
 
 def extract(case_id: str, side: str, source: Path | None = None):
     profile = FRONTEND_PROFILES[case_id]
     selected = profile.neon if side == "neon" else profile.rvv
-    path = source or ROOT / "kernels" / ("source" if side == "neon" else "target") / f"{case_id}.c"
+    path = (
+        source
+        or ROOT
+        / "kernels"
+        / ("source" if side == "neon" else "target")
+        / f"{case_id}.c"
+    )
     return parse_kernel(path, profile=selected)
 
 
@@ -53,6 +66,103 @@ def test_four_scaleup_cases_emit_independent_neon_and_rvv_models(case_id: str):
     assert "SALT.Intrinsics.RVV." in module
     assert result.neon_consumed_calls
     assert result.rvv_consumed_calls
+
+
+def test_s8_emission_consumes_every_neon_and_rvv_call():
+    neon = extract("s8-vclamp", "neon")
+    rvv = extract("s8-vclamp", "rvv")
+    result = emit("s8-vclamp")
+
+    assert len(neon.calls) == 36
+    assert len(rvv.calls) == 5
+    assert set(result.neon_consumed_calls) == {call.node_id for call in neon.calls}
+    assert set(result.rvv_consumed_calls) == {call.node_id for call in rvv.calls}
+    assert "def neonBlock8FromIntrinsics" in result.emitted.module_text
+    assert "def neonPartialTailLivePrefixFromIntrinsics" in result.emitted.module_text
+    assert "def neonValueLoopFromIntrinsics" in result.emitted.module_text
+
+
+def test_generic_lane_store_still_requires_an_endian_contract():
+    extraction = extract("s8-vclamp", "neon")
+    emitter = _BlockEmitter(
+        extraction,
+        Architecture.NEON,
+        registry=SCALEUP_CATALOGS["s8-vclamp"].registry,
+    )
+    lane_store = next(
+        call for call in extraction.calls if call.spelling == "vst1_lane_u32"
+    )
+
+    with pytest.raises(LeanEmissionError, match="requires an endian contract"):
+        emitter.emit_registered_call(lane_store)
+
+
+@pytest.mark.parametrize(
+    ("old", "new", "message"),
+    (
+        ("if (batch & 4)", "if (batch & 3)", "Neon control shape changed"),
+        ("if (batch & 2)", "if (batch & 3)", "Neon control shape changed"),
+        ("if (batch & 1)", "if (batch & 3)", "Neon control shape changed"),
+        (
+            "vext_s8(vacc, vacc, 4)",
+            "vext_s8(vacc, vacc, 2)",
+            "Neon 8-lane/tail call or operand shape changed",
+        ),
+        (
+            "vext_s8(vacc, vacc, 2)",
+            "vext_s8(vacc, vacc, 1)",
+            "Neon 8-lane/tail call or operand shape changed",
+        ),
+        ("output += 4;", "output += 3;", "pointer or count updates changed"),
+        (
+            "vst1_lane_s8(output, vacc, 0)",
+            "vst1_lane_s8(output, vacc, 1)",
+            "Neon 8-lane/tail call or operand shape changed",
+        ),
+    ),
+)
+def test_s8_tail_shape_mutations_fail_closed(
+    tmp_path: Path, old: str, new: str, message: str
+):
+    source = (ROOT / "kernels/source/s8-vclamp.c").read_text(encoding="utf-8")
+    assert source.count(old) == 1
+    mutated = tmp_path / "s8-vclamp.c"
+    mutated.write_text(source.replace(old, new, 1), encoding="utf-8")
+
+    with pytest.raises(CaseEmissionError, match=message):
+        emit("s8-vclamp", neon_source=mutated)
+
+
+@pytest.mark.parametrize(
+    ("old", "new"),
+    (
+        (
+            "vacc = vmin_s8(vacc, vget_low_s8(voutput_max));",
+            "vacc = vmax_s8(vacc, vget_low_s8(voutput_max));",
+        ),
+        (
+            "vacc = vmax_s8(vacc, vget_low_s8(voutput_min));",
+            "vacc = vmin_s8(vacc, vget_low_s8(voutput_min));",
+        ),
+    ),
+)
+def test_s8_tail_semantic_operation_mutations_fail_closed(
+    tmp_path: Path, old: str, new: str
+):
+    source = (ROOT / "kernels/source/s8-vclamp.c").read_text(encoding="utf-8")
+    offset = source.rfind(old)
+    assert offset >= 0
+    mutated = tmp_path / "s8-vclamp.c"
+    mutated.write_text(
+        source[:offset] + new + source[offset + len(old) :],
+        encoding="utf-8",
+    )
+
+    with pytest.raises(
+        CaseEmissionError,
+        match="Neon 8-lane/tail call or operand shape changed",
+    ):
+        emit("s8-vclamp", neon_source=mutated)
 
 
 def test_supported_neon_semantic_mutation_changes_the_s8_model(tmp_path: Path):

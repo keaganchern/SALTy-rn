@@ -1,8 +1,9 @@
-"""Generic local-block Lean emission for reviewed scale-up profiles.
+"""Lean emission for reviewed scale-up profiles.
 
-The emitter consumes calls from one selected Neon fixed-width loop body and one
-RVV strip-mined body.  Calls in tails and other phases remain audited by the
-frontend but are deliberately outside the theorem represented by this module.
+The generic path consumes one selected Neon fixed-width loop body and one RVV
+strip-mined body. Case-specific adapters may extend that boundary only after
+validating the complete source shape. The s8-vclamp adapter, for example,
+consumes all source calls and emits a value-only 64/8/4/2/1 schedule.
 """
 
 from __future__ import annotations
@@ -19,7 +20,13 @@ from .emit_lean import (
     _lean_string_definition,
     _single_dependency,
 )
-from .frontend import ArgumentFact, ControlFact, DefinitionFact, IntrinsicCall, KernelExtraction
+from .frontend import (
+    ArgumentFact,
+    ControlFact,
+    DefinitionFact,
+    IntrinsicCall,
+    KernelExtraction,
+)
 from .model_profiles import ModelProfile
 from .schema import (
     Architecture,
@@ -210,7 +217,9 @@ class _CaseBlockEmitter(_BlockEmitter):
                 and definition.definition_kind != "parameter"
                 and definition.parent_control is None
             ):
-                self.environment[definition.value] = _reviewed_scalar_definition(definition)
+                self.environment[definition.value] = _reviewed_scalar_definition(
+                    definition
+                )
 
     def _checked_field_source(self, argument: ArgumentFact) -> tuple[str, bool]:
         return _reviewed_field_argument(argument)
@@ -278,9 +287,11 @@ def _normalized_control_shape(
     return tuple(
         (
             control.kind,
-            None
-            if control.parent_control is None
-            else positions.get(control.parent_control, -1),
+            (
+                None
+                if control.parent_control is None
+                else positions.get(control.parent_control, -1)
+            ),
             control.condition_text,
             control.condition_dependencies,
             control.update_text,
@@ -380,9 +391,7 @@ def _emit_neon_case(
     emitter = _CaseBlockEmitter(extraction, Architecture.NEON, registry)
 
     selected_calls = [
-        call
-        for call in extraction.calls
-        if call.parent_control in {None, loop.node_id}
+        call for call in extraction.calls if call.parent_control in {None, loop.node_id}
     ]
     for call in selected_calls:
         if call.parent_control is None:
@@ -407,7 +416,10 @@ def _emit_neon_case(
         if call.parent_control != loop.node_id:
             continue
         spec = emitter._lookup_intrinsic(call.spelling)
-        if isinstance(spec, StructuralIntrinsic) and spec.operation is StructuralOp.LOAD:
+        if (
+            isinstance(spec, StructuralIntrinsic)
+            and spec.operation is StructuralOp.LOAD
+        ):
             base_argument = call.arguments[0]
             dependency = _single_dependency(base_argument)
             match = re.fullmatch(r"([A-Za-z_][A-Za-z0-9_]*)@(\d+)", dependency)
@@ -416,7 +428,10 @@ def _emit_neon_case(
                     f"{profile.case_id}: unsupported Neon load base {dependency!r}"
                 )
             base, version_text = match.groups()
-            if base_argument.source_text.strip() != base or base_argument.semantic_operations:
+            if (
+                base_argument.source_text.strip() != base
+                or base_argument.semantic_operations
+            ):
                 raise CaseEmissionError(
                     f"{profile.case_id}: unsupported Neon load expression "
                     f"{base_argument.source_text!r}"
@@ -440,7 +455,10 @@ def _emit_neon_case(
             input_update_widths[base].append(width)
             emitter._bind_call(call, expression)
             continue
-        if isinstance(spec, StructuralIntrinsic) and spec.operation is StructuralOp.STORE:
+        if (
+            isinstance(spec, StructuralIntrinsic)
+            and spec.operation is StructuralOp.STORE
+        ):
             store_base = call.arguments[0]
             if (
                 store_base.dependencies != (f"output@{store_version}",)
@@ -451,12 +469,17 @@ def _emit_neon_case(
                     f"{profile.case_id}: Neon store base changed at store {store_version}"
                 )
         result = emitter.emit_registered_call(call)
-        if isinstance(spec, StructuralIntrinsic) and spec.operation is StructuralOp.STORE:
+        if (
+            isinstance(spec, StructuralIntrinsic)
+            and spec.operation is StructuralOp.STORE
+        ):
             if result is None:
                 raise CaseEmissionError(f"{call.spelling} produced no stored value")
             vector = spec.signature.parameters[1].type
             if not isinstance(vector, VectorType) or vector.fixed_lanes is None:
-                raise CaseEmissionError(f"{call.spelling} needs a fixed-width stored value")
+                raise CaseEmissionError(
+                    f"{call.spelling} needs a fixed-width stored value"
+                )
             stored_lanes += vector.fixed_lanes
             output_update_widths.append(vector.fixed_lanes)
             store_version += 1
@@ -512,7 +535,527 @@ def _emit_neon_case(
             f"{profile.case_id}: untranslated Neon block definitions {untranslated!r}"
         )
     _validate_external_definitions(extraction, emitter)
-    return emitter.lines, " ++ ".join(f"({value})" for value in stores), tuple(sorted(expected))
+    return (
+        emitter.lines,
+        " ++ ".join(f"({value})" for value in stores),
+        tuple(sorted(expected)),
+    )
+
+
+def _compact_source(text: str) -> str:
+    return re.sub(r"\s+", "", text)
+
+
+def _s8_tail_call_shape(call: IntrinsicCall) -> tuple[object, ...]:
+    return (
+        call.node_id,
+        call.spelling,
+        call.assigned_to,
+        call.parent_control,
+        call.control_path,
+        tuple(
+            (
+                _compact_source(argument.source_text),
+                argument.dependencies,
+                argument.semantic_operations,
+                argument.constant_value,
+            )
+            for argument in call.arguments
+        ),
+    )
+
+
+_S8_TAIL_CONTROL_SHAPES = (
+    (
+        "control_0000",
+        "ForStmt",
+        None,
+        "batch>=64",
+        ("batch@0", "constant:64:int"),
+        "batch-=64",
+    ),
+    (
+        "control_0001",
+        "ForStmt",
+        None,
+        "batch>=8",
+        ("batch@1", "constant:8:int"),
+        "batch-=8",
+    ),
+    (
+        "control_0002",
+        "IfStmt",
+        None,
+        "batch!=0",
+        ("batch@2", "constant:0:int"),
+        "",
+    ),
+    (
+        "control_0003",
+        "IfStmt",
+        "control_0002",
+        "batch&4",
+        ("batch@2", "constant:4:int"),
+        "",
+    ),
+    (
+        "control_0004",
+        "IfStmt",
+        "control_0002",
+        "batch&2",
+        ("batch@2", "constant:2:int"),
+        "",
+    ),
+    (
+        "control_0005",
+        "IfStmt",
+        "control_0002",
+        "batch&1",
+        ("batch@2", "constant:1:int"),
+        "",
+    ),
+)
+
+
+_S8_TAIL_CALL_SHAPES = (
+    (
+        "call_0018",
+        "vld1_s8",
+        "vacc@0",
+        "control_0001",
+        (),
+        (("input", ("input@4",), (), None),),
+    ),
+    (
+        "call_0019",
+        "vget_low_s8",
+        None,
+        "control_0001",
+        (),
+        (("voutput_max", ("voutput_max@0",), (), None),),
+    ),
+    (
+        "call_0020",
+        "vmin_s8",
+        "vacc@1",
+        "control_0001",
+        (),
+        (
+            ("vacc", ("vacc@0",), (), None),
+            ("vget_low_s8(voutput_max)", ("call:call_0019",), (), None),
+        ),
+    ),
+    (
+        "call_0021",
+        "vget_low_s8",
+        None,
+        "control_0001",
+        (),
+        (("voutput_min", ("voutput_min@0",), (), None),),
+    ),
+    (
+        "call_0022",
+        "vmax_s8",
+        "vacc@2",
+        "control_0001",
+        (),
+        (
+            ("vacc", ("vacc@1",), (), None),
+            ("vget_low_s8(voutput_min)", ("call:call_0021",), (), None),
+        ),
+    ),
+    (
+        "call_0023",
+        "vst1_s8",
+        None,
+        "control_0001",
+        (),
+        (
+            ("output", ("output@4",), (), None),
+            ("vacc", ("vacc@2",), (), None),
+        ),
+    ),
+    (
+        "call_0024",
+        "vld1_s8",
+        "vacc@3",
+        "control_0002",
+        ("control_0002:then",),
+        (("input", ("input@5",), (), None),),
+    ),
+    (
+        "call_0025",
+        "vget_low_s8",
+        None,
+        "control_0002",
+        ("control_0002:then",),
+        (("voutput_max", ("voutput_max@0",), (), None),),
+    ),
+    (
+        "call_0026",
+        "vmin_s8",
+        "vacc@4",
+        "control_0002",
+        ("control_0002:then",),
+        (
+            ("vacc", ("vacc@3",), (), None),
+            ("vget_low_s8(voutput_max)", ("call:call_0025",), (), None),
+        ),
+    ),
+    (
+        "call_0027",
+        "vget_low_s8",
+        None,
+        "control_0002",
+        ("control_0002:then",),
+        (("voutput_min", ("voutput_min@0",), (), None),),
+    ),
+    (
+        "call_0028",
+        "vmax_s8",
+        "vacc@5",
+        "control_0002",
+        ("control_0002:then",),
+        (
+            ("vacc", ("vacc@4",), (), None),
+            ("vget_low_s8(voutput_min)", ("call:call_0027",), (), None),
+        ),
+    ),
+    (
+        "call_0029",
+        "vreinterpret_u32_s8",
+        None,
+        "control_0003",
+        ("control_0002:then", "control_0003:then"),
+        (("vacc", ("vacc@5",), (), None),),
+    ),
+    (
+        "call_0030",
+        "vst1_lane_u32",
+        None,
+        "control_0003",
+        ("control_0002:then", "control_0003:then"),
+        (
+            (
+                "(void*)output",
+                ("output@5",),
+                (
+                    "explicit-cast:BitCast:void *",
+                    "implicit-cast:BitCast:uint32_t *",
+                ),
+                None,
+            ),
+            ("vreinterpret_u32_s8(vacc)", ("call:call_0029",), (), None),
+            ("0", ("constant:0:int",), (), 0),
+        ),
+    ),
+    (
+        "call_0031",
+        "vext_s8",
+        "vacc@6",
+        "control_0003",
+        ("control_0002:then", "control_0003:then"),
+        (
+            ("vacc", ("vacc@5",), (), None),
+            ("vacc", ("vacc@5",), (), None),
+            ("4", ("constant:4:int",), (), 4),
+        ),
+    ),
+    (
+        "call_0032",
+        "vreinterpret_u16_s8",
+        None,
+        "control_0004",
+        ("control_0002:then", "control_0004:then"),
+        (("vacc", ("vacc@6",), (), None),),
+    ),
+    (
+        "call_0033",
+        "vst1_lane_u16",
+        None,
+        "control_0004",
+        ("control_0002:then", "control_0004:then"),
+        (
+            (
+                "(void*)output",
+                ("output@6",),
+                (
+                    "explicit-cast:BitCast:void *",
+                    "implicit-cast:BitCast:uint16_t *",
+                ),
+                None,
+            ),
+            ("vreinterpret_u16_s8(vacc)", ("call:call_0032",), (), None),
+            ("0", ("constant:0:int",), (), 0),
+        ),
+    ),
+    (
+        "call_0034",
+        "vext_s8",
+        "vacc@7",
+        "control_0004",
+        ("control_0002:then", "control_0004:then"),
+        (
+            ("vacc", ("vacc@6",), (), None),
+            ("vacc", ("vacc@6",), (), None),
+            ("2", ("constant:2:int",), (), 2),
+        ),
+    ),
+    (
+        "call_0035",
+        "vst1_lane_s8",
+        None,
+        "control_0005",
+        ("control_0002:then", "control_0005:then"),
+        (
+            ("output", ("output@7",), (), None),
+            ("vacc", ("vacc@7",), (), None),
+            ("0", ("constant:0:int",), (), 0),
+        ),
+    ),
+)
+
+
+_S8_TAIL_UPDATE_SHAPES = (
+    (
+        "input@5",
+        "control_0001",
+        (),
+        "input+=8",
+        ("input@4", "constant:8:int"),
+    ),
+    (
+        "output@5",
+        "control_0001",
+        (),
+        "output+=8",
+        ("output@4", "constant:8:int"),
+    ),
+    (
+        "batch@2",
+        "control_0001",
+        (),
+        "batch-=8",
+        ("batch@1", "constant:8:int"),
+    ),
+    (
+        "input@6",
+        "control_0002",
+        ("control_0002:then",),
+        "input+=8",
+        ("input@5", "constant:8:int"),
+    ),
+    (
+        "output@6",
+        "control_0003",
+        ("control_0002:then", "control_0003:then"),
+        "output+=4",
+        ("output@5", "constant:4:int"),
+    ),
+    (
+        "output@7",
+        "control_0004",
+        ("control_0002:then", "control_0004:then"),
+        "output+=2",
+        ("output@6", "constant:2:int"),
+    ),
+)
+
+
+def _validate_s8_tail_source_shape(
+    extraction: KernelExtraction,
+) -> tuple[IntrinsicCall, ...]:
+    actual_controls = tuple(
+        (
+            control.node_id,
+            control.kind,
+            control.parent_control,
+            _compact_source(control.condition_text),
+            control.condition_dependencies,
+            _compact_source(control.update_text),
+        )
+        for control in extraction.controls
+    )
+    if actual_controls != _S8_TAIL_CONTROL_SHAPES:
+        raise CaseEmissionError(
+            "s8-vclamp: complete Neon control shape changed: "
+            f"expected={_S8_TAIL_CONTROL_SHAPES!r}, actual={actual_controls!r}"
+        )
+
+    tail_calls = tuple(extraction.calls[18:])
+    actual_calls = tuple(_s8_tail_call_shape(call) for call in tail_calls)
+    if actual_calls != _S8_TAIL_CALL_SHAPES:
+        raise CaseEmissionError(
+            "s8-vclamp: Neon 8-lane/tail call or operand shape changed: "
+            f"expected={_S8_TAIL_CALL_SHAPES!r}, actual={actual_calls!r}"
+        )
+
+    tail_control_ids = {"control_0001", "control_0002", "control_0003", "control_0004"}
+    tail_control_ids.add("control_0005")
+    actual_updates = tuple(
+        (
+            definition.value,
+            definition.parent_control,
+            definition.control_path,
+            _compact_source(definition.expression_text),
+            definition.dependencies,
+        )
+        for definition in extraction.definitions
+        if definition.parent_control in tail_control_ids
+        and definition.definition_kind.startswith("compound-")
+    )
+    if actual_updates != _S8_TAIL_UPDATE_SHAPES:
+        raise CaseEmissionError(
+            "s8-vclamp: Neon 8-lane/tail pointer or count updates changed: "
+            f"expected={_S8_TAIL_UPDATE_SHAPES!r}, actual={actual_updates!r}"
+        )
+
+    untranslated = [
+        definition.value
+        for definition in extraction.definitions
+        if definition.parent_control in tail_control_ids
+        and definition.value_call is None
+        and not definition.definition_kind.startswith("compound-")
+    ]
+    if untranslated:
+        raise CaseEmissionError(
+            "s8-vclamp: untranslated Neon 8-lane/tail definitions " f"{untranslated!r}"
+        )
+    return tail_calls
+
+
+def _new_s8_tail_emitter(
+    extraction: KernelExtraction, registry: Mapping[str, IntrinsicSpec]
+) -> _CaseBlockEmitter:
+    emitter = _CaseBlockEmitter(extraction, Architecture.NEON, registry)
+    emitter.environment.update(
+        {
+            "voutput_max@0": "List.replicate 16 ((p.max).truncate 8)",
+            "voutput_min@0": "List.replicate 16 ((p.min).truncate 8)",
+        }
+    )
+    return emitter
+
+
+def _consume_little_endian_lane_store(
+    emitter: _CaseBlockEmitter,
+    call: IntrinsicCall,
+    *,
+    width: int,
+    bit: int,
+    name: str,
+) -> str:
+    spec = emitter._lookup_intrinsic(call.spelling)
+    if not (
+        isinstance(spec, StructuralIntrinsic)
+        and spec.operation is StructuralOp.LANE_STORE
+    ):
+        raise CaseEmissionError(f"{call.spelling}: expected a reviewed lane store")
+    emitter._validate_immediates(call, spec)
+    value = emitter._resolve(call.arguments[1])
+    emitter.consumed.add(call.node_id)
+    emitter.lines.append(
+        f"  let {name} := if live.testBit {bit} then ({value}).take {width} else []"
+    )
+    return name
+
+
+def _emit_s8_tail_value_models(
+    extraction: KernelExtraction, registry: Mapping[str, IntrinsicSpec]
+) -> tuple[list[str], tuple[str, ...]]:
+    """Emit the exact S8 8-lane and live-prefix value adapters.
+
+    Lane stores are interpreted as little-endian byte prefixes only inside this
+    adapter. This is not a generic C-memory or endian correspondence rule.
+    """
+
+    calls = _validate_s8_tail_source_shape(extraction)
+    by_id = {call.node_id: call for call in calls}
+
+    block = _new_s8_tail_emitter(extraction, registry)
+    block._bind_call(by_id["call_0018"], "(input).take 8")
+    for call_id in ("call_0019", "call_0020", "call_0021", "call_0022"):
+        block.emit_registered_call(by_id[call_id])
+    block_output = block.emit_registered_call(by_id["call_0023"])
+    if block_output is None:
+        raise CaseEmissionError("s8-vclamp: 8-lane store produced no value")
+
+    partial = _new_s8_tail_emitter(extraction, registry)
+    partial._bind_call(by_id["call_0024"], "(loaded).take 8")
+    for call_id in ("call_0025", "call_0026", "call_0027", "call_0028", "call_0029"):
+        partial.emit_registered_call(by_id[call_id])
+
+    stored4 = _consume_little_endian_lane_store(
+        partial, by_id["call_0030"], width=4, bit=2, name="stored4"
+    )
+    shifted4 = partial.emit_registered_call(by_id["call_0031"])
+    if shifted4 is None:
+        raise CaseEmissionError("s8-vclamp: 4-lane slide produced no value")
+    partial.lines.append(
+        f"  let after4 := if live.testBit 2 then {shifted4} else vacc_5"
+    )
+    partial.environment["vacc@6"] = "after4"
+
+    partial.emit_registered_call(by_id["call_0032"])
+    stored2 = _consume_little_endian_lane_store(
+        partial, by_id["call_0033"], width=2, bit=1, name="stored2"
+    )
+    shifted2 = partial.emit_registered_call(by_id["call_0034"])
+    if shifted2 is None:
+        raise CaseEmissionError("s8-vclamp: 2-lane slide produced no value")
+    partial.lines.append(
+        f"  let after2 := if live.testBit 1 then {shifted2} else after4"
+    )
+    partial.environment["vacc@7"] = "after2"
+    stored1 = _consume_little_endian_lane_store(
+        partial, by_id["call_0035"], width=1, bit=0, name="stored1"
+    )
+
+    expected = {call.node_id for call in calls}
+    consumed = block.consumed | partial.consumed
+    if consumed != expected:
+        raise CaseEmissionError(
+            "s8-vclamp: Neon 8-lane/tail call coverage mismatch: "
+            f"missing={sorted(expected - consumed)!r}, extra={sorted(consumed - expected)!r}"
+        )
+
+    lines = [
+        "",
+        "/-- Generated value model of the source's reversed-order 8-lane block. -/",
+        "def neonBlock8FromIntrinsics (p : S8ClampParams)",
+        "    (input : List (BitVec 8)) : List (BitVec 8) :=",
+        *block.lines,
+        f"  {block_output}",
+        "",
+        "/-- Generated little-endian live-prefix value abstraction for the 4/2/1 stores.",
+        "",
+        "This definition does not establish C memory, alignment, aliasing, or endian adequacy.",
+        "-/",
+        "def neonPartialTailLivePrefixFromIntrinsics (p : S8ClampParams)",
+        "    (loaded : List (BitVec 8)) (live : Nat) : List (BitVec 8) :=",
+        *partial.lines,
+        f"  ({stored4}) ++ ({stored2}) ++ ({stored1})",
+        "",
+        "/-- Generated value-only lifting of the validated 64/8/4/2/1 control shape.",
+        "",
+        "The zero padding represents unobserved overread lanes, not a C-memory load.",
+        "-/",
+        "def neonValueLoopFromIntrinsics (p : S8ClampParams)",
+        "    (input : List (BitVec 8)) : List (BitVec 8) :=",
+        "  if input.length >= 64 then",
+        "    neonBlock64FromIntrinsics p (input.take 64) ++",
+        "      neonValueLoopFromIntrinsics p (input.drop 64)",
+        "  else if input.length >= 8 then",
+        "    neonBlock8FromIntrinsics p (input.take 8) ++",
+        "      neonValueLoopFromIntrinsics p (input.drop 8)",
+        "  else",
+        "    let loaded := input ++",
+        "      List.replicate (8 - input.length) (0 : BitVec 8)",
+        "    neonPartialTailLivePrefixFromIntrinsics p loaded input.length",
+        "termination_by input.length",
+        "decreasing_by all_goals simp_all [List.length_drop]; omega",
+    ]
+    return lines, tuple(sorted(expected))
 
 
 def _selected_rvv_loop(extraction: KernelExtraction, profile: ModelProfile):
@@ -540,9 +1083,7 @@ def _validate_rvv_scalar_types(
             or definition.definition_kind == "parameter"
             or definition.value_call is not None
             or len(definition.dependencies) != 1
-            or not definition.dependencies[0].startswith(
-                "field:params@0.scalar."
-            )
+            or not definition.dependencies[0].startswith("field:params@0.scalar.")
         ):
             continue
         field = _field_name(definition.dependencies[0])
@@ -561,7 +1102,10 @@ def _validate_external_definitions(
 ) -> None:
     rejected: list[str] = []
     for definition in extraction.definitions:
-        if definition.parent_control is not None or definition.definition_kind == "parameter":
+        if (
+            definition.parent_control is not None
+            or definition.definition_kind == "parameter"
+        ):
             continue
         if definition.value_call is not None:
             continue
@@ -646,7 +1190,9 @@ def _reviewed_signed_shift_branch(
     try:
         shift = emitter.environment["shift@0"]
     except KeyError as error:
-        raise CaseEmissionError("RVV signed-shift branch has no reviewed shift") from error
+        raise CaseEmissionError(
+            "RVV signed-shift branch has no reviewed shift"
+        ) from error
     mode = emitter._resolve(right.arguments[2])
     right_name = emitter._bind_call(
         right,
@@ -748,7 +1294,9 @@ def _emit_rvv_case(
             emitter.consumed.add(call.node_id)
             continue
         if not saw_schedule:
-            raise CaseEmissionError(f"{profile.case_id}: RVV data operation precedes vsetvl")
+            raise CaseEmissionError(
+                f"{profile.case_id}: RVV data operation precedes vsetvl"
+            )
         vl_indices = [
             index
             for index, parameter in enumerate(spec.signature.parameters)
@@ -764,7 +1312,10 @@ def _emit_rvv_case(
                 raise CaseEmissionError(
                     f"{profile.case_id}: {call.spelling} does not consume active vl"
                 )
-        if isinstance(spec, StructuralIntrinsic) and spec.operation is StructuralOp.LOAD:
+        if (
+            isinstance(spec, StructuralIntrinsic)
+            and spec.operation is StructuralOp.LOAD
+        ):
             base_argument = call.arguments[0]
             dependency = _single_dependency(base_argument)
             base = dependency.split("@", 1)[0]
@@ -776,14 +1327,20 @@ def _emit_rvv_case(
                 raise CaseEmissionError(
                     f"{profile.case_id}: RVV load does not use the chunk base"
                 )
-            if base_argument.source_text.strip() != base or base_argument.semantic_operations:
+            if (
+                base_argument.source_text.strip() != base
+                or base_argument.semantic_operations
+            ):
                 raise CaseEmissionError(
                     f"{profile.case_id}: unsupported RVV load expression "
                     f"{base_argument.source_text!r}"
                 )
             emitter._bind_call(call, base)
             continue
-        if isinstance(spec, StructuralIntrinsic) and spec.operation is StructuralOp.STORE:
+        if (
+            isinstance(spec, StructuralIntrinsic)
+            and spec.operation is StructuralOp.STORE
+        ):
             store_base = call.arguments[0]
             if (
                 store_base.dependencies != ("output@0",)
@@ -794,7 +1351,10 @@ def _emit_rvv_case(
                     f"{profile.case_id}: RVV store does not use the chunk output base"
                 )
         result = emitter.emit_registered_call(call)
-        if isinstance(spec, StructuralIntrinsic) and spec.operation is StructuralOp.STORE:
+        if (
+            isinstance(spec, StructuralIntrinsic)
+            and spec.operation is StructuralOp.STORE
+        ):
             if output is not None or result is None:
                 raise CaseEmissionError(f"{profile.case_id}: expected one RVV store")
             output = result
@@ -809,8 +1369,7 @@ def _emit_rvv_case(
     if output is None:
         raise CaseEmissionError(f"{profile.case_id}: RVV block has no store")
     expected_updates = [
-        (f"{input_name}@1", f"{input_name} += vl")
-        for input_name in profile.inputs
+        (f"{input_name}@1", f"{input_name} += vl") for input_name in profile.inputs
     ]
     expected_updates.extend(
         [
@@ -849,8 +1408,7 @@ def _emit_rvv_case(
 def _parameter_structure(profile: ModelProfile) -> list[str]:
     lines = [f"structure {profile.parameter_type} where"]
     lines.extend(
-        f"  {field.name} : BitVec {field.width}"
-        for field in profile.parameter_fields
+        f"  {field.name} : BitVec {field.width}" for field in profile.parameter_fields
     )
     lines.append("  deriving Repr, DecidableEq")
     return lines
@@ -858,7 +1416,9 @@ def _parameter_structure(profile: ModelProfile) -> list[str]:
 
 def _function_header(name: str, profile: ModelProfile) -> list[str]:
     lines = [f"def {name} (p : {profile.parameter_type})"]
-    lines.extend(f"    ({input_name} : List (BitVec 8))" for input_name in profile.inputs)
+    lines.extend(
+        f"    ({input_name} : List (BitVec 8))" for input_name in profile.inputs
+    )
     lines[-1] = f"{lines[-1]} : List (BitVec 8) :="
     return lines
 
@@ -872,13 +1432,32 @@ def emit_case_pair(
     rvv_registry: Mapping[str, IntrinsicSpec],
     registry_sha256: str,
 ) -> CaseEmission:
-    """Emit independent local block/chunk models for one reviewed pair."""
+    """Emit reviewed models for one pair, including any validated case adapter."""
 
     if neon.facade_sha256 != rvv.facade_sha256:
         raise CaseEmissionError(f"{profile.case_id}: parse facades differ across sides")
     neon_lines, neon_output, neon_consumed = _emit_neon_case(
         neon, profile, neon_registry
     )
+    neon_extra_lines: list[str] = []
+    if profile.case_id == "s8-vclamp":
+        neon_extra_lines, tail_consumed = _emit_s8_tail_value_models(
+            neon, neon_registry
+        )
+        overlap = set(neon_consumed) & set(tail_consumed)
+        if overlap:
+            raise CaseEmissionError(
+                f"s8-vclamp: duplicate Neon call consumption {sorted(overlap)!r}"
+            )
+        combined = set(neon_consumed) | set(tail_consumed)
+        all_calls = {call.node_id for call in neon.calls}
+        if combined != all_calls:
+            raise CaseEmissionError(
+                "s8-vclamp: complete Neon value-call coverage mismatch: "
+                f"missing={sorted(all_calls - combined)!r}, "
+                f"extra={sorted(combined - all_calls)!r}"
+            )
+        neon_consumed = tuple(sorted(combined))
     rvv_lines, rvv_output, rvv_consumed = _emit_rvv_case(rvv, profile, rvv_registry)
     lines = [
         "-- This file is generated. Do not edit the models by hand.",
@@ -899,6 +1478,7 @@ def emit_case_pair(
         *_function_header(profile.neon_function, profile),
         *neon_lines,
         f"  {neon_output}",
+        *neon_extra_lines,
         "",
         *_function_header(profile.rvv_function, profile),
         *rvv_lines,
@@ -907,7 +1487,5 @@ def emit_case_pair(
         f"end {profile.lean_namespace}",
         "",
     ]
-    emitted = EmittedPair(
-        "\n".join(lines), profile.neon_function, profile.rvv_function
-    )
+    emitted = EmittedPair("\n".join(lines), profile.neon_function, profile.rvv_function)
     return CaseEmission(emitted, neon_consumed, rvv_consumed)
