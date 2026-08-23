@@ -48,6 +48,25 @@ def test_changed_neon_pointer_stride_is_rejected(tmp_path: Path):
         emit_s8_vmax_example(repository_root=ROOT, neon_source=mutated)
 
 
+def test_extra_top_level_neon_control_is_rejected(tmp_path: Path):
+    source = (ROOT / "examples/s8-vmax-to-lean/neon.c").read_text(encoding="ascii")
+    marker = "\n}\n"
+    injected = """
+  if (batch >= 0) {
+    output -= 16;
+    int8x16_t extra = vdupq_n_s8(0);
+    vst1q_s8(output, extra);
+  }
+}
+"""
+    assert source.endswith(marker)
+    mutated = tmp_path / "neon.c"
+    mutated.write_text(source[: -len(marker)] + "\n" + injected, encoding="ascii")
+
+    with pytest.raises(CaseEmissionError, match="Neon control shape changed"):
+        emit_s8_vmax_example(repository_root=ROOT, neon_source=mutated)
+
+
 def test_supported_neon_semantic_mutation_changes_model(tmp_path: Path):
     original = generate_s8_vmax_example(repository_root=ROOT)
     source = (ROOT / "examples/s8-vmax-to-lean/neon.c").read_text(encoding="ascii")

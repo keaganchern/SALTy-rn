@@ -271,6 +271,96 @@ def _selected_neon_loop(extraction: KernelExtraction, profile: ModelProfile):
     return matches[0]
 
 
+def _normalized_control_shape(
+    controls: tuple[ControlFact, ...],
+) -> tuple[tuple[str, int | None, str, tuple[str, ...], str], ...]:
+    positions = {control.node_id: index for index, control in enumerate(controls)}
+    return tuple(
+        (
+            control.kind,
+            None
+            if control.parent_control is None
+            else positions.get(control.parent_control, -1),
+            control.condition_text,
+            control.condition_dependencies,
+            control.update_text,
+        )
+        for control in controls
+    )
+
+
+_S8_VCLAMP_NEON_CONTROL_SHAPE = (
+    ("ForStmt", None, "batch >= 64", ("batch@0", "constant:64:int"), "batch -= 64"),
+    ("ForStmt", None, "batch >= 8", ("batch@1", "constant:8:int"), "batch -= 8"),
+    ("IfStmt", None, "batch != 0", ("batch@2", "constant:0:int"), ""),
+    ("IfStmt", 2, "batch & 4", ("batch@2", "constant:4:int"), ""),
+    ("IfStmt", 2, "batch & 2", ("batch@2", "constant:2:int"), ""),
+    ("IfStmt", 2, "batch & 1", ("batch@2", "constant:1:int"), ""),
+)
+
+
+def _byte_tail_control_shape(
+    loop: ControlFact, element_type: str
+) -> tuple[tuple[str, int | None, str, tuple[str, ...], str], ...]:
+    return (
+        (
+            loop.kind,
+            None,
+            loop.condition_text,
+            loop.condition_dependencies,
+            loop.update_text,
+        ),
+        ("IfStmt", None, "batch != 0", ("batch@1", "constant:0:int"), ""),
+        (
+            "IfStmt",
+            1,
+            f"batch & (4 * sizeof({element_type}))",
+            ("batch@1", "constant:4:int", f"sizeof:{element_type}"),
+            "",
+        ),
+        (
+            "IfStmt",
+            1,
+            f"batch & (2 * sizeof({element_type}))",
+            ("batch@1", "constant:2:int", f"sizeof:{element_type}"),
+            "",
+        ),
+        (
+            "IfStmt",
+            1,
+            f"batch & (1 * sizeof({element_type}))",
+            ("batch@1", "constant:1:int", f"sizeof:{element_type}"),
+            "",
+        ),
+    )
+
+
+def _validate_neon_control_shape(
+    extraction: KernelExtraction, profile: ModelProfile, loop: ControlFact
+) -> None:
+    if profile.case_id == "s8-vclamp":
+        expected = _S8_VCLAMP_NEON_CONTROL_SHAPE
+    elif profile.case_id in {"qs8-vcvt", "qs8-vlrelu"}:
+        expected = _byte_tail_control_shape(loop, "int8_t")
+    elif profile.case_id == "qu8-vadd-minmax":
+        expected = _byte_tail_control_shape(loop, "uint8_t")
+    else:
+        expected = (
+            (
+                loop.kind,
+                None,
+                loop.condition_text,
+                loop.condition_dependencies,
+                loop.update_text,
+            ),
+        )
+    actual = _normalized_control_shape(extraction.controls)
+    if actual != expected:
+        raise CaseEmissionError(
+            f"{profile.case_id}: Neon control shape changed: {actual!r}"
+        )
+
+
 def _emit_neon_case(
     extraction: KernelExtraction,
     profile: ModelProfile,
@@ -286,6 +376,7 @@ def _emit_neon_case(
         raise CaseEmissionError(
             f"{profile.case_id}: nested Neon block control is unsupported"
         )
+    _validate_neon_control_shape(extraction, profile, loop)
     emitter = _CaseBlockEmitter(extraction, Architecture.NEON, registry)
 
     selected_calls = [
