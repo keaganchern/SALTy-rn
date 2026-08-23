@@ -112,3 +112,8 @@ C memory effects, or real `vsetvl` executions to those schedule theorems.
 Therefore the result is generated Lean block-model equivalence. It is not yet a
 C-source observational-equivalence theorem, an intrinsic-to-ISA adequacy theorem,
 or a compiled-binary theorem.
+
+A smaller Chinese teaching example is available at
+`examples/s8-vmax-to-lean/README.zh-CN.md`. Its synthetic Neon/RVV C pair goes
+through this actual frontend and emitter and produces a checked local-block Lean
+model and proof; it is kept outside the five real-kernel generation set.
