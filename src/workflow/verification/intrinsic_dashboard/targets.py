@@ -37,7 +37,7 @@ PROOF_CASES: Mapping[str, ProofTarget] = {
         models_path="src/verification_bw/lean/SALT/Generated/QS8VCvt/Models.lean",
         proof_path="src/verification_bw/lean/SALT/Generated/QS8VCvt/Proof.lean",
         contract_path="src/verification_bw/lean/SALT/Kernel/QS8VCvt/Contract.lean",
-        claim_scope=ClaimScope.SELECTED_LOCAL_BLOCK,
+        claim_scope=ClaimScope.ARBITRARY_LENGTH_VALUE,
     ),
     "qs8-vlrelu": ProofTarget(
         module="SALT.Generated.QS8VLReLU.Proof",

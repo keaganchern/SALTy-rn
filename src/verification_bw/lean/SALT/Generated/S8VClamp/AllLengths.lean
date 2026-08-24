@@ -71,50 +71,13 @@ theorem neonBlock8FromIntrinsics_eq_map (p : S8ClampParams)
   unfold neonTailValue clampValue
   exact min_then_max_eq_max_then_min x _ _ hBounds
 
-private def littleEndianPrefixStorePlan (values : List (BitVec 8))
-    (live : Nat) : List (BitVec 8) :=
-  let stored4 := if live.testBit 2 then values.take 4 else []
-  let shifted4 := ((values ++ values).drop 4).take 8
-  let after4 := if live.testBit 2 then shifted4 else values
-  let stored2 := if live.testBit 1 then after4.take 2 else []
-  let shifted2 := ((after4 ++ after4).drop 2).take 8
-  let after2 := if live.testBit 1 then shifted2 else after4
-  let stored1 := if live.testBit 0 then after2.take 1 else []
-  stored4 ++ stored2 ++ stored1
-
-private theorem littleEndianPrefixStorePlan_eq_take (values : List (BitVec 8))
-    (hLength : values.length = 8) (live : Nat) (hLive : live < 8) :
-    littleEndianPrefixStorePlan values live = values.take live := by
-  rcases values with _ | ⟨x0, xs⟩
-  · simp at hLength
-  rcases xs with _ | ⟨x1, xs⟩
-  · simp at hLength
-  rcases xs with _ | ⟨x2, xs⟩
-  · simp at hLength
-  rcases xs with _ | ⟨x3, xs⟩
-  · simp at hLength
-  rcases xs with _ | ⟨x4, xs⟩
-  · simp at hLength
-  rcases xs with _ | ⟨x5, xs⟩
-  · simp at hLength
-  rcases xs with _ | ⟨x6, xs⟩
-  · simp at hLength
-  rcases xs with _ | ⟨x7, xs⟩
-  · simp at hLength
-  have hTail : xs = [] := by cases xs <;> simp_all
-  subst xs
-  have hCases : live = 0 ∨ live = 1 ∨ live = 2 ∨ live = 3 ∨
-      live = 4 ∨ live = 5 ∨ live = 6 ∨ live = 7 := by omega
-  rcases hCases with h | h | h | h | h | h | h | h <;>
-    subst live <;> simp [littleEndianPrefixStorePlan, Nat.testBit]
-
 theorem neonPartialTailLivePrefixFromIntrinsics_eq_take_tailMap
     (p : S8ClampParams) (loaded : List (BitVec 8)) (hLength : loaded.length = 8)
     (live : Nat) (hLive : live < 8) :
     neonPartialTailLivePrefixFromIntrinsics p loaded live =
       (loaded.map (neonTailValue p)).take live := by
-  change littleEndianPrefixStorePlan (neonBlock8FromIntrinsics p loaded) live = _
-  rw [littleEndianPrefixStorePlan_eq_take _ (by simp [
+  change littleEndianPrefixStore8 (neonBlock8FromIntrinsics p loaded) live = _
+  rw [littleEndianPrefixStore8_eq_take _ (by simp [
     neonBlock8FromIntrinsics_eq_tailMap, hLength]) _ hLive]
   rw [neonBlock8FromIntrinsics_eq_tailMap p loaded hLength]
 
@@ -170,39 +133,16 @@ theorem neonValueLoopWithOverreadFromIntrinsics_eq_map (p : S8ClampParams)
     (input overread : List (BitVec 8)) (hOverread : 7 <= overread.length) :
     neonValueLoopWithOverreadFromIntrinsics p input overread =
       input.map (clampValue p) := by
-  suffices forall n (xs : List (BitVec 8)), xs.length <= n ->
-      neonValueLoopWithOverreadFromIntrinsics p xs overread =
-        xs.map (clampValue p) from
-    this input.length input (by omega)
-  intro n
-  induction n with
-  | zero =>
-      intro xs hLength
-      have : xs = [] := by cases xs <;> simp_all
-      subst xs
-      simp [neonValueLoopWithOverreadFromIntrinsics]
-  | succ n ih =>
-      intro xs hLength
-      unfold neonValueLoopWithOverreadFromIntrinsics
-      split
-      · have hTake : (xs.take 64).length = 64 := by
-          simp [List.length_take]
-          omega
-        rw [neonBlock64FromIntrinsics_eq_map p _ hTake]
-        rw [ih _ (by simp [List.length_drop]; omega)]
-        rw [<- List.map_append, List.take_append_drop]
-      · split
-        · have hTake : (xs.take 8).length = 8 := by
-            simp [List.length_take]
-            omega
-          rw [neonBlock8FromIntrinsics_eq_map p hBounds _ hTake]
-          rw [ih _ (by simp [List.length_drop]; omega)]
-          rw [<- List.map_append, List.take_append_drop]
-        · split
-          · simp_all
-          · have hPositive : 0 < xs.length := by cases xs <;> simp_all
-            exact neonPartialTailWithOverread_eq_map p hBounds xs overread
-              (by omega) (by omega)
+  unfold neonValueLoopWithOverreadFromIntrinsics
+  apply runFixedChunkTail_eq_map 64 (by decide)
+      (neonBlock64FromIntrinsics p) _ (clampValue p)
+  · exact neonBlock64FromIntrinsics_eq_map p
+  · intro after64 _ _
+    apply runFixedChunkTail_eq_map 8 (by decide)
+        (neonBlock8FromIntrinsics p) _ (clampValue p)
+    · exact neonBlock8FromIntrinsics_eq_map p hBounds
+    · intro tail _ hTail
+      exact neonPartialTailWithOverread_eq_map p hBounds tail overread hTail (by omega)
 
 theorem neonValueLoopFromIntrinsics_eq_map (p : S8ClampParams)
     (hBounds : (p.min.truncate 8).toInt <= (p.max.truncate 8).toInt)
@@ -222,35 +162,15 @@ theorem neonValueLoopWithOverread_irrelevant (p : S8ClampParams)
   rw [neonValueLoopWithOverreadFromIntrinsics_eq_map p hBounds input overreadB
     hOverreadB]
 
-private def processBlockSizes {alpha beta : Type}
-    (block : List alpha -> List beta) : List Nat -> List alpha -> List beta
-  | [], _ => []
-  | chunk :: chunks, input =>
-      block (input.take chunk) ++ processBlockSizes block chunks (input.drop chunk)
-
-private theorem processBlockSizes_eq_map {alpha beta : Type}
-    (block : List alpha -> List beta) (f : alpha -> beta)
-    (hBlock : forall xs, block xs = xs.map f)
-    (chunks : List Nat) (input : List alpha)
-    (coverage : chunks.sum = input.length) :
-    processBlockSizes block chunks input = input.map f := by
-  induction chunks generalizing input with
-  | nil => cases input <;> simp_all [processBlockSizes]
-  | cons chunk chunks ih =>
-      simp only [processBlockSizes]
-      rw [hBlock, ih (input.drop chunk) (by simp [List.length_drop, <- coverage])]
-      rw [<- List.map_append, List.take_append_drop]
-
 /-- Apply the generated RVV chunk model according to an arbitrary complete schedule. -/
 def reviewedRVVValueLoop (p : S8ClampParams) (input : List (BitVec 8))
     (schedule : PositivePartition input.length) : List (BitVec 8) :=
-  processBlockSizes (rvvChunkFromIntrinsics p) schedule.chunks input
+  processBlocks (rvvChunkFromIntrinsics p) input schedule
 
 theorem reviewedRVVValueLoop_eq_map (p : S8ClampParams)
     (input : List (BitVec 8)) (schedule : PositivePartition input.length) :
     reviewedRVVValueLoop p input schedule = input.map (clampValue p) :=
-  processBlockSizes_eq_map _ _ (rvvChunkFromIntrinsics_eq_map p)
-    schedule.chunks input schedule.total
+  processBlocks_eq_map _ _ (rvvChunkFromIntrinsics_eq_map p) input schedule
 
 /-- Arbitrary-length value equality for every complete positive RVV partition.
 

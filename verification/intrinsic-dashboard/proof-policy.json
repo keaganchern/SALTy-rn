@@ -4,7 +4,7 @@
     "Quot.sound",
     "propext"
   ],
-  "lean_project_sha256": "46d1cc952de9d5ffce0f72461ec1c48ad61c1e5d56630f0c7168f6b89664ca13",
+  "lean_project_sha256": "d1e2ebd8986140cda7365926f63166cb4351f5b843732a1f616ae25535cbc0ee",
   "cases": {
     "qs8-vadd-minmax": {
       "contract": {
@@ -33,8 +33,8 @@
       },
       "module": "SALT.Generated.QS8VCvt.Proof",
       "proof_path": "src/verification_bw/lean/SALT/Generated/QS8VCvt/Proof.lean",
-      "elaborated_type_sha256": "9e8fe5038878372906447fc7df6d87436798a9c0d673f081c7e6f61b3616af75",
-      "theorem": "SALT.Generated.QS8VCvt.generated_block_equal"
+      "elaborated_type_sha256": "4098ebfaa12e79d718f9f7fa8b5c47001245d32bf74c8ec44bf62b03694e4a6f",
+      "theorem": "SALT.Generated.QS8VCvt.allLengthsValueEqualWithOverread"
     },
     "qs8-vlrelu": {
       "contract": {

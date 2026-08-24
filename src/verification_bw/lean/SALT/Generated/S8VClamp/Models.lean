@@ -1,6 +1,7 @@
 -- This file is generated. Do not edit the models by hand.
 import SALT.Intrinsics.Neon
 import SALT.Intrinsics.RVV
+import SALT.Kernel.Schedule
 
 namespace SALT.Generated.S8VClamp
 
@@ -79,19 +80,14 @@ This definition does not establish that those bytes are legally readable.
 -/
 def neonValueLoopWithOverreadFromIntrinsics (p : S8ClampParams)
     (input overread : List (BitVec 8)) : List (BitVec 8) :=
-  if input.length >= 64 then
-    neonBlock64FromIntrinsics p (input.take 64) ++
-      neonValueLoopWithOverreadFromIntrinsics p (input.drop 64) overread
-  else if input.length >= 8 then
-    neonBlock8FromIntrinsics p (input.take 8) ++
-      neonValueLoopWithOverreadFromIntrinsics p (input.drop 8) overread
-  else if input = [] then
-    []
-  else
-    let loaded := (input ++ overread).take 8
-    neonPartialTailLivePrefixFromIntrinsics p loaded input.length
-termination_by input.length
-decreasing_by all_goals simp_all [List.length_drop]; omega
+  SALT.Kernel.Schedule.runFixedChunkTail 64 (by decide)
+    (neonBlock64FromIntrinsics p)
+    (SALT.Kernel.Schedule.runFixedChunkTail 8 (by decide)
+      (neonBlock8FromIntrinsics p)
+      (fun tail =>
+        let loaded := (tail ++ overread).take 8
+        neonPartialTailLivePrefixFromIntrinsics p loaded tail.length))
+    input
 
 /-- Zero-filled compatibility specialization of the arbitrary-overread model. -/
 def neonValueLoopFromIntrinsics (p : S8ClampParams)

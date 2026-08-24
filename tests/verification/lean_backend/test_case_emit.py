@@ -81,12 +81,85 @@ def test_s8_emission_consumes_every_neon_and_rvv_call():
     assert "def neonPartialTailLivePrefixFromIntrinsics" in result.emitted.module_text
     assert "def neonValueLoopWithOverreadFromIntrinsics" in result.emitted.module_text
     assert "def neonValueLoopFromIntrinsics" in result.emitted.module_text
-    assert "let loaded := (input ++ overread).take 8" in result.emitted.module_text
+    assert "let loaded := (tail ++ overread).take 8" in result.emitted.module_text
     assert "List.replicate 7 (0 : BitVec 8)" in result.emitted.module_text
     overread_model = result.emitted.module_text.split(
         "def neonValueLoopWithOverreadFromIntrinsics", 1
     )[1].split("Zero-filled compatibility specialization", 1)[0]
     assert "List.replicate" not in overread_model
+
+
+def test_qs8_vcvt_emission_consumes_complete_unbounded_schedule():
+    neon = extract("qs8-vcvt", "neon")
+    rvv = extract("qs8-vcvt", "rvv")
+    result = emit("qs8-vcvt")
+    module = result.emitted.module_text
+
+    assert len(neon.calls) == 23
+    assert len(rvv.calls) == 11
+    assert set(result.neon_consumed_calls) == {call.node_id for call in neon.calls}
+    assert set(result.rvv_consumed_calls) == {call.node_id for call in rvv.calls}
+    assert "def neonPartialTailLivePrefixFromIntrinsics" in module
+    assert "def neonValueLoopWithOverreadFromIntrinsics" in module
+    assert "def rvvValueLoopFromIntrinsics" in module
+    assert "runFixedChunkTail 8" in module
+    assert "PositivePartition input.length" in module
+    assert "let loaded := (tail ++ overread).take 8" in module
+
+
+@pytest.mark.parametrize(
+    ("old", "new", "message"),
+    (
+        (
+            "if (batch & (4 * sizeof(int8_t)))",
+            "if (batch & (3 * sizeof(int8_t)))",
+            "Neon control shape changed",
+        ),
+        (
+            "vext_s8(vy, vy, 4)",
+            "vext_s8(vy, vy, 2)",
+            "conditional slide changed",
+        ),
+        (
+            "output += 4;",
+            "output += 3;",
+            "prefix-tail pointer updates changed",
+        ),
+        (
+            "vst1_lane_u32((void*) output",
+            "vst1_lane_u32((uint32_t*) output",
+            "width-4 lane-store shape changed",
+        ),
+    ),
+)
+def test_qs8_vcvt_tail_shape_mutations_fail_closed(
+    tmp_path: Path, old: str, new: str, message: str
+):
+    source = (ROOT / "kernels/source/qs8-vcvt.c").read_text(encoding="utf-8")
+    assert source.count(old) == 1
+    mutated = tmp_path / "qs8-vcvt.c"
+    mutated.write_text(source.replace(old, new, 1), encoding="utf-8")
+
+    with pytest.raises((CaseEmissionError, LeanEmissionError), match=message):
+        emit("qs8-vcvt", neon_source=mutated)
+
+
+def test_supported_qs8_vcvt_tail_semantic_mutation_changes_model(tmp_path: Path):
+    original = emit("qs8-vcvt").emitted.module_text
+    source = (ROOT / "kernels/source/qs8-vcvt.c").read_text(encoding="utf-8")
+    old = "vacc = vqaddq_s16(vacc, voutput_zero_point);"
+    offset = source.rfind(old)
+    assert offset >= 0
+    new = "vacc = vqrdmulhq_s16(vacc, voutput_zero_point);"
+    mutated = tmp_path / "qs8-vcvt.c"
+    mutated.write_text(
+        source[:offset] + new + source[offset + len(old) :], encoding="utf-8"
+    )
+
+    changed = emit("qs8-vcvt", neon_source=mutated).emitted.module_text
+    assert changed != original
+    tail = changed.split("def neonPartialTailLivePrefixFromIntrinsics", 1)[1]
+    assert "SALT.Intrinsics.Neon.vqrdmulhq_s16 (vacc_6) (voutput_zero_point_0)" in tail
 
 
 def test_generic_lane_store_still_requires_an_endian_contract():

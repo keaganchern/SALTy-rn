@@ -80,7 +80,7 @@ under ordered clamp bounds. Its stronger entry theorem takes arbitrary values fo
 seven would-be tail-overread bytes and proves that their contents do not affect
 the live output. This is not a proof that the physical overread is legal.
 `QS8VCvt/Proof.lean` proves
-the generated 8-lane conversion blocks equal under the parameter domain of the
+the generated conversion blocks equal under the parameter domain of the
 pinned `XNNPACK@867d5a344790802ee067be62f572c2e2722bf6fb` revision. The
 [zero-point checks](https://github.com/google/XNNPACK/blob/867d5a344790802ee067be62f572c2e2722bf6fb/src/tensor.c#L50-L70)
 and [conversion multiplier construction](https://github.com/google/XNNPACK/blob/867d5a344790802ee067be62f572c2e2722bf6fb/src/microparams-init.c#L1103-L1118)
@@ -112,17 +112,20 @@ not relate Neon QC to RVV `vxsat` or model the persistent `vxrm` state.
 
 `SALT/Kernel/Schedule.lean` proves generic fixed-chunk/tail and
 positive-partition refinements to `List.map`/`List.zipWith` for arbitrary list
-lengths. The `s8-vclamp` adapter uses a little-endian live-prefix value
-abstraction for its lane stores. It proves content independence for any seven
-supplied byte values after a short tail, but does not establish their C-memory
-readability, alignment, aliasing, host endianness, or real `vsetvl`/ISA executions.
-The other scale-up cases remain selected-block results and do not yet connect
-their complete Neon tails to the schedule theorems.
+lengths. The `s8-vclamp` and `qs8-vcvt` adapters use a little-endian live-prefix
+value abstraction for their 4/2/1 lane stores. They prove content independence
+for any seven supplied byte values after a short tail, but do not establish
+their C-memory readability, alignment, aliasing, host endianness, or real
+`vsetvl`/ISA executions. `qs8-vcvt` consumes all 23 reachable Neon calls and all
+11 RVV calls when generating its full value models. Its case-specific
+`Proof.lean` remains reviewed code; `generate_cases.py` does not generate the
+proof. The other three scale-up cases remain selected-block results and do not
+yet connect their complete Neon tails to the schedule theorems.
 
 Therefore these are generated Lean value-model equivalence results; only the
-`s8-vclamp` result currently quantifies over arbitrary input lengths. They are
-not yet C-source observational-equivalence, intrinsic-to-ISA adequacy, or
-compiled-binary theorems.
+`s8-vclamp` and `qs8-vcvt` results currently quantify over arbitrary input
+lengths. They are not yet C-source observational-equivalence,
+intrinsic-to-ISA adequacy, or compiled-binary theorems.
 
 A smaller Chinese teaching example is available at
 `examples/s8-vmax-to-lean/README.zh-CN.md`. Its synthetic Neon/RVV C pair goes

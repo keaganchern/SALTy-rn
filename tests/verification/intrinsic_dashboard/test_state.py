@@ -396,7 +396,7 @@ def test_kernel_rows_use_explicit_aliases_and_real_artifact_gates(
     assert by_program["qs8-vcvt"].spec_generated
     assert by_program["qs8-vcvt"].proof_generated
     assert by_program["qs8-vcvt"].generated_model_fresh
-    assert by_program["qs8-vcvt"].claim_scope is ClaimScope.SELECTED_LOCAL_BLOCK
+    assert by_program["qs8-vcvt"].claim_scope is ClaimScope.ARBITRARY_LENGTH_VALUE
     assert not by_program["qs8-vcvt"].complete_c_function_verified
     assert by_program["s8-vclamp"].spec_generated
     assert by_program["s8-vclamp"].proof_generated
@@ -437,7 +437,7 @@ def test_kernel_rows_use_explicit_aliases_and_real_artifact_gates(
     assert binding["generated_model_fresh"] is True
     assert binding["proof"]["sha256"]
     assert binding["proof_check"] is None
-    assert projected["qs8-vcvt"]["claim_scope"] == "selected-local-block"
+    assert projected["qs8-vcvt"]["claim_scope"] == "arbitrary-length-value"
     s8_binding = projected["s8-vclamp"]["artifact_binding"]
     assert s8_binding["contract"]["path"].endswith("/S8VClamp/Contract.lean")
     assert s8_binding["proof"]["path"].endswith("/S8VClamp/AllLengths.lean")
@@ -817,10 +817,13 @@ def test_local_provider_does_not_scan_xnnpack_and_rebuilds_live_state(
         for row in first["kernel_files"]
         if row["claim_scope"] == "arbitrary-length-value"
     ]
-    assert len(selected_rows) == 4
+    assert len(selected_rows) == 3
     assert all(row["generated_model_fresh"] for row in selected_rows)
-    assert [row["program_id"] for row in arbitrary_length_rows] == ["s8-vclamp"]
-    assert arbitrary_length_rows[0]["generated_model_fresh"] is True
+    assert {row["program_id"] for row in arbitrary_length_rows} == {
+        "s8-vclamp",
+        "qs8-vcvt",
+    }
+    assert all(row["generated_model_fresh"] for row in arbitrary_length_rows)
     assert second["agents"][0]["id"] == "agent-live"
     assert first["revision"] == second["revision"]
     assert len(current_ledger.kernel_files) == 40

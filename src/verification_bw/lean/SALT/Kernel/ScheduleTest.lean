@@ -40,4 +40,22 @@ example {α β γ : Type} (f : α -> β -> γ) (inputA : List α) (inputB : List
     processChunks2 f inputA inputB sameLength schedule = List.zipWith f inputA inputB :=
   processChunks2_eq_zipWith f inputA inputB sameLength schedule
 
+def addOneBlock (input : List Nat) : List Nat := input.map (fun n => n + 1)
+
+example : processBlocks addOneBlock [0, 1, 2, 3, 4] fiveElements =
+    [1, 2, 3, 4, 5] := by
+  rfl
+
+example : runFixedChunkTail 2 (by decide) addOneBlock addOneBlock [0, 1, 2, 3, 4] =
+    [1, 2, 3, 4, 5] := by
+  calc
+    _ = [0, 1, 2, 3, 4].map (fun n => n + 1) :=
+      runFixedChunkTail_eq_map 2 (by decide) addOneBlock addOneBlock
+        (fun n => n + 1) (by intro input _; rfl) (by intro input _ _; rfl) _
+    _ = _ := by rfl
+
+example : littleEndianPrefixStore8 [0, 1, 2, 3, 4, 5, 6, 7] 7 =
+    [0, 1, 2, 3, 4, 5, 6] := by
+  rfl
+
 end SALT.Kernel.ScheduleTest
