@@ -79,7 +79,14 @@ def test_s8_emission_consumes_every_neon_and_rvv_call():
     assert set(result.rvv_consumed_calls) == {call.node_id for call in rvv.calls}
     assert "def neonBlock8FromIntrinsics" in result.emitted.module_text
     assert "def neonPartialTailLivePrefixFromIntrinsics" in result.emitted.module_text
+    assert "def neonValueLoopWithOverreadFromIntrinsics" in result.emitted.module_text
     assert "def neonValueLoopFromIntrinsics" in result.emitted.module_text
+    assert "let loaded := (input ++ overread).take 8" in result.emitted.module_text
+    assert "List.replicate 7 (0 : BitVec 8)" in result.emitted.module_text
+    overread_model = result.emitted.module_text.split(
+        "def neonValueLoopWithOverreadFromIntrinsics", 1
+    )[1].split("Zero-filled compatibility specialization", 1)[0]
+    assert "List.replicate" not in overread_model
 
 
 def test_generic_lane_store_still_requires_an_endian_contract():

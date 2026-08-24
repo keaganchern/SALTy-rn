@@ -76,7 +76,10 @@ For `s8-vclamp`, the frontend validates and consumes all 36 Neon intrinsic calls
 and emits the 64-lane, 8-lane, and 4/2/1 live-prefix value paths.
 `S8VClamp/AllLengths.lean` proves that the generated Neon value schedule is
 equal to an RVV chunk model for every input length and every complete positive partition,
-under ordered clamp bounds. `QS8VCvt/Proof.lean` proves
+under ordered clamp bounds. Its stronger entry theorem takes arbitrary values for
+seven would-be tail-overread bytes and proves that their contents do not affect
+the live output. This is not a proof that the physical overread is legal.
+`QS8VCvt/Proof.lean` proves
 the generated 8-lane conversion blocks equal under the parameter domain of the
 pinned `XNNPACK@867d5a344790802ee067be62f572c2e2722bf6fb` revision. The
 [zero-point checks](https://github.com/google/XNNPACK/blob/867d5a344790802ee067be62f572c2e2722bf6fb/src/tensor.c#L50-L70)
@@ -110,8 +113,9 @@ not relate Neon QC to RVV `vxsat` or model the persistent `vxrm` state.
 `SALT/Kernel/Schedule.lean` proves generic fixed-chunk/tail and
 positive-partition refinements to `List.map`/`List.zipWith` for arbitrary list
 lengths. The `s8-vclamp` adapter uses a little-endian live-prefix value
-abstraction for its lane stores. It does not establish C memory, alignment,
-aliasing, legal overreads, host endianness, or real `vsetvl`/ISA executions.
+abstraction for its lane stores. It proves content independence for any seven
+supplied byte values after a short tail, but does not establish their C-memory
+readability, alignment, aliasing, host endianness, or real `vsetvl`/ISA executions.
 The other scale-up cases remain selected-block results and do not yet connect
 their complete Neon tails to the schedule theorems.
 

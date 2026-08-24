@@ -3,8 +3,10 @@
 
   The frontend validates and consumes all 36 source Neon calls. The generated
   tail model interprets the 4/2/1 lane stores as a little-endian live-prefix
-  value plan. This remains a value abstraction: it does not establish C memory,
-  alignment, aliasing, overread validity, host endianness, or ISA execution.
+  value plan. Its stronger theorem accepts arbitrary bytes beyond a short tail
+  and proves their contents irrelevant to the live output. This remains a value
+  abstraction: it does not establish C memory, alignment, aliasing, overread
+  validity, host endianness, or ISA execution.
 -/
 import SALT.Generated.S8VClamp.Proof
 import SALT.Kernel.Schedule
@@ -136,12 +138,41 @@ theorem neonPartialTailFromInput_eq_map (p : S8ClampParams)
   unfold neonTailValue clampValue
   exact min_then_max_eq_max_then_min x _ _ hBounds
 
-theorem neonValueLoopFromIntrinsics_eq_map (p : S8ClampParams)
+theorem neonPartialTailWithOverread_eq_map (p : S8ClampParams)
     (hBounds : (p.min.truncate 8).toInt <= (p.max.truncate 8).toInt)
-    (input : List (BitVec 8)) :
-    neonValueLoopFromIntrinsics p input = input.map (clampValue p) := by
+    (input overread : List (BitVec 8)) (hLength : input.length < 8)
+    (hOverread : 8 - input.length <= overread.length) :
+    let loaded := (input ++ overread).take 8
+    neonPartialTailLivePrefixFromIntrinsics p loaded input.length =
+      input.map (clampValue p) := by
+  dsimp only
+  let loaded := (input ++ overread).take 8
+  have hLoaded : loaded.length = 8 := by
+    simp [loaded, List.length_take]
+    omega
+  rw [neonPartialTailLivePrefixFromIntrinsics_eq_take_tailMap
+    p loaded hLoaded input.length hLength]
+  have hLoadedPrefix : loaded.take input.length = input := by
+    simp only [loaded, List.take_take]
+    rw [show min input.length 8 = input.length by omega]
+    simp
+  have hPrefix : (loaded.map (neonTailValue p)).take input.length =
+      input.map (neonTailValue p) := by
+    rw [<- List.map_take, hLoadedPrefix]
+  rw [hPrefix]
+  apply List.map_congr_left
+  intro x _
+  unfold neonTailValue clampValue
+  exact min_then_max_eq_max_then_min x _ _ hBounds
+
+theorem neonValueLoopWithOverreadFromIntrinsics_eq_map (p : S8ClampParams)
+    (hBounds : (p.min.truncate 8).toInt <= (p.max.truncate 8).toInt)
+    (input overread : List (BitVec 8)) (hOverread : 7 <= overread.length) :
+    neonValueLoopWithOverreadFromIntrinsics p input overread =
+      input.map (clampValue p) := by
   suffices forall n (xs : List (BitVec 8)), xs.length <= n ->
-      neonValueLoopFromIntrinsics p xs = xs.map (clampValue p) from
+      neonValueLoopWithOverreadFromIntrinsics p xs overread =
+        xs.map (clampValue p) from
     this input.length input (by omega)
   intro n
   induction n with
@@ -149,11 +180,10 @@ theorem neonValueLoopFromIntrinsics_eq_map (p : S8ClampParams)
       intro xs hLength
       have : xs = [] := by cases xs <;> simp_all
       subst xs
-      simpa [neonValueLoopFromIntrinsics] using
-        neonPartialTailFromInput_eq_map p hBounds [] (by decide)
+      simp [neonValueLoopWithOverreadFromIntrinsics]
   | succ n ih =>
       intro xs hLength
-      unfold neonValueLoopFromIntrinsics
+      unfold neonValueLoopWithOverreadFromIntrinsics
       split
       · have hTake : (xs.take 64).length = 64 := by
           simp [List.length_take]
@@ -168,7 +198,29 @@ theorem neonValueLoopFromIntrinsics_eq_map (p : S8ClampParams)
           rw [neonBlock8FromIntrinsics_eq_map p hBounds _ hTake]
           rw [ih _ (by simp [List.length_drop]; omega)]
           rw [<- List.map_append, List.take_append_drop]
-        · exact neonPartialTailFromInput_eq_map p hBounds xs (by omega)
+        · split
+          · simp_all
+          · have hPositive : 0 < xs.length := by cases xs <;> simp_all
+            exact neonPartialTailWithOverread_eq_map p hBounds xs overread
+              (by omega) (by omega)
+
+theorem neonValueLoopFromIntrinsics_eq_map (p : S8ClampParams)
+    (hBounds : (p.min.truncate 8).toInt <= (p.max.truncate 8).toInt)
+    (input : List (BitVec 8)) :
+    neonValueLoopFromIntrinsics p input = input.map (clampValue p) := by
+  unfold neonValueLoopFromIntrinsics
+  exact neonValueLoopWithOverreadFromIntrinsics_eq_map p hBounds input _ (by simp)
+
+theorem neonValueLoopWithOverread_irrelevant (p : S8ClampParams)
+    (hBounds : (p.min.truncate 8).toInt <= (p.max.truncate 8).toInt)
+    (input overreadA overreadB : List (BitVec 8))
+    (hOverreadA : 7 <= overreadA.length) (hOverreadB : 7 <= overreadB.length) :
+    neonValueLoopWithOverreadFromIntrinsics p input overreadA =
+      neonValueLoopWithOverreadFromIntrinsics p input overreadB := by
+  rw [neonValueLoopWithOverreadFromIntrinsics_eq_map p hBounds input overreadA
+    hOverreadA]
+  rw [neonValueLoopWithOverreadFromIntrinsics_eq_map p hBounds input overreadB
+    hOverreadB]
 
 private def processBlockSizes {alpha beta : Type}
     (block : List alpha -> List beta) : List Nat -> List alpha -> List beta
@@ -213,5 +265,20 @@ theorem allLengthsValueEqual (p : S8ClampParams)
     neonValueLoopFromIntrinsics p input = reviewedRVVValueLoop p input schedule := by
   change (p.min.truncate 8).toInt <= (p.max.truncate 8).toInt at hBounds
   rw [neonValueLoopFromIntrinsics_eq_map p hBounds, reviewedRVVValueLoop_eq_map]
+
+/-- Arbitrary-length value equality with explicit, arbitrary Neon tail overread.
+
+Seven supplied byte values suffice for every nonempty tail shorter than eight bytes.
+The theorem proves content independence, not C-memory readability or ISA adequacy.
+-/
+theorem allLengthsValueEqualWithOverread (p : S8ClampParams)
+    (hBounds : SALT.Kernel.S8VClamp.WellFormedParams p)
+    (input overread : List (BitVec 8)) (hOverread : 7 <= overread.length)
+    (schedule : PositivePartition input.length) :
+    neonValueLoopWithOverreadFromIntrinsics p input overread =
+      reviewedRVVValueLoop p input schedule := by
+  change (p.min.truncate 8).toInt <= (p.max.truncate 8).toInt at hBounds
+  rw [neonValueLoopWithOverreadFromIntrinsics_eq_map p hBounds input overread
+    hOverread, reviewedRVVValueLoop_eq_map]
 
 end SALT.Generated.S8VClamp
