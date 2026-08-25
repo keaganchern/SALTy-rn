@@ -19,6 +19,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any, Iterable
 
+from ..lean_backend.descriptor import canonical_spec_record
 from ..lean_backend.registry import (
     QS8_VADD_MINMAX_NEON_SPECS,
     QS8_VADD_MINMAX_RVV_SPECS,
@@ -26,9 +27,7 @@ from ..lean_backend.registry import (
 from ..lean_backend.scaleup_catalog import SCALEUP_CATALOGS
 from ..lean_backend.schema import (
     IntrinsicSpec,
-    ScheduleIntrinsic,
     SemanticIntrinsic,
-    StructuralIntrinsic,
     render_clang_function_type,
 )
 
@@ -55,44 +54,6 @@ def _digest_json(value: object) -> str:
     return hashlib.sha256(
         json.dumps(value, sort_keys=True, separators=(",", ":")).encode("utf-8")
     ).hexdigest()
-
-
-def _canonical_spec(spec: IntrinsicSpec) -> dict[str, Any]:
-    constraints = [
-        {
-            "argument_index": constraint.argument_index,
-            "allowed_values": sorted(
-                constraint.allowed_values,
-                key=lambda value: (type(value).__name__, value),
-            ),
-            "erased_from_semantics": constraint.erased_from_semantics,
-        }
-        for constraint in spec.immediate_constraints
-    ]
-    record: dict[str, Any] = {
-        "architecture": spec.architecture.value,
-        "spelling": spec.spelling,
-        "kind": spec.kind.value,
-        "shape": spec.shape.value,
-        "signature": render_clang_function_type(spec.signature),
-        "immediate_constraints": constraints,
-    }
-    if isinstance(spec, SemanticIntrinsic):
-        record["lean_name"] = spec.lean_name
-        record["lean_arguments"] = [
-            {
-                "source_index": argument.source_index,
-                "transform": argument.transform.value,
-            }
-            for argument in spec.lean_arguments
-        ]
-    elif isinstance(spec, StructuralIntrinsic):
-        record["operation"] = spec.operation.value
-    elif isinstance(spec, ScheduleIntrinsic):
-        record["operation"] = spec.operation.value
-    else:  # pragma: no cover - closed IntrinsicSpec union
-        raise TypeError(f"unsupported intrinsic descriptor: {type(spec)!r}")
-    return record
 
 
 def _configured_cases() -> Iterable[tuple[str, tuple[IntrinsicSpec, ...]]]:
@@ -192,7 +153,7 @@ def collect_registry_implementations(
     ] = defaultdict(list)
     for case_id, specs in _configured_cases():
         for spec in specs:
-            variant = _canonical_spec(spec)
+            variant = canonical_spec_record(spec)
             canonical = json.dumps(variant, sort_keys=True, separators=(",", ":"))
             grouped[(spec.architecture.value, spec.spelling, canonical)].append(
                 (case_id, spec, variant, _descriptor_source(spec))
@@ -248,9 +209,11 @@ def collect_registry_implementations(
             "variant": variant,
             "descriptor_paths": descriptor_paths,
             "supported_cases": cases,
-            "signature": variant["signature"],
+            "signature": render_clang_function_type(spec.signature),
             "lean_target": variant.get("lean_name"),
-            "lowering_operation": variant.get("operation"),
+            "lowering_operation": variant.get(
+                "structural_operation", variant.get("schedule_operation")
+            ),
             "kind": variant["kind"],
             "code": _implementation_paths(repository_root, spec),
             "tcb_files": tcb_files,

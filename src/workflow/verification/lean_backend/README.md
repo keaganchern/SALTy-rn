@@ -67,6 +67,33 @@ qs8-vlrelu       signed compare, mask/select, scaling, and narrowing
 qu8-vadd-minmax  unsigned binary arithmetic and a reviewed signed-shift branch
 ```
 
+## Intrinsic Candidate Discovery
+
+`descriptor.py` defines the canonical, complete descriptor identity shared by
+registry binding and the dashboard. `intrinsic_index.py` preserves every
+case-scoped occurrence and groups only descriptors whose architecture, signature,
+immediate contract, operation, Lean target, and operand transforms are identical.
+The current five catalogs contain 161 occurrences, 85 architecture/spelling keys,
+and 96 complete variants. Nine keys have multiple variants despite sharing a C
+function signature.
+
+The onboarding report runs the real restricted frontend and suggests compatible
+configured descriptors without using the reported case's own catalog:
+
+```sh
+PYTHONPATH=src python3 -m workflow.verification.lean_backend.registry_onboarding \
+  --repository-root . --case qs8-vlrelu --format json
+```
+
+Results are only `unique-candidate`, `ambiguous`, `same-name-mismatch`, or
+`unknown`; a source call is never labeled `exact-configured`. Every call site for
+one architecture/spelling/type must be covered by the same candidate, and required
+immediates must be present in the Clang facts. New kernels still need an explicit
+parse facade and frontend profile before this command can inspect them. A reviewer
+must then add a complete descriptor to the kernel-scoped catalog. Model generation
+does not fall back to the global index, and candidate discovery never inherits an
+intrinsic review or approval.
+
 ## Established Boundary
 
 Most generated Lean definitions independently execute one selected Neon main

@@ -17,6 +17,7 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
+from .descriptor import canonical_spec_record
 from .frontend import ArgumentFact, IntrinsicCall, KernelExtraction, SourceRange
 from .registry import QS8_VADD_MINMAX_REGISTRY
 from .schema import (
@@ -131,52 +132,11 @@ def _type_record(value_type: ValueType) -> dict[str, Any]:
     raise BindingError(f"unserializable registry type {type(value_type)!r}")
 
 
-def _immediate_sort_key(value: int | str) -> tuple[str, str]:
-    return type(value).__name__, repr(value)
-
-
 def _registry_entry(spec: IntrinsicSpec) -> dict[str, Any]:
-    record: dict[str, Any] = {
-        "spelling": spec.spelling,
-        "architecture": spec.architecture.value,
-        "kind": spec.kind.value,
-        "shape": spec.shape.value,
-        "signature": {
-            "parameters": [
-                {"name": parameter.name, "type": _type_record(parameter.type)}
-                for parameter in spec.signature.parameters
-            ],
-            "result": _type_record(spec.signature.result),
-        },
-        "immediate_constraints": [
-            {
-                "argument_index": constraint.argument_index,
-                "allowed_values": sorted(
-                    constraint.allowed_values, key=_immediate_sort_key
-                ),
-                "erased_from_semantics": constraint.erased_from_semantics,
-            }
-            for constraint in sorted(
-                spec.immediate_constraints, key=lambda constraint: constraint.argument_index
-            )
-        ],
-    }
-    if isinstance(spec, StructuralIntrinsic):
-        record["structural_operation"] = spec.operation.value
-    elif isinstance(spec, ScheduleIntrinsic):
-        record["schedule_operation"] = spec.operation.value
-    elif isinstance(spec, SemanticIntrinsic):
-        record["lean_name"] = spec.lean_name
-        record["lean_arguments"] = [
-            {
-                "source_index": argument.source_index,
-                "transform": argument.transform.value,
-            }
-            for argument in spec.lean_arguments
-        ]
-    else:
-        raise BindingError(f"unsupported registry entry {type(spec)!r}")
-    return record
+    try:
+        return canonical_spec_record(spec)
+    except ValueError as error:
+        raise BindingError(f"unsupported registry entry {type(spec)!r}") from error
 
 
 def _canonical_registry_payload(
