@@ -15,6 +15,7 @@ class ProofTarget:
     proof_path: str
     contract_path: str
     claim_scope: ClaimScope
+    obligation_path: str | None = None
 
 
 PROOF_CASES: Mapping[str, ProofTarget] = {
@@ -40,11 +41,17 @@ PROOF_CASES: Mapping[str, ProofTarget] = {
         claim_scope=ClaimScope.ARBITRARY_LENGTH_VALUE,
     ),
     "qs8-vlrelu": ProofTarget(
-        module="SALT.Generated.QS8VLReLU.Proof",
+        module="SALT.Generated.QS8VLReLU.CandidateProof",
         models_path="src/verification_bw/lean/SALT/Generated/QS8VLReLU/Models.lean",
-        proof_path="src/verification_bw/lean/SALT/Generated/QS8VLReLU/Proof.lean",
+        proof_path=(
+            "src/verification_bw/lean/SALT/Generated/QS8VLReLU/"
+            "CandidateProof.lean"
+        ),
         contract_path="src/verification_bw/lean/SALT/Kernel/QS8VLReLU/Contract.lean",
-        claim_scope=ClaimScope.SELECTED_LOCAL_BLOCK,
+        claim_scope=ClaimScope.ARBITRARY_LENGTH_VALUE,
+        obligation_path=(
+            "src/verification_bw/lean/SALT/Generated/QS8VLReLU/Obligation.lean"
+        ),
     ),
     "qu8-vadd-minmax": ProofTarget(
         module="SALT.Generated.QU8VAddMinmax.Proof",

@@ -354,8 +354,6 @@ def _validate_neon_control_shape(
         expected = _S8_VCLAMP_NEON_CONTROL_SHAPE
     elif profile.prefix_tail is not None:
         expected = _byte_tail_control_shape(loop, profile.prefix_tail.element_c_type)
-    elif profile.case_id == "qs8-vlrelu":
-        expected = _byte_tail_control_shape(loop, "int8_t")
     elif profile.case_id == "qu8-vadd-minmax":
         expected = _byte_tail_control_shape(loop, "uint8_t")
     else:
@@ -1168,7 +1166,7 @@ def _emit_prefix_tail_value_models(
 
     tail_value: str | None = None
     tail_dependency: str | None = None
-    for call in root_calls[1:]:
+    for index, call in enumerate(root_calls[1:], 1):
         spec = emitter._lookup_intrinsic(call.spelling)
         if isinstance(spec, StructuralIntrinsic) and spec.operation in {
             StructuralOp.STORE,
@@ -1177,11 +1175,22 @@ def _emit_prefix_tail_value_models(
             raise CaseEmissionError(
                 f"{profile.case_id}: store appeared before a tail-width branch"
             )
-        tail_value = emitter.emit_registered_call(call)
-        if tail_value is None or call.assigned_to is None:
+        emitted_value = emitter.emit_registered_call(call)
+        if emitted_value is None:
             raise CaseEmissionError(
-                f"{profile.case_id}: tail value pipeline must end in an assigned vector"
+                f"{profile.case_id}: tail value pipeline call produced no value"
             )
+        if call.assigned_to is None:
+            dependency = f"call:{call.node_id}"
+            if not any(
+                dependency in later.dependencies for later in root_calls[index + 1 :]
+            ):
+                raise CaseEmissionError(
+                    f"{profile.case_id}: expression-only tail call {call.spelling} "
+                    "is not consumed by a later call"
+                )
+            continue
+        tail_value = emitted_value
         tail_dependency = call.assigned_to
     if tail_value is None or tail_dependency is None:
         raise CaseEmissionError(f"{profile.case_id}: prefix-tail pipeline is empty")

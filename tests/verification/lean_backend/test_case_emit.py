@@ -107,6 +107,96 @@ def test_qs8_vcvt_emission_consumes_complete_unbounded_schedule():
     assert "let loaded := (tail ++ overread).take 8" in module
 
 
+def test_qs8_vlrelu_emission_consumes_complete_unbounded_schedule():
+    neon = extract("qs8-vlrelu", "neon")
+    rvv = extract("qs8-vlrelu", "rvv")
+    result = emit("qs8-vlrelu")
+    module = result.emitted.module_text
+
+    assert len(neon.calls) == 30
+    assert len(rvv.calls) == 13
+    assert set(result.neon_consumed_calls) == {call.node_id for call in neon.calls}
+    assert set(result.rvv_consumed_calls) == {call.node_id for call in rvv.calls}
+    assert "def neonPartialTailLivePrefixFromIntrinsics" in module
+    assert "def neonValueLoopWithOverreadFromIntrinsics" in module
+    assert "def rvvValueLoopFromIntrinsics" in module
+    assert "runFixedChunkTail 8" in module
+    assert "PositivePartition input.length" in module
+    assert "let call_0016 := List.replicate 8 (0)" in module
+    assert "vcltq_s16 (vacc_4) (call_0016)" in module
+
+
+@pytest.mark.parametrize(
+    ("old", "new", "message"),
+    (
+        (
+            "if (batch & (4 * sizeof(int8_t)))",
+            "if (batch & (3 * sizeof(int8_t)))",
+            "Neon control shape changed",
+        ),
+        (
+            "vext_s8(vy, vy, 4)",
+            "vext_s8(vy, vy, 2)",
+            "conditional slide changed",
+        ),
+        (
+            "output += 4;",
+            "output += 3;",
+            "prefix-tail pointer updates changed",
+        ),
+    ),
+)
+def test_qs8_vlrelu_tail_shape_mutations_fail_closed(
+    tmp_path: Path, old: str, new: str, message: str
+):
+    source = (ROOT / "kernels/source/qs8-vlrelu.c").read_text(encoding="utf-8")
+    assert source.count(old) == 1
+    mutated = tmp_path / "qs8-vlrelu.c"
+    mutated.write_text(source.replace(old, new, 1), encoding="utf-8")
+
+    with pytest.raises((CaseEmissionError, LeanEmissionError), match=message):
+        emit("qs8-vlrelu", neon_source=mutated)
+
+
+def test_supported_qs8_vlrelu_tail_semantic_mutation_changes_model(tmp_path: Path):
+    original = emit("qs8-vlrelu").emitted.module_text
+    source = (ROOT / "kernels/source/qs8-vlrelu.c").read_text(encoding="utf-8")
+    old = "vcltq_s16(vacc, vmovq_n_s16(0))"
+    offset = source.rfind(old)
+    assert offset >= 0
+    new = "vcltq_s16(vacc, vmovq_n_s16(2))"
+    mutated = tmp_path / "qs8-vlrelu.c"
+    mutated.write_text(
+        source[:offset] + new + source[offset + len(old) :], encoding="utf-8"
+    )
+
+    changed = emit("qs8-vlrelu", neon_source=mutated).emitted.module_text
+    assert changed != original
+    main, tail = changed.split("def neonPartialTailLivePrefixFromIntrinsics", 1)
+    assert "let call_0006 := List.replicate 8 (0)" in main
+    assert "let call_0016 := List.replicate 8 (2)" in tail
+    assert "vcltq_s16 (vacc_4) (call_0016)" in tail
+
+
+def test_qs8_vlrelu_rejects_unused_expression_only_tail_call(tmp_path: Path):
+    source = (ROOT / "kernels/source/qs8-vlrelu.c").read_text(encoding="utf-8")
+    marker = "    int16x8_t vacc = vsubw_s8(vinput_zero_point, vx);\n"
+    offset = source.rfind(marker)
+    assert offset >= 0
+    mutated = tmp_path / "qs8-vlrelu.c"
+    mutated.write_text(
+        source[: offset + len(marker)]
+        + "    vmovq_n_s16(0);\n"
+        + source[offset + len(marker) :],
+        encoding="utf-8",
+    )
+
+    with pytest.raises(
+        CaseEmissionError, match="expression-only tail call vmovq_n_s16 is not consumed"
+    ):
+        emit("qs8-vlrelu", neon_source=mutated)
+
+
 @pytest.mark.parametrize(
     ("old", "new", "message"),
     (

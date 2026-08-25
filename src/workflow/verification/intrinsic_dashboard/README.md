@@ -65,11 +65,11 @@ server. The 107-row catalog is used only to assign concise kernel-group labels.
   `Reviewed x/y` counts only independently reviewed C-intrinsic-to-Lean semantic
   mappings. A matching spelling from another, unconfigured case cannot satisfy a
   file dependency. Mapping completeness is not semantic approval.
-- `Contract/spec artifact` means the designated policy contract exists. The file
-  may be a case-specific `Contract.lean` or a shared parameter contract such as
-  `Kernel/QS8/Params.lean`. A theorem can typecheck without this separate artifact,
-  so a missing contract does not prevent `Lean theorem check` from passing; it
-  does lock final scope review.
+- `Contract/spec artifact` means the designated policy contract exists and, for a
+  generated-obligation case, its protected `Obligation.lean` also exists. A
+  contract may be case-specific or shared, such as `Kernel/QS8/Params.lean`. A
+  theorem can typecheck without a separate contract artifact, so a missing one
+  does not by itself prevent compilation; it does lock final scope review.
 - `Lean proof file` means the designated proof artifact for a known case exists.
 - `Lean theorem check` requires an actual current `lake --rehash --no-cache
   build`, the pinned structurally encoded elaborated entry-theorem type and
@@ -184,9 +184,10 @@ The dashboard reports lexical usage, configured descriptor variants, determinist
 generated-model freshness, Lean build results, claim scope, and review evidence.
 For each configured generated case, freshness means that the current C inputs,
 facades, resolved Clang binary/resource headers, and generator reproduce the
-checked-in `Models.lean` byte-for-byte. The freshness digest is part of the
-kernel artifact binding. A stale model locks final review even when an older
-proof still typechecks.
+checked-in `Models.lean` byte-for-byte. Where a reviewed obligation profile is
+configured, the same check also reproduces `Obligation.lean` byte-for-byte. The
+freshness digest is part of the kernel artifact binding. A stale generated
+artifact locks final review even when an older proof still typechecks.
 
 The proof policy in `verification/intrinsic-dashboard/proof-policy.json` pins one
 designated entry theorem per case and the current contract file where one exists.
@@ -201,10 +202,31 @@ not a proof that every public theorem in the module has the intended API.
 
 The policy digest binds the policy, full dashboard and Lean-backend Python source,
 parse facades, fixed Lean auditor, Lean toolchain selector, Python producer, and
-resolved Clang producer. The policy fixes the reviewed complete Lean
-source/configuration digest before building, while each proof attestation records
-that same live digest. Toolchain identity is recomputed from disk; it is not
+resolved Clang producer. Schema v3 fixes the complete Lean source/configuration
+digest. Schema v4 additionally supports a proof-agent pilot: a case may explicitly
+name one `candidate_proof_path` and one separately hashed `obligation`. The active
+pilot applies this boundary to `qs8-vlrelu`; its designated theorem is in
+`QS8VLReLU/CandidateProof.lean` while the generated claim remains in
+`QS8VLReLU/Obligation.lean`. Only the
+enumerated candidate path is omitted from the protected-project digest; models,
+contracts, the obligation, other proofs, project configuration, and every other
+Lean source remain protected. Cases without this pair remain fully protected.
+
+The complete live Lean digest always includes candidate proofs. It is recorded in
+each attestation and checked before and after every build and elaborated theorem
+audit. The repository-wide forbidden-identifier scan also continues to inspect
+candidate files. The fixed auditor loads the exact candidate module/theorem and
+checks its elaborated type and transitive axioms against the policy. This lets a
+reviewer accept changes confined to the named candidate without re-signing the
+reviewed semantic inputs. Toolchain identity is recomputed from disk; it is not
 accepted from `PATH` or a cached path-only lookup.
+
+This policy is a review and accidental-change gate, not an OS security boundary.
+It assumes that a trusted reviewer anchors the policy/checker and verifies that
+the submitted diff changes only the named candidate. A process with write access
+to the whole repository could also change the policy or race the in-place build;
+fully adversarial proof generation requires a fresh read-only snapshot anchored
+by the reviewer plus process isolation.
 
 It does not establish that a Lean intrinsic definition is adequate to Arm ACLE or
 the RISC-V V specification, that

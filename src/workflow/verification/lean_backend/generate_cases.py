@@ -1,4 +1,4 @@
-"""Generate reviewed local-block Lean models for the integer scale-up cases."""
+"""Generate reviewed Lean models and protected obligations for scale-up cases."""
 
 from __future__ import annotations
 
@@ -12,6 +12,7 @@ from .case_emit import emit_case_pair
 from .frontend import parse_kernel
 from .generate import _atomic_write_text
 from .model_profiles import SCALE_UP_MODELS
+from .obligation_emit import emit_unary_prefix_tail_obligation
 from .profiles import FRONTEND_PROFILES
 from .scaleup_catalog import SCALEUP_CATALOGS
 
@@ -90,6 +91,48 @@ def generated_module_path(
     )
 
 
+def generate_case_obligations(
+    *,
+    cases: Sequence[str] = _CASE_ORDER,
+) -> dict[str, str]:
+    """Return deterministic protected obligations for configured loop profiles."""
+
+    generated: dict[str, str] = {}
+    for case_id in cases:
+        try:
+            profile = SCALE_UP_MODELS[case_id]
+        except KeyError as error:
+            raise ValueError(f"unknown scale-up case {case_id!r}") from error
+        if profile.unary_prefix_tail_obligation is None:
+            continue
+        if case_id in generated:
+            raise ValueError(f"duplicate scale-up obligation {case_id!r}")
+        generated[case_id] = emit_unary_prefix_tail_obligation(profile)
+    return generated
+
+
+def generated_obligation_path(
+    repository_root: str | Path, case_id: str
+) -> Path:
+    root = Path(repository_root).resolve()
+    try:
+        profile = SCALE_UP_MODELS[case_id]
+    except KeyError as error:
+        raise ValueError(f"unknown scale-up case {case_id!r}") from error
+    if profile.unary_prefix_tail_obligation is None:
+        raise ValueError(f"case {case_id!r} has no generated obligation")
+    return (
+        root
+        / "src"
+        / "verification_bw"
+        / "lean"
+        / "SALT"
+        / "Generated"
+        / profile.generated_directory
+        / "Obligation.lean"
+    )
+
+
 def _main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repository-root", type=Path, default=_REPOSITORY_ROOT)
@@ -114,9 +157,19 @@ def _main(argv: Sequence[str] | None = None) -> int:
         cases=cases,
         clang=arguments.clang,
     )
+    obligations = generate_case_obligations(cases=cases)
+    artifacts = {
+        generated_module_path(arguments.repository_root, case_id): module_text
+        for case_id, module_text in generated.items()
+    }
+    artifacts.update(
+        {
+            generated_obligation_path(arguments.repository_root, case_id): module_text
+            for case_id, module_text in obligations.items()
+        }
+    )
     stale: list[Path] = []
-    for case_id, module_text in generated.items():
-        path = generated_module_path(arguments.repository_root, case_id)
+    for path, module_text in artifacts.items():
         if arguments.check:
             if not path.is_file() or path.read_text(encoding="ascii") != module_text:
                 stale.append(path)
@@ -125,7 +178,7 @@ def _main(argv: Sequence[str] | None = None) -> int:
             sys.stdout.write(f"generated {path}\n")
     if stale:
         for path in stale:
-            sys.stderr.write(f"stale generated module: {path}\n")
+            sys.stderr.write(f"stale generated artifact: {path}\n")
         return 1
     return 0
 

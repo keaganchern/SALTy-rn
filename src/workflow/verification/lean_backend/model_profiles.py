@@ -50,6 +50,31 @@ class PrefixTailProfile:
 
 
 @dataclass(frozen=True, slots=True)
+class UnaryPrefixTailObligationProfile:
+    """Reviewed interface for one generated arbitrary-length value claim."""
+
+    contract_module: str
+    contract_namespace: str
+    contract_predicate: str
+    claim_name: str
+    display_name: str
+    element_width: int
+
+    def __post_init__(self) -> None:
+        for field in (
+            self.contract_module,
+            self.contract_namespace,
+            self.contract_predicate,
+            self.claim_name,
+            self.display_name,
+        ):
+            if not field:
+                raise ValueError("obligation profile fields must be non-empty")
+        if self.element_width <= 0:
+            raise ValueError("obligation element width must be positive")
+
+
+@dataclass(frozen=True, slots=True)
 class ModelProfile:
     case_id: str
     lean_namespace: str
@@ -61,6 +86,14 @@ class ModelProfile:
     neon_loop_condition: str
     neon_loop_update: str
     prefix_tail: PrefixTailProfile | None = None
+    unary_prefix_tail_obligation: UnaryPrefixTailObligationProfile | None = None
+
+    def __post_init__(self) -> None:
+        if self.unary_prefix_tail_obligation is not None:
+            if self.prefix_tail is None:
+                raise ValueError("a unary prefix-tail obligation needs a tail profile")
+            if len(self.inputs) != 1:
+                raise ValueError("a unary prefix-tail obligation needs exactly one input")
 
     @property
     def generated_directory(self) -> str:
@@ -132,6 +165,19 @@ QS8_VLRELU_MODEL = ModelProfile(
     neon_block_lanes=8,
     neon_loop_condition="batch >= 8 * sizeof(int8_t)",
     neon_loop_update="batch -= 8 * sizeof(int8_t)",
+    prefix_tail=PrefixTailProfile(
+        element_c_type="int8_t",
+        load_lanes=8,
+        store_widths=(4, 2, 1),
+    ),
+    unary_prefix_tail_obligation=UnaryPrefixTailObligationProfile(
+        contract_module="SALT.Kernel.QS8VLReLU.Contract",
+        contract_namespace="SALT.Kernel.QS8VLReLU",
+        contract_predicate="WellFormedParams",
+        claim_name="allLengthsValueEqualWithOverreadClaim",
+        display_name="QS8 LReLU",
+        element_width=8,
+    ),
 )
 
 QU8_VADD_MINMAX_MODEL = ModelProfile(

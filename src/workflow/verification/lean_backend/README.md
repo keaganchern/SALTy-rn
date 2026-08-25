@@ -46,7 +46,7 @@ Build the generated proof from `src/verification_bw/lean`:
 lake build SALT.Generated.QS8VAddMinmax.Proof
 ```
 
-Generate the four additional model pairs:
+Generate the four additional model pairs and configured protected obligations:
 
 ```sh
 PYTHONPATH=src python3 -m workflow.verification.lean_backend.generate_cases \
@@ -85,8 +85,11 @@ pinned `XNNPACK@867d5a344790802ee067be62f572c2e2722bf6fb` revision. The
 [zero-point checks](https://github.com/google/XNNPACK/blob/867d5a344790802ee067be62f572c2e2722bf6fb/src/tensor.c#L50-L70)
 and [conversion multiplier construction](https://github.com/google/XNNPACK/blob/867d5a344790802ee067be62f572c2e2722bf6fb/src/microparams-init.c#L1103-L1118)
 are the external evidence for that contract. `QS8VLReLU/Proof.lean` proves the
-generated 8-lane LReLU blocks equal for every 32-bit parameter representation;
-its contract-bound theorem records XNN's legal producer domain. The
+generated 8-lane LReLU blocks equal for every 32-bit parameter representation.
+The deterministic `QS8VLReLU/Obligation.lean` fixes the arbitrary-length claim,
+and the separately reviewed `QS8VLReLU/CandidateProof.lean` proves it for every
+input length, every sufficient tail-overread value list, and every complete
+positive RVV partition. Its contract argument records XNN's legal producer domain. The
 [LReLU multiplier construction](https://github.com/google/XNNPACK/blob/867d5a344790802ee067be62f572c2e2722bf6fb/src/microparams-init.c#L619-L646)
 provides the multiplier ranges. `QU8VAddMinmax/Proof.lean` proves its generated
 8-lane blocks equal when the effective shift is at most 31. Its contract-bound
@@ -112,19 +115,21 @@ not relate Neon QC to RVV `vxsat` or model the persistent `vxrm` state.
 
 `SALT/Kernel/Schedule.lean` proves generic fixed-chunk/tail and
 positive-partition refinements to `List.map`/`List.zipWith` for arbitrary list
-lengths. The `s8-vclamp` and `qs8-vcvt` adapters use a little-endian live-prefix
-value abstraction for their 4/2/1 lane stores. They prove content independence
+lengths. The `s8-vclamp`, `qs8-vcvt`, and `qs8-vlrelu` adapters use a little-endian
+live-prefix value abstraction for their 4/2/1 lane stores. They prove content independence
 for any seven supplied byte values after a short tail, but do not establish
 their C-memory readability, alignment, aliasing, host endianness, or real
 `vsetvl`/ISA executions. `qs8-vcvt` consumes all 23 reachable Neon calls and all
-11 RVV calls when generating its full value models. Its case-specific
-`Proof.lean` remains reviewed code; `generate_cases.py` does not generate the
-proof. The other three scale-up cases remain selected-block results and do not
-yet connect their complete Neon tails to the schedule theorems.
+11 RVV calls; `qs8-vlrelu` consumes all 30 Neon and all 13 RVV calls when
+generating their full value models. The VCVT case-specific
+`Proof.lean` remains reviewed code; `generate_cases.py` generates the protected
+LReLU obligation but not its candidate proof. The other two scale-up cases remain
+selected-block results and do not yet connect their complete Neon tails to the
+schedule theorems.
 
 Therefore these are generated Lean value-model equivalence results; only the
-`s8-vclamp` and `qs8-vcvt` results currently quantify over arbitrary input
-lengths. They are not yet C-source observational-equivalence,
+`s8-vclamp`, `qs8-vcvt`, and `qs8-vlrelu` results currently quantify over
+arbitrary input lengths. They are not yet C-source observational-equivalence,
 intrinsic-to-ISA adequacy, or compiled-binary theorems.
 
 A smaller Chinese teaching example is available at

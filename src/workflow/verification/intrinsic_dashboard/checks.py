@@ -15,6 +15,7 @@ from typing import Callable, Mapping, Sequence
 from .model import LeanCheck, ProofCheckAttestation
 from .proof_policy import (
     ResolvedLeanToolchain,
+    current_protected_lean_project_digest,
     expected_lean_project_digest,
     lean_project_digest,
     proof_policy_digest,
@@ -50,16 +51,22 @@ def run_lean_proof_checks(
     policy_checker: Callable[..., Mapping[str, bool]] = run_proof_policy_checks,
     policy_digester: Callable[[Path], str] = proof_policy_digest,
     expected_project_digester: Callable[[Path], str] = expected_lean_project_digest,
+    protected_project_digester: Callable[
+        [Path], str
+    ] = current_protected_lean_project_digest,
     toolchain_resolver: Callable[
         [Path], ResolvedLeanToolchain
     ] = resolve_lean_toolchain,
 ) -> dict[str, ProofCheckAttestation]:
     """Build selected targets and return input-bound proof-check attestations.
 
+    The protected digest must match the reviewer-anchored policy before a build
+    starts. This function detects ordinary persistent changes; it is not a
+    filesystem sandbox for a process with repository-wide write access.
     A nominally successful build is reported as failed if any Lean source,
-    configuration, or toolchain input changes while that target is being built.
-    Such a run did not check one stable project state and cannot be approval
-    evidence.
+    including an editable candidate proof, changes while that target is being
+    built. Such a run did not check one stable live project state and cannot be
+    approval evidence.
     """
 
     root = repository_root.resolve()
@@ -78,11 +85,12 @@ def run_lean_proof_checks(
     policy_sha256 = policy_digester(root)
     project_sha256 = lean_project_digest(root)
     expected_project_sha256 = expected_project_digester(root)
+    protected_project_sha256 = protected_project_digester(root)
     toolchain = toolchain_resolver(root)
     build_results: dict[str, bool] = {}
     for case_id in selected:
         target = PROOF_TARGETS[case_id]
-        if project_sha256 != expected_project_sha256:
+        if protected_project_sha256 != expected_project_sha256:
             build_results[case_id] = False
             continue
         completed = runner(
@@ -103,8 +111,9 @@ def run_lean_proof_checks(
         build_results[case_id] = completed.returncode == 0
 
     inputs_stable = (
-        project_sha256 == expected_project_sha256
+        protected_project_sha256 == expected_project_sha256
         and lean_project_digest(root) == project_sha256
+        and protected_project_digester(root) == protected_project_sha256
         and policy_digester(root) == policy_sha256
     )
     try:
@@ -122,6 +131,7 @@ def run_lean_proof_checks(
     policy_stable = (
         inputs_stable
         and lean_project_digest(root) == project_sha256
+        and protected_project_digester(root) == protected_project_sha256
         and policy_digester(root) == policy_sha256
         and set(policy_results) == set(selected)
         and all(type(value) is bool for value in policy_results.values())

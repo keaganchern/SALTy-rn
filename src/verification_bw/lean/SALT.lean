@@ -15,7 +15,7 @@ import SALT.Generated.QS8VAddMinmax.Proof
 import SALT.Generated.S8VClamp.Proof
 import SALT.Generated.S8VClamp.AllLengths
 import SALT.Generated.QS8VCvt.Proof
-import SALT.Generated.QS8VLReLU.Proof
+import SALT.Generated.QS8VLReLU.CandidateProof
 import SALT.Generated.QU8VAddMinmax.Proof
 import SALT.Example.S8VMax.Audit
 import SALT.Test.QS8VCvt

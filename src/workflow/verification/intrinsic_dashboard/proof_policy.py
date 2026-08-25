@@ -18,6 +18,7 @@ from .model import canonical_sha256
 
 
 POLICY_RELATIVE_PATH = Path("verification/intrinsic-dashboard/proof-policy.json")
+LEAN_PROJECT_RELATIVE_PATH = Path("src/verification_bw/lean")
 AUDITOR_RELATIVE_PATH = Path(
     "src/workflow/verification/intrinsic_dashboard/lean/ProofAudit.lean"
 )
@@ -87,6 +88,8 @@ class ProofPolicyCase:
     proof_path: str
     elaborated_type_sha256: str
     contract: ProtectedFile | None
+    candidate_proof_path: str | None = None
+    obligation: ProtectedFile | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -101,10 +104,27 @@ class LeanToolchainPolicy:
 
 @dataclass(frozen=True, slots=True)
 class ProofPolicy:
+    schema_version: int
     allowed_axioms: frozenset[str]
-    lean_project_sha256: str
+    protected_lean_project_sha256: str
     toolchain: LeanToolchainPolicy
     cases: Mapping[str, ProofPolicyCase]
+
+    @property
+    def lean_project_sha256(self) -> str:
+        """Compatibility alias for schema-v3 callers."""
+
+        return self.protected_lean_project_sha256
+
+    @property
+    def candidate_proof_paths(self) -> tuple[str, ...]:
+        return tuple(
+            sorted(
+                entry.candidate_proof_path
+                for entry in self.cases.values()
+                if entry.candidate_proof_path is not None
+            )
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -179,10 +199,8 @@ def _toolchain_runtime_digest(sysroot: Path) -> str:
     return digest.hexdigest()
 
 
-def lean_project_digest(repository_root: Path) -> str:
-    """Hash every checked root-project Lean source and configuration file."""
-
-    lean_root = repository_root.resolve() / "src/verification_bw/lean"
+def _lean_project_files(repository_root: Path) -> tuple[Path, tuple[Path, ...]]:
+    lean_root = repository_root.resolve() / LEAN_PROJECT_RELATIVE_PATH
     candidates = sorted(lean_root.rglob("*.lean"))
     candidates.extend(
         path
@@ -196,8 +214,12 @@ def lean_project_digest(repository_root: Path) -> str:
     )
     if not candidates:
         raise FileNotFoundError(f"Lean project has no source files: {lean_root}")
+    return lean_root, tuple(sorted(set(candidates)))
+
+
+def _hash_lean_project_files(lean_root: Path, candidates: Sequence[Path]) -> str:
     digest = hashlib.sha256()
-    for path in sorted(set(candidates)):
+    for path in candidates:
         relative = path.relative_to(lean_root).as_posix().encode("utf-8")
         content = path.read_bytes()
         digest.update(len(relative).to_bytes(8, "big"))
@@ -205,6 +227,44 @@ def lean_project_digest(repository_root: Path) -> str:
         digest.update(len(content).to_bytes(8, "big"))
         digest.update(content)
     return digest.hexdigest()
+
+
+def lean_project_digest(repository_root: Path) -> str:
+    """Hash the complete live Lean tree, including every candidate proof."""
+
+    lean_root, candidates = _lean_project_files(repository_root)
+    return _hash_lean_project_files(lean_root, candidates)
+
+
+def protected_lean_project_digest(
+    repository_root: Path, candidate_proof_paths: Sequence[str]
+) -> str:
+    """Hash reviewed Lean inputs, excluding exactly the named candidate proofs."""
+
+    root = repository_root.resolve()
+    lean_root, candidates = _lean_project_files(root)
+    candidate_set = set(candidates)
+    excluded: set[Path] = set()
+    for index, relative_text in enumerate(candidate_proof_paths):
+        relative = _relative_path(relative_text, f"candidate_proof_paths[{index}]")
+        path = (root / relative).resolve()
+        try:
+            path.relative_to(lean_root)
+        except ValueError as error:
+            raise ProofPolicyError(
+                "candidate proof path must be inside the Lean project"
+            ) from error
+        if path.suffix != ".lean" or path not in candidate_set:
+            raise ProofPolicyError(
+                f"candidate proof path is not a tracked Lean source: {relative}"
+            )
+        if path in excluded:
+            raise ProofPolicyError(f"duplicate candidate proof path: {relative}")
+        excluded.add(path)
+    protected = tuple(path for path in candidates if path not in excluded)
+    if not protected:
+        raise ProofPolicyError("candidate exclusions removed the complete Lean project")
+    return _hash_lean_project_files(lean_root, protected)
 
 
 def _strict_command_line(
@@ -325,22 +385,48 @@ def _digest(value: object, field: str) -> str:
     return value
 
 
+def _protected_file(value: object, field: str) -> ProtectedFile | None:
+    if value is None:
+        return None
+    if not isinstance(value, dict) or set(value) != {"path", "sha256"}:
+        raise ProofPolicyError(f"invalid protected-file binding for {field}")
+    return ProtectedFile(
+        path=_relative_path(value["path"], f"{field}.path"),
+        sha256=_digest(value["sha256"], f"{field}.sha256"),
+    )
+
+
 def load_proof_policy(repository_root: Path) -> ProofPolicy:
     path = repository_root.resolve() / POLICY_RELATIVE_PATH
     try:
         raw = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, UnicodeError, json.JSONDecodeError) as error:
         raise ProofPolicyError(f"cannot read proof policy {path}: {error}") from error
-    if not isinstance(raw, dict) or set(raw) != {
-        "schema_version",
-        "allowed_axioms",
-        "lean_project_sha256",
-        "toolchain",
-        "cases",
-    }:
-        raise ProofPolicyError("proof policy has unexpected top-level fields")
-    if raw["schema_version"] != 3:
+    if not isinstance(raw, dict):
+        raise ProofPolicyError("proof policy must be an object")
+    schema_version = raw.get("schema_version")
+    if schema_version == 3:
+        expected_top_level = {
+            "schema_version",
+            "allowed_axioms",
+            "lean_project_sha256",
+            "toolchain",
+            "cases",
+        }
+        protected_digest_field = "lean_project_sha256"
+    elif schema_version == 4:
+        expected_top_level = {
+            "schema_version",
+            "allowed_axioms",
+            "protected_lean_project_sha256",
+            "toolchain",
+            "cases",
+        }
+        protected_digest_field = "protected_lean_project_sha256"
+    else:
         raise ProofPolicyError("unsupported proof-policy schema version")
+    if set(raw) != expected_top_level:
+        raise ProofPolicyError("proof policy has unexpected top-level fields")
     allowed = raw["allowed_axioms"]
     if (
         not isinstance(allowed, list)
@@ -381,13 +467,16 @@ def load_proof_policy(repository_root: Path) -> ProofPolicy:
     parsed: dict[str, ProofPolicyCase] = {}
     for case_id in POLICY_CASES:
         row = cases[case_id]
-        if not isinstance(row, dict) or set(row) != {
+        expected_case_fields = {
             "module",
             "theorem",
             "proof_path",
             "elaborated_type_sha256",
             "contract",
-        }:
+        }
+        if schema_version == 4:
+            expected_case_fields.update({"candidate_proof_path", "obligation"})
+        if not isinstance(row, dict) or set(row) != expected_case_fields:
             raise ProofPolicyError(f"invalid proof-policy fields for {case_id}")
         module = row["module"]
         theorem = row["theorem"]
@@ -395,40 +484,77 @@ def load_proof_policy(repository_root: Path) -> ProofPolicy:
             raise ProofPolicyError(f"{case_id}.module must be non-empty")
         if not isinstance(theorem, str) or not theorem:
             raise ProofPolicyError(f"{case_id}.theorem must be non-empty")
-        contract_raw = row["contract"]
-        contract = None
-        if contract_raw is not None:
-            if not isinstance(contract_raw, dict) or set(contract_raw) != {
-                "path",
-                "sha256",
-            }:
-                raise ProofPolicyError(f"invalid contract binding for {case_id}")
-            contract = ProtectedFile(
-                path=_relative_path(contract_raw["path"], f"{case_id}.contract.path"),
-                sha256=_digest(contract_raw["sha256"], f"{case_id}.contract.sha256"),
-            )
+        proof_path = _relative_path(row["proof_path"], f"{case_id}.proof_path")
+        contract = _protected_file(row["contract"], f"{case_id}.contract")
+        candidate_proof_path = None
+        obligation = None
+        if schema_version == 4:
+            candidate_raw = row["candidate_proof_path"]
+            if candidate_raw is not None:
+                candidate_proof_path = _relative_path(
+                    candidate_raw, f"{case_id}.candidate_proof_path"
+                )
+            obligation = _protected_file(row["obligation"], f"{case_id}.obligation")
+            if (candidate_proof_path is None) != (obligation is None):
+                raise ProofPolicyError(
+                    f"{case_id} must bind candidate_proof_path and obligation together"
+                )
+            if candidate_proof_path is not None:
+                if candidate_proof_path != proof_path:
+                    raise ProofPolicyError(
+                        f"{case_id}.candidate_proof_path must equal proof_path"
+                    )
+                if obligation is not None and obligation.path == candidate_proof_path:
+                    raise ProofPolicyError(
+                        f"{case_id}.obligation must remain protected"
+                    )
+                if contract is not None and contract.path == candidate_proof_path:
+                    raise ProofPolicyError(
+                        f"{case_id}.contract must remain protected"
+                    )
         parsed[case_id] = ProofPolicyCase(
             module=module,
             theorem=theorem,
-            proof_path=_relative_path(row["proof_path"], f"{case_id}.proof_path"),
+            proof_path=proof_path,
             elaborated_type_sha256=_digest(
                 row["elaborated_type_sha256"],
                 f"{case_id}.elaborated_type_sha256",
             ),
             contract=contract,
+            candidate_proof_path=candidate_proof_path,
+            obligation=obligation,
         )
+    candidate_paths = [
+        entry.candidate_proof_path
+        for entry in parsed.values()
+        if entry.candidate_proof_path is not None
+    ]
+    if len(candidate_paths) != len(set(candidate_paths)):
+        raise ProofPolicyError("candidate proof paths must be unique across cases")
     return ProofPolicy(
+        schema_version=schema_version,
         allowed_axioms=frozenset(allowed),
-        lean_project_sha256=_digest(raw["lean_project_sha256"], "lean_project_sha256"),
+        protected_lean_project_sha256=_digest(
+            raw[protected_digest_field], protected_digest_field
+        ),
         toolchain=toolchain,
         cases=parsed,
     )
 
 
 def expected_lean_project_digest(repository_root: Path) -> str:
-    """Return the reviewed root-project digest pinned by the tracked policy."""
+    """Return the reviewed protected-project digest pinned by the policy."""
 
-    return load_proof_policy(repository_root).lean_project_sha256
+    return load_proof_policy(repository_root).protected_lean_project_sha256
+
+
+def current_protected_lean_project_digest(repository_root: Path) -> str:
+    """Hash current reviewed inputs under the policy's explicit exclusions."""
+
+    policy = load_proof_policy(repository_root)
+    return protected_lean_project_digest(
+        repository_root, policy.candidate_proof_paths
+    )
 
 
 def _strip_lean_comments_and_strings(source: str) -> str:
@@ -642,7 +768,7 @@ def proof_policy_digest(repository_root: Path) -> str:
         raise ProofPolicyError("Python proof-policy executable is missing")
     return canonical_sha256(
         {
-            "schema": "proof-policy-tcb-v3",
+            "schema": "proof-policy-tcb-v4",
             "files": files,
             "python": {
                 "path": executable.as_posix(),
@@ -681,7 +807,10 @@ def run_proof_policy_checks(
     result = {case_id: False for case_id in selected}
     try:
         policy = load_proof_policy(root)
-        if lean_project_digest(root) != policy.lean_project_sha256:
+        if (
+            protected_lean_project_digest(root, policy.candidate_proof_paths)
+            != policy.protected_lean_project_sha256
+        ):
             return result
         toolchain = resolve_lean_toolchain(root, policy=policy.toolchain)
         tokens_safe = _forbidden_tokens_absent(root)
@@ -710,6 +839,11 @@ def run_proof_policy_checks(
                 (root / entry.contract.path).is_file()
                 and _file_sha256(root / entry.contract.path) == entry.contract.sha256
             )
+            obligation_current = entry.obligation is None or (
+                (root / entry.obligation.path).is_file()
+                and _file_sha256(root / entry.obligation.path)
+                == entry.obligation.sha256
+            )
             audit = _run_elaborated_audit(
                 root, entry, runner=runner, toolchain=toolchain
             )
@@ -721,6 +855,7 @@ def run_proof_policy_checks(
                 and module_path_current
                 and type_current
                 and contract_current
+                and obligation_current
                 and axiom_safe
             )
         except (

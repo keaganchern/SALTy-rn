@@ -42,6 +42,8 @@ def test_proof_checks_report_actual_process_status() -> None:
         runner=runner,
         policy_checker=policy_checker,
         policy_digester=lambda _root: "f" * 64,
+        expected_project_digester=lean_project_digest,
+        protected_project_digester=lean_project_digest,
     )
 
     assert all(isinstance(item, ProofCheckAttestation) for item in result.values())
@@ -85,6 +87,35 @@ def test_successful_build_fails_when_proof_policy_fails() -> None:
     assert result.status is LeanCheck.FAILED
 
 
+def test_candidate_live_digest_need_not_equal_protected_review_digest(
+    tmp_path: Path,
+) -> None:
+    lean_root = tmp_path / "src/verification_bw/lean"
+    lean_root.mkdir(parents=True)
+    (lean_root / "lakefile.toml").write_text('name = "test"\n', encoding="ascii")
+    (lean_root / "CandidateProof.lean").write_text(
+        "theorem candidate : True := by trivial\n", encoding="ascii"
+    )
+    live_digest = lean_project_digest(tmp_path)
+    protected_digest = "a" * 64
+    resolved_toolchain = resolve_lean_toolchain(REPOSITORY_ROOT)
+
+    result = run_lean_proof_checks(
+        tmp_path,
+        cases=("s8-vclamp",),
+        runner=lambda command, **_kwargs: subprocess.CompletedProcess(command, 0),
+        policy_checker=lambda _root, *, cases=None: {"s8-vclamp": True},
+        policy_digester=lambda _root: "f" * 64,
+        expected_project_digester=lambda _root: protected_digest,
+        protected_project_digester=lambda _root: protected_digest,
+        toolchain_resolver=lambda _root: resolved_toolchain,
+    )["s8-vclamp"]
+
+    assert live_digest != protected_digest
+    assert result.project_sha256 == live_digest
+    assert result.status is LeanCheck.PASSED
+
+
 def test_lean_project_digest_changes_with_source(tmp_path: Path) -> None:
     lean_root = tmp_path / "src/verification_bw/lean"
     source = lean_root / "SALT/Test.lean"
@@ -123,6 +154,7 @@ def test_successful_process_fails_closed_if_project_changes_during_check(
         policy_checker=lambda _root, *, cases=None: {"s8-vclamp": True},
         policy_digester=lambda _root: "f" * 64,
         expected_project_digester=lambda _root: before,
+        protected_project_digester=lean_project_digest,
         toolchain_resolver=lambda _root: resolved_toolchain,
     )["s8-vclamp"]
 
@@ -159,6 +191,7 @@ def test_stable_tree_different_from_reviewed_baseline_is_not_built(
         policy_checker=lambda _root, *, cases=None: {"s8-vclamp": True},
         policy_digester=lambda _root: "f" * 64,
         expected_project_digester=lambda _root: reviewed_digest,
+        protected_project_digester=lean_project_digest,
         toolchain_resolver=lambda _root: resolved_toolchain,
     )["s8-vclamp"]
 

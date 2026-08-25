@@ -21,8 +21,10 @@ from ..lean_backend.frontend import (
 )
 from ..lean_backend.generate import _extract_pair
 from ..lean_backend.generate_cases import (
+    generate_case_obligations,
     generate_case_modules,
     generated_module_path,
+    generated_obligation_path,
 )
 from ..lean_backend.model_profiles import SCALE_UP_MODELS
 from ..lean_backend.profiles import FRONTEND_PROFILES
@@ -238,6 +240,11 @@ def generation_watch_digest(repository_root: Path, *, clang: str = "clang") -> s
         paths.add(root / "kernels/source" / f"{case_id}.c")
         paths.add(root / "kernels/target" / f"{case_id}.c")
         paths.add(_generated_model_path(root, case_id))
+        if (
+            case_id in SCALE_UP_MODELS
+            and SCALE_UP_MODELS[case_id].unary_prefix_tail_obligation is not None
+        ):
+            paths.add(generated_obligation_path(root, case_id))
     missing = sorted(path for path in paths if not path.is_file())
     if missing:
         raise FileNotFoundError(f"generated-model input is missing: {missing}")
@@ -396,9 +403,19 @@ def check_generated_models(
                 repository_root=root, cases=(case_id,), clang=clang
             )[case_id]
             path = _generated_model_path(root, case_id)
-            result[case_id] = (
+            model_current = (
                 path.is_file() and path.read_text(encoding="ascii") == expected
             )
+            obligations = generate_case_obligations(cases=(case_id,))
+            obligation_current = True
+            for obligation_case, obligation_text in obligations.items():
+                obligation_path = generated_obligation_path(root, obligation_case)
+                obligation_current = obligation_current and (
+                    obligation_path.is_file()
+                    and obligation_path.read_text(encoding="ascii")
+                    == obligation_text
+                )
+            result[case_id] = model_current and obligation_current
         except (OSError, UnicodeError, RuntimeError, ValueError):
             result[case_id] = False
     return result

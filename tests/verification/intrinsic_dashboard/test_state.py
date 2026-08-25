@@ -402,6 +402,13 @@ def test_kernel_rows_use_explicit_aliases_and_real_artifact_gates(
     assert by_program["s8-vclamp"].proof_generated
     assert by_program["s8-vclamp"].claim_scope is ClaimScope.ARBITRARY_LENGTH_VALUE
     assert not by_program["s8-vclamp"].complete_c_function_verified
+    assert by_program["qs8-vlrelu"].spec_generated
+    assert by_program["qs8-vlrelu"].proof_generated
+    assert (
+        by_program["qs8-vlrelu"].claim_scope
+        is ClaimScope.ARBITRARY_LENGTH_VALUE
+    )
+    assert not by_program["qs8-vlrelu"].complete_c_function_verified
     assert by_program["qs8-vadd-minmax"].spec_generated
     assert by_program["qs8-vadd-minmax"].proof_generated
     assert by_program["f32-vmax"].claim_scope is ClaimScope.LEXICAL_INVENTORY
@@ -442,6 +449,17 @@ def test_kernel_rows_use_explicit_aliases_and_real_artifact_gates(
     assert s8_binding["contract"]["path"].endswith("/S8VClamp/Contract.lean")
     assert s8_binding["proof"]["path"].endswith("/S8VClamp/AllLengths.lean")
     assert projected["s8-vclamp"]["claim_scope"] == "arbitrary-length-value"
+    vlrelu_binding = projected["qs8-vlrelu"]["artifact_binding"]
+    assert vlrelu_binding["obligation"]["path"].endswith(
+        "/QS8VLReLU/Obligation.lean"
+    )
+    assert vlrelu_binding["obligation"]["sha256"] == file_sha256(
+        ROOT / vlrelu_binding["obligation"]["path"]
+    )
+    assert vlrelu_binding["proof"]["path"].endswith(
+        "/QS8VLReLU/CandidateProof.lean"
+    )
+    assert projected["qs8-vlrelu"]["claim_scope"] == "arbitrary-length-value"
     assert not projected["qs8-vcvt"]["complete_c_function_verified"]
 
 
@@ -817,11 +835,12 @@ def test_local_provider_does_not_scan_xnnpack_and_rebuilds_live_state(
         for row in first["kernel_files"]
         if row["claim_scope"] == "arbitrary-length-value"
     ]
-    assert len(selected_rows) == 3
+    assert len(selected_rows) == 2
     assert all(row["generated_model_fresh"] for row in selected_rows)
     assert {row["program_id"] for row in arbitrary_length_rows} == {
         "s8-vclamp",
         "qs8-vcvt",
+        "qs8-vlrelu",
     }
     assert all(row["generated_model_fresh"] for row in arbitrary_length_rows)
     assert second["agents"][0]["id"] == "agent-live"

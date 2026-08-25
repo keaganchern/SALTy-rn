@@ -697,13 +697,19 @@ def _generated_artifact_status(repository_root: Path, program_id: str) -> tuple[
     dict[str, str] | None,
     dict[str, str] | None,
     dict[str, str] | None,
+    dict[str, str] | None,
 ]:
     target = PROOF_CASES.get(program_id)
     if target is None:
-        return None, None, None
+        return None, None, None, None
     contract = repository_root / target.contract_path
     models = repository_root / target.models_path
     proof = repository_root / target.proof_path
+    obligation = (
+        None
+        if target.obligation_path is None
+        else repository_root / target.obligation_path
+    )
     contract_record = (
         {
             "path": contract.relative_to(repository_root).as_posix(),
@@ -728,7 +734,15 @@ def _generated_artifact_status(repository_root: Path, program_id: str) -> tuple[
         if proof.is_file()
         else None
     )
-    return contract_record, models_record, proof_record
+    obligation_record = (
+        {
+            "path": obligation.relative_to(repository_root).as_posix(),
+            "sha256": file_sha256(obligation),
+        }
+        if obligation is not None and obligation.is_file()
+        else None
+    )
+    return contract_record, models_record, proof_record, obligation_record
 
 
 def _missing_local_dependency(
@@ -877,10 +891,18 @@ def _kernel_files(
                 registry_records=registry_records,
             )
         )
-        contract_record, models_record, proof_record = _generated_artifact_status(
-            repository_root, program.program_id
+        (
+            contract_record,
+            models_record,
+            proof_record,
+            obligation_record,
+        ) = _generated_artifact_status(repository_root, program.program_id)
+        target = PROOF_CASES.get(program.program_id)
+        spec_generated = contract_record is not None and (
+            target is None
+            or target.obligation_path is None
+            or obligation_record is not None
         )
-        spec_generated = contract_record is not None
         proof_generated = proof_record is not None
         generated_model_fresh = models_record is not None and model_freshness.get(
             program.program_id, False
@@ -890,7 +912,6 @@ def _kernel_files(
             raise DashboardStateError(
                 f"Lean-check evidence exists without a proof artifact: {program.program_id}"
             )
-        target = PROOF_CASES.get(program.program_id)
         if proof_check is not None and (
             target is None or proof_check.target != target.module
         ):
@@ -915,7 +936,7 @@ def _kernel_files(
         )
         artifact_sha256 = canonical_sha256(
             {
-                "schema": "kernel-file-artifact-binding-v2",
+                "schema": "kernel-file-artifact-binding-v3",
                 "kernel_family": program.family,
                 "program_id": program.program_id,
                 "source": source_record,
@@ -927,6 +948,7 @@ def _kernel_files(
                     _dependency_record(intrinsic) for intrinsic in rvv
                 ],
                 "contract": contract_record,
+                "obligation": obligation_record,
                 "models": models_record,
                 "generated_model_fresh": generated_model_fresh,
                 "generated_model_freshness_sha256": (
@@ -971,6 +993,7 @@ def _kernel_files(
                     "source": source_record,
                     "target": target_record,
                     "contract": contract_record,
+                    "obligation": obligation_record,
                     "models": models_record,
                     "generated_model_fresh": generated_model_fresh,
                     "generated_model_freshness_sha256": (
