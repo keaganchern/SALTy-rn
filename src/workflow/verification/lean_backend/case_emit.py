@@ -354,8 +354,6 @@ def _validate_neon_control_shape(
         expected = _S8_VCLAMP_NEON_CONTROL_SHAPE
     elif profile.prefix_tail is not None:
         expected = _byte_tail_control_shape(loop, profile.prefix_tail.element_c_type)
-    elif profile.case_id == "qu8-vadd-minmax":
-        expected = _byte_tail_control_shape(loop, "uint8_t")
     else:
         expected = (
             (
@@ -1071,22 +1069,50 @@ def _tail_control_path(
     return path
 
 
+def _role_argument_names(prefix: str, inputs: tuple[str, ...]) -> tuple[str, ...]:
+    if len(inputs) == 1:
+        return (prefix,)
+    names: list[str] = []
+    for input_name in inputs:
+        role = input_name.removeprefix("input_")
+        parts = role.split("_")
+        if not role or any(
+            re.fullmatch(r"[A-Za-z][A-Za-z0-9]*", part) is None for part in parts
+        ):
+            raise CaseEmissionError(
+                f"cannot derive a Lean tail role from input {input_name!r}"
+            )
+        suffix = "".join(part[0].upper() + part[1:] for part in parts)
+        names.append(f"{prefix}{suffix}")
+    if len(set(names)) != len(names):
+        raise CaseEmissionError(f"duplicate generated tail arguments {names!r}")
+    return tuple(names)
+
+
+def _loaded_argument_names(inputs: tuple[str, ...]) -> tuple[str, ...]:
+    return _role_argument_names("loaded", inputs)
+
+
+def _overread_argument_names(inputs: tuple[str, ...]) -> tuple[str, ...]:
+    return _role_argument_names("overread", inputs)
+
+
 def _emit_prefix_tail_value_models(
     extraction: KernelExtraction,
     profile: ModelProfile,
     registry: Mapping[str, IntrinsicSpec],
     already_consumed: tuple[str, ...],
 ) -> tuple[list[str], tuple[str, ...]]:
-    """Emit one reviewed unary fixed-block plus little-endian prefix-tail schedule."""
+    """Emit one reviewed fixed-block plus little-endian prefix-tail schedule."""
 
     config = profile.prefix_tail
     if config is None:
         raise CaseEmissionError(f"{profile.case_id}: no prefix-tail profile")
-    if len(profile.inputs) != 1:
+    if len(profile.inputs) not in {1, 2}:
         raise CaseEmissionError(
-            f"{profile.case_id}: the initial prefix-tail adapter is unary"
+            f"{profile.case_id}: prefix-tail value loops support one or two inputs"
         )
-    input_name = profile.inputs[0]
+    input_names = profile.inputs
     main = _selected_neon_loop(extraction, profile)
     roots = [
         control
@@ -1144,36 +1170,46 @@ def _emit_prefix_tail_value_models(
         raise CaseEmissionError(f"{profile.case_id}: prefix tail has no value pipeline")
     if any(call.control_path != _tail_control_path(root) for call in root_calls):
         raise CaseEmissionError(f"{profile.case_id}: prefix-tail root path changed")
-    load = root_calls[0]
-    load_spec = emitter._lookup_intrinsic(load.spelling)
-    if not (
-        isinstance(load_spec, StructuralIntrinsic)
-        and load_spec.operation is StructuralOp.LOAD
-        and isinstance(load_spec.signature.result, VectorType)
-        and load_spec.signature.result.fixed_lanes == config.load_lanes
+    if len(root_calls) <= len(input_names):
+        raise CaseEmissionError(f"{profile.case_id}: prefix-tail pipeline is empty")
+    loaded_names = _loaded_argument_names(input_names)
+    for load, input_name, loaded_name in zip(
+        root_calls[: len(input_names)], input_names, loaded_names
     ):
-        raise CaseEmissionError(
-            f"{profile.case_id}: prefix tail must begin with a {config.load_lanes}-lane load"
-        )
-    load_base = load.arguments[0]
-    if (
-        load_base.dependencies != (f"{input_name}@1",)
-        or load_base.source_text.strip() != input_name
-        or load_base.semantic_operations
-    ):
-        raise CaseEmissionError(f"{profile.case_id}: prefix-tail load base changed")
-    emitter._bind_call(load, f"(loaded).take {config.load_lanes}")
+        load_spec = emitter._lookup_intrinsic(load.spelling)
+        if not (
+            isinstance(load_spec, StructuralIntrinsic)
+            and load_spec.operation is StructuralOp.LOAD
+            and isinstance(load_spec.signature.result, VectorType)
+            and load_spec.signature.result.fixed_lanes == config.load_lanes
+        ):
+            raise CaseEmissionError(
+                f"{profile.case_id}: prefix tail must begin with one "
+                f"{config.load_lanes}-lane load per input"
+            )
+        load_base = load.arguments[0]
+        if (
+            load_base.dependencies != (f"{input_name}@1",)
+            or load_base.source_text.strip() != input_name
+            or load_base.semantic_operations
+        ):
+            raise CaseEmissionError(
+                f"{profile.case_id}: prefix-tail load base changed for {input_name}"
+            )
+        emitter._bind_call(load, f"({loaded_name}).take {config.load_lanes}")
 
     tail_value: str | None = None
     tail_dependency: str | None = None
-    for index, call in enumerate(root_calls[1:], 1):
+    value_calls = root_calls[len(input_names) :]
+    for index, call in enumerate(value_calls):
         spec = emitter._lookup_intrinsic(call.spelling)
         if isinstance(spec, StructuralIntrinsic) and spec.operation in {
+            StructuralOp.LOAD,
             StructuralOp.STORE,
             StructuralOp.LANE_STORE,
         }:
             raise CaseEmissionError(
-                f"{profile.case_id}: store appeared before a tail-width branch"
+                f"{profile.case_id}: load or store appeared inside the tail value pipeline"
             )
         emitted_value = emitter.emit_registered_call(call)
         if emitted_value is None:
@@ -1183,7 +1219,7 @@ def _emit_prefix_tail_value_models(
         if call.assigned_to is None:
             dependency = f"call:{call.node_id}"
             if not any(
-                dependency in later.dependencies for later in root_calls[index + 1 :]
+                dependency in later.dependencies for later in value_calls[index + 1 :]
             ):
                 raise CaseEmissionError(
                     f"{profile.case_id}: expression-only tail call {call.spelling} "
@@ -1283,10 +1319,18 @@ def _emit_prefix_tail_value_models(
             continue
         slide = branch_calls[-1]
         slide_spec = emitter._lookup_intrinsic(slide.spelling)
+        slide_definition = (
+            None
+            if slide.assigned_to is None
+            else emitter.definitions.get(slide.assigned_to)
+        )
         if not (
             isinstance(slide_spec, StructuralIntrinsic)
             and slide_spec.operation is StructuralOp.EXTRACT_FROM_CONCAT
             and slide.assigned_to is not None
+            and slide_definition is not None
+            and slide_definition.definition_kind == "assignment"
+            and slide_definition.value_call == slide.node_id
             and slide.arguments[0].dependencies == (tail_dependency,)
             and slide.arguments[1].dependencies == (tail_dependency,)
             and slide.arguments[2].constant_value == width
@@ -1321,16 +1365,16 @@ def _emit_prefix_tail_value_models(
         output_version = next_version
 
     if config.input_advances_after_load:
-        expected_updates.insert(
-            0,
+        expected_updates[0:0] = [
             (
                 f"{input_name}@2",
                 root.node_id,
                 _tail_control_path(root),
                 f"{input_name}+={config.load_lanes}",
                 (f"{input_name}@1", f"constant:{config.load_lanes}:int"),
-            ),
-        )
+            )
+            for input_name in input_names
+        ]
     actual_updates = [
         (
             definition.value,
@@ -1371,6 +1415,65 @@ def _emit_prefix_tail_value_models(
 
     width = profile.neon_block_lanes
     padding = config.load_lanes - 1
+    loaded_parameters = " ".join(loaded_names)
+    partial_application = " ".join(loaded_names)
+    overread_description = (
+        "`overread` supplies the bytes physically loaded beyond a nonempty short tail."
+        if len(input_names) == 1
+        else "`overreadA` and `overreadB` supply the bytes physically loaded beyond "
+        "a nonempty short tail."
+    )
+    if len(input_names) == 1:
+        input_name = input_names[0]
+        value_loop_parameters = [
+            f"    ({input_name} overread : List (BitVec 8)) : List (BitVec 8) :=",
+        ]
+        tail_loader_lines = [
+            f"      let {loaded_names[0]} := (tail ++ overread).take {config.load_lanes}",
+            f"      neonPartialTailLivePrefixFromIntrinsics p {partial_application} tail.length)",
+        ]
+        schedule_lines = [
+            f"  SALT.Kernel.Schedule.runFixedChunkTail {width} (by decide)",
+            f"    ({profile.neon_function} p)",
+            "    (fun tail =>",
+            *tail_loader_lines,
+            f"    {input_name}",
+        ]
+        compatibility_parameters = [
+            f"    ({input_name} : List (BitVec 8)) : List (BitVec 8) :=",
+        ]
+        compatibility_arguments = [
+            f"  neonValueLoopWithOverreadFromIntrinsics p {input_name}",
+            f"    (List.replicate {padding} (0 : BitVec 8))",
+        ]
+    else:
+        input_a, input_b = input_names
+        overread_names = _overread_argument_names(input_names)
+        overread_a, overread_b = overread_names
+        loaded_a, loaded_b = loaded_names
+        value_loop_parameters = [
+            f"    ({input_a} {input_b} {overread_a} {overread_b} : List (BitVec 8))",
+            f"    (sameLength : {input_a}.length = {input_b}.length) : List (BitVec 8) :=",
+        ]
+        schedule_lines = [
+            f"  SALT.Kernel.Schedule.runFixedChunkTail2 {width} (by decide)",
+            f"    ({profile.neon_function} p)",
+            "    (fun tailA tailB =>",
+            f"      let {loaded_a} := (tailA ++ {overread_a}).take {config.load_lanes}",
+            f"      let {loaded_b} := (tailB ++ {overread_b}).take {config.load_lanes}",
+            f"      neonPartialTailLivePrefixFromIntrinsics p {partial_application} tailA.length)",
+            f"    {input_a} {input_b} sameLength",
+        ]
+        compatibility_parameters = [
+            f"    ({input_a} {input_b} : List (BitVec 8))",
+            f"    (sameLength : {input_a}.length = {input_b}.length) : List (BitVec 8) :=",
+        ]
+        compatibility_arguments = [
+            f"  neonValueLoopWithOverreadFromIntrinsics p {input_a} {input_b}",
+            f"    (List.replicate {padding} (0 : BitVec 8))",
+            f"    (List.replicate {padding} (0 : BitVec 8)) sameLength",
+        ]
+
     lines = [
         "",
         "/-- Generated little-endian live-prefix value abstraction for the reviewed tail stores.",
@@ -1378,29 +1481,23 @@ def _emit_prefix_tail_value_models(
         "This definition does not establish C memory, alignment, aliasing, or endian adequacy.",
         "-/",
         f"def neonPartialTailLivePrefixFromIntrinsics (p : {profile.parameter_type})",
-        "    (loaded : List (BitVec 8)) (live : Nat) : List (BitVec 8) :=",
+        f"    ({loaded_parameters} : List (BitVec 8)) (live : Nat) : List (BitVec 8) :=",
         *emitter.lines,
         "  " + " ++ ".join(f"({value})" for value in stored_values),
         "",
         f"/-- Generated value-only lifting of the validated {width}/{'/'.join(map(str, config.store_widths))} control shape.",
         "",
-        "`overread` supplies the bytes physically loaded beyond a nonempty short tail.",
+        overread_description,
         "This definition does not establish that those bytes are legally readable.",
         "-/",
         f"def neonValueLoopWithOverreadFromIntrinsics (p : {profile.parameter_type})",
-        "    (input overread : List (BitVec 8)) : List (BitVec 8) :=",
-        f"  SALT.Kernel.Schedule.runFixedChunkTail {width} (by decide)",
-        f"    ({profile.neon_function} p)",
-        "    (fun tail =>",
-        f"      let loaded := (tail ++ overread).take {config.load_lanes}",
-        "      neonPartialTailLivePrefixFromIntrinsics p loaded tail.length)",
-        "    input",
+        *value_loop_parameters,
+        *schedule_lines,
         "",
         "/-- Zero-filled compatibility specialization of the explicit-overread model. -/",
         f"def neonValueLoopFromIntrinsics (p : {profile.parameter_type})",
-        "    (input : List (BitVec 8)) : List (BitVec 8) :=",
-        "  neonValueLoopWithOverreadFromIntrinsics p input",
-        f"    (List.replicate {padding} (0 : BitVec 8))",
+        *compatibility_parameters,
+        *compatibility_arguments,
     ]
     return lines, tuple(sorted(expected_tail))
 
@@ -1500,9 +1597,57 @@ def _reviewed_signed_shift_branch(
     emitter._validate_immediates(right, right_spec)
     emitter._validate_immediates(left, left_spec)
 
+    accumulator_dependencies = right.arguments[0].dependencies
+    accumulator_dependency = (
+        accumulator_dependencies[0] if len(accumulator_dependencies) == 1 else ""
+    )
+    accumulator_match = re.fullmatch(
+        r"([A-Za-z_][A-Za-z0-9_]*)@(\d+)", accumulator_dependency
+    )
+    right_match = (
+        None
+        if right.assigned_to is None
+        else re.fullmatch(r"([A-Za-z_][A-Za-z0-9_]*)@(\d+)", right.assigned_to)
+    )
+    left_match = (
+        None
+        if left.assigned_to is None
+        else re.fullmatch(r"([A-Za-z_][A-Za-z0-9_]*)@(\d+)", left.assigned_to)
+    )
+    right_definition = (
+        None
+        if right.assigned_to is None
+        else emitter.definitions.get(right.assigned_to)
+    )
+    left_definition = (
+        None if left.assigned_to is None else emitter.definitions.get(left.assigned_to)
+    )
+    call_positions = {
+        call.node_id: index for index, call in enumerate(emitter.extraction.calls)
+    }
+    left_position = call_positions[left.node_id]
+    later_calls = emitter.extraction.calls[left_position + 1 :]
+    first_consumer = later_calls[0] if later_calls else None
+
     if (
         right.assigned_to is None
         or left.assigned_to is None
+        or accumulator_match is None
+        or right_match is None
+        or left_match is None
+        or accumulator_match.group(1) != right_match.group(1)
+        or right_match.group(1) != left_match.group(1)
+        or int(right_match.group(2)) != int(accumulator_match.group(2)) + 1
+        or int(left_match.group(2)) != int(right_match.group(2)) + 1
+        or right_definition is None
+        or left_definition is None
+        or right_definition.definition_kind != "assignment"
+        or left_definition.definition_kind != "assignment"
+        or right_definition.value_call != right.node_id
+        or left_definition.value_call != left.node_id
+        or first_consumer is None
+        or not first_consumer.arguments
+        or first_consumer.arguments[0].dependencies != (left.assigned_to,)
         or right.arguments[0].dependencies != ("vacc@1",)
         or left.arguments[0].dependencies != (right.assigned_to,)
         or left.arguments[0].source_text.strip() != "vacc"
@@ -1576,14 +1721,14 @@ def _emit_rvv_case(
         for control in extraction.controls
         if control.parent_control == loop.node_id
     ]
-    if child_controls and profile.case_id != "qu8-vadd-minmax":
+    if child_controls and not profile.rvv_signed_shift_branch:
         raise CaseEmissionError(
             f"{profile.case_id}: nested RVV control needs a reviewed adapter"
         )
-    if profile.case_id == "qu8-vadd-minmax":
+    if profile.rvv_signed_shift_branch:
         if len(child_controls) != 1:
             raise CaseEmissionError(
-                "qu8-vadd-minmax: expected one signed-shift child branch"
+                f"{profile.case_id}: expected one signed-shift child branch"
             )
         allowed_controls = {loop.node_id, child_controls[0].node_id}
     else:
@@ -1610,6 +1755,7 @@ def _emit_rvv_case(
     saw_schedule = False
     output: str | None = None
     branch_consumed = False
+    loaded_inputs: list[str] = []
     for call in selected_calls:
         if child_controls and call.parent_control == child_controls[0].node_id:
             if branch_consumed:
@@ -1682,6 +1828,7 @@ def _emit_rvv_case(
                     f"{profile.case_id}: unsupported RVV load expression "
                     f"{base_argument.source_text!r}"
                 )
+            loaded_inputs.append(base)
             emitter._bind_call(call, base)
             continue
         if (
@@ -1715,6 +1862,10 @@ def _emit_rvv_case(
         )
     if output is None:
         raise CaseEmissionError(f"{profile.case_id}: RVV block has no store")
+    if loaded_inputs != list(profile.inputs):
+        raise CaseEmissionError(
+            f"{profile.case_id}: RVV load footprint/order changed: {loaded_inputs!r}"
+        )
     expected_updates = [
         (f"{input_name}@1", f"{input_name} += vl") for input_name in profile.inputs
     ]
@@ -1826,11 +1977,10 @@ def emit_case_pair(
     rvv_lines, rvv_output, rvv_consumed = _emit_rvv_case(rvv, profile, rvv_registry)
     rvv_extra_lines: list[str] = []
     if profile.prefix_tail is not None:
-        if len(profile.inputs) != 1:
+        if len(profile.inputs) not in {1, 2}:
             raise CaseEmissionError(
-                f"{profile.case_id}: the initial RVV value-loop adapter is unary"
+                f"{profile.case_id}: RVV value loops support one or two inputs"
             )
-        input_name = profile.inputs[0]
         rvv_extra_lines = [
             "",
             "/-- Generated value-only lifting of the validated RVV strip-mined loop.",
@@ -1838,11 +1988,33 @@ def emit_case_pair(
             "A positive partition abstracts active lengths; ISA `vsetvl` legality is separate.",
             "-/",
             f"def rvvValueLoopFromIntrinsics (p : {profile.parameter_type})",
-            f"    ({input_name} : List (BitVec 8))",
-            "    (schedule : SALT.Kernel.Schedule.PositivePartition input.length) :",
-            "    List (BitVec 8) :=",
-            "  SALT.Kernel.Schedule.processBlocks (rvvChunkFromIntrinsics p) input schedule",
         ]
+        if len(profile.inputs) == 1:
+            input_name = profile.inputs[0]
+            rvv_extra_lines.extend(
+                [
+                    f"    ({input_name} : List (BitVec 8))",
+                    "    (schedule : SALT.Kernel.Schedule.PositivePartition "
+                    f"{input_name}.length) :",
+                    "    List (BitVec 8) :=",
+                    "  SALT.Kernel.Schedule.processBlocks "
+                    f"(rvvChunkFromIntrinsics p) {input_name} schedule",
+                ]
+            )
+        else:
+            input_a, input_b = profile.inputs
+            rvv_extra_lines.extend(
+                [
+                    f"    ({input_a} {input_b} : List (BitVec 8))",
+                    f"    (sameLength : {input_a}.length = {input_b}.length)",
+                    "    (schedule : SALT.Kernel.Schedule.PositivePartition "
+                    f"{input_a}.length) :",
+                    "    List (BitVec 8) :=",
+                    "  SALT.Kernel.Schedule.processBlocks2 "
+                    f"(rvvChunkFromIntrinsics p) {input_a} {input_b} "
+                    "sameLength schedule",
+                ]
+            )
     schedule_import = (
         ["import SALT.Kernel.Schedule"]
         if profile.case_id == "s8-vclamp" or profile.prefix_tail is not None

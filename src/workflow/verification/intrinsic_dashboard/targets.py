@@ -54,10 +54,16 @@ PROOF_CASES: Mapping[str, ProofTarget] = {
         ),
     ),
     "qu8-vadd-minmax": ProofTarget(
-        module="SALT.Generated.QU8VAddMinmax.Proof",
+        module="SALT.Generated.QU8VAddMinmax.CandidateProof",
         models_path="src/verification_bw/lean/SALT/Generated/QU8VAddMinmax/Models.lean",
-        proof_path="src/verification_bw/lean/SALT/Generated/QU8VAddMinmax/Proof.lean",
+        proof_path=(
+            "src/verification_bw/lean/SALT/Generated/QU8VAddMinmax/"
+            "CandidateProof.lean"
+        ),
         contract_path="src/verification_bw/lean/SALT/Kernel/QU8VAddMinmax/Contract.lean",
-        claim_scope=ClaimScope.SELECTED_LOCAL_BLOCK,
+        claim_scope=ClaimScope.ARBITRARY_LENGTH_VALUE,
+        obligation_path=(
+            "src/verification_bw/lean/SALT/Generated/QU8VAddMinmax/Obligation.lean"
+        ),
     ),
 }

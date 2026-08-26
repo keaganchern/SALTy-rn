@@ -460,6 +460,17 @@ def test_kernel_rows_use_explicit_aliases_and_real_artifact_gates(
         "/QS8VLReLU/CandidateProof.lean"
     )
     assert projected["qs8-vlrelu"]["claim_scope"] == "arbitrary-length-value"
+    qu8_binding = projected["qu8-vadd-minmax"]["artifact_binding"]
+    assert qu8_binding["obligation"]["path"].endswith(
+        "/QU8VAddMinmax/Obligation.lean"
+    )
+    assert qu8_binding["obligation"]["sha256"] == file_sha256(
+        ROOT / qu8_binding["obligation"]["path"]
+    )
+    assert qu8_binding["proof"]["path"].endswith(
+        "/QU8VAddMinmax/CandidateProof.lean"
+    )
+    assert projected["qu8-vadd-minmax"]["claim_scope"] == "arbitrary-length-value"
     assert not projected["qs8-vcvt"]["complete_c_function_verified"]
 
 
@@ -835,12 +846,13 @@ def test_local_provider_does_not_scan_xnnpack_and_rebuilds_live_state(
         for row in first["kernel_files"]
         if row["claim_scope"] == "arbitrary-length-value"
     ]
-    assert len(selected_rows) == 2
+    assert len(selected_rows) == 1
     assert all(row["generated_model_fresh"] for row in selected_rows)
     assert {row["program_id"] for row in arbitrary_length_rows} == {
         "s8-vclamp",
         "qs8-vcvt",
         "qs8-vlrelu",
+        "qu8-vadd-minmax",
     }
     assert all(row["generated_model_fresh"] for row in arbitrary_length_rows)
     assert second["agents"][0]["id"] == "agent-live"

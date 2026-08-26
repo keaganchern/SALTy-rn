@@ -3,7 +3,7 @@ from random import Random
 
 import pytest
 
-from src.workflow.verification.lean_backend.intrinsic_index import (
+from workflow.verification.lean_backend.intrinsic_index import (
     CANONICAL_INTRINSIC_INDEX,
     CanonicalIntrinsicIndex,
     DescriptorProvenance,
@@ -15,11 +15,11 @@ from src.workflow.verification.lean_backend.intrinsic_index import (
     canonical_spec_digest,
     canonical_spec_record,
 )
-from src.workflow.verification.lean_backend.registry import QS8_VADD_MINMAX_REGISTRY
-from src.workflow.verification.lean_backend.scaleup_catalog import (
+from workflow.verification.lean_backend.registry import QS8_VADD_MINMAX_REGISTRY
+from workflow.verification.lean_backend.scaleup_catalog import (
     QS8_VCVT_CATALOG,
 )
-from src.workflow.verification.lean_backend.schema import (
+from workflow.verification.lean_backend.schema import (
     Architecture,
     FunctionSignature,
     ImmediateConstraint,

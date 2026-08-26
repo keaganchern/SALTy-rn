@@ -4,7 +4,7 @@
     "Quot.sound",
     "propext"
   ],
-  "protected_lean_project_sha256": "f8a6471b24913d3998e104233c62873df40a99eeac15e35cee68bcb19de46b85",
+  "protected_lean_project_sha256": "0ea7686503646f9a5b02ab5a78e21eaa1a3454dc4a6fac7682fbbf9933f1b378",
   "cases": {
     "qs8-vadd-minmax": {
       "candidate_proof_path": null,
@@ -58,16 +58,19 @@
       "theorem": "SALT.Generated.QS8VLReLU.allLengthsValueEqualWithOverread"
     },
     "qu8-vadd-minmax": {
-      "candidate_proof_path": null,
+      "candidate_proof_path": "src/verification_bw/lean/SALT/Generated/QU8VAddMinmax/CandidateProof.lean",
       "contract": {
         "path": "src/verification_bw/lean/SALT/Kernel/QU8VAddMinmax/Contract.lean",
         "sha256": "973e4033154f72bb4f3aabae701c339131bd5aa19e9c1a30a0686ca0a78eff86"
       },
-      "module": "SALT.Generated.QU8VAddMinmax.Proof",
-      "obligation": null,
-      "proof_path": "src/verification_bw/lean/SALT/Generated/QU8VAddMinmax/Proof.lean",
-      "elaborated_type_sha256": "0eb75acbf31005255c3b037595bee3d2962f957452a9d6b81636bd3012c562ef",
-      "theorem": "SALT.Generated.QU8VAddMinmax.generated_block_equal"
+      "module": "SALT.Generated.QU8VAddMinmax.CandidateProof",
+      "obligation": {
+        "path": "src/verification_bw/lean/SALT/Generated/QU8VAddMinmax/Obligation.lean",
+        "sha256": "7282e11bb820859b011a66976758776506a2a03e190ab5db5414f21469fe74d1"
+      },
+      "proof_path": "src/verification_bw/lean/SALT/Generated/QU8VAddMinmax/CandidateProof.lean",
+      "elaborated_type_sha256": "52e06179d46b3d88a7b8948239ccd8b8ee6d363bcda5c707908d2904466e5090",
+      "theorem": "SALT.Generated.QU8VAddMinmax.allLengthsValueEqualWithOverread"
     }
   },
   "schema_version": 4,

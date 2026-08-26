@@ -53,6 +53,21 @@ def test_qs8_vlrelu_obligation_is_deterministic_and_checked_in() -> None:
     assert "allLengthsValueEqualWithOverreadClaim" in first["qs8-vlrelu"]
 
 
+def test_qu8_binary_obligation_is_deterministic_and_checked_in() -> None:
+    first = generate_case_obligations(cases=("qu8-vadd-minmax",))
+    second = generate_case_obligations(cases=("qu8-vadd-minmax",))
+    path = generated_obligation_path(ROOT, "qu8-vadd-minmax")
+
+    assert first == second
+    assert tuple(first) == ("qu8-vadd-minmax",)
+    assert path.read_text(encoding="ascii") == first["qu8-vadd-minmax"]
+    obligation = first["qu8-vadd-minmax"]
+    assert "allLengthsValueEqualWithOverreadClaim" in obligation
+    assert "sameLength : inputA.length = inputB.length" in obligation
+    assert "7 <= overreadA.length" in obligation
+    assert "7 <= overreadB.length" in obligation
+
+
 def test_cli_check_rejects_stale_generated_obligation(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

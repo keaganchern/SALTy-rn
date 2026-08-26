@@ -18,7 +18,7 @@ class ParameterField:
 
 @dataclass(frozen=True, slots=True)
 class PrefixTailProfile:
-    """Reviewed byte-tail grammar for one fixed-width unary Neon loop."""
+    """Reviewed byte-tail grammar for one fixed-width Neon loop."""
 
     element_c_type: str
     load_lanes: int
@@ -75,6 +75,31 @@ class UnaryPrefixTailObligationProfile:
 
 
 @dataclass(frozen=True, slots=True)
+class BinaryPrefixTailObligationProfile:
+    """Reviewed interface for one generated binary arbitrary-length claim."""
+
+    contract_module: str
+    contract_namespace: str
+    contract_predicate: str
+    claim_name: str
+    display_name: str
+    element_width: int
+
+    def __post_init__(self) -> None:
+        for field in (
+            self.contract_module,
+            self.contract_namespace,
+            self.contract_predicate,
+            self.claim_name,
+            self.display_name,
+        ):
+            if not field:
+                raise ValueError("obligation profile fields must be non-empty")
+        if self.element_width <= 0:
+            raise ValueError("obligation element width must be positive")
+
+
+@dataclass(frozen=True, slots=True)
 class ModelProfile:
     case_id: str
     lean_namespace: str
@@ -87,13 +112,34 @@ class ModelProfile:
     neon_loop_update: str
     prefix_tail: PrefixTailProfile | None = None
     unary_prefix_tail_obligation: UnaryPrefixTailObligationProfile | None = None
+    binary_prefix_tail_obligation: BinaryPrefixTailObligationProfile | None = None
+    rvv_signed_shift_branch: bool = False
 
     def __post_init__(self) -> None:
+        if (
+            self.unary_prefix_tail_obligation is not None
+            and self.binary_prefix_tail_obligation is not None
+        ):
+            raise ValueError("a model cannot configure unary and binary obligations")
+        if (
+            self.prefix_tail is not None
+            and self.neon_block_lanes != self.prefix_tail.load_lanes
+        ):
+            raise ValueError(
+                "a prefix-tail load width must match the fixed Neon block width"
+            )
         if self.unary_prefix_tail_obligation is not None:
             if self.prefix_tail is None:
                 raise ValueError("a unary prefix-tail obligation needs a tail profile")
             if len(self.inputs) != 1:
                 raise ValueError("a unary prefix-tail obligation needs exactly one input")
+        if self.binary_prefix_tail_obligation is not None:
+            if self.prefix_tail is None:
+                raise ValueError("a binary prefix-tail obligation needs a tail profile")
+            if len(self.inputs) != 2:
+                raise ValueError(
+                    "a binary prefix-tail obligation needs exactly two inputs"
+                )
 
     @property
     def generated_directory(self) -> str:
@@ -208,6 +254,20 @@ QU8_VADD_MINMAX_MODEL = ModelProfile(
     neon_block_lanes=8,
     neon_loop_condition="batch >= 8 * sizeof(uint8_t)",
     neon_loop_update="batch -= 8 * sizeof(uint8_t)",
+    prefix_tail=PrefixTailProfile(
+        element_c_type="uint8_t",
+        load_lanes=8,
+        store_widths=(4, 2, 1),
+    ),
+    binary_prefix_tail_obligation=BinaryPrefixTailObligationProfile(
+        contract_module="SALT.Kernel.QU8VAddMinmax.Contract",
+        contract_namespace="SALT.Kernel.QU8VAddMinmax",
+        contract_predicate="WellFormedParams",
+        claim_name="allLengthsValueEqualWithOverreadClaim",
+        display_name="QU8 VAdd Minmax",
+        element_width=8,
+    ),
+    rvv_signed_shift_branch=True,
 )
 
 SCALE_UP_MODELS = {

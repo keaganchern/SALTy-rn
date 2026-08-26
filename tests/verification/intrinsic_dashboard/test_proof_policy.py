@@ -57,14 +57,16 @@ def test_tracked_policy_matches_current_statements_contracts_and_axioms() -> Non
         assert entry.proof_path == target.proof_path
         assert entry.contract is not None
         assert entry.contract.path == target.contract_path
-    vlrelu = policy.cases["qs8-vlrelu"]
-    assert vlrelu.candidate_proof_path == vlrelu.proof_path
-    assert vlrelu.obligation is not None
-    assert vlrelu.obligation.path.endswith("/QS8VLReLU/Obligation.lean")
+    candidate_cases = {"qs8-vlrelu", "qu8-vadd-minmax"}
+    for case_id in candidate_cases:
+        entry = policy.cases[case_id]
+        assert entry.candidate_proof_path == entry.proof_path
+        assert entry.obligation is not None
+        assert entry.obligation.path.endswith("/Obligation.lean")
     assert all(
         entry.candidate_proof_path is None and entry.obligation is None
         for case_id, entry in policy.cases.items()
-        if case_id != "qs8-vlrelu"
+        if case_id not in candidate_cases
     )
     assert run_proof_policy_checks(ROOT) == {case_id: True for case_id in policy.cases}
 

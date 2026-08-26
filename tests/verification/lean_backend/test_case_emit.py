@@ -126,6 +126,160 @@ def test_qs8_vlrelu_emission_consumes_complete_unbounded_schedule():
     assert "vcltq_s16 (vacc_4) (call_0016)" in module
 
 
+def test_qu8_emission_consumes_every_call_and_emits_binary_value_runners():
+    neon = extract("qu8-vadd-minmax", "neon")
+    rvv = extract("qu8-vadd-minmax", "rvv")
+    result = emit("qu8-vadd-minmax")
+    module = result.emitted.module_text
+
+    assert len(neon.calls) == 70
+    assert len(rvv.calls) == 21
+    assert set(result.neon_consumed_calls) == {call.node_id for call in neon.calls}
+    assert set(result.rvv_consumed_calls) == {call.node_id for call in rvv.calls}
+    assert "(loadedA loadedB : List (BitVec 8))" in module
+    assert "let loadedA := (tailA ++ overreadA).take 8" in module
+    assert "let loadedB := (tailB ++ overreadB).take 8" in module
+    assert "runFixedChunkTail2 8" in module
+    assert "sameLength : input_a.length = input_b.length" in module
+    assert "SALT.Kernel.Schedule.processBlocks2" in module
+
+
+def test_qu8_tail_second_load_cannot_alias_first_input(tmp_path: Path):
+    source = (ROOT / "kernels/source/qu8-vadd-minmax.c").read_text(encoding="utf-8")
+    old = "const uint8x8_t vb01234567 = vld1_u8(input_b);"
+    offset = source.rfind(old)
+    assert offset >= 0
+    mutated = tmp_path / "qu8-vadd-minmax.c"
+    mutated.write_text(
+        source[:offset]
+        + old.replace("input_b", "input_a")
+        + source[offset + len(old) :],
+        encoding="utf-8",
+    )
+
+    with pytest.raises(CaseEmissionError, match="load base changed for input_b"):
+        emit("qu8-vadd-minmax", neon_source=mutated)
+
+
+def test_supported_qu8_tail_operator_mutation_changes_only_tail_model(tmp_path: Path):
+    original = emit("qu8-vadd-minmax").emitted.module_text
+    source = (ROOT / "kernels/source/qu8-vadd-minmax.c").read_text(encoding="utf-8")
+    old = "vout01234567 = vmin_u8(vout01234567, voutput_max);"
+    offset = source.rfind(old)
+    assert offset >= 0
+    mutated = tmp_path / "qu8-vadd-minmax.c"
+    mutated.write_text(
+        source[:offset]
+        + "vout01234567 = vmax_u8(vout01234567, voutput_max);"
+        + source[offset + len(old) :],
+        encoding="utf-8",
+    )
+
+    changed = emit("qu8-vadd-minmax", neon_source=mutated).emitted.module_text
+    assert changed != original
+    main, tail = changed.split("def neonPartialTailLivePrefixFromIntrinsics", 1)
+    assert main.count("SALT.Intrinsics.Neon.vmin_u8") == 1
+    assert tail.count("SALT.Intrinsics.Neon.vmin_u8") == 0
+    assert tail.count("SALT.Intrinsics.Neon.vmax_u8") == 2
+
+
+@pytest.mark.parametrize(
+    ("old", "new", "message"),
+    (
+        (
+            "if (batch & (4 * sizeof(uint8_t)))",
+            "if (batch & (3 * sizeof(uint8_t)))",
+            "Neon control shape changed",
+        ),
+        (
+            "vst1_lane_u16((void*) output",
+            "vst1_lane_u16((uint16_t*) output",
+            "width-2 lane-store shape changed",
+        ),
+    ),
+)
+def test_qu8_tail_control_and_store_mutations_fail_closed(
+    tmp_path: Path, old: str, new: str, message: str
+):
+    source = (ROOT / "kernels/source/qu8-vadd-minmax.c").read_text(encoding="utf-8")
+    assert source.count(old) == 1
+    mutated = tmp_path / "qu8-vadd-minmax.c"
+    mutated.write_text(source.replace(old, new, 1), encoding="utf-8")
+
+    with pytest.raises((CaseEmissionError, LeanEmissionError), match=message):
+        emit("qu8-vadd-minmax", neon_source=mutated)
+
+
+def test_qu8_tail_slide_shadow_declaration_is_rejected(tmp_path: Path):
+    source = (ROOT / "kernels/source/qu8-vadd-minmax.c").read_text(encoding="utf-8")
+    old = "vout01234567 = vext_u8(vout01234567, vout01234567, 4);"
+    assert source.count(old) == 1
+    mutated = tmp_path / "qu8-vadd-minmax.c"
+    mutated.write_text(
+        source.replace(old, f"uint8x8_t {old}", 1),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(CaseEmissionError, match="width-4 conditional slide changed"):
+        emit("qu8-vadd-minmax", neon_source=mutated)
+
+
+def test_qu8_second_neon_input_update_is_validated(tmp_path: Path):
+    source = (ROOT / "kernels/source/qu8-vadd-minmax.c").read_text(encoding="utf-8")
+    old = "input_b += 8;"
+    assert source.count(old) == 1
+    mutated = tmp_path / "qu8-vadd-minmax.c"
+    mutated.write_text(source.replace(old, "input_b += 4;", 1), encoding="utf-8")
+
+    with pytest.raises(CaseEmissionError, match="Neon pointer/count updates changed"):
+        emit("qu8-vadd-minmax", neon_source=mutated)
+
+
+@pytest.mark.parametrize(
+    ("old", "new", "message"),
+    (
+        (
+            "__riscv_vle8_v_u8m2(input_b, vl)",
+            "__riscv_vle8_v_u8m2(input_a, vl)",
+            "RVV load footprint/order changed",
+        ),
+        (
+            "__riscv_vle8_v_u8m2(input_b, vl)",
+            "__riscv_vle8_v_u8m2(input_b, -vl)",
+            "does not consume active vl",
+        ),
+        ("input_b += vl;", "input_b += 1;", "RVV pointer/count updates changed"),
+    ),
+)
+def test_qu8_second_rvv_input_schedule_mutations_fail_closed(
+    tmp_path: Path, old: str, new: str, message: str
+):
+    source = (ROOT / "kernels/target/qu8-vadd-minmax.c").read_text(encoding="utf-8")
+    assert source.count(old) == 1
+    mutated = tmp_path / "qu8-vadd-minmax.c"
+    mutated.write_text(source.replace(old, new, 1), encoding="utf-8")
+
+    with pytest.raises((CaseEmissionError, LeanEmissionError), match=message):
+        emit("qu8-vadd-minmax", rvv_source=mutated)
+
+
+@pytest.mark.parametrize("declaration", ("vint32m8_t vacc", "vint32m8_t foo"))
+def test_qu8_rvv_else_result_must_assign_the_outer_accumulator(
+    tmp_path: Path, declaration: str
+):
+    source = (ROOT / "kernels/target/qu8-vadd-minmax.c").read_text(encoding="utf-8")
+    old = "vacc = __riscv_vsll_vx_i32m8(vacc, (size_t)(-shift), vl);"
+    assert source.count(old) == 1
+    mutated = tmp_path / "qu8-vadd-minmax.c"
+    mutated.write_text(
+        source.replace(old, f"{declaration} = {old.split(' = ', 1)[1]}", 1),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(CaseEmissionError, match="signed-shift branch dataflow changed"):
+        emit("qu8-vadd-minmax", rvv_source=mutated)
+
+
 @pytest.mark.parametrize(
     ("old", "new", "message"),
     (

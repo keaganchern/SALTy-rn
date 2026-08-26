@@ -72,6 +72,34 @@ theorem map_zip_eq_zipWith {α : Type u} {β : Type v} {γ : Type w} (f : α -> 
       | nil => simp
       | cons headB tailB => simp [ih]
 
+private theorem zipWith_append_of_prefix_length {α : Type u} {β : Type v} {γ : Type w}
+    (f : α -> β -> γ) (prefixA suffixA : List α) (prefixB suffixB : List β)
+    (samePrefixLength : prefixA.length = prefixB.length) :
+    List.zipWith f (prefixA ++ suffixA) (prefixB ++ suffixB) =
+      List.zipWith f prefixA prefixB ++ List.zipWith f suffixA suffixB := by
+  induction prefixA generalizing prefixB with
+  | nil =>
+      have : prefixB = [] := by cases prefixB <;> simp_all
+      subst prefixB
+      simp
+  | cons headA tailA ih =>
+      cases prefixB with
+      | nil => simp at samePrefixLength
+      | cons headB tailB =>
+          simp [List.zipWith]
+          exact ih tailB (by simpa using samePrefixLength)
+
+theorem zipWith_take_append_drop_eq {α : Type u} {β : Type v} {γ : Type w}
+    (f : α -> β -> γ) (inputA : List α) (inputB : List β) (n : Nat)
+    (sameLength : inputA.length = inputB.length) :
+    List.zipWith f (inputA.take n) (inputB.take n) ++
+      List.zipWith f (inputA.drop n) (inputB.drop n) =
+        List.zipWith f inputA inputB := by
+  rw [<- zipWith_append_of_prefix_length f
+    (inputA.take n) (inputA.drop n) (inputB.take n) (inputB.drop n)
+    (by simp [List.length_take, sameLength]),
+    List.take_append_drop, List.take_append_drop]
+
 theorem processChunkSizes2_eq_zipWith {α : Type u} {β : Type v} {γ : Type w}
     (f : α -> β -> γ) (chunks : List Nat) (inputA : List α) (inputB : List β)
     (sameLength : inputA.length = inputB.length)
@@ -133,6 +161,53 @@ theorem processBlocks_eq_map {α : Type u} {β : Type v}
     processBlocks block input schedule = input.map f :=
   processBlockSizes_eq_map block f blockRefines schedule.chunks input schedule.total
 
+/-- Execute a generated binary block model according to explicit chunk sizes.
+    Each invocation receives the corresponding active chunks from both inputs. -/
+def processBlockSizes2 {α : Type u} {β : Type v} {γ : Type w}
+    (block : List α -> List β -> List γ) : List Nat -> List α -> List β -> List γ
+  | [], _, _ => []
+  | chunk :: chunks, inputA, inputB =>
+      block (inputA.take chunk) (inputB.take chunk) ++
+        processBlockSizes2 block chunks (inputA.drop chunk) (inputB.drop chunk)
+
+theorem processBlockSizes2_eq_zipWith {α : Type u} {β : Type v} {γ : Type w}
+    (block : List α -> List β -> List γ) (f : α -> β -> γ)
+    (blockRefines : forall inputA inputB, inputA.length = inputB.length ->
+      block inputA inputB = List.zipWith f inputA inputB)
+    (chunks : List Nat) (inputA : List α) (inputB : List β)
+    (sameLength : inputA.length = inputB.length)
+    (coverage : chunks.sum = inputA.length) :
+    processBlockSizes2 block chunks inputA inputB = List.zipWith f inputA inputB := by
+  induction chunks generalizing inputA inputB with
+  | nil =>
+      cases inputA <;> cases inputB <;> simp_all [processBlockSizes2]
+  | cons chunk chunks ih =>
+      simp only [processBlockSizes2]
+      rw [blockRefines _ _ (by simp [List.length_take, sameLength])]
+      rw [ih (inputA.drop chunk) (inputB.drop chunk)
+        (by simp [List.length_drop, sameLength])
+        (by simp [List.length_drop, <- coverage])]
+      exact zipWith_take_append_drop_eq f inputA inputB chunk sameLength
+
+/-- Process two equal-length inputs with a binary block model according to a
+    complete positive partition of the first input's length. -/
+def processBlocks2 {α : Type u} {β : Type v} {γ : Type w}
+    (block : List α -> List β -> List γ) (inputA : List α) (inputB : List β)
+    (_sameLength : inputA.length = inputB.length)
+    (schedule : PositivePartition inputA.length) : List γ :=
+  processBlockSizes2 block schedule.chunks inputA inputB
+
+theorem processBlocks2_eq_zipWith {α : Type u} {β : Type v} {γ : Type w}
+    (block : List α -> List β -> List γ) (f : α -> β -> γ)
+    (blockRefines : forall inputA inputB, inputA.length = inputB.length ->
+      block inputA inputB = List.zipWith f inputA inputB)
+    (inputA : List α) (inputB : List β)
+    (sameLength : inputA.length = inputB.length)
+    (schedule : PositivePartition inputA.length) :
+    processBlocks2 block inputA inputB sameLength schedule = List.zipWith f inputA inputB :=
+  processBlockSizes2_eq_zipWith block f blockRefines schedule.chunks inputA inputB
+    sameLength schedule.total
+
 /-- Execute fixed-width generated blocks, followed by a nonempty short-tail model.
     The empty input never invokes `tail`, matching a C `if (batch != 0)` guard. -/
 def runFixedChunkTail {α : Type u} {β : Type v} (width : Nat)
@@ -182,6 +257,72 @@ theorem runFixedChunkTail_eq_map {α : Type u} {β : Type v}
           rw [<- List.map_append, List.take_append_drop]
         · rw [tailRefines xs (by cases xs <;> simp_all) (by omega)]
 
+/-- Execute synchronized fixed-width binary blocks, followed by a nonempty short-tail model.
+    The empty inputs never invoke `tail`, matching a C `if (batch != 0)` guard. -/
+def runFixedChunkTail2 {α : Type u} {β : Type v} {γ : Type w} (width : Nat)
+    (widthPositive : 0 < width) (body tail : List α -> List β -> List γ)
+    (inputA : List α) (inputB : List β) (sameLength : inputA.length = inputB.length) :
+    List γ :=
+  if inputA = [] then
+    []
+  else if width <= inputA.length then
+    body (inputA.take width) (inputB.take width) ++
+      runFixedChunkTail2 width widthPositive body tail (inputA.drop width)
+        (inputB.drop width) (by simp [List.length_drop, sameLength])
+  else
+    tail inputA inputB
+termination_by inputA.length
+decreasing_by
+  simp only [List.length_drop]
+  exact Nat.sub_lt_self widthPositive (by omega)
+
+theorem runFixedChunkTail2_eq_zipWith {α : Type u} {β : Type v} {γ : Type w}
+    (width : Nat) (widthPositive : 0 < width)
+    (body tail : List α -> List β -> List γ) (f : α -> β -> γ)
+    (bodyRefines : forall inputA inputB, inputA.length = inputB.length ->
+      inputA.length = width -> body inputA inputB = List.zipWith f inputA inputB)
+    (tailRefines : forall inputA inputB, inputA.length = inputB.length ->
+      0 < inputA.length -> inputA.length < width ->
+      tail inputA inputB = List.zipWith f inputA inputB)
+    (inputA : List α) (inputB : List β) (sameLength : inputA.length = inputB.length) :
+    runFixedChunkTail2 width widthPositive body tail inputA inputB sameLength =
+      List.zipWith f inputA inputB := by
+  suffices forall n (xs : List α) (ys : List β) (hSame : xs.length = ys.length),
+      xs.length <= n ->
+      runFixedChunkTail2 width widthPositive body tail xs ys hSame =
+        List.zipWith f xs ys from
+    this inputA.length inputA inputB sameLength (by omega)
+  intro n
+  induction n with
+  | zero =>
+      intro xs ys hSame hLength
+      have hXs : xs = [] := by cases xs <;> simp_all
+      have hYs : ys = [] := by cases ys <;> simp_all
+      subst xs
+      subst ys
+      simp [runFixedChunkTail2]
+  | succ n ih =>
+      intro xs ys hSame hLength
+      unfold runFixedChunkTail2
+      split
+      · have hYs : ys = [] := by cases ys <;> simp_all
+        subst ys
+        simp
+      · split
+        · have hTakeSame : (xs.take width).length = (ys.take width).length := by
+            simp [List.length_take, hSame]
+          have hTakeLength : (xs.take width).length = width := by
+            simp [List.length_take]
+            omega
+          have hDropSame : (xs.drop width).length = (ys.drop width).length := by
+            simp [List.length_drop, hSame]
+          rw [bodyRefines _ _ hTakeSame hTakeLength]
+          rw [ih _ _ hDropSame (by simp [List.length_drop]; omega)]
+          exact zipWith_take_append_drop_eq f xs ys width hSame
+        · have hPositive : 0 < xs.length := by
+            cases xs <;> simp_all <;> omega
+          rw [tailRefines xs ys hSame hPositive (by omega)]
+
 /-- Combine a fixed-width Neon-style executor with an arbitrary RVV-style
     positive partition once both generated block models refine the same map. -/
 theorem runFixedChunkTail_eq_processBlocks {α : Type u} {β : Type v}
@@ -197,6 +338,26 @@ theorem runFixedChunkTail_eq_processBlocks {α : Type u} {β : Type v}
   rw [runFixedChunkTail_eq_map width widthPositive body tail f bodyRefines
     tailRefines input]
   rw [processBlocks_eq_map block f blockRefines input schedule]
+
+/-- Combine a fixed-width Neon-style binary executor with an arbitrary RVV-style
+    positive partition once both generated block models refine the same `zipWith`. -/
+theorem runFixedChunkTail2_eq_processBlocks2 {α : Type u} {β : Type v} {γ : Type w}
+    (width : Nat) (widthPositive : 0 < width)
+    (body tail block : List α -> List β -> List γ) (f : α -> β -> γ)
+    (bodyRefines : forall inputA inputB, inputA.length = inputB.length ->
+      inputA.length = width -> body inputA inputB = List.zipWith f inputA inputB)
+    (tailRefines : forall inputA inputB, inputA.length = inputB.length ->
+      0 < inputA.length -> inputA.length < width ->
+      tail inputA inputB = List.zipWith f inputA inputB)
+    (blockRefines : forall inputA inputB, inputA.length = inputB.length ->
+      block inputA inputB = List.zipWith f inputA inputB)
+    (inputA : List α) (inputB : List β) (sameLength : inputA.length = inputB.length)
+    (schedule : PositivePartition inputA.length) :
+    runFixedChunkTail2 width widthPositive body tail inputA inputB sameLength =
+      processBlocks2 block inputA inputB sameLength schedule := by
+  rw [runFixedChunkTail2_eq_zipWith width widthPositive body tail f bodyRefines
+    tailRefines inputA inputB sameLength]
+  rw [processBlocks2_eq_zipWith block f blockRefines inputA inputB sameLength schedule]
 
 /-- Value-level interpretation of the reviewed little-endian 4/2/1 lane-store
     sequence used by an eight-byte prefix tail. This is not a C-memory theorem. -/

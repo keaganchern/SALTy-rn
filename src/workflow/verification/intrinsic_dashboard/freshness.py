@@ -242,7 +242,10 @@ def generation_watch_digest(repository_root: Path, *, clang: str = "clang") -> s
         paths.add(_generated_model_path(root, case_id))
         if (
             case_id in SCALE_UP_MODELS
-            and SCALE_UP_MODELS[case_id].unary_prefix_tail_obligation is not None
+            and (
+                SCALE_UP_MODELS[case_id].unary_prefix_tail_obligation is not None
+                or SCALE_UP_MODELS[case_id].binary_prefix_tail_obligation is not None
+            )
         ):
             paths.add(generated_obligation_path(root, case_id))
     missing = sorted(path for path in paths if not path.is_file())

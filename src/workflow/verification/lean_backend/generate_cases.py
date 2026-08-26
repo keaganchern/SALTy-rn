@@ -12,7 +12,10 @@ from .case_emit import emit_case_pair
 from .frontend import parse_kernel
 from .generate import _atomic_write_text
 from .model_profiles import SCALE_UP_MODELS
-from .obligation_emit import emit_unary_prefix_tail_obligation
+from .obligation_emit import (
+    emit_binary_prefix_tail_obligation,
+    emit_unary_prefix_tail_obligation,
+)
 from .profiles import FRONTEND_PROFILES
 from .scaleup_catalog import SCALEUP_CATALOGS
 
@@ -103,11 +106,17 @@ def generate_case_obligations(
             profile = SCALE_UP_MODELS[case_id]
         except KeyError as error:
             raise ValueError(f"unknown scale-up case {case_id!r}") from error
-        if profile.unary_prefix_tail_obligation is None:
+        if (
+            profile.unary_prefix_tail_obligation is None
+            and profile.binary_prefix_tail_obligation is None
+        ):
             continue
         if case_id in generated:
             raise ValueError(f"duplicate scale-up obligation {case_id!r}")
-        generated[case_id] = emit_unary_prefix_tail_obligation(profile)
+        if profile.unary_prefix_tail_obligation is not None:
+            generated[case_id] = emit_unary_prefix_tail_obligation(profile)
+        else:
+            generated[case_id] = emit_binary_prefix_tail_obligation(profile)
     return generated
 
 
@@ -119,7 +128,10 @@ def generated_obligation_path(
         profile = SCALE_UP_MODELS[case_id]
     except KeyError as error:
         raise ValueError(f"unknown scale-up case {case_id!r}") from error
-    if profile.unary_prefix_tail_obligation is None:
+    if (
+        profile.unary_prefix_tail_obligation is None
+        and profile.binary_prefix_tail_obligation is None
+    ):
         raise ValueError(f"case {case_id!r} has no generated obligation")
     return (
         root

@@ -1,6 +1,7 @@
 -- This file is generated. Do not edit the models by hand.
 import SALT.Intrinsics.Neon
 import SALT.Intrinsics.RVV
+import SALT.Kernel.Schedule
 
 namespace SALT.Generated.QU8VAddMinmax
 
@@ -68,6 +69,82 @@ def neonBlock8FromIntrinsics (p : QU8AddMinmaxParams)
   let vout01234567_2 := SALT.Intrinsics.Neon.vmin_u8 (vout01234567_1) (voutput_max_0)
   (vout01234567_2)
 
+/-- Generated little-endian live-prefix value abstraction for the reviewed tail stores.
+
+This definition does not establish C memory, alignment, aliasing, or endian adequacy.
+-/
+def neonPartialTailLivePrefixFromIntrinsics (p : QU8AddMinmaxParams)
+    (loadedA loadedB : List (BitVec 8)) (live : Nat) : List (BitVec 8) :=
+  let va_zero_point_0 := List.replicate 8 ((p.a_zero_point).truncate 8)
+  let vb_zero_point_0 := List.replicate 8 ((p.b_zero_point).truncate 8)
+  let va_multiplier_0 := List.replicate 4 ((p.a_multiplier).truncate 32)
+  let vb_multiplier_0 := List.replicate 4 ((p.b_multiplier).truncate 32)
+  let vright_shift_0 := List.replicate 4 (-(p.shift).truncate 32)
+  let voutput_zero_point_0 := List.replicate 8 ((p.output_zero_point).truncate 16)
+  let voutput_min_0 := List.replicate 8 ((p.output_min).truncate 8)
+  let voutput_max_0 := List.replicate 8 ((p.output_max).truncate 8)
+  let va01234567_1 := (loadedA).take 8
+  let vb01234567_1 := (loadedB).take 8
+  let call_0038 := SALT.Intrinsics.Neon.vsubl_u8 (va01234567_1) (va_zero_point_0)
+  let vxa01234567_1 := call_0038
+  let call_0040 := SALT.Intrinsics.Neon.vsubl_u8 (vb01234567_1) (vb_zero_point_0)
+  let vxb01234567_1 := call_0040
+  let call_0042 := (vxa01234567_1).take 4
+  let call_0043 := SALT.Intrinsics.Neon.vmovl_s16 (call_0042)
+  let vacc0123_3 := SALT.Intrinsics.Neon.vmulq_s32 (call_0043) ((p.a_multiplier).truncate 32)
+  let call_0045 := (vxa01234567_1).drop 4
+  let call_0046 := SALT.Intrinsics.Neon.vmovl_s16 (call_0045)
+  let vacc4567_3 := SALT.Intrinsics.Neon.vmulq_s32 (call_0046) ((p.a_multiplier).truncate 32)
+  let call_0048 := (vxb01234567_1).take 4
+  let call_0049 := SALT.Intrinsics.Neon.vmovl_s16 (call_0048)
+  let vacc0123_4 := SALT.Intrinsics.Neon.vmlaq_s32 (vacc0123_3) (call_0049) ((p.b_multiplier).truncate 32)
+  let call_0051 := (vxb01234567_1).drop 4
+  let call_0052 := SALT.Intrinsics.Neon.vmovl_s16 (call_0051)
+  let vacc4567_4 := SALT.Intrinsics.Neon.vmlaq_s32 (vacc4567_3) (call_0052) ((p.b_multiplier).truncate 32)
+  let vacc0123_5 := SALT.Intrinsics.Neon.vrshlq_s32_vec (vacc0123_4) (vright_shift_0)
+  let vacc4567_5 := SALT.Intrinsics.Neon.vrshlq_s32_vec (vacc4567_4) (vright_shift_0)
+  let call_0056 := SALT.Intrinsics.Neon.vqmovn_s32 (vacc0123_5)
+  let call_0057 := SALT.Intrinsics.Neon.vqmovn_s32 (vacc4567_5)
+  let call_0058 := call_0056 ++ call_0057
+  let vacc01234567_1 := SALT.Intrinsics.Neon.vqaddq_s16 (call_0058) ((p.output_zero_point).truncate 16)
+  let vout01234567_3 := SALT.Intrinsics.Neon.vqmovun_s16 (vacc01234567_1)
+  let vout01234567_4 := SALT.Intrinsics.Neon.vmax_u8 (vout01234567_3) (voutput_min_0)
+  let vout01234567_5 := SALT.Intrinsics.Neon.vmin_u8 (vout01234567_4) (voutput_max_0)
+  let call_0063 := vout01234567_5
+  let stored4 := if live.testBit 2 then (call_0063).take 4 else []
+  let vout01234567_6 := ((vout01234567_5 ++ vout01234567_5).drop 4).take 8
+  let after4 := if live.testBit 2 then vout01234567_6 else vout01234567_5
+  let call_0066 := after4
+  let stored2 := if live.testBit 1 then (call_0066).take 2 else []
+  let vout01234567_7 := ((after4 ++ after4).drop 2).take 8
+  let after2 := if live.testBit 1 then vout01234567_7 else after4
+  let stored1 := if live.testBit 0 then (after2).take 1 else []
+  (stored4) ++ (stored2) ++ (stored1)
+
+/-- Generated value-only lifting of the validated 8/4/2/1 control shape.
+
+`overreadA` and `overreadB` supply the bytes physically loaded beyond a nonempty short tail.
+This definition does not establish that those bytes are legally readable.
+-/
+def neonValueLoopWithOverreadFromIntrinsics (p : QU8AddMinmaxParams)
+    (input_a input_b overreadA overreadB : List (BitVec 8))
+    (sameLength : input_a.length = input_b.length) : List (BitVec 8) :=
+  SALT.Kernel.Schedule.runFixedChunkTail2 8 (by decide)
+    (neonBlock8FromIntrinsics p)
+    (fun tailA tailB =>
+      let loadedA := (tailA ++ overreadA).take 8
+      let loadedB := (tailB ++ overreadB).take 8
+      neonPartialTailLivePrefixFromIntrinsics p loadedA loadedB tailA.length)
+    input_a input_b sameLength
+
+/-- Zero-filled compatibility specialization of the explicit-overread model. -/
+def neonValueLoopFromIntrinsics (p : QU8AddMinmaxParams)
+    (input_a input_b : List (BitVec 8))
+    (sameLength : input_a.length = input_b.length) : List (BitVec 8) :=
+  neonValueLoopWithOverreadFromIntrinsics p input_a input_b
+    (List.replicate 7 (0 : BitVec 8))
+    (List.replicate 7 (0 : BitVec 8)) sameLength
+
 def rvvChunkFromIntrinsics (p : QU8AddMinmaxParams)
     (input_a : List (BitVec 8))
     (input_b : List (BitVec 8)) : List (BitVec 8) :=
@@ -92,5 +169,16 @@ def rvvChunkFromIntrinsics (p : QU8AddMinmaxParams)
   let vout_1 := SALT.Intrinsics.RVV.vmaxu_vx_u8 (vout_0) ((p.output_min).truncate 8)
   let vout_2 := SALT.Intrinsics.RVV.vminu_vx_u8 (vout_1) ((p.output_max).truncate 8)
   vout_2
+
+/-- Generated value-only lifting of the validated RVV strip-mined loop.
+
+A positive partition abstracts active lengths; ISA `vsetvl` legality is separate.
+-/
+def rvvValueLoopFromIntrinsics (p : QU8AddMinmaxParams)
+    (input_a input_b : List (BitVec 8))
+    (sameLength : input_a.length = input_b.length)
+    (schedule : SALT.Kernel.Schedule.PositivePartition input_a.length) :
+    List (BitVec 8) :=
+  SALT.Kernel.Schedule.processBlocks2 (rvvChunkFromIntrinsics p) input_a input_b sameLength schedule
 
 end SALT.Generated.QU8VAddMinmax
