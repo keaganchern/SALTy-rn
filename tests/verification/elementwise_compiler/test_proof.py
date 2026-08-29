@@ -21,6 +21,8 @@ from workflow.verification.elementwise_compiler.schema import (
     ProofTask,
     Result,
     ResultStatus,
+    canonical_json,
+    canonical_sha256,
 )
 
 
@@ -158,6 +160,29 @@ def test_parent_mutation_invalidates_prepared_task(tmp_path: Path) -> None:
 
     assert checked.result.status is ResultStatus.GENERATION_FAILED
     assert "hash chain" in checked.result.detail
+
+
+@pytest.mark.parametrize(
+    ("binding", "message"),
+    (
+        ("external_condition", "mandatory external-condition audit"),
+        ("cross_phase_audit", "mandatory cross-phase audit"),
+    ),
+)
+def test_proof_task_rejects_missing_mandatory_audit_binding(
+    tmp_path: Path, binding: str, message: str
+) -> None:
+    output = tmp_path / binding
+    _compile(output)
+    index_path = output / "ArtifactIndex.json"
+    index = json.loads(index_path.read_text(encoding="utf-8"))
+    index.pop("stack_sha256")
+    index.pop(binding)
+    index["stack_sha256"] = canonical_sha256(index)
+    index_path.write_text(canonical_json(index, pretty=True), encoding="utf-8")
+
+    with pytest.raises(RuntimeError, match=message):
+        prepare_proof_task(ROOT, output)
 
 
 def test_heldout_new_program_and_mutation_matrix() -> None:

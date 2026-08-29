@@ -1,13 +1,18 @@
 {
   "artifact_index": "programs/qs8-vadd-minmax/ArtifactIndex.json",
-  "detail": "typed manifest, Models, and proof-free Spec generated",
+  "counterexample": null,
+  "cross_phase_status": "blocked-by-missing-external-condition",
+  "detail": "generated Spec is blocked because external input conditions are unresolved",
   "entry_contract_preflight": "equal",
+  "external_condition_detail": "initializer transforms or validates semantic parameters, but no complete caller-to-kernel guarantee has been established",
+  "external_condition_sha256": "7f92db0c241827ca875e17e40df9536c52f4853efa17aea3f9d2cb5fd37bec0c",
+  "external_condition_status": "required-missing",
   "input_streams": [
     "input_a",
     "input_b"
   ],
   "layout_preflight": "scalar-lane",
-  "manifest_sha256": "e58d86be72c77ed6f7aa9a0d7c6fc932b09917947cd9eefd0fe7c182375a9f31",
+  "manifest_sha256": "b8cb81a4ab13907b6ecc61a36fafb042ed57634a9990a3e094a9d30459241e81",
   "missing_intrinsics": [],
   "neon_function": "test_neon",
   "neon_intrinsics": [
@@ -65,6 +70,6 @@
   ],
   "rvv_source": "kernels/target/qs8-vadd-minmax.c",
   "schedule_preflight": "multi-phase",
-  "status": "spec-generated",
+  "status": "external-condition-missing",
   "status_layer": "typed-generated"
 }

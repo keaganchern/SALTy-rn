@@ -232,23 +232,34 @@
       "sha256": "0fda41c4f3e66e7bd649bb6abcdf98e97dedbb37e85d0a9ff22689ceabb4e9b0"
     }
   ],
+  "cross_phase_audit": {
+    "path": "CrossPhaseAudit.json",
+    "sha256": "02da16956f82bd38f97eae354b91387ebd2454aa890677086a25dfcbb320b66b",
+    "status": "blocked-external-condition"
+  },
+  "external_condition": {
+    "path": "ExternalCondition.json",
+    "sha256": "7f92db0c241827ca875e17e40df9536c52f4853efa17aea3f9d2cb5fd37bec0c",
+    "status": "required-missing"
+  },
   "manifest": {
     "path": "ProgramManifest.json",
-    "sha256": "e58d86be72c77ed6f7aa9a0d7c6fc932b09917947cd9eefd0fe7c182375a9f31"
+    "sha256": "b8cb81a4ab13907b6ecc61a36fafb042ed57634a9990a3e094a9d30459241e81"
   },
   "models": {
     "kind": "models",
-    "parent_sha256": "e58d86be72c77ed6f7aa9a0d7c6fc932b09917947cd9eefd0fe7c182375a9f31",
+    "parent_sha256": "b8cb81a4ab13907b6ecc61a36fafb042ed57634a9990a3e094a9d30459241e81",
     "path": "Models.lean",
-    "sha256": "92c755deb8ab2306bd09a2e31327907922ec38a264beafc3cc4d85288cb351ad"
+    "sha256": "3eb835174f204c75eca90836c56439abeecbaaf9035413632e10f7651dd44198"
   },
   "namespace": "SALT.Corpus.qs8vaddminmax",
-  "schema_version": 1,
+  "schema_version": 2,
   "spec": {
     "kind": "spec",
-    "parent_sha256": "92c755deb8ab2306bd09a2e31327907922ec38a264beafc3cc4d85288cb351ad",
+    "parent_sha256": "3eb835174f204c75eca90836c56439abeecbaaf9035413632e10f7651dd44198",
     "path": "Spec.lean",
-    "sha256": "32939c94b9acbffca5e931998e1aa6fdf84ede8678125cabd2b157c3430c8800"
+    "sha256": "d4c6d71e07f58a5598e9fbb697a9bf27bea159ba69f332477049f82b4f70733e"
   },
-  "stack_sha256": "abf7c81061166ea6b2c581c3ab1cc82519ac3d1f71765024fde5d55c232d6052"
+  "stack_sha256": "ece1c962c4ebb626c1cf689771477db4e2fc0e78e985fc853f368dd080542308",
+  "target_claim": "completeValueEquivalenceClaim"
 }

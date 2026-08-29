@@ -46,20 +46,33 @@ def test_corpus_report_is_deterministic_and_tracks_real_blockers(tmp_path: Path)
     assert first["discovered_elementwise"] == 20
     assert first["scalar_layout_scope"] == 19
     assert first["status_counts"] == {
+        "counterexample": 1,
+        "external-condition-missing": 4,
         "intrinsic-missing": 14,
         "layout-unrecognized": 1,
-        "spec-generated": 5,
     }
+    assert first["external_condition_counts"] == {
+        "not-required": 12,
+        "required-missing": 8,
+    }
+    assert first["counterexample_count"] == 1
     assert all(
         program["entry_contract_preflight"] == "equal"
         for program in first["programs"]
     )
     generated = [
-        program for program in first["programs"] if program["status"] == "spec-generated"
+        program
+        for program in first["programs"]
+        if program["artifact_index"] is not None
     ]
     assert len(generated) == 5
     assert all(program["artifact_index"] for program in generated)
     assert all(program["manifest_sha256"] for program in generated)
+    counterexample = next(
+        program for program in first["programs"] if program["status"] == "counterexample"
+    )
+    assert counterexample["cross_phase_status"] == "lean-checked-counterexample"
+    assert counterexample["counterexample"]["left_output"] != counterexample["counterexample"]["right_output"]
     assert json.loads((output / "CorpusReport.json").read_text())["report_sha256"]
 
 

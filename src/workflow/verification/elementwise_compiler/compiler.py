@@ -24,12 +24,20 @@ from workflow.verification.lean_backend.schema import Architecture as BackendArc
 
 from .capabilities import IntrinsicCapability
 from .emit import EmittedStack, emit_stack
+from .external_conditions import (
+    ExternalConditionRequest,
+    audit_external_condition,
+    audit_local_unconditional_claim,
+    source_pair_sha256,
+)
 from .intrinsics import ResolvedIntrinsicSet, resolve_intrinsics
 from .recognize import PairRecognition, recognize_pair
 from .schema import (
     Architecture,
     ArtifactKind,
     GeneratedArtifact,
+    ExternalConditionEvidence,
+    ExternalConditionRef,
     ProgramManifest,
     SourceArtifact,
     canonical_json,
@@ -55,6 +63,7 @@ class CompilerRequest:
     namespace: str
     output_directory: Path
     clang: str = "clang"
+    external_condition: ExternalConditionRequest | None = None
 
     def __post_init__(self) -> None:
         for value, label in (
@@ -84,6 +93,7 @@ class Compilation:
     models: GeneratedArtifact
     spec: GeneratedArtifact
     artifact_index_path: Path
+    external_condition: ExternalConditionEvidence
 
 
 def _sha256(path: Path) -> str:
@@ -219,18 +229,40 @@ def compile_pair(
         repository_root=root,
         index=intrinsic_index,
     )
+    sources = (
+        _source_artifact(neon, Architecture.NEON, root),
+        _source_artifact(rvv, Architecture.RVV, root),
+    )
+    source_binding = source_pair_sha256(sources)
+    if request.external_condition is not None:
+        external_condition = audit_external_condition(
+            root,
+            (request.neon_source, request.rvv_source),
+            source_binding,
+            request.external_condition,
+        )
+    else:
+        external_condition = audit_local_unconditional_claim(
+            root,
+            (request.neon_source, request.rvv_source),
+            source_binding,
+            (request.neon_function, request.rvv_function),
+        )
+    external_ref = ExternalConditionRef(
+        "ExternalCondition.json",
+        external_condition.sha256,
+        external_condition.status,
+    )
     manifest = ProgramManifest(
         compiler_sha256=_compiler_digest(root),
-        sources=(
-            _source_artifact(neon, Architecture.NEON, root),
-            _source_artifact(rvv, Architecture.RVV, root),
-        ),
+        sources=sources,
         contracts=recognition.contracts,
         intrinsic_capabilities=intrinsics.refs,
         layout=recognition.layout,
         schedules=recognition.schedules,
         local_assertions=recognition.local_assertions,
         consumed_effects_sha256=recognition.consumed_effects_sha256,
+        external_condition=external_ref,
     )
     stack = emit_stack(
         neon,
@@ -240,11 +272,16 @@ def compile_pair(
         namespace=request.namespace,
         neon_registry=intrinsics.neon_registry,
         rvv_registry=intrinsics.rvv_registry,
+        external_condition=external_condition,
     )
     manifest_path = output / "ProgramManifest.json"
     models_path = output / "Models.lean"
     spec_path = output / "Spec.lean"
     _atomic_write(manifest_path, canonical_json(manifest.to_record(), pretty=True))
+    _atomic_write(
+        output / "ExternalCondition.json",
+        canonical_json(external_condition.to_record(), pretty=True),
+    )
     _atomic_write(models_path, stack.models_text)
     models = GeneratedArtifact(
         ArtifactKind.MODELS,
@@ -262,8 +299,9 @@ def compile_pair(
     capabilities = _write_capabilities(output, intrinsics.capabilities, recognition)
     index = {
         "artifact_kind": "elementwise-generated-stack",
-        "schema_version": 1,
+        "schema_version": 2,
         "namespace": request.namespace,
+        "target_claim": stack.target_theorem,
         "manifest": {
             "path": "ProgramManifest.json",
             "sha256": manifest.sha256,
@@ -272,10 +310,15 @@ def compile_pair(
         "spec": spec.to_record(),
         "capabilities": list(capabilities),
     }
+    index["external_condition"] = {
+        "path": "ExternalCondition.json",
+        "sha256": external_condition.sha256,
+        "status": external_condition.status.value,
+    }
     index["stack_sha256"] = canonical_sha256(index)
     artifact_index_path = output / "ArtifactIndex.json"
     _atomic_write(artifact_index_path, canonical_json(index, pretty=True))
-    return Compilation(
+    compilation = Compilation(
         manifest,
         recognition,
         intrinsics,
@@ -284,7 +327,14 @@ def compile_pair(
         models,
         spec,
         artifact_index_path,
+        external_condition,
     )
+    # Multi-phase consistency is a mandatory compiler audit, not a corpus-only
+    # post-processing step.  The lazy import avoids a module cycle with proof.py.
+    from .counterexamples import audit_cross_phase
+
+    audit_cross_phase(root, compilation)
+    return compilation
 
 
 def _main(argv: Sequence[str] | None = None) -> int:
@@ -301,7 +351,15 @@ def _main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--namespace", required=True)
     parser.add_argument("--output-directory", type=Path, required=True)
     parser.add_argument("--clang", default="clang")
+    parser.add_argument("--external-upstream-root", type=Path)
+    parser.add_argument("--external-registration", type=Path)
     arguments = parser.parse_args(argv)
+    if (arguments.external_upstream_root is None) != (
+        arguments.external_registration is None
+    ):
+        parser.error(
+            "--external-upstream-root and --external-registration must be provided together"
+        )
     result = compile_pair(
         CompilerRequest(
             repository_root=arguments.repository_root,
@@ -316,6 +374,15 @@ def _main(argv: Sequence[str] | None = None) -> int:
             namespace=arguments.namespace,
             output_directory=arguments.output_directory,
             clang=arguments.clang,
+            external_condition=(
+                ExternalConditionRequest(
+                    arguments.external_upstream_root,
+                    arguments.external_registration,
+                )
+                if arguments.external_upstream_root is not None
+                and arguments.external_registration is not None
+                else None
+            ),
         )
     )
     print(

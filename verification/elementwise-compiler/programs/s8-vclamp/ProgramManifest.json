@@ -1,6 +1,6 @@
 {
   "artifact_kind": "elementwise-program-manifest",
-  "compiler_sha256": "a4f48f79d2fa0cdd975f6f7afe45adb794065e0eff38fd2d282379c4272c5869",
+  "compiler_sha256": "f79bdddd9e2621d190afd6445bad81254fbedeb1d86d35210d6def174e2b6673",
   "consumed_effects_sha256": "f07b94c87c7e15e283b898e9a0482fb2e409e22d12aa197b5043c127fe562dce",
   "contracts": {
     "neon": {
@@ -331,6 +331,11 @@
     },
     "shared_sha256": "d3451fad1964124247d8f6f7c65b8c38cb60dd2b873b45589dc153cba6644130"
   },
+  "external_condition": {
+    "path": "ExternalCondition.json",
+    "sha256": "490a7cade552bd3a2d41e3e0ad1a0c87bac72e4f266d03998c2c973ea3531104",
+    "status": "required-missing"
+  },
   "intrinsic_capabilities": [
     {
       "capability_id": "intrinsic:neon:vdupq_n_s8:8501da31aa4fae5c",
@@ -462,7 +467,7 @@
     ]
   },
   "local_assertions": [],
-  "manifest_sha256": "f76fd1f9b2838348f46c922a84e011306a3f0465843d1a305bfad5cc77571e9d",
+  "manifest_sha256": "2113815149b0aff4ea1929b961021a4a70edfe70866eb6fce04d193dd98b3793",
   "schedules": [
     {
       "architecture": "neon",
@@ -494,7 +499,7 @@
       }
     }
   ],
-  "schema_version": 1,
+  "schema_version": 2,
   "sources": [
     {
       "architecture": "neon",

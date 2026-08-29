@@ -19,6 +19,10 @@ from workflow.verification.elementwise_compiler.capabilities import (
 )
 from workflow.verification.elementwise_compiler.schema import (
     ArtifactKind,
+    CounterexampleWitness,
+    CrossPhaseAudit,
+    CrossPhaseAuditStatus,
+    ExternalConditionEvidence,
     GeneratedArtifact,
     ProgramManifest,
     ProofTask,
@@ -135,6 +139,65 @@ def _verify_stack(corpus_root: Path, relative_index: object) -> dict[str, Any]:
     if spec.kind is not ArtifactKind.SPEC or spec.parent_sha256 != models.sha256:
         raise ElementwiseGraphError("Spec is not bound to Models")
 
+    external_binding = index.get("external_condition")
+    if not isinstance(external_binding, Mapping):
+        raise ElementwiseGraphError("external-condition binding is malformed")
+    external_path = _bound_path(
+        program_root, external_binding.get("path"), "external-condition path"
+    )
+    external = ExternalConditionEvidence.from_record(_json(external_path))
+    if (
+        external_binding.get("sha256") != external.sha256
+        or external_binding.get("status") != external.status.value
+        or manifest.external_condition.sha256 != external.sha256
+        or manifest.external_condition.status is not external.status
+        or manifest.external_condition.path != external_binding.get("path")
+    ):
+        raise ElementwiseGraphError("external-condition binding digest mismatch")
+
+    phase_binding = index.get("cross_phase_audit")
+    if not isinstance(phase_binding, Mapping):
+        raise ElementwiseGraphError("cross-phase audit binding is malformed")
+    phase_path = _bound_path(
+        program_root, phase_binding.get("path"), "cross-phase audit path"
+    )
+    phase = CrossPhaseAudit.from_record(_json(phase_path))
+    if (
+        phase_binding.get("sha256") != phase.sha256
+        or phase_binding.get("status") != phase.status.value
+        or phase.manifest_sha256 != manifest.sha256
+        or phase.models_sha256 != models.sha256
+        or phase.spec_sha256 != spec.sha256
+    ):
+        raise ElementwiseGraphError("cross-phase audit binding digest mismatch")
+
+    counterexample: CounterexampleWitness | None = None
+    counterexample_binding = index.get("counterexample")
+    if counterexample_binding is not None:
+        if not isinstance(counterexample_binding, Mapping):
+            raise ElementwiseGraphError("counterexample binding is malformed")
+        counterexample_path = _bound_path(
+            program_root, counterexample_binding.get("path"), "counterexample path"
+        )
+        counterexample = CounterexampleWitness.from_record(_json(counterexample_path))
+        lean_path = _bound_path(
+            program_root, counterexample.lean_path, "counterexample Lean path"
+        )
+        if (
+            counterexample_binding.get("sha256") != counterexample.sha256
+            or counterexample_binding.get("lean_sha256") != counterexample.lean_sha256
+            or not lean_path.is_file()
+            or _sha256(lean_path) != counterexample.lean_sha256
+            or counterexample.manifest_sha256 != manifest.sha256
+            or counterexample.models_sha256 != models.sha256
+            or counterexample.spec_sha256 != spec.sha256
+            or phase.status is not CrossPhaseAuditStatus.COUNTEREXAMPLE
+            or phase.counterexample_sha256 != counterexample.sha256
+        ):
+            raise ElementwiseGraphError("counterexample binding digest mismatch")
+    elif phase.status is CrossPhaseAuditStatus.COUNTEREXAMPLE:
+        raise ElementwiseGraphError("cross-phase audit has no counterexample")
+
     capability_ids: list[str] = []
     intrinsic_capabilities: list[IntrinsicCapability] = []
     bindings = index.get("capabilities")
@@ -179,8 +242,8 @@ def _verify_stack(corpus_root: Path, relative_index: object) -> dict[str, Any]:
     result: Result | None = None
     result_binding = index.get("result")
     if result_binding is not None:
-        if task is None or not isinstance(result_binding, Mapping):
-            raise ElementwiseGraphError("result has no valid proof task")
+        if not isinstance(result_binding, Mapping):
+            raise ElementwiseGraphError("result binding is malformed")
         result_path = _bound_path(
             program_root, result_binding.get("path"), "result path"
         )
@@ -190,19 +253,33 @@ def _verify_stack(corpus_root: Path, relative_index: object) -> dict[str, Any]:
             or result_binding.get("status") != result.status.value
         ):
             raise ElementwiseGraphError("result binding digest mismatch")
-        if (
-            result.proof_task_sha256 is not None
-            and result.proof_task_sha256 != task.sha256
-        ):
-            raise ElementwiseGraphError("result is bound to another proof task")
-        if (
-            result.checker_sha256 != task.checker_policy_sha256
-            or result.toolchain_sha256 != task.toolchain_sha256
-        ):
-            raise ElementwiseGraphError(
-                "result checker/toolchain differs from its proof task"
-            )
-        if result.proof_sha256 is not None:
+        if result.status is ResultStatus.COUNTEREXAMPLE:
+            if (
+                task is not None
+                or counterexample is None
+                or result.counterexample_sha256 != counterexample.sha256
+                or result.checker_sha256 != counterexample.checker_sha256
+                or result.toolchain_sha256 != counterexample.toolchain_sha256
+            ):
+                raise ElementwiseGraphError(
+                    "counterexample result is not bound to its checked witness"
+                )
+        else:
+            if task is None:
+                raise ElementwiseGraphError("proof result has no valid proof task")
+            if (
+                result.proof_task_sha256 is not None
+                and result.proof_task_sha256 != task.sha256
+            ):
+                raise ElementwiseGraphError("result is bound to another proof task")
+            if (
+                result.checker_sha256 != task.checker_policy_sha256
+                or result.toolchain_sha256 != task.toolchain_sha256
+            ):
+                raise ElementwiseGraphError(
+                    "result checker/toolchain differs from its proof task"
+                )
+        if result.proof_sha256 is not None and task is not None:
             proof_path = _bound_path(program_root, task.proof_path, "proof path")
             if not proof_path.is_file() or _sha256(proof_path) != result.proof_sha256:
                 raise ElementwiseGraphError("proof file digest mismatch")
@@ -215,6 +292,9 @@ def _verify_stack(corpus_root: Path, relative_index: object) -> dict[str, Any]:
         "intrinsic_capabilities": tuple(intrinsic_capabilities),
         "task": task,
         "result": result,
+        "external": external,
+        "phase": phase,
+        "counterexample": counterexample,
     }
 
 
@@ -230,6 +310,9 @@ def _program_node(
         "manifest": False,
         "models": False,
         "spec": False,
+        "external_condition": False,
+        "cross_phase_audit": False,
+        "counterexample": False,
         "proof_task": False,
         "result": False,
     }
@@ -249,6 +332,9 @@ def _program_node(
                 manifest=True,
                 models=True,
                 spec=True,
+                external_condition=True,
+                cross_phase_audit=True,
+                counterexample=stack["counterexample"] is not None,
                 proof_task=task is not None,
                 result=result is not None,
             )
@@ -267,9 +353,9 @@ def _program_node(
                 layer = "frozen-proof-task"
                 claim["value"] = "ready"
             else:
-                status = "spec-generated"
-                layer = "typed-generated"
-                claim["value"] = "spec-generated"
+                claim["value"] = (
+                    "spec-generated" if status == "spec-generated" else "blocked"
+                )
         except Exception as error:
             status = "stale-artifact"
             layer = "artifact-integrity"

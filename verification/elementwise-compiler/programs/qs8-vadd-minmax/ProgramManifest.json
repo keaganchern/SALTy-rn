@@ -1,6 +1,6 @@
 {
   "artifact_kind": "elementwise-program-manifest",
-  "compiler_sha256": "a4f48f79d2fa0cdd975f6f7afe45adb794065e0eff38fd2d282379c4272c5869",
+  "compiler_sha256": "f79bdddd9e2621d190afd6445bad81254fbedeb1d86d35210d6def174e2b6673",
   "consumed_effects_sha256": "246f0407d26a191a07bb34fc95b5bb5a437caf56a824a2de598ac71bbfc7c52b",
   "contracts": {
     "neon": {
@@ -399,6 +399,11 @@
     },
     "shared_sha256": "f4c1fb073c05d935abf44acc38855469baf021962e556ee32751bae19a50d1f0"
   },
+  "external_condition": {
+    "path": "ExternalCondition.json",
+    "sha256": "7f92db0c241827ca875e17e40df9536c52f4853efa17aea3f9d2cb5fd37bec0c",
+    "status": "required-missing"
+  },
   "intrinsic_capabilities": [
     {
       "capability_id": "intrinsic:neon:vcombine_s16:abd9567b68808fbc",
@@ -645,7 +650,7 @@
     ]
   },
   "local_assertions": [],
-  "manifest_sha256": "e58d86be72c77ed6f7aa9a0d7c6fc932b09917947cd9eefd0fe7c182375a9f31",
+  "manifest_sha256": "b8cb81a4ab13907b6ecc61a36fafb042ed57634a9990a3e094a9d30459241e81",
   "schedules": [
     {
       "architecture": "neon",
@@ -677,7 +682,7 @@
       }
     }
   ],
-  "schema_version": 1,
+  "schema_version": 2,
   "sources": [
     {
       "architecture": "neon",

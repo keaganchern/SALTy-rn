@@ -26,6 +26,11 @@ from workflow.verification.intrinsic_dashboard.proof_policy import (
 
 from .schema import (
     ArtifactKind,
+    CounterexampleWitness,
+    CrossPhaseAudit,
+    CrossPhaseAuditStatus,
+    ExternalConditionEvidence,
+    ExternalConditionStatus,
     GeneratedArtifact,
     ProgramManifest,
     ProofTask,
@@ -34,6 +39,7 @@ from .schema import (
     canonical_json,
     canonical_sha256,
 )
+from .external_conditions import source_pair_sha256, verify_external_condition
 
 
 ALLOWED_AXIOMS = frozenset({"Classical.choice", "Quot.sound", "propext"})
@@ -187,8 +193,16 @@ def _artifact(index: Mapping[str, Any], key: str) -> GeneratedArtifact:
 
 
 def _verify_stack(
-    output: Path, index: Mapping[str, Any]
-) -> tuple[ProgramManifest, GeneratedArtifact, GeneratedArtifact, str]:
+    repository_root: Path, output: Path, index: Mapping[str, Any]
+) -> tuple[
+    ProgramManifest,
+    GeneratedArtifact,
+    GeneratedArtifact,
+    str,
+    str,
+    ExternalConditionEvidence,
+    CrossPhaseAudit,
+]:
     manifest = ProgramManifest.from_record(_json(output / "ProgramManifest.json"))
     manifest_index = index.get("manifest")
     if (
@@ -211,7 +225,82 @@ def _verify_stack(
     namespace = index.get("namespace")
     if not isinstance(namespace, str) or not namespace:
         raise ProofGateError("ArtifactIndex has no Lean namespace")
-    return manifest, models, spec, namespace
+    target_claim = index.get("target_claim")
+    if not isinstance(target_claim, str) or re.fullmatch(
+        r"[A-Za-z_][A-Za-z0-9_']*", target_claim
+    ) is None:
+        raise ProofGateError("ArtifactIndex has no valid generated target claim")
+    external_index = index.get("external_condition")
+    if not isinstance(external_index, Mapping):
+        raise ProofGateError("ArtifactIndex has no mandatory external-condition audit")
+    external_path = output / manifest.external_condition.path
+    external = ExternalConditionEvidence.from_record(_json(external_path))
+    if (
+        external.sha256 != manifest.external_condition.sha256
+        or external.status is not manifest.external_condition.status
+        or external_index.get("path") != manifest.external_condition.path
+        or external_index.get("sha256") != external.sha256
+        or external_index.get("status") != external.status.value
+    ):
+        raise ProofGateError("external-condition identity differs from manifest/index")
+    try:
+        verify_external_condition(
+            repository_root,
+            tuple(repository_root / source.path for source in manifest.sources),
+            source_pair_sha256(manifest.sources),
+            external,
+        )
+    except (OSError, ValueError, RuntimeError) as error:
+        raise ProofGateError(f"external-condition evidence failed: {error}") from error
+    phase_index = index.get("cross_phase_audit")
+    if not isinstance(phase_index, Mapping):
+        raise ProofGateError("ArtifactIndex has no mandatory cross-phase audit")
+    phase = CrossPhaseAudit.from_record(
+        _json(output / str(phase_index.get("path", "")))
+    )
+    if (
+        phase_index.get("sha256") != phase.sha256
+        or phase_index.get("status") != phase.status.value
+        or phase.manifest_sha256 != manifest.sha256
+        or phase.models_sha256 != models.sha256
+        or phase.spec_sha256 != spec.sha256
+    ):
+        raise ProofGateError("cross-phase audit identity differs from generated stack")
+    counterexample_index = index.get("counterexample")
+    if counterexample_index is not None:
+        if not isinstance(counterexample_index, Mapping):
+            raise ProofGateError("ArtifactIndex counterexample binding is malformed")
+        counterexample_path = output / str(counterexample_index.get("path", ""))
+        witness = CounterexampleWitness.from_record(_json(counterexample_path))
+        lean_path = output / witness.lean_path
+        if (
+            counterexample_index.get("sha256") != witness.sha256
+            or counterexample_index.get("lean_path") != witness.lean_path
+            or counterexample_index.get("lean_sha256") != witness.lean_sha256
+            or counterexample_index.get("claim") != witness.claim
+            or witness.manifest_sha256 != manifest.sha256
+            or witness.models_sha256 != models.sha256
+            or witness.spec_sha256 != spec.sha256
+            or not lean_path.is_file()
+            or _sha256(lean_path) != witness.lean_sha256
+        ):
+            raise ProofGateError("counterexample identity differs from generated stack")
+        result_index = index.get("result")
+        if not isinstance(result_index, Mapping):
+            raise ProofGateError("checked counterexample has no terminal Result binding")
+        result = Result.from_record(_json(output / str(result_index.get("path", ""))))
+        if (
+            result.status is not ResultStatus.COUNTEREXAMPLE
+            or result.counterexample_sha256 != witness.sha256
+            or result_index.get("sha256") != result.sha256
+            or result_index.get("status") != result.status.value
+        ):
+            raise ProofGateError("counterexample Result identity is invalid")
+        if phase.status is not CrossPhaseAuditStatus.COUNTEREXAMPLE:
+            raise ProofGateError("counterexample exists without matching cross-phase audit")
+    elif phase.status is CrossPhaseAuditStatus.COUNTEREXAMPLE:
+        raise ProofGateError("cross-phase audit names a missing counterexample")
+    return manifest, models, spec, namespace, target_claim, external, phase
 
 
 _LEAN_DEPENDENCIES = (
@@ -299,6 +388,7 @@ def _checked_claim_encoding(
     repository_root: Path,
     output: Path,
     namespace: str,
+    claim: str,
     toolchain: _Toolchain,
 ) -> str:
     temporary, stage, environment = _stage(
@@ -317,7 +407,7 @@ def _checked_claim_encoding(
         inspect = stage / "ElementwiseClaimInspect.lean"
         inspect.write_text(
             f"import {namespace}.Spec\n"
-            f"#print {namespace}.completeValueEquivalenceClaim\n",
+            f"#print {claim}\n",
             encoding="utf-8",
         )
         completed = _compile(toolchain, stage, environment, inspect, emit_olean=False)
@@ -331,7 +421,7 @@ def _checked_claim_encoding(
             {
                 "schema": "lean-checked-claim-v1",
                 "module": f"{namespace}.Spec",
-                "claim": f"{namespace}.completeValueEquivalenceClaim",
+                "claim": claim,
                 "printed_declaration": completed.stdout.strip(),
             }
         )
@@ -346,6 +436,7 @@ def _closure_files(output: Path, index: Mapping[str, Any]) -> tuple[Path, ...]:
         output / "Models.lean",
         output / "Spec.lean",
         output / "ProofTask.json",
+        output / "CrossPhaseAudit.json",
     }
     capabilities = index.get("capabilities")
     if not isinstance(capabilities, list):
@@ -356,6 +447,20 @@ def _closure_files(output: Path, index: Mapping[str, Any]) -> tuple[Path, ...]:
         ):
             raise ProofGateError("ArtifactIndex capability binding is malformed")
         files.add(output / str(capability["path"]))
+    external = index.get("external_condition")
+    if external is not None:
+        if not isinstance(external, Mapping) or not isinstance(external.get("path"), str):
+            raise ProofGateError("ArtifactIndex external-condition binding is malformed")
+        files.add(output / str(external["path"]))
+    counterexample = index.get("counterexample")
+    if counterexample is not None:
+        if not isinstance(counterexample, Mapping):
+            raise ProofGateError("ArtifactIndex counterexample binding is malformed")
+        for key in ("path", "lean_path"):
+            path = counterexample.get(key)
+            if not isinstance(path, str):
+                raise ProofGateError("ArtifactIndex counterexample path is malformed")
+            files.add(output / path)
     if any(not path.is_file() for path in files):
         raise ProofGateError("protected proof-task closure is incomplete")
     return tuple(sorted(files))
@@ -379,7 +484,20 @@ def prepare_proof_task(
     repository = Path(repository_root).resolve()
     output = Path(output_directory).resolve()
     index = _load_index(output)
-    manifest, models, spec, namespace = _verify_stack(output, index)
+    manifest, models, spec, namespace, target_claim, external, phase = _verify_stack(
+        repository, output, index
+    )
+    if phase.status is CrossPhaseAuditStatus.COUNTEREXAMPLE:
+        raise ProofGateError(
+            "counterexample: a Lean-checked phase disagreement forbids proof delegation"
+        )
+    if (
+        external is not None
+        and external.status is ExternalConditionStatus.REQUIRED_MISSING
+    ):
+        raise ProofGateError(
+            "external-condition-missing: proof task cannot use an unresolved input condition"
+        )
     toolchain = _resolve_toolchain(repository)
     task = ProofTask(
         manifest_sha256=manifest.sha256,
@@ -388,8 +506,9 @@ def prepare_proof_task(
         proof_path="Proof.lean",
         module=f"{namespace}.Proof",
         theorem=f"{namespace}.completeValueEquivalence",
+        claim=f"{namespace}.{target_claim}",
         elaborated_type_sha256=_checked_claim_encoding(
-            repository, output, namespace, toolchain
+            repository, output, namespace, f"{namespace}.{target_claim}", toolchain
         ),
         checker_policy_sha256=_checker_sha256(),
         toolchain_sha256=toolchain.sha256,
@@ -451,7 +570,9 @@ def check_proof(
     task_path = output / "ProofTask.json"
     task: ProofTask
     try:
-        manifest, models, spec, namespace = _verify_stack(output, index)
+        manifest, models, spec, namespace, target_claim, external, phase = _verify_stack(
+            repository, output, index
+        )
         task = ProofTask.from_record(_json(task_path))
         task_index = index.get("proof_task")
         if (
@@ -463,6 +584,7 @@ def check_proof(
             task.manifest_sha256 != manifest.sha256
             or task.models != models
             or task.spec != spec
+            or task.claim != f"{namespace}.{target_claim}"
         ):
             raise ProofGateError("ProofTask parent chain differs from generated stack")
         if (
@@ -471,7 +593,7 @@ def check_proof(
         ):
             raise ProofGateError("ProofTask checker/toolchain identity is stale")
         checked_claim = _checked_claim_encoding(
-            repository, output, namespace, toolchain
+            repository, output, namespace, task.claim, toolchain
         )
         if checked_claim != task.elaborated_type_sha256:
             raise ProofGateError(
@@ -537,7 +659,7 @@ def check_proof(
                     break
             if failure is None:
                 audit = stage / "ElementwiseProofAudit.lean"
-                claim = f"{namespace}.completeValueEquivalenceClaim"
+                claim = task.claim
                 audit.write_text(
                     f"import {task.module}\n"
                     f"example : {claim} := {task.theorem}\n"
@@ -563,7 +685,13 @@ def check_proof(
             detail = str(error)
         finally:
             temporary.cleanup()
-    end = _closure_sha256(output, index)
+    try:
+        _verify_stack(repository, output, index)
+        end = _closure_sha256(output, index)
+    except (OSError, ValueError, ProofGateError) as error:
+        end = None
+        status = ResultStatus.LEAN_FAILED
+        detail = f"protected external/generated inputs changed: {error}"
     if end != start:
         status = ResultStatus.LEAN_FAILED
         detail = "protected artifact closure changed during proof checking"

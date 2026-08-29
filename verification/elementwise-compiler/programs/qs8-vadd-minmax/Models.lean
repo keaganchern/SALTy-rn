@@ -6,7 +6,7 @@ import SALT.Kernel.ElementwiseFamily
 
 namespace SALT.Corpus.qs8vaddminmax
 
-def programManifestSha256 : String := "e58d86be72c77ed6f7aa9a0d7c6fc932b09917947cd9eefd0fe7c182375a9f31"
+def programManifestSha256 : String := "b8cb81a4ab13907b6ecc61a36fafb042ed57634a9990a3e094a9d30459241e81"
 def consumedEffectsSha256 : String := "246f0407d26a191a07bb34fc95b5bb5a437caf56a824a2de598ac71bbfc7c52b"
 
 def neonSourceSha256 : String :=
@@ -226,11 +226,16 @@ def rvvChunkFromIntrinsics (p : qs8vaddminmaxParams)
 
 /-- Scalar action independently projected from the parsed Neon block. -/
 def fNeon (p : qs8vaddminmaxParams) (x y : BitVec 8) : BitVec 8 :=
-  (neonBlock16FromIntrinsics p (List.replicate 16 x) (List.replicate 16 y)).headD x
+  (neonBlock16FromIntrinsics p (List.replicate 16 x) (List.replicate 16 y)).headD (0 : BitVec 8)
 
 /-- Scalar action independently projected from the parsed RVV chunk. -/
 def fRvv (p : qs8vaddminmaxParams) (x y : BitVec 8) : BitVec 8 :=
-  (rvvChunkFromIntrinsics p [x] [y]).headD x
+  (rvvChunkFromIntrinsics p [x] [y]).headD (0 : BitVec 8)
+
+/-- Scalar action projected from the parsed secondary Neon block. -/
+def fNeonSecondary (p : qs8vaddminmaxParams)
+    (x y : BitVec 8) : BitVec 8 :=
+  (neonBlock8FromIntrinsics p [x] [y]).headD (0 : BitVec 8)
 
 /-- Generated RVV positive-partition assembly. -/
 def rvvValueLoopFromIntrinsics (p : qs8vaddminmaxParams)

@@ -1,0 +1,14 @@
+{
+  "artifact_kind": "elementwise-result",
+  "checker_sha256": "024de984d03845847cb6d806f8597877efbfb115f34ddad33069545608da2a2d",
+  "counterexample_sha256": "8b1021e6f167222f35401042d3ad570a792988286ba41cb5c487e3f5d2c606c3",
+  "detail": "Lean checked a concrete disagreement between generated Neon phase functions",
+  "end_closure_sha256": null,
+  "proof_sha256": null,
+  "proof_task_sha256": null,
+  "result_sha256": "751f90e67d506485a45ab058cb47b42c404db59db0c2638b72c40d8ad5bb68c8",
+  "schema_version": 2,
+  "start_closure_sha256": null,
+  "status": "counterexample",
+  "toolchain_sha256": "1ce7d3879378e751ecae7bb5fd76c57bde9e4957e69b20b4693d759eb34a8c6d"
+}

@@ -3,9 +3,14 @@ import SALT.Corpus.s8vclamp.Models
 
 namespace SALT.Corpus.s8vclamp
 
-def manifestSha256InSpec : String := "f76fd1f9b2838348f46c922a84e011306a3f0465843d1a305bfad5cc77571e9d"
-def modelsSha256InSpec : String := "0a58329b012687edc365fb94c2339c825e6dd21bab9ba789032a8688ed41decb"
+def manifestSha256InSpec : String := "2113815149b0aff4ea1929b961021a4a70edfe70866eb6fce04d193dd98b3793"
+def modelsSha256InSpec : String := "e26918393ea91f126a4ac098fe6c16681057c4d751ca6dfc06c359a80078e828"
 def sharedEntryContractSha256 : String := "d3451fad1964124247d8f6f7c65b8c38cb60dd2b873b45589dc153cba6644130"
+def externalConditionSha256InSpec : String := "490a7cade552bd3a2d41e3e0ad1a0c87bac72e4f266d03998c2c973ea3531104"
+
+/-- Candidate only: this is not available to proofs while evidence is unresolved. -/
+def candidateExternalCondition (p : s8vclampParams) : Prop :=
+  ((p.min).toInt ≤ (p.max).toInt)
 
 def neonBlockEqualsMapClaim : Prop :=
   ∀ (p : s8vclampParams) (input : List (BitVec 8)),
@@ -15,7 +20,11 @@ def neonBlockEqualsMapClaim : Prop :=
 def neonSecondaryBlockEqualsMapClaim : Prop :=
   ∀ (p : s8vclampParams) (input : List (BitVec 8)),
     input.length = 8 →
-    neonBlock8FromIntrinsics p input = input.map (fNeon p)
+    neonBlock8FromIntrinsics p input = input.map (fNeonSecondary p)
+
+def neonPhaseFunctionsEqualClaim : Prop :=
+  ∀ (p : s8vclampParams) (x : BitVec 8),
+    fNeon p x = fNeonSecondary p x
 
 def rvvChunkEqualsMapClaim : Prop :=
   ∀ (p : s8vclampParams) (input : List (BitVec 8)),
@@ -39,6 +48,16 @@ def completeValueEquivalenceClaim : Prop :=
   ∀ (p : s8vclampParams) (input : List (BitVec 8))
     (overread0 : List (BitVec 8))
     (schedule : SALT.Kernel.Schedule.PositivePartition input.length),
+    7 ≤ overread0.length →
+    neonValueLoopWithOverreadFromIntrinsics p input overread0 =
+      rvvValueLoopFromIntrinsics p input schedule
+
+/-- Diagnostic theorem shape; not selected until ExternalCondition is resolved. -/
+def completeValueEquivalenceUnderCandidateConditionClaim : Prop :=
+  ∀ (p : s8vclampParams) (input : List (BitVec 8))
+    (overread0 : List (BitVec 8))
+    (schedule : SALT.Kernel.Schedule.PositivePartition input.length),
+    candidateExternalCondition p →
     7 ≤ overread0.length →
     neonValueLoopWithOverreadFromIntrinsics p input overread0 =
       rvvValueLoopFromIntrinsics p input schedule

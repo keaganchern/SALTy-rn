@@ -6,7 +6,7 @@ import SALT.Kernel.ElementwiseFamily
 
 namespace SALT.Corpus.qu8vaddminmax
 
-def programManifestSha256 : String := "a6abb312b46241c399c8a13ba98d850a4f2aa2cf2add9a94f4010464df6c20ef"
+def programManifestSha256 : String := "5b87af7efafd01e3cacadfc326ce92111c8f9757898ea42a03ca73c358bfceec"
 def consumedEffectsSha256 : String := "76280bda1a4a1930a02761132ea4327cae7e05c9f5521044eb111d3af4032921"
 
 def neonSourceSha256 : String :=
@@ -188,9 +188,9 @@ def rvvValueLoopFromIntrinsics (p : qu8vaddminmaxParams)
 
 /-- Scalar action independently projected from the parsed Neon block. -/
 def fNeon (p : qu8vaddminmaxParams) (x y : BitVec 8) : BitVec 8 :=
-  (neonBlock8FromIntrinsics p (List.replicate 8 x) (List.replicate 8 y)).headD x
+  (neonBlock8FromIntrinsics p (List.replicate 8 x) (List.replicate 8 y)).headD (0 : BitVec 8)
 
 /-- Scalar action independently projected from the parsed RVV chunk. -/
 def fRvv (p : qu8vaddminmaxParams) (x y : BitVec 8) : BitVec 8 :=
-  (rvvChunkFromIntrinsics p [x] [y]).headD x
+  (rvvChunkFromIntrinsics p [x] [y]).headD (0 : BitVec 8)
 end SALT.Corpus.qu8vaddminmax

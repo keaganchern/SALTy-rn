@@ -122,23 +122,46 @@
       "sha256": "0fda41c4f3e66e7bd649bb6abcdf98e97dedbb37e85d0a9ff22689ceabb4e9b0"
     }
   ],
+  "counterexample": {
+    "claim": "SALT.Corpus.s8vclamp.neonPhaseFunctionsEqualClaim",
+    "lean_path": "Counterexample.lean",
+    "lean_sha256": "4c7837b3f00b74225af3a94a4c4bd2726af4f76be2d47d0d2026069a67abaf21",
+    "path": "Counterexample.json",
+    "sha256": "8b1021e6f167222f35401042d3ad570a792988286ba41cb5c487e3f5d2c606c3"
+  },
+  "cross_phase_audit": {
+    "path": "CrossPhaseAudit.json",
+    "sha256": "0c2104e791172a2dc701057e05d040df84f1d94badeb09dfb13750f2a2acb0bb",
+    "status": "counterexample"
+  },
+  "external_condition": {
+    "path": "ExternalCondition.json",
+    "sha256": "490a7cade552bd3a2d41e3e0ad1a0c87bac72e4f266d03998c2c973ea3531104",
+    "status": "required-missing"
+  },
   "manifest": {
     "path": "ProgramManifest.json",
-    "sha256": "f76fd1f9b2838348f46c922a84e011306a3f0465843d1a305bfad5cc77571e9d"
+    "sha256": "2113815149b0aff4ea1929b961021a4a70edfe70866eb6fce04d193dd98b3793"
   },
   "models": {
     "kind": "models",
-    "parent_sha256": "f76fd1f9b2838348f46c922a84e011306a3f0465843d1a305bfad5cc77571e9d",
+    "parent_sha256": "2113815149b0aff4ea1929b961021a4a70edfe70866eb6fce04d193dd98b3793",
     "path": "Models.lean",
-    "sha256": "0a58329b012687edc365fb94c2339c825e6dd21bab9ba789032a8688ed41decb"
+    "sha256": "e26918393ea91f126a4ac098fe6c16681057c4d751ca6dfc06c359a80078e828"
   },
   "namespace": "SALT.Corpus.s8vclamp",
-  "schema_version": 1,
+  "result": {
+    "path": "Result.json",
+    "sha256": "751f90e67d506485a45ab058cb47b42c404db59db0c2638b72c40d8ad5bb68c8",
+    "status": "counterexample"
+  },
+  "schema_version": 2,
   "spec": {
     "kind": "spec",
-    "parent_sha256": "0a58329b012687edc365fb94c2339c825e6dd21bab9ba789032a8688ed41decb",
+    "parent_sha256": "e26918393ea91f126a4ac098fe6c16681057c4d751ca6dfc06c359a80078e828",
     "path": "Spec.lean",
-    "sha256": "2eeb5907398b62528992a9429c34206239196f2dc61f86ee2d66235522fecee6"
+    "sha256": "19e3d5f84153aa1d292cfc0569578195c678d4bd9dcdc0848fe1d9385e5ad936"
   },
-  "stack_sha256": "1ac17f746e36350e455155213c79bd607e75252095c07829d849538a15538297"
+  "stack_sha256": "de439409eaab28ad9d493bf9507b58774b03332b58b88ba6994482c2107474e4",
+  "target_claim": "completeValueEquivalenceClaim"
 }

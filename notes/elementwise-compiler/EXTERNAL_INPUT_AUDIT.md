@@ -2,10 +2,11 @@
 
 Audit date: 2026-08-29 (Asia/Seoul)
 
-Repository scope: `feat/elementwise-compiler@c36d91e`, twenty programs in
+Repository scope: `feat/elementwise-compiler`, twenty programs in
 `verification/elementwise-compiler/CorpusReport.json`.
 
-Upstream evidence scope: Google XNNPACK `master`, inspected on 2026-08-29. This
+Upstream evidence scope: pinned Google XNNPACK commit
+`867d5a344790802ee067be62f572c2e2722bf6fb`, audited on 2026-08-29. This
 audit asks whether parameter facts used by the intended XNNPACK call domain are
 absent from the isolated Neon/RVV kernel entry assertions. It does not audit C
 memory extent, FP environment, or ISA state.
@@ -32,7 +33,7 @@ fields was found. This does not rule out separate FP/ISA environment obligations
 
 | Program | Upstream-derived facts relevant to the isolated params |
 |---|---|
-| `s8-vclamp` | signed `min <= max`; validated output range and clamp initializer |
+| `s8-vclamp` | initializer applies one quantizer to clamp `min`/`max`; signed `min <= max` repairs the phase mismatch, but its caller guarantee is unresolved |
 | `qs8-vadd-minmax` | bounded shift and multipliers; zero-point ranges; ordered/fixed output bounds |
 | `qu8-vadd-minmax` | bounded shift and multipliers; zero-point ranges; ordered/fixed output bounds |
 | `qs8-vcvt` | multiplier in `[1, 32768]`; signed zero-point ranges |
@@ -59,6 +60,13 @@ multi-field parameter invariant for it.
 
 ## Evidence
 
+**Correction to the first audit pass:** `xnn_subgraph_check_output_min_max`
+exists in the pinned tree, but the audited unary clamp path
+`xnn_define_clamp -> xnn_define_unary -> xnn_create_unary_elementwise_nc` does
+not call it. File co-occurrence is not a call-chain proof. Therefore the current
+compiler records signed `params.min <= params.max` only as a candidate and keeps
+`s8-vclamp` in `required-missing`.
+
 - Local twenty-program list:
   `verification/elementwise-compiler/CorpusReport.json`.
 - Local kernel entry assertions and parameter reads: `kernels/source/*.c` and
@@ -67,7 +75,8 @@ multi-field parameter invariant for it.
 - XNNPACK validates quantized tensor zero-point ranges and requires a finite,
   normalized, positive scale:
   <https://github.com/google/XNNPACK/blob/master/src/tensor.c>.
-- XNNPACK output-range validation rejects `output_min > output_max`:
+- XNNPACK output-range validation rejects `output_min > output_max`, but is not
+  currently connected to the pinned unary clamp path:
   <https://github.com/google/XNNPACK/blob/master/src/subgraph/validation.c>.
 - XNNPACK constructs S8/QU8 add, QS8 conversion, QS8 LReLU, QS8 multiply, and
   clamp microparameters in:
@@ -80,8 +89,17 @@ multi-field parameter invariant for it.
 
 Eight of twenty is too common to treat as an isolated exception. It does not
 justify building a whole-program interprocedural XNNPACK frontend immediately.
-The minimum honest next step is to mark these eight programs as having unchecked
-external input conditions and prevent that state from being confused with a proof
-ready program. A later generic extractor should follow the registered parameter
-initializer and upstream validation evidence; it must not add per-program Python
-branches or let the proof agent invent conditions.
+The implemented minimum honest step now marks these eight programs
+`required-missing` and prevents that state from being confused with proof ready.
+The extractor follows the unique same-stem registration to the shared Neon/RVV
+parameter initializer and hashes the pinned commit plus every consulted file.
+Resolving a condition still requires a checked caller/initializer postcondition;
+it must not come from a per-program table or from the proof agent.
+
+Every compiler invocation now emits this audit class. XNNPACK corpus runs use the
+registered-domain scope above. A standalone/held-out invocation without an
+upstream registration emits `local-unconditional-claim`: it assumes no hidden
+caller restriction and leaves every modeled parameter value in the generated
+claim. That explicit scope is not caller evidence and cannot repair a false
+claim; the mandatory cross-phase audit or the proof must still establish the
+claim. There is no `not-audited` state that can enter proof preparation.

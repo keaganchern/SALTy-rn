@@ -460,3 +460,69 @@ scalar function for its secondary block. Both were fixed with permanent negative
 and generation tests. A second read-only review returned `GO` after 38 passing
 focused tests and temporary generation of both multi-phase corpus shapes. The
 phase-equality proposition remains deliberately unproved for the next milestone.
+
+## 2026-08-29 — External-condition audit and checked counterexample milestone
+
+**Question:** Can the framework automatically distinguish kernel-entry asserts
+from facts established outside the isolated C pair, and can it explain a false
+multi-phase claim without letting the proof agent add an assumption?
+
+**Conclusion:** yes for detection, provenance, refusal, and concrete
+counterexamples; no current external condition is promoted to resolved. A generic
+same-stem registration discovery finds one XNNPACK `.inc` candidate without a
+program allowlist. The compiler verifies the pinned XNNPACK gitlink, requires one
+common Neon/RVV parameter initializer, records every consulted file and hash in
+`ExternalCondition.json`, and reproduces that extraction in the proof gate. The
+twenty-program audit yields twelve `not-required` and eight
+`required-missing`. The proof gate refuses to create a ProofTask for the latter.
+
+The earlier claim that XNNPACK's output-range validator established S8 clamp
+ordering was corrected. The function exists, but the pinned unary clamp path does
+not call it. The generated signed `min <= max` predicate is therefore labeled a
+candidate only. The unconditional claim remains visible.
+
+The multi-phase diagnostic found `s8-vclamp` parameters `min = 5`, `max = 0` and
+input `0`. Generated `fNeon` returns `0`; `fNeonSecondary` returns `5`.
+`Counterexample.lean` checks both evaluations and their inequality with Lean;
+`Counterexample.json` binds the Manifest, Models, Spec, checker, witness, and
+toolchain hashes. The checked-in corpus now reports one `counterexample`, four
+`external-condition-missing`, fourteen `intrinsic-missing`, and one deferred
+grouped layout. A missing condition with no candidate blocks cross-phase search
+instead of turning a bounded-search timeout into generation failure.
+
+**Evidence:** pinned XNNPACK commit
+`867d5a344790802ee067be62f572c2e2722bf6fb`; generated
+`verification/elementwise-compiler/programs/s8-vclamp/ExternalCondition.json`,
+`Counterexample.lean`, and `Counterexample.json`; focused schema/compiler/proof/
+external-condition tests; deterministic corpus regeneration.
+
+**Unresolved:** the eight quantized parameter families still need reusable,
+checked initializer/caller postconditions before contextual proof tasks can be
+created. The next framework milestone is the single dashboard/artifact authority.
+
+## 2026-08-29 — M2 fail-open closure and convergence review
+
+**Question:** Do external-condition and multi-phase checks remain mandatory when
+the generic compiler is called outside the corpus runner, and does a checked
+counterexample actually stop proof delegation?
+
+**Conclusion:** yes after three required revisions. The first independent review
+returned `NO-GO`: the external audit request was optional, a checked witness did
+not block `prepare_proof_task`, and cross-phase search was chosen only by the
+corpus driver. The compiler now always emits a scoped `ExternalCondition.json`,
+always invokes a content-addressed `CrossPhaseAudit.json`, and treats a bound
+Lean-checked counterexample as terminal. The dashboard validates the same closure
+and accepts counterexample results only when they bind the witness/checker/
+toolchain and correctly have no ProofTask.
+
+**Evidence:** standalone and registered S8 clamp both emit the checked
+`min = 5, max = 0, x = 0` witness and reject proof-task creation; standalone S8
+VMax emits `local-unconditional-claim` plus cross-phase `not-applicable` and may
+proceed to proof. The independent convergence review returned `GO`; 73 focused
+compiler/proof/corpus/dashboard tests and the complete 402-test repository suite
+passed. See
+`notes/reviews/elementwise-m2-review-2026-08-29.md`.
+
+**Unresolved:** the eight registered XNNPACK parameter domains remain
+`required-missing`; a bounded cross-phase search with no witness remains a
+diagnostic, not a proof.

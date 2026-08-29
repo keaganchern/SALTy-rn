@@ -1,7 +1,12 @@
 {
   "artifact_kind": "elementwise-corpus-report",
+  "counterexample_count": 1,
   "discovered_elementwise": 20,
   "discovery_rule": "paired-single-output-vsetvl-vector-load-store-v1",
+  "external_condition_counts": {
+    "not-required": 12,
+    "required-missing": 8
+  },
   "grouped_layout_deferred": 1,
   "intrinsic_dependencies": [
     {
@@ -1570,8 +1575,13 @@
   "programs": [
     {
       "artifact_index": null,
+      "counterexample": null,
+      "cross_phase_status": "not-typed",
       "detail": "no exact typed parse facade covers this pair",
       "entry_contract_preflight": "equal",
+      "external_condition_detail": "local kernels do not read semantic parameter fields",
+      "external_condition_sha256": "584f0f426270b6bcf222bbabcfe05da7c922ae8dc565d04d94ed0cfa515f334a",
+      "external_condition_status": "not-required",
       "input_streams": [
         "input"
       ],
@@ -1692,8 +1702,13 @@
     },
     {
       "artifact_index": null,
+      "counterexample": null,
+      "cross_phase_status": "not-typed",
       "detail": "no exact typed parse facade covers this pair",
       "entry_contract_preflight": "equal",
+      "external_condition_detail": "local kernels do not read semantic parameter fields",
+      "external_condition_sha256": "824e1ebe5ae180b8093f3d950d604e13a9261d99603f0ef15edf72e05b92753c",
+      "external_condition_status": "not-required",
       "input_streams": [
         "input_a",
         "input_b"
@@ -1743,8 +1758,13 @@
     },
     {
       "artifact_index": null,
+      "counterexample": null,
+      "cross_phase_status": "not-typed",
       "detail": "planar grouping needs a reusable grouped layout capability",
       "entry_contract_preflight": "equal",
+      "external_condition_detail": "local kernels do not read semantic parameter fields",
+      "external_condition_sha256": "de22bb58e9ef27a4027f6260485a399b3b1b71f34ea72a388089b5de3b8a6c9e",
+      "external_condition_status": "not-required",
       "input_streams": [
         "input_a",
         "input_b"
@@ -1802,8 +1822,13 @@
     },
     {
       "artifact_index": null,
+      "counterexample": null,
+      "cross_phase_status": "not-typed",
       "detail": "no exact typed parse facade covers this pair",
       "entry_contract_preflight": "equal",
+      "external_condition_detail": "local kernels do not read semantic parameter fields",
+      "external_condition_sha256": "cf84b2ccff0a4519e8a04fff1dbe66794a99ed05a06a08972c97547d088da9e7",
+      "external_condition_status": "not-required",
       "input_streams": [
         "input_a",
         "input_b"
@@ -1853,8 +1878,13 @@
     },
     {
       "artifact_index": null,
+      "counterexample": null,
+      "cross_phase_status": "not-typed",
       "detail": "no exact typed parse facade covers this pair",
       "entry_contract_preflight": "equal",
+      "external_condition_detail": "initializer directly copies an unconstrained unary scalar parameter",
+      "external_condition_sha256": "fec766aaea63bfe68ffb8f9c54d8527d3706df58d1cabc37ac3e5c56648502a5",
+      "external_condition_status": "not-required",
       "input_streams": [
         "input"
       ],
@@ -1919,8 +1949,13 @@
     },
     {
       "artifact_index": null,
+      "counterexample": null,
+      "cross_phase_status": "not-typed",
       "detail": "no exact typed parse facade covers this pair",
       "entry_contract_preflight": "equal",
+      "external_condition_detail": "local kernels do not read semantic parameter fields",
+      "external_condition_sha256": "9ee75d886805aef2eed3d1c80aa0cd53010a55930fd8eee1e7fcea1be33908f1",
+      "external_condition_status": "not-required",
       "input_streams": [
         "input_a",
         "input_b"
@@ -1970,8 +2005,13 @@
     },
     {
       "artifact_index": null,
+      "counterexample": null,
+      "cross_phase_status": "not-typed",
       "detail": "no exact typed parse facade covers this pair",
       "entry_contract_preflight": "equal",
+      "external_condition_detail": "local kernels do not read semantic parameter fields",
+      "external_condition_sha256": "6aaa1ad5710d4aadfd7c10f5bc67a2113f84725340fd7d22eef53e3c8e6e71ae",
+      "external_condition_status": "not-required",
       "input_streams": [
         "input_a",
         "input_b"
@@ -2021,8 +2061,13 @@
     },
     {
       "artifact_index": null,
+      "counterexample": null,
+      "cross_phase_status": "not-typed",
       "detail": "no exact typed parse facade covers this pair",
       "entry_contract_preflight": "equal",
+      "external_condition_detail": "local kernels do not read semantic parameter fields",
+      "external_condition_sha256": "b2cb245a80388f226571f6950b625fbae625d4b5597e4067ea907596265a0622",
+      "external_condition_status": "not-required",
       "input_streams": [
         "input_a",
         "input_b"
@@ -2072,8 +2117,13 @@
     },
     {
       "artifact_index": null,
+      "counterexample": null,
+      "cross_phase_status": "not-typed",
       "detail": "no exact typed parse facade covers this pair",
       "entry_contract_preflight": "equal",
+      "external_condition_detail": "local kernels do not read semantic parameter fields",
+      "external_condition_sha256": "97a1fa4a87baf9d7867f7f09cfcde11187e47f9c38a313a0d3681132887601ca",
+      "external_condition_status": "not-required",
       "input_streams": [
         "input_a",
         "input_b"
@@ -2125,8 +2175,13 @@
     },
     {
       "artifact_index": null,
+      "counterexample": null,
+      "cross_phase_status": "not-typed",
       "detail": "no exact typed parse facade covers this pair",
       "entry_contract_preflight": "equal",
+      "external_condition_detail": "local kernels do not read semantic parameter fields",
+      "external_condition_sha256": "610782c17ad3f30fbf92c02598307eab276512e2142db08569ae163224a34e06",
+      "external_condition_status": "not-required",
       "input_streams": [
         "input"
       ],
@@ -2207,8 +2262,13 @@
     },
     {
       "artifact_index": null,
+      "counterexample": null,
+      "cross_phase_status": "not-typed",
       "detail": "no exact typed parse facade covers this pair",
       "entry_contract_preflight": "equal",
+      "external_condition_detail": "local kernels do not read semantic parameter fields",
+      "external_condition_sha256": "67c24ed782143c07b05b136d4d48480b3c4fb0bc586553cc8c63d60b50aad965",
+      "external_condition_status": "not-required",
       "input_streams": [
         "input",
         "unused_params"
@@ -2258,8 +2318,13 @@
     },
     {
       "artifact_index": null,
+      "counterexample": null,
+      "cross_phase_status": "not-typed",
       "detail": "no exact typed parse facade covers this pair",
       "entry_contract_preflight": "equal",
+      "external_condition_detail": "local kernels do not read semantic parameter fields",
+      "external_condition_sha256": "d7e14cd20055341ccc6f22b89d244e3e58f0e7b437a5d4c693ff586d2bca6a71",
+      "external_condition_status": "not-required",
       "input_streams": [
         "input_a",
         "input_b"
@@ -2309,8 +2374,13 @@
     },
     {
       "artifact_index": null,
+      "counterexample": null,
+      "cross_phase_status": "not-typed",
       "detail": "no exact typed parse facade covers this pair",
       "entry_contract_preflight": "equal",
+      "external_condition_detail": "initializer transforms or validates semantic parameters, but no complete caller-to-kernel guarantee has been established",
+      "external_condition_sha256": "2e878b84ad60bbeedf86ce02f8f9bbe5296d70236a3786d9a3533fdb0b84a9c9",
+      "external_condition_status": "required-missing",
       "input_streams": [
         "input"
       ],
@@ -2372,14 +2442,19 @@
     },
     {
       "artifact_index": "programs/qs8-vadd-minmax/ArtifactIndex.json",
-      "detail": "typed manifest, Models, and proof-free Spec generated",
+      "counterexample": null,
+      "cross_phase_status": "blocked-by-missing-external-condition",
+      "detail": "generated Spec is blocked because external input conditions are unresolved",
       "entry_contract_preflight": "equal",
+      "external_condition_detail": "initializer transforms or validates semantic parameters, but no complete caller-to-kernel guarantee has been established",
+      "external_condition_sha256": "7f92db0c241827ca875e17e40df9536c52f4853efa17aea3f9d2cb5fd37bec0c",
+      "external_condition_status": "required-missing",
       "input_streams": [
         "input_a",
         "input_b"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": "e58d86be72c77ed6f7aa9a0d7c6fc932b09917947cd9eefd0fe7c182375a9f31",
+      "manifest_sha256": "b8cb81a4ab13907b6ecc61a36fafb042ed57634a9990a3e094a9d30459241e81",
       "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
@@ -2438,18 +2513,23 @@
       ],
       "rvv_source": "kernels/target/qs8-vadd-minmax.c",
       "schedule_preflight": "multi-phase",
-      "status": "spec-generated",
+      "status": "external-condition-missing",
       "status_layer": "typed-generated"
     },
     {
       "artifact_index": "programs/qs8-vcvt/ArtifactIndex.json",
-      "detail": "typed manifest, Models, and proof-free Spec generated",
+      "counterexample": null,
+      "cross_phase_status": "not-multi-phase",
+      "detail": "generated Spec is blocked because external input conditions are unresolved",
       "entry_contract_preflight": "equal",
+      "external_condition_detail": "initializer transforms or validates semantic parameters, but no complete caller-to-kernel guarantee has been established",
+      "external_condition_sha256": "ffad28fbbbfae73f6a4d116d4175a9909ee0a6d0c55ccb2531b35907bfcc1750",
+      "external_condition_status": "required-missing",
       "input_streams": [
         "input"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": "74a58e09a0e52822c9d24a61c59fbd3c784d48836d0ebd8c76e2a829b8aed944",
+      "manifest_sha256": "847e90c63140b69dab10d8f62d813de613a24953beb389ffa949e85e986623a2",
       "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
@@ -2490,18 +2570,23 @@
       ],
       "rvv_source": "kernels/target/qs8-vcvt.c",
       "schedule_preflight": "fixed-tail",
-      "status": "spec-generated",
+      "status": "external-condition-missing",
       "status_layer": "typed-generated"
     },
     {
       "artifact_index": "programs/qs8-vlrelu/ArtifactIndex.json",
-      "detail": "typed manifest, Models, and proof-free Spec generated",
+      "counterexample": null,
+      "cross_phase_status": "not-multi-phase",
+      "detail": "generated Spec is blocked because external input conditions are unresolved",
       "entry_contract_preflight": "equal",
+      "external_condition_detail": "initializer transforms or validates semantic parameters, but no complete caller-to-kernel guarantee has been established",
+      "external_condition_sha256": "36aed0967c77eac6869bf2538b73412429a69c0b021134aa03c94703ef038418",
+      "external_condition_status": "required-missing",
       "input_streams": [
         "input"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": "a6769200d8a0e13357112dd986ab0ccc7775ba68041523958b1b4ccfbd9fc907",
+      "manifest_sha256": "0b381186609b8141d72a70300036831f33b861e37bf41599407cacb782f6589f",
       "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
@@ -2547,13 +2632,18 @@
       ],
       "rvv_source": "kernels/target/qs8-vlrelu.c",
       "schedule_preflight": "fixed-tail",
-      "status": "spec-generated",
+      "status": "external-condition-missing",
       "status_layer": "typed-generated"
     },
     {
       "artifact_index": null,
+      "counterexample": null,
+      "cross_phase_status": "not-typed",
       "detail": "no exact typed parse facade covers this pair",
       "entry_contract_preflight": "equal",
+      "external_condition_detail": "initializer transforms or validates semantic parameters, but no complete caller-to-kernel guarantee has been established",
+      "external_condition_sha256": "755cb3a2851fe5fd8f4d0c803f8e1ef60d9260f5639c444e6f1879026abb1e04",
+      "external_condition_status": "required-missing",
       "input_streams": [
         "input_a",
         "input_b"
@@ -2634,8 +2724,13 @@
     },
     {
       "artifact_index": null,
+      "counterexample": null,
+      "cross_phase_status": "not-typed",
       "detail": "no exact typed parse facade covers this pair",
       "entry_contract_preflight": "equal",
+      "external_condition_detail": "initializer transforms or validates semantic parameters, but no complete caller-to-kernel guarantee has been established",
+      "external_condition_sha256": "cb26b1cf248a3c6b23d09674022c6965203a9ccdb4571fa9bb79eded6d6f6b32",
+      "external_condition_status": "required-missing",
       "input_streams": [
         "input"
       ],
@@ -2702,14 +2797,19 @@
     },
     {
       "artifact_index": "programs/qu8-vadd-minmax/ArtifactIndex.json",
-      "detail": "typed manifest, Models, and proof-free Spec generated",
+      "counterexample": null,
+      "cross_phase_status": "not-multi-phase",
+      "detail": "generated Spec is blocked because external input conditions are unresolved",
       "entry_contract_preflight": "equal",
+      "external_condition_detail": "initializer transforms or validates semantic parameters, but no complete caller-to-kernel guarantee has been established",
+      "external_condition_sha256": "bba97c61130d4545b42cc3f9ace21051f0487de6af3315d91c29140f5f0e3d44",
+      "external_condition_status": "required-missing",
       "input_streams": [
         "input_a",
         "input_b"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": "a6abb312b46241c399c8a13ba98d850a4f2aa2cf2add9a94f4010464df6c20ef",
+      "manifest_sha256": "5b87af7efafd01e3cacadfc326ce92111c8f9757898ea42a03ca73c358bfceec",
       "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
@@ -2767,18 +2867,36 @@
       ],
       "rvv_source": "kernels/target/qu8-vadd-minmax.c",
       "schedule_preflight": "fixed-tail",
-      "status": "spec-generated",
+      "status": "external-condition-missing",
       "status_layer": "typed-generated"
     },
     {
       "artifact_index": "programs/s8-vclamp/ArtifactIndex.json",
-      "detail": "typed manifest, Models, and proof-free Spec generated",
+      "counterexample": {
+        "claim": "SALT.Corpus.s8vclamp.neonPhaseFunctionsEqualClaim",
+        "inputs": [
+          0
+        ],
+        "left_output": 0,
+        "parameters": {
+          "max": 0,
+          "min": 5
+        },
+        "path": "programs/s8-vclamp/Counterexample.json",
+        "right_output": 5,
+        "sha256": "8b1021e6f167222f35401042d3ad570a792988286ba41cb5c487e3f5d2c606c3"
+      },
+      "cross_phase_status": "lean-checked-counterexample",
+      "detail": "Lean checked a concrete disagreement between generated Neon phases",
       "entry_contract_preflight": "equal",
+      "external_condition_detail": "initializer applies the same quantizer to clamp.min and clamp.max; caller guarantees for input order and positive scale remain unresolved",
+      "external_condition_sha256": "490a7cade552bd3a2d41e3e0ad1a0c87bac72e4f266d03998c2c973ea3531104",
+      "external_condition_status": "required-missing",
       "input_streams": [
         "input"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": "f76fd1f9b2838348f46c922a84e011306a3f0465843d1a305bfad5cc77571e9d",
+      "manifest_sha256": "2113815149b0aff4ea1929b961021a4a70edfe70866eb6fce04d193dd98b3793",
       "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
@@ -2815,16 +2933,17 @@
       ],
       "rvv_source": "kernels/target/s8-vclamp.c",
       "schedule_preflight": "multi-phase",
-      "status": "spec-generated",
+      "status": "counterexample",
       "status_layer": "typed-generated"
     }
   ],
-  "report_sha256": "85b2d4d992737acd89f9a95b388bf22fc92b5b12b36b1ce328fed741201b37a8",
+  "report_sha256": "0e69a285e7d12cc6eafd3c0ed2a65c739e8e2a11fad93716593fc192e981fcf1",
   "scalar_layout_scope": 19,
   "schema_version": 1,
   "status_counts": {
+    "counterexample": 1,
+    "external-condition-missing": 4,
     "intrinsic-missing": 14,
-    "layout-unrecognized": 1,
-    "spec-generated": 5
+    "layout-unrecognized": 1
   }
 }

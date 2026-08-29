@@ -3,8 +3,8 @@ import SALT.Corpus.qs8vaddminmax.Models
 
 namespace SALT.Corpus.qs8vaddminmax
 
-def manifestSha256InSpec : String := "e58d86be72c77ed6f7aa9a0d7c6fc932b09917947cd9eefd0fe7c182375a9f31"
-def modelsSha256InSpec : String := "92c755deb8ab2306bd09a2e31327907922ec38a264beafc3cc4d85288cb351ad"
+def manifestSha256InSpec : String := "b8cb81a4ab13907b6ecc61a36fafb042ed57634a9990a3e094a9d30459241e81"
+def modelsSha256InSpec : String := "3eb835174f204c75eca90836c56439abeecbaaf9035413632e10f7651dd44198"
 def sharedEntryContractSha256 : String := "f4c1fb073c05d935abf44acc38855469baf021962e556ee32751bae19a50d1f0"
 
 def neonBlockEqualsMapClaim : Prop :=
@@ -17,7 +17,11 @@ def neonSecondaryBlockEqualsMapClaim : Prop :=
   ∀ (p : qs8vaddminmaxParams) (input_a input_b : List (BitVec 8)),
     input_a.length = 8 →
     input_a.length = input_b.length →
-    neonBlock8FromIntrinsics p input_a input_b = List.zipWith (fNeon p) input_a input_b
+    neonBlock8FromIntrinsics p input_a input_b = List.zipWith (fNeonSecondary p) input_a input_b
+
+def neonPhaseFunctionsEqualClaim : Prop :=
+  ∀ (p : qs8vaddminmaxParams) (x y : BitVec 8),
+    fNeon p x y = fNeonSecondary p x y
 
 def rvvChunkEqualsMapClaim : Prop :=
   ∀ (p : qs8vaddminmaxParams) (input_a input_b : List (BitVec 8)),

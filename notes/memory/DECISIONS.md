@@ -375,3 +375,52 @@ For a multi-phase Neon schedule, project each parsed phase to its own scalar
 function. Generate phase-to-map claims separately and expose equality between the
 phase functions as an explicit proof obligation. Never define the secondary phase
 through the primary scalar function before that equality has been established.
+
+## EC-033: File Co-Occurrence Is Not External-Condition Evidence
+
+**Status:** Accepted and implemented, 2026-08-29. Supersedes the evidence claim
+in EC-029 that XNNPACK output-range validation is confirmed on the S8 unary clamp
+call path; EC-029's requirement to keep the direct false claim visible remains in
+force.
+
+An external condition is `resolved` only when the exact caller/initializer path
+that establishes it is hash-bound and checked. Finding a suitable validator and a
+parameter initializer in the same upstream repository is insufficient. At pinned
+XNNPACK commit `867d5a344790802ee067be62f572c2e2722bf6fb`, the audited unary clamp
+path does not call `xnn_subgraph_check_output_min_max`. Signed
+`params.min <= params.max` therefore remains a candidate, and `s8-vclamp` remains
+`required-missing` even though that candidate repairs the generated theorem.
+
+`ExternalCondition.json` binds the local source pair, explicit registration,
+shared Neon/RVV initializer, upstream commit, extractor, and consulted file
+hashes. The proof gate may select a contextual claim only for `resolved` evidence;
+it rejects `required-missing` before proof delegation.
+
+## EC-034: Counterexample Search Is Checked but Bounded
+
+**Status:** Accepted and implemented, 2026-08-29.
+
+For a multi-phase generated model, a found scalar-function disagreement must be
+reified in `Counterexample.lean`, checked by Lean, and bound to Manifest, Models,
+Spec, checker, and toolchain hashes in `Counterexample.json`. A bounded search
+that finds no witness is not a proof of equality. When the relevant external
+condition is already missing and has no expressible candidate, report that
+missing-condition blocker instead of treating a large unconstrained search
+timeout as generation failure.
+
+## EC-035: Audit Absence Is Never an Accepted Audit Result
+
+**Status:** Accepted and implemented, 2026-08-29.
+
+Every generated stack must bind both `ExternalCondition.json` and
+`CrossPhaseAudit.json`. Omitting XNNPACK caller information selects an explicit
+standalone scope whose generated proposition quantifies over all modeled
+parameters; it does not silently map absence to `not-required`. XNNPACK corpus
+runs must continue to use the registered-domain audit and may not fall back to the
+standalone scope when registration discovery fails.
+
+The cross-phase audit runs from the generic compiler path. It records
+non-applicability, a missing external domain, a bounded search with no witness, or
+a Lean-checked counterexample. A bounded miss remains only a diagnostic. A bound
+counterexample is terminal and `prepare_proof_task` must reject it even if some
+other condition is also missing.

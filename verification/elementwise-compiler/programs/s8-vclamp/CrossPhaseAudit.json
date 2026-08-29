@@ -1,0 +1,16 @@
+{
+  "artifact_kind": "elementwise-cross-phase-audit",
+  "checker_sha256": "024de984d03845847cb6d806f8597877efbfb115f34ddad33069545608da2a2d",
+  "claim": "SALT.Corpus.s8vclamp.neonPhaseFunctionsEqualClaim",
+  "counterexample_sha256": "8b1021e6f167222f35401042d3ad570a792988286ba41cb5c487e3f5d2c606c3",
+  "cross_phase_audit_sha256": "0c2104e791172a2dc701057e05d040df84f1d94badeb09dfb13750f2a2acb0bb",
+  "detail": "bounded search found a concrete phase disagreement and Lean checked it",
+  "external_condition_sha256": "490a7cade552bd3a2d41e3e0ad1a0c87bac72e4f266d03998c2c973ea3531104",
+  "manifest_sha256": "2113815149b0aff4ea1929b961021a4a70edfe70866eb6fce04d193dd98b3793",
+  "models_sha256": "e26918393ea91f126a4ac098fe6c16681057c4d751ca6dfc06c359a80078e828",
+  "schema_version": 1,
+  "spec_sha256": "19e3d5f84153aa1d292cfc0569578195c678d4bd9dcdc0848fe1d9385e5ad936",
+  "status": "counterexample",
+  "toolchain_sha256": "1ce7d3879378e751ecae7bb5fd76c57bde9e4957e69b20b4693d759eb34a8c6d",
+  "trial_count": 128
+}

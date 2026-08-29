@@ -17,6 +17,10 @@ from typing import Any, Mapping, Sequence
 
 
 SCHEMA_VERSION = 1
+EXTERNAL_CONDITION_SCHEMA_VERSION = 2
+PROGRAM_MANIFEST_SCHEMA_VERSION = 2
+PROOF_TASK_SCHEMA_VERSION = 2
+RESULT_SCHEMA_VERSION = 2
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 _IDENTIFIER_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_.']*$")
 
@@ -573,6 +577,232 @@ class LocalAssertionFact:
         )
 
 
+class ExternalConditionStatus(str, Enum):
+    """Whether facts outside the isolated kernels are needed and established."""
+
+    NOT_REQUIRED = "not-required"
+    REQUIRED_MISSING = "required-missing"
+    RESOLVED = "resolved"
+
+
+class ExternalConditionScope(str, Enum):
+    """Domain whose caller conditions were audited."""
+
+    LOCAL_UNCONDITIONAL = "local-unconditional-claim"
+    XNNPACK_REGISTERED = "xnnpack-registered-domain"
+
+
+@dataclass(frozen=True, slots=True)
+class EvidenceSource:
+    """One immutable repository file used by an external-condition audit."""
+
+    role: str
+    path: str
+    sha256: str
+    symbols: tuple[str, ...]
+
+    def __post_init__(self) -> None:
+        _text(self.role, "evidence source role")
+        _relative_path(self.path, "evidence source path")
+        _digest(self.sha256, "evidence source digest")
+        if not self.symbols:
+            raise ElementwiseSchemaError("evidence source needs at least one symbol")
+        if tuple(sorted(set(self.symbols))) != self.symbols:
+            raise ElementwiseSchemaError("evidence source symbols must be sorted and unique")
+        for symbol in self.symbols:
+            _text(symbol, "evidence source symbol")
+
+    def to_record(self) -> dict[str, Any]:
+        return {
+            "role": self.role,
+            "path": self.path,
+            "sha256": self.sha256,
+            "symbols": list(self.symbols),
+        }
+
+    @classmethod
+    def from_record(cls, data: Mapping[str, Any]) -> "EvidenceSource":
+        _exact_keys(data, {"role", "path", "sha256", "symbols"}, "evidence source")
+        return cls(
+            role=_text(data["role"], "evidence source role"),
+            path=_relative_path(data["path"], "evidence source path"),
+            sha256=_digest(data["sha256"], "evidence source digest"),
+            symbols=tuple(
+                _text(item, "evidence source symbol")
+                for item in _sequence(data["symbols"], "evidence source symbols")
+            ),
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class ExternalConditionEvidence:
+    """Content-addressed result of tracing facts outside a kernel pair.
+
+    ``candidate_contract`` is deliberately not an assumption.  It records a
+    condition suggested by the semantics audit.  Only ``RESOLVED`` evidence may
+    make that condition available to a proof task.
+    """
+
+    local_sources_sha256: str
+    scope: ExternalConditionScope
+    upstream_root: str | None
+    upstream_commit: str | None
+    parameter_type: str
+    initializer: str
+    status: ExternalConditionStatus
+    candidate_contract: EntryContract
+    sources: tuple[EvidenceSource, ...]
+    extractor_sha256: str
+    derivation: str
+    detail: str
+    schema_version: int = EXTERNAL_CONDITION_SCHEMA_VERSION
+
+    def __post_init__(self) -> None:
+        if self.schema_version != EXTERNAL_CONDITION_SCHEMA_VERSION:
+            raise ElementwiseSchemaError("unsupported external-condition schema version")
+        _digest(self.local_sources_sha256, "external-condition local-sources digest")
+        if self.scope is ExternalConditionScope.XNNPACK_REGISTERED:
+            if self.upstream_root is None or self.upstream_commit is None:
+                raise ElementwiseSchemaError(
+                    "registered-domain evidence needs an upstream root and commit"
+                )
+            _relative_path(self.upstream_root, "external-condition upstream root")
+            if re.fullmatch(r"[0-9a-f]{40}", self.upstream_commit) is None:
+                raise ElementwiseSchemaError(
+                    "external-condition upstream commit must be a Git SHA-1"
+                )
+        elif self.upstream_root is not None or self.upstream_commit is not None:
+            raise ElementwiseSchemaError(
+                "local unconditional evidence cannot name an upstream checkout"
+            )
+        _text(self.parameter_type, "external-condition parameter type")
+        _text(self.initializer, "external-condition initializer")
+        _digest(self.extractor_sha256, "external-condition extractor digest")
+        _text(self.derivation, "external-condition derivation")
+        _text(self.detail, "external-condition detail")
+        source_keys = [canonical_json(source.to_record()) for source in self.sources]
+        if not source_keys or source_keys != sorted(set(source_keys)):
+            raise ElementwiseSchemaError("evidence sources must be sorted and unique")
+        if self.status is ExternalConditionStatus.NOT_REQUIRED and self.candidate_contract.clauses:
+            raise ElementwiseSchemaError("not-required evidence cannot carry candidate conditions")
+        if self.status is ExternalConditionStatus.RESOLVED and not self.candidate_contract.clauses:
+            raise ElementwiseSchemaError("resolved evidence needs a non-empty contract")
+        if (
+            self.scope is ExternalConditionScope.LOCAL_UNCONDITIONAL
+            and self.status is not ExternalConditionStatus.NOT_REQUIRED
+        ):
+            raise ElementwiseSchemaError(
+                "an unconditional local claim cannot depend on an external condition"
+            )
+
+    def unsigned_record(self) -> dict[str, Any]:
+        return {
+            "artifact_kind": "elementwise-external-condition",
+            "schema_version": self.schema_version,
+            "local_sources_sha256": self.local_sources_sha256,
+            "scope": self.scope.value,
+            "upstream_root": self.upstream_root,
+            "upstream_commit": self.upstream_commit,
+            "parameter_type": self.parameter_type,
+            "initializer": self.initializer,
+            "status": self.status.value,
+            "candidate_contract": self.candidate_contract.to_record(),
+            "sources": [source.to_record() for source in self.sources],
+            "extractor_sha256": self.extractor_sha256,
+            "derivation": self.derivation,
+            "detail": self.detail,
+        }
+
+    @property
+    def sha256(self) -> str:
+        return canonical_sha256(self.unsigned_record())
+
+    def to_record(self) -> dict[str, Any]:
+        return {**self.unsigned_record(), "external_condition_sha256": self.sha256}
+
+    @classmethod
+    def from_record(cls, data: Mapping[str, Any]) -> "ExternalConditionEvidence":
+        expected = {
+            "artifact_kind", "schema_version", "local_sources_sha256", "scope",
+            "upstream_root", "upstream_commit", "parameter_type", "initializer",
+            "status", "candidate_contract", "sources", "extractor_sha256",
+            "derivation", "detail", "external_condition_sha256",
+        }
+        _exact_keys(data, expected, "external-condition evidence")
+        if data["artifact_kind"] != "elementwise-external-condition":
+            raise ElementwiseSchemaError("invalid external-condition artifact kind")
+        result = cls(
+            schema_version=data["schema_version"],
+            local_sources_sha256=_digest(
+                data["local_sources_sha256"], "external-condition local-sources digest"
+            ),
+            scope=_enum(
+                ExternalConditionScope, data["scope"], "external-condition scope"
+            ),
+            upstream_root=(
+                None
+                if data["upstream_root"] is None
+                else _relative_path(
+                    data["upstream_root"], "external-condition upstream root"
+                )
+            ),
+            upstream_commit=(
+                None
+                if data["upstream_commit"] is None
+                else _text(data["upstream_commit"], "external-condition upstream commit")
+            ),
+            parameter_type=_text(data["parameter_type"], "external-condition parameter type"),
+            initializer=_text(data["initializer"], "external-condition initializer"),
+            status=_enum(
+                ExternalConditionStatus, data["status"], "external-condition status"
+            ),
+            candidate_contract=EntryContract.from_record(
+                _mapping(data["candidate_contract"], "external-condition candidate contract")
+            ),
+            sources=tuple(
+                EvidenceSource.from_record(_mapping(item, "evidence source"))
+                for item in _sequence(data["sources"], "evidence sources")
+            ),
+            extractor_sha256=_digest(
+                data["extractor_sha256"], "external-condition extractor digest"
+            ),
+            derivation=_text(data["derivation"], "external-condition derivation"),
+            detail=_text(data["detail"], "external-condition detail"),
+        )
+        if _digest(
+            data["external_condition_sha256"], "external-condition digest"
+        ) != result.sha256:
+            raise ElementwiseSchemaError(
+                "external-condition digest disagrees with contents"
+            )
+        return result
+
+
+@dataclass(frozen=True, slots=True)
+class ExternalConditionRef:
+    path: str
+    sha256: str
+    status: ExternalConditionStatus
+
+    def __post_init__(self) -> None:
+        _relative_path(self.path, "external-condition reference path")
+        _digest(self.sha256, "external-condition reference digest")
+
+    def to_record(self) -> dict[str, Any]:
+        return {"path": self.path, "sha256": self.sha256, "status": self.status.value}
+
+    @classmethod
+    def from_record(cls, data: Mapping[str, Any]) -> "ExternalConditionRef":
+        _exact_keys(data, {"path", "sha256", "status"}, "external-condition reference")
+        return cls(
+            path=_relative_path(data["path"], "external-condition reference path"),
+            sha256=_digest(data["sha256"], "external-condition reference digest"),
+            status=_enum(
+                ExternalConditionStatus, data["status"], "external-condition reference status"
+            ),
+        )
+
+
 @dataclass(frozen=True, slots=True)
 class ProgramManifest:
     compiler_sha256: str
@@ -583,10 +813,11 @@ class ProgramManifest:
     schedules: tuple[ScheduleInstance, ScheduleInstance]
     local_assertions: tuple[LocalAssertionFact, ...]
     consumed_effects_sha256: str
-    schema_version: int = SCHEMA_VERSION
+    external_condition: ExternalConditionRef
+    schema_version: int = PROGRAM_MANIFEST_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        if self.schema_version != SCHEMA_VERSION:
+        if self.schema_version != PROGRAM_MANIFEST_SCHEMA_VERSION:
             raise ElementwiseSchemaError(f"unsupported manifest schema version {self.schema_version}")
         _digest(self.compiler_sha256, "compiler digest")
         if tuple(source.architecture for source in self.sources) != (Architecture.NEON, Architecture.RVV):
@@ -613,6 +844,7 @@ class ProgramManifest:
             "schedules": [schedule.to_record() for schedule in self.schedules],
             "local_assertions": [item.to_record() for item in self.local_assertions],
             "consumed_effects_sha256": self.consumed_effects_sha256,
+            "external_condition": self.external_condition.to_record(),
         }
 
     @property
@@ -627,7 +859,8 @@ class ProgramManifest:
         expected = {
             "artifact_kind", "schema_version", "compiler_sha256", "sources",
             "contracts", "intrinsic_capabilities", "layout", "schedules",
-            "local_assertions", "consumed_effects_sha256", "manifest_sha256",
+            "local_assertions", "consumed_effects_sha256", "external_condition",
+            "manifest_sha256",
         }
         _exact_keys(data, expected, "program manifest")
         if data["artifact_kind"] != "elementwise-program-manifest":
@@ -646,6 +879,9 @@ class ProgramManifest:
             schedules=(schedules[0], schedules[1]),
             local_assertions=tuple(LocalAssertionFact.from_record(_mapping(item, "local assertion")) for item in _sequence(data["local_assertions"], "local assertions")),
             consumed_effects_sha256=_digest(data["consumed_effects_sha256"], "consumed effects digest"),
+            external_condition=ExternalConditionRef.from_record(
+                _mapping(data["external_condition"], "external-condition reference")
+            ),
         )
         if _digest(data["manifest_sha256"], "manifest digest") != result.sha256:
             raise ElementwiseSchemaError("program manifest digest disagrees with contents")
@@ -684,6 +920,282 @@ class GeneratedArtifact:
         )
 
 
+@dataclass(frozen=True, slots=True)
+class CounterexampleWitness:
+    """A concrete, Lean-checked disagreement between two generated functions."""
+
+    manifest_sha256: str
+    models_sha256: str
+    spec_sha256: str
+    claim: str
+    left_function: str
+    right_function: str
+    parameter_values: tuple[tuple[str, int], ...]
+    input_values: tuple[int, ...]
+    left_output: int
+    right_output: int
+    lean_path: str
+    lean_sha256: str
+    checker_sha256: str
+    toolchain_sha256: str
+    schema_version: int = SCHEMA_VERSION
+
+    def __post_init__(self) -> None:
+        if self.schema_version != SCHEMA_VERSION:
+            raise ElementwiseSchemaError("unsupported counterexample schema version")
+        for value, field in (
+            (self.manifest_sha256, "counterexample manifest digest"),
+            (self.models_sha256, "counterexample Models digest"),
+            (self.spec_sha256, "counterexample Spec digest"),
+            (self.lean_sha256, "counterexample Lean digest"),
+            (self.checker_sha256, "counterexample checker digest"),
+            (self.toolchain_sha256, "counterexample toolchain digest"),
+        ):
+            _digest(value, field)
+        for value, field in (
+            (self.claim, "counterexample claim"),
+            (self.left_function, "counterexample left function"),
+            (self.right_function, "counterexample right function"),
+        ):
+            if _IDENTIFIER_RE.fullmatch(value) is None:
+                raise ElementwiseSchemaError(f"{field} must be a Lean identifier")
+        keys = [name for name, _ in self.parameter_values]
+        if keys != sorted(set(keys)):
+            raise ElementwiseSchemaError(
+                "counterexample parameter assignments must be sorted and unique"
+            )
+        if any(type(value) is not int for _, value in self.parameter_values):
+            raise ElementwiseSchemaError("counterexample parameter values must be integers")
+        if not self.input_values or any(type(value) is not int for value in self.input_values):
+            raise ElementwiseSchemaError("counterexample inputs must be non-empty integers")
+        if type(self.left_output) is not int or type(self.right_output) is not int:
+            raise ElementwiseSchemaError("counterexample outputs must be integers")
+        if self.left_output == self.right_output:
+            raise ElementwiseSchemaError("counterexample outputs must disagree")
+        _relative_path(self.lean_path, "counterexample Lean path")
+
+    def unsigned_record(self) -> dict[str, Any]:
+        return {
+            "artifact_kind": "elementwise-counterexample",
+            "schema_version": self.schema_version,
+            "manifest_sha256": self.manifest_sha256,
+            "models_sha256": self.models_sha256,
+            "spec_sha256": self.spec_sha256,
+            "claim": self.claim,
+            "left_function": self.left_function,
+            "right_function": self.right_function,
+            "parameter_values": {
+                name: value for name, value in self.parameter_values
+            },
+            "input_values": list(self.input_values),
+            "left_output": self.left_output,
+            "right_output": self.right_output,
+            "lean_path": self.lean_path,
+            "lean_sha256": self.lean_sha256,
+            "checker_sha256": self.checker_sha256,
+            "toolchain_sha256": self.toolchain_sha256,
+        }
+
+    @property
+    def sha256(self) -> str:
+        return canonical_sha256(self.unsigned_record())
+
+    def to_record(self) -> dict[str, Any]:
+        return {**self.unsigned_record(), "counterexample_sha256": self.sha256}
+
+    @classmethod
+    def from_record(cls, data: Mapping[str, Any]) -> "CounterexampleWitness":
+        expected = {
+            "artifact_kind", "schema_version", "manifest_sha256", "models_sha256",
+            "spec_sha256", "claim", "left_function", "right_function",
+            "parameter_values", "input_values", "left_output", "right_output",
+            "lean_path", "lean_sha256", "checker_sha256", "toolchain_sha256",
+            "counterexample_sha256",
+        }
+        _exact_keys(data, expected, "counterexample")
+        if data["artifact_kind"] != "elementwise-counterexample":
+            raise ElementwiseSchemaError("invalid counterexample artifact kind")
+        assignments = _mapping(data["parameter_values"], "counterexample parameters")
+        if any(type(value) is not int for value in assignments.values()):
+            raise ElementwiseSchemaError("counterexample parameter values must be integers")
+        input_values = tuple(_sequence(data["input_values"], "counterexample inputs"))
+        result = cls(
+            schema_version=data["schema_version"],
+            manifest_sha256=_digest(data["manifest_sha256"], "counterexample manifest digest"),
+            models_sha256=_digest(data["models_sha256"], "counterexample Models digest"),
+            spec_sha256=_digest(data["spec_sha256"], "counterexample Spec digest"),
+            claim=_text(data["claim"], "counterexample claim"),
+            left_function=_text(data["left_function"], "counterexample left function"),
+            right_function=_text(data["right_function"], "counterexample right function"),
+            parameter_values=tuple(sorted(assignments.items())),
+            input_values=input_values,
+            left_output=data["left_output"],
+            right_output=data["right_output"],
+            lean_path=_relative_path(data["lean_path"], "counterexample Lean path"),
+            lean_sha256=_digest(data["lean_sha256"], "counterexample Lean digest"),
+            checker_sha256=_digest(
+                data["checker_sha256"], "counterexample checker digest"
+            ),
+            toolchain_sha256=_digest(
+                data["toolchain_sha256"], "counterexample toolchain digest"
+            ),
+        )
+        if _digest(data["counterexample_sha256"], "counterexample digest") != result.sha256:
+            raise ElementwiseSchemaError("counterexample digest disagrees with contents")
+        return result
+
+
+class CrossPhaseAuditStatus(str, Enum):
+    """Outcome of the mandatory audit for distinct Neon phase functions."""
+
+    NOT_APPLICABLE = "not-applicable"
+    BLOCKED_EXTERNAL_CONDITION = "blocked-external-condition"
+    NO_COUNTEREXAMPLE_BOUNDED = "no-counterexample-bounded"
+    COUNTEREXAMPLE = "counterexample"
+
+
+@dataclass(frozen=True, slots=True)
+class CrossPhaseAudit:
+    """Content-addressed record of the generic cross-phase pre-proof audit."""
+
+    manifest_sha256: str
+    models_sha256: str
+    spec_sha256: str
+    claim: str
+    status: CrossPhaseAuditStatus
+    trial_count: int
+    checker_sha256: str | None
+    toolchain_sha256: str | None
+    external_condition_sha256: str | None
+    counterexample_sha256: str | None
+    detail: str
+    schema_version: int = SCHEMA_VERSION
+
+    def __post_init__(self) -> None:
+        if self.schema_version != SCHEMA_VERSION:
+            raise ElementwiseSchemaError("unsupported cross-phase audit schema version")
+        for value, field in (
+            (self.manifest_sha256, "cross-phase manifest digest"),
+            (self.models_sha256, "cross-phase Models digest"),
+            (self.spec_sha256, "cross-phase Spec digest"),
+        ):
+            _digest(value, field)
+        if _IDENTIFIER_RE.fullmatch(self.claim) is None:
+            raise ElementwiseSchemaError("cross-phase claim must be a Lean identifier")
+        if type(self.trial_count) is not int or self.trial_count < 0:
+            raise ElementwiseSchemaError("cross-phase trial count must be nonnegative")
+        _optional_digest(self.checker_sha256, "cross-phase checker digest")
+        _optional_digest(self.toolchain_sha256, "cross-phase toolchain digest")
+        _optional_digest(
+            self.external_condition_sha256, "cross-phase external-condition digest"
+        )
+        _optional_digest(
+            self.counterexample_sha256, "cross-phase counterexample digest"
+        )
+        _text(self.detail, "cross-phase audit detail")
+        if self.status is CrossPhaseAuditStatus.NOT_APPLICABLE:
+            if self.trial_count != 0 or any(
+                value is not None
+                for value in (
+                    self.checker_sha256,
+                    self.toolchain_sha256,
+                    self.external_condition_sha256,
+                    self.counterexample_sha256,
+                )
+            ):
+                raise ElementwiseSchemaError(
+                    "not-applicable cross-phase audit cannot bind a search"
+                )
+        elif self.status is CrossPhaseAuditStatus.BLOCKED_EXTERNAL_CONDITION:
+            if (
+                self.trial_count != 0
+                or self.external_condition_sha256 is None
+                or self.checker_sha256 is not None
+                or self.toolchain_sha256 is not None
+                or self.counterexample_sha256 is not None
+            ):
+                raise ElementwiseSchemaError(
+                    "blocked cross-phase audit needs only an external-condition binding"
+                )
+        else:
+            if (
+                self.trial_count <= 0
+                or self.checker_sha256 is None
+                or self.toolchain_sha256 is None
+            ):
+                raise ElementwiseSchemaError(
+                    "searched cross-phase audit needs trials, checker, and toolchain"
+                )
+            if (
+                self.status is CrossPhaseAuditStatus.COUNTEREXAMPLE
+            ) != (self.counterexample_sha256 is not None):
+                raise ElementwiseSchemaError(
+                    "cross-phase counterexample status and witness binding disagree"
+                )
+
+    def unsigned_record(self) -> dict[str, Any]:
+        return {
+            "artifact_kind": "elementwise-cross-phase-audit",
+            "schema_version": self.schema_version,
+            "manifest_sha256": self.manifest_sha256,
+            "models_sha256": self.models_sha256,
+            "spec_sha256": self.spec_sha256,
+            "claim": self.claim,
+            "status": self.status.value,
+            "trial_count": self.trial_count,
+            "checker_sha256": self.checker_sha256,
+            "toolchain_sha256": self.toolchain_sha256,
+            "external_condition_sha256": self.external_condition_sha256,
+            "counterexample_sha256": self.counterexample_sha256,
+            "detail": self.detail,
+        }
+
+    @property
+    def sha256(self) -> str:
+        return canonical_sha256(self.unsigned_record())
+
+    def to_record(self) -> dict[str, Any]:
+        return {**self.unsigned_record(), "cross_phase_audit_sha256": self.sha256}
+
+    @classmethod
+    def from_record(cls, data: Mapping[str, Any]) -> "CrossPhaseAudit":
+        expected = {
+            "artifact_kind", "schema_version", "manifest_sha256", "models_sha256",
+            "spec_sha256", "claim", "status", "trial_count", "checker_sha256",
+            "toolchain_sha256", "external_condition_sha256",
+            "counterexample_sha256", "detail", "cross_phase_audit_sha256",
+        }
+        _exact_keys(data, expected, "cross-phase audit")
+        if data["artifact_kind"] != "elementwise-cross-phase-audit":
+            raise ElementwiseSchemaError("invalid cross-phase audit artifact kind")
+        trials = data["trial_count"]
+        if type(trials) is not int:
+            raise ElementwiseSchemaError("cross-phase trial count must be an integer")
+        result = cls(
+            schema_version=data["schema_version"],
+            manifest_sha256=_digest(data["manifest_sha256"], "cross-phase manifest digest"),
+            models_sha256=_digest(data["models_sha256"], "cross-phase Models digest"),
+            spec_sha256=_digest(data["spec_sha256"], "cross-phase Spec digest"),
+            claim=_text(data["claim"], "cross-phase claim"),
+            status=_enum(CrossPhaseAuditStatus, data["status"], "cross-phase status"),
+            trial_count=trials,
+            checker_sha256=_optional_digest(data["checker_sha256"], "cross-phase checker digest"),
+            toolchain_sha256=_optional_digest(data["toolchain_sha256"], "cross-phase toolchain digest"),
+            external_condition_sha256=_optional_digest(
+                data["external_condition_sha256"], "cross-phase external-condition digest"
+            ),
+            counterexample_sha256=_optional_digest(
+                data["counterexample_sha256"], "cross-phase counterexample digest"
+            ),
+            detail=_text(data["detail"], "cross-phase audit detail"),
+        )
+        if _digest(
+            data["cross_phase_audit_sha256"], "cross-phase audit digest"
+        ) != result.sha256:
+            raise ElementwiseSchemaError("cross-phase audit digest disagrees with contents")
+        return result
+
+
 class ClaimScope(str, Enum):
     VALUE = "value"
 
@@ -696,14 +1208,15 @@ class ProofTask:
     proof_path: str
     module: str
     theorem: str
+    claim: str
     elaborated_type_sha256: str
     checker_policy_sha256: str
     toolchain_sha256: str
     claim_scope: ClaimScope = ClaimScope.VALUE
-    schema_version: int = SCHEMA_VERSION
+    schema_version: int = PROOF_TASK_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        if self.schema_version != SCHEMA_VERSION:
+        if self.schema_version != PROOF_TASK_SCHEMA_VERSION:
             raise ElementwiseSchemaError("unsupported proof-task schema version")
         _digest(self.manifest_sha256, "proof-task manifest digest")
         if self.models.kind is not ArtifactKind.MODELS or self.models.parent_sha256 != self.manifest_sha256:
@@ -711,8 +1224,11 @@ class ProofTask:
         if self.spec.kind is not ArtifactKind.SPEC or self.spec.parent_sha256 != self.models.sha256:
             raise ElementwiseSchemaError("Spec artifact is not bound to Models")
         _relative_path(self.proof_path, "proof path")
-        if _IDENTIFIER_RE.fullmatch(self.module) is None or _IDENTIFIER_RE.fullmatch(self.theorem) is None:
-            raise ElementwiseSchemaError("proof module/theorem must be Lean identifiers")
+        if any(
+            _IDENTIFIER_RE.fullmatch(value) is None
+            for value in (self.module, self.theorem, self.claim)
+        ):
+            raise ElementwiseSchemaError("proof module/theorem/claim must be Lean identifiers")
         _digest(self.elaborated_type_sha256, "elaborated theorem type digest")
         _digest(self.checker_policy_sha256, "checker policy digest")
         _digest(self.toolchain_sha256, "toolchain digest")
@@ -727,6 +1243,7 @@ class ProofTask:
             "proof_path": self.proof_path,
             "module": self.module,
             "theorem": self.theorem,
+            "claim": self.claim,
             "elaborated_type_sha256": self.elaborated_type_sha256,
             "checker_policy_sha256": self.checker_policy_sha256,
             "toolchain_sha256": self.toolchain_sha256,
@@ -744,7 +1261,7 @@ class ProofTask:
     def from_record(cls, data: Mapping[str, Any]) -> "ProofTask":
         expected = {
             "artifact_kind", "schema_version", "manifest_sha256", "models", "spec",
-            "proof_path", "module", "theorem", "elaborated_type_sha256",
+            "proof_path", "module", "theorem", "claim", "elaborated_type_sha256",
             "checker_policy_sha256", "toolchain_sha256", "claim_scope", "proof_task_sha256",
         }
         _exact_keys(data, expected, "proof task")
@@ -758,6 +1275,7 @@ class ProofTask:
             proof_path=_relative_path(data["proof_path"], "proof path"),
             module=_text(data["module"], "proof module"),
             theorem=_text(data["theorem"], "proof theorem"),
+            claim=_text(data["claim"], "proof claim"),
             elaborated_type_sha256=_digest(data["elaborated_type_sha256"], "elaborated theorem type digest"),
             checker_policy_sha256=_digest(data["checker_policy_sha256"], "checker policy digest"),
             toolchain_sha256=_digest(data["toolchain_sha256"], "toolchain digest"),
@@ -776,6 +1294,7 @@ class ResultStatus(str, Enum):
     LAYOUT_UNRECOGNIZED = "layout-unrecognized"
     FAMILY_UNRECOGNIZED = "family-unrecognized"
     GENERATION_FAILED = "generation-failed"
+    EXTERNAL_CONDITION_MISSING = "external-condition-missing"
     PROOF_SEARCH_FAILED = "proof-search-failed"
     COUNTEREXAMPLE = "counterexample"
     LEAN_FAILED = "lean-failed"
@@ -792,10 +1311,11 @@ class Result:
     start_closure_sha256: str | None
     end_closure_sha256: str | None
     detail: str
-    schema_version: int = SCHEMA_VERSION
+    counterexample_sha256: str | None = None
+    schema_version: int = RESULT_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        if self.schema_version != SCHEMA_VERSION:
+        if self.schema_version != RESULT_SCHEMA_VERSION:
             raise ElementwiseSchemaError("unsupported result schema version")
         _optional_digest(self.proof_task_sha256, "result proof-task digest")
         _optional_digest(self.proof_sha256, "result proof digest")
@@ -803,6 +1323,7 @@ class Result:
         _digest(self.toolchain_sha256, "result toolchain digest")
         _optional_digest(self.start_closure_sha256, "result start-closure digest")
         _optional_digest(self.end_closure_sha256, "result end-closure digest")
+        _optional_digest(self.counterexample_sha256, "result counterexample digest")
         _text(self.detail, "result detail")
         if self.status is ResultStatus.VERIFIED_VALUE:
             required = (
@@ -815,6 +1336,19 @@ class Result:
                 raise ElementwiseSchemaError("verified result needs complete proof/closure bindings")
             if self.start_closure_sha256 != self.end_closure_sha256:
                 raise ElementwiseSchemaError("verified result protected closure changed")
+        if self.status is ResultStatus.COUNTEREXAMPLE:
+            if self.counterexample_sha256 is None:
+                raise ElementwiseSchemaError(
+                    "counterexample result needs a checked witness binding"
+                )
+            if self.proof_task_sha256 is not None or self.proof_sha256 is not None:
+                raise ElementwiseSchemaError(
+                    "counterexample result cannot claim an accepted proof"
+                )
+        elif self.counterexample_sha256 is not None:
+            raise ElementwiseSchemaError(
+                "only a counterexample result may bind a counterexample"
+            )
 
     def unsigned_record(self) -> dict[str, Any]:
         return {
@@ -828,6 +1362,7 @@ class Result:
             "start_closure_sha256": self.start_closure_sha256,
             "end_closure_sha256": self.end_closure_sha256,
             "detail": self.detail,
+            "counterexample_sha256": self.counterexample_sha256,
         }
 
     @property
@@ -843,6 +1378,7 @@ class Result:
             "artifact_kind", "schema_version", "status", "proof_task_sha256", "proof_sha256",
             "checker_sha256", "toolchain_sha256", "start_closure_sha256",
             "end_closure_sha256", "detail", "result_sha256",
+            "counterexample_sha256",
         }
         _exact_keys(data, expected, "result")
         if data["artifact_kind"] != "elementwise-result":
@@ -857,6 +1393,9 @@ class Result:
             start_closure_sha256=_optional_digest(data["start_closure_sha256"], "result start-closure digest"),
             end_closure_sha256=_optional_digest(data["end_closure_sha256"], "result end-closure digest"),
             detail=_text(data["detail"], "result detail"),
+            counterexample_sha256=_optional_digest(
+                data["counterexample_sha256"], "result counterexample digest"
+            ),
         )
         if _digest(data["result_sha256"], "result digest") != result.sha256:
             raise ElementwiseSchemaError("result digest disagrees with contents")

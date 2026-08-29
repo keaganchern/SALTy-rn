@@ -6,7 +6,7 @@ import SALT.Kernel.ElementwiseFamily
 
 namespace SALT.Corpus.qs8vlrelu
 
-def programManifestSha256 : String := "a6769200d8a0e13357112dd986ab0ccc7775ba68041523958b1b4ccfbd9fc907"
+def programManifestSha256 : String := "0b381186609b8141d72a70300036831f33b861e37bf41599407cacb782f6589f"
 def consumedEffectsSha256 : String := "d30399e898565c2d5a52ec29fc644b6a03bda52f527d97c7551bab5ad0e8afa5"
 
 def neonSourceSha256 : String :=
@@ -124,9 +124,9 @@ def rvvValueLoopFromIntrinsics (p : qs8vlreluParams)
 
 /-- Scalar action independently projected from the parsed Neon block. -/
 def fNeon (p : qs8vlreluParams) (x : BitVec 8) : BitVec 8 :=
-  (neonBlock8FromIntrinsics p (List.replicate 8 x)).headD x
+  (neonBlock8FromIntrinsics p (List.replicate 8 x)).headD (0 : BitVec 8)
 
 /-- Scalar action independently projected from the parsed RVV chunk. -/
 def fRvv (p : qs8vlreluParams) (x : BitVec 8) : BitVec 8 :=
-  (rvvChunkFromIntrinsics p [x]).headD x
+  (rvvChunkFromIntrinsics p [x]).headD (0 : BitVec 8)
 end SALT.Corpus.qs8vlrelu

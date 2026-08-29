@@ -4,12 +4,14 @@ Last updated: 2026-08-29 (Asia/Seoul)
 
 ## Active Milestone
 
-The width/tail milestone is complete in the working implementation: Models and
-Spec now preserve distinct 8/16/32-bit input/output widths, complete power-of-two
-tails, and typed RVV byte-to-element conversion. The next active milestone is the
-content-addressed external-condition and cross-phase counterexample path. The
-legacy dashboard's parallel case authorities still need retirement before
-capability expansion becomes the only production status source.
+The width/tail milestone is committed. The external-condition/counterexample
+milestone is implemented and independently reviewed after closing three
+fail-open paths. Models and Spec
+preserve distinct 8/16/32-bit widths; external audits bind the pinned registration
+and initializer and fail closed as `required-missing`; S8 clamp has a Lean-checked
+cross-phase counterexample. No external condition is currently `resolved`. The
+active milestone is retiring the legacy dashboard's parallel case
+authorities before capability expansion becomes the only production status source.
 
 ## Canonical Artifact Chain
 
@@ -33,9 +35,16 @@ ScheduleFamilyCapability ┘          │ manifest_sha256
                                 Result.json
 ```
 
-`ExternalContract.json` is optional, separately evidenced, and content-addressed.
-It may create a contextual claim only by establishing the direct claim's full
-Neon/RVV/family/intrinsic assumption domain.
+`ExternalCondition.json` is mandatory, separately evidenced, and
+content-addressed. XNNPACK-domain runs bind registrations and initializers;
+standalone runs explicitly select an unconditional claim over all modeled
+parameters. It may create a contextual claim only by establishing the direct
+claim's full Neon/RVV/family/intrinsic assumption domain.
+
+`CrossPhaseAudit.json` is mandatory. It distinguishes non-multi-phase programs,
+missing external domains, bounded searches with no witness, and Lean-checked
+counterexamples. A bounded miss is diagnostic only; a checked counterexample
+forbids proof-task creation.
 
 ## Milestone Roadmap
 
@@ -223,9 +232,10 @@ external-condition, cross-phase, and dashboard-authority gates below.
 
 ## Immediate Work Queue
 
-1. implement and validate content-addressed external input evidence and checked
-   cross-phase counterexamples;
-2. migrate or retire legacy `/api/state` case authorities and add a checked-in
+1. **Completed and independently reviewed:** mandatory content-addressed external input
+   audits, explicit missing states, generic cross-phase audits, and checked
+   counterexample rejection;
+2. **Active:** migrate or retire legacy `/api/state` case authorities and add a checked-in
    held-out-to-dashboard regression;
 3. add independently reviewed integer/FP intrinsic capabilities, starting from
    the dependencies shared by the largest number of the fourteen blocked scalar
@@ -238,12 +248,13 @@ external-condition, cross-phase, and dashboard-authority gates below.
 7. keep grouped `f32-vcmul` deferred until a reviewed complex layout/view exists;
 8. use the new `counterexample` terminal state to explain false
    cross-phase/equivalence obligations;
-9. for `s8-vclamp`, bind the confirmed upstream range validation plus parameter
-   initializer to the generated signed `min <= max` condition; preserve the false
-   direct claim and never add the condition inside an agent proof.
-10. until that path exists, mark all eight audited quantized-parameter programs as
-    having unchecked external input conditions; do not present them as proof ready
-    solely because Models/Spec were generated.
+9. for `s8-vclamp`, preserve the false direct claim and candidate signed
+   `min <= max`, but keep it unresolved until an actual caller/initializer
+   guarantee is established; the pinned unary clamp path does not call the
+   previously cited output-range validator.
+10. keep all eight audited quantized-parameter programs in
+    `required-missing` until their reusable initializer/caller postconditions are
+    checked; generated Models/Spec alone are not proof ready.
 
 ## Nineteen-Program Delivery and Review Plan
 
@@ -254,11 +265,13 @@ separate grouped-layout milestone.
 
 1. **Completed:** generalize element widths, phase widths, loads, and tail stores
    together with the family theorem and generated Spec shape;
-2. require every phase to implement one scalar action under the bound conditions,
-   otherwise emit a concrete counterexample or an explicit missing-condition
-   state;
-3. implement content-addressed external input evidence from XNNPACK validation and
-   registered parameter initializers;
+2. **Completed for the current generated multi-phase set:** require every phase to
+   implement one scalar action under bound conditions, otherwise emit a concrete
+   counterexample or an explicit missing-condition state;
+3. **Completed as a fail-closed audit path:** bind the pinned XNNPACK registration
+   and initializer in a content-addressed artifact. Establishing reusable
+   postconditions that promote the eight current `required-missing` states to
+   `resolved` remains capability work;
 4. make the artifact graph the only production dashboard authority and retire the
    legacy case lists.
 
@@ -268,10 +281,15 @@ separate grouped-layout milestone.
    8/16/32 input/output widths, float facade types, generic fixed tails, strict RVV
    byte-to-element normalization, phase-specific scalar functions, held-out
    generation, and Lean elaboration. Reviewer verdict: `GO`.
-2. **External conditions and counterexamples — next:** independently evidenced
-   conditions, explicit missing-condition state, cross-phase checking, and a real
-   counterexample result producer.
-3. **Single artifact/dashboard authority:** retire production case lists and make
+2. **External audits and counterexamples — completed and independently reviewed:**
+   mandatory scoped audits, pinned/hash-bound registration and initializer
+   evidence, explicit missing state, mandatory generic cross-phase audit,
+   proof-gate rejection, and a real Lean-checked counterexample producer. All
+   eight quantized conditions remain unresolved rather than being fabricated.
+   The first review found three fail-open paths; after mandatory audit bindings,
+   generic compiler integration, and terminal counterexample rejection were
+   added, the convergence review returned `GO`.
+3. **Single artifact/dashboard authority — next:** retire production case lists and make
    verified artifact closure the only status source.
 4. **Intrinsic batch 1:** shared high-fanout integer/bitwise/conversion pieces with
    exact typed definitions and independent review records.

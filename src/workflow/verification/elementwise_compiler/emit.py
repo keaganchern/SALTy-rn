@@ -20,6 +20,13 @@ from workflow.verification.lean_backend.schema import IntrinsicSpec
 from .capabilities import ScheduleKind
 from .recognize import PairRecognition
 from .schema import ProgramManifest
+from .schema import (
+    ContractExpr,
+    ContractOp,
+    ContractTypeKind,
+    ExternalConditionEvidence,
+    ExternalConditionStatus,
+)
 
 
 class GenerationError(ValueError):
@@ -34,6 +41,8 @@ class EmittedStack:
     neon_block: str
     rvv_chunk: str
     target_theorem: str
+    parameter_fields: tuple[ParameterField, ...]
+    input_width: int
 
 
 _FIELD_PREFIX = "field:params@0.scalar."
@@ -335,11 +344,71 @@ def _ensure_import(text: str, module: str) -> str:
     return text[:first_blank] + "\n" + import_line.rstrip() + text[first_blank:]
 
 
+def _external_expr(expr: ContractExpr, profile: ModelProfile) -> str:
+    """Render the small typed external-condition language into Lean."""
+
+    if expr.op is ContractOp.VARIABLE:
+        if not isinstance(expr.value, str) or not expr.value.startswith("params."):
+            raise GenerationError("external-condition variables must start with params.")
+        field = expr.value.removeprefix("params.")
+        widths = {item.name: item.width for item in profile.parameter_fields}
+        if field not in widths or widths[field] != expr.type.bit_width:
+            raise GenerationError(
+                f"external-condition field {field!r} is absent or has the wrong width"
+            )
+        if expr.type.kind is not ContractTypeKind.INTEGER or expr.type.signed is None:
+            raise GenerationError("external-condition parameters must be typed integers")
+        projection = "toInt" if expr.type.signed else "toNat"
+        return f"(p.{field}).{projection}"
+    if expr.op is ContractOp.INTEGER:
+        return str(expr.value)
+    if expr.op is ContractOp.NOT:
+        return f"¬ ({_external_expr(expr.args[0], profile)})"
+    binary = {
+        ContractOp.AND: "∧",
+        ContractOp.OR: "∨",
+        ContractOp.EQ: "=",
+        ContractOp.NE: "≠",
+        ContractOp.LT: "<",
+        ContractOp.LE: "≤",
+        ContractOp.GT: ">",
+        ContractOp.GE: "≥",
+        ContractOp.ADD: "+",
+        ContractOp.SUB: "-",
+        ContractOp.MUL: "*",
+        ContractOp.MOD: "%",
+    }
+    if expr.op in {ContractOp.AND, ContractOp.OR}:
+        operator = binary[expr.op]
+        return "(" + f" {operator} ".join(
+            _external_expr(argument, profile) for argument in expr.args
+        ) + ")"
+    if expr.op in binary and len(expr.args) == 2:
+        return (
+            f"({_external_expr(expr.args[0], profile)} {binary[expr.op]} "
+            f"{_external_expr(expr.args[1], profile)})"
+        )
+    raise GenerationError(f"unsupported external-condition expression {expr.op.value}")
+
+
+def _candidate_external_condition(
+    evidence: ExternalConditionEvidence | None,
+    profile: ModelProfile,
+) -> str | None:
+    if evidence is None or not evidence.candidate_contract.clauses:
+        return None
+    return " ∧ ".join(
+        _external_expr(clause, profile)
+        for clause in evidence.candidate_contract.clauses
+    )
+
+
 def _spec_text(
     manifest: ProgramManifest,
     models_sha256: str,
     profile: ModelProfile,
     recognition: PairRecognition,
+    external_condition: ExternalConditionEvidence | None,
 ) -> str:
     input_width = recognition.element_width
     block_width = recognition.neon.lanes
@@ -404,6 +473,19 @@ def _spec_text(
         if tail_family
         else f"{block_width} ∣ {inputs[0]}.length →"
     )
+    candidate_condition = _candidate_external_condition(external_condition, profile)
+    condition_resolved = (
+        external_condition is not None
+        and external_condition.status is ExternalConditionStatus.RESOLVED
+    )
+    condition_name = (
+        "externalCondition" if condition_resolved else "candidateExternalCondition"
+    )
+    contextual_claim_name = (
+        "completeValueEquivalenceUnderExternalConditionClaim"
+        if condition_resolved
+        else "completeValueEquivalenceUnderCandidateConditionClaim"
+    )
     spec = [
         "-- This file is generated and proof-free. Proof search must not edit it.",
         f"import {profile.lean_namespace}.Models",
@@ -413,6 +495,21 @@ def _spec_text(
         f'def manifestSha256InSpec : String := "{manifest.sha256}"',
         f'def modelsSha256InSpec : String := "{models_sha256}"',
         f'def sharedEntryContractSha256 : String := "{manifest.contracts.shared.sha256}"',
+        *(
+            [
+                f'def externalConditionSha256InSpec : String := "{external_condition.sha256}"',
+                "",
+                (
+                    "/-- Externally evidenced condition selected by the proof task. -/"
+                    if condition_resolved
+                    else "/-- Candidate only: this is not available to proofs while evidence is unresolved. -/"
+                ),
+                f"def {condition_name} (p : " + profile.parameter_type + ") : Prop :=",
+                f"  {candidate_condition}",
+            ]
+            if candidate_condition is not None and external_condition is not None
+            else []
+        ),
         "",
         "def neonBlockEqualsMapClaim : Prop :=",
         f"  ∀ (p : {profile.parameter_type}) {list_binders},",
@@ -509,11 +606,35 @@ def _spec_text(
             f"    {neon_precondition}",
             f"    neonValueLoop{'WithOverread' if overread_binder else ''}FromIntrinsics {neon_loop_args} =",
             f"      rvvValueLoopFromIntrinsics {rvv_loop_args} schedule",
-            "",
-            f"end {profile.lean_namespace}",
-            "",
         ]
     )
+    if candidate_condition is not None:
+        spec.extend(
+            [
+                "",
+                (
+                    "/-- Contextual theorem selected only with resolved external evidence. -/"
+                    if condition_resolved
+                    else "/-- Diagnostic theorem shape; not selected until ExternalCondition is resolved. -/"
+                ),
+                f"def {contextual_claim_name} : Prop :=",
+                f"  ∀ (p : {profile.parameter_type}) {list_binders}",
+            ]
+        )
+        if overread_binder:
+            spec.append(f"    {overread_binder}")
+        if binary:
+            spec.append(f"    (sameLength : {inputs[0]}.length = {inputs[1]}.length)")
+        spec.extend(
+            [
+                f"    (schedule : SALT.Kernel.Schedule.PositivePartition {inputs[0]}.length),",
+                f"    {condition_name} p →",
+                f"    {neon_precondition}",
+                f"    neonValueLoop{'WithOverread' if overread_binder else ''}FromIntrinsics {neon_loop_args} =",
+                f"      rvvValueLoopFromIntrinsics {rvv_loop_args} schedule",
+            ]
+        )
+    spec.extend(["", f"end {profile.lean_namespace}", ""])
     return "\n".join(spec)
 
 
@@ -526,6 +647,7 @@ def emit_stack(
     namespace: str,
     neon_registry: Mapping[str, IntrinsicSpec],
     rvv_registry: Mapping[str, IntrinsicSpec],
+    external_condition: ExternalConditionEvidence | None = None,
 ) -> EmittedStack:
     profile = infer_model_profile(neon, rvv, recognition, namespace=namespace)
     registry_digest = hashlib.sha256(
@@ -556,12 +678,23 @@ def emit_stack(
     )
     models = _insert_before_end(models, namespace, _model_extensions(profile, recognition))
     models_sha = hashlib.sha256(models.encode("ascii")).hexdigest()
-    spec = _spec_text(manifest, models_sha, profile, recognition)
+    spec = _spec_text(
+        manifest, models_sha, profile, recognition, external_condition
+    )
+    target_theorem = (
+        "completeValueEquivalenceUnderExternalConditionClaim"
+        if external_condition is not None
+        and external_condition.status is ExternalConditionStatus.RESOLVED
+        and external_condition.candidate_contract.clauses
+        else "completeValueEquivalenceClaim"
+    )
     return EmittedStack(
         models,
         spec,
         profile.parameter_type,
         profile.neon_function,
         profile.rvv_function,
-        "completeValueEquivalenceClaim",
+        target_theorem,
+        profile.parameter_fields,
+        profile.input_width,
     )

@@ -13,8 +13,15 @@ from workflow.verification.elementwise_compiler.schema import (
     ContractBinding,
     ContractExpr,
     ContractOp,
+    ContractType,
+    ContractTypeKind,
     ElementwiseSchemaError,
     EntryContract,
+    EvidenceSource,
+    ExternalConditionEvidence,
+    ExternalConditionRef,
+    ExternalConditionScope,
+    ExternalConditionStatus,
     GeneratedArtifact,
     LayoutInstance,
     LocalAssertionFact,
@@ -22,6 +29,7 @@ from workflow.verification.elementwise_compiler.schema import (
     ProofTask,
     Result,
     ResultStatus,
+    CounterexampleWitness,
     ScheduleInstance,
     SourceArtifact,
     canonical_sha256,
@@ -81,6 +89,9 @@ def _manifest() -> ProgramManifest:
         schedules=schedules,
         local_assertions=(assertion,),
         consumed_effects_sha256=E,
+        external_condition=ExternalConditionRef(
+            "ExternalCondition.json", D, ExternalConditionStatus.NOT_REQUIRED
+        ),
     )
 
 
@@ -163,9 +174,108 @@ def test_one_global_intrinsic_reference_can_feed_multiple_manifests() -> None:
         schedules=first.schedules,
         local_assertions=first.local_assertions,
         consumed_effects_sha256=first.consumed_effects_sha256,
+        external_condition=first.external_condition,
     )
     assert first.sha256 != second.sha256
     assert first.intrinsic_capabilities == second.intrinsic_capabilities
+
+
+def test_external_condition_and_counterexample_are_strictly_content_addressed() -> None:
+    condition_type = ContractType(ContractTypeKind.INTEGER, "int8_t", 8, True)
+    condition = ContractExpr.make(
+        ContractOp.LE,
+        ContractExpr.variable("params.min", condition_type),
+        ContractExpr.variable("params.max", condition_type),
+    )
+    evidence = ExternalConditionEvidence(
+        local_sources_sha256=D,
+        scope=ExternalConditionScope.XNNPACK_REGISTERED,
+        upstream_root="benchmark/XNNPACK",
+        upstream_commit="a" * 40,
+        parameter_type="struct xnn_s8_minmax_params",
+        initializer="xnn_init_qs8_clamp_scalar_params",
+        status=ExternalConditionStatus.REQUIRED_MISSING,
+        candidate_contract=EntryContract.normalized((condition,)),
+        sources=(
+            EvidenceSource(
+                "kernel-registration",
+                "benchmark/XNNPACK/src/s8-vclamp/s8-vclamp.inc",
+                E,
+                ("xnn_s8_vclamp_ukernel__neon_u64",),
+            ),
+        ),
+        extractor_sha256=F,
+        derivation="ordered-clamp-candidate-v1",
+        detail="candidate exists but caller guarantee is unresolved",
+    )
+    assert ExternalConditionEvidence.from_record(evidence.to_record()) == evidence
+    changed = copy.deepcopy(evidence.to_record())
+    changed["detail"] = "mutated"
+    with pytest.raises(ElementwiseSchemaError, match="digest disagrees"):
+        ExternalConditionEvidence.from_record(changed)
+
+    manifest = _manifest()
+    bound = ProgramManifest(
+        compiler_sha256=manifest.compiler_sha256,
+        sources=manifest.sources,
+        contracts=manifest.contracts,
+        intrinsic_capabilities=manifest.intrinsic_capabilities,
+        layout=manifest.layout,
+        schedules=manifest.schedules,
+        local_assertions=manifest.local_assertions,
+        consumed_effects_sha256=manifest.consumed_effects_sha256,
+        external_condition=ExternalConditionRef(
+            "ExternalCondition.json", evidence.sha256, evidence.status
+        ),
+    )
+    assert bound.sha256 != manifest.sha256
+
+    witness = CounterexampleWitness(
+        manifest_sha256=bound.sha256,
+        models_sha256=D,
+        spec_sha256=E,
+        claim="Generated.neonPhaseFunctionsEqualClaim",
+        left_function="Generated.fNeon",
+        right_function="Generated.fNeonSecondary",
+        parameter_values=(("max", 0), ("min", 5)),
+        input_values=(0,),
+        left_output=0,
+        right_output=5,
+        lean_path="Counterexample.lean",
+        lean_sha256=F,
+        checker_sha256=D,
+        toolchain_sha256=E,
+    )
+    assert CounterexampleWitness.from_record(witness.to_record()) == witness
+    counterexample_result = Result(
+        status=ResultStatus.COUNTEREXAMPLE,
+        proof_task_sha256=None,
+        proof_sha256=None,
+        checker_sha256=D,
+        toolchain_sha256=E,
+        start_closure_sha256=None,
+        end_closure_sha256=None,
+        detail="Lean checked the witness",
+        counterexample_sha256=witness.sha256,
+    )
+    assert Result.from_record(counterexample_result.to_record()) == counterexample_result
+    with pytest.raises(ElementwiseSchemaError, match="must disagree"):
+        CounterexampleWitness(
+            manifest_sha256=bound.sha256,
+            models_sha256=D,
+            spec_sha256=E,
+            claim=witness.claim,
+            left_function=witness.left_function,
+            right_function=witness.right_function,
+            parameter_values=witness.parameter_values,
+            input_values=witness.input_values,
+            left_output=5,
+            right_output=5,
+            lean_path=witness.lean_path,
+            lean_sha256=F,
+            checker_sha256=D,
+            toolchain_sha256=E,
+        )
 
 
 def _proof_task() -> ProofTask:
@@ -179,6 +289,7 @@ def _proof_task() -> ProofTask:
         proof_path="out/Proof.lean",
         module="Generated.Random.Proof",
         theorem="programs_equal",
+        claim="Generated.Random.completeValueEquivalenceClaim",
         elaborated_type_sha256=F,
         checker_policy_sha256=D,
         toolchain_sha256=E,
@@ -197,6 +308,7 @@ def test_proof_task_round_trip_and_parent_edges() -> None:
             proof_path=task.proof_path,
             module=task.module,
             theorem=task.theorem,
+            claim=task.claim,
             elaborated_type_sha256=task.elaborated_type_sha256,
             checker_policy_sha256=task.checker_policy_sha256,
             toolchain_sha256=task.toolchain_sha256,

@@ -24,10 +24,22 @@ from workflow.verification.lean_backend.intrinsic_index import (
 from workflow.verification.lean_backend.schema import Architecture as BackendArchitecture
 
 from .compiler import CompilerError, CompilerRequest, compile_pair
+from .counterexamples import CounterexampleError, find_cross_phase_counterexample
 from .emit import GenerationError
 from .intrinsics import IntrinsicResolutionError
+from .external_conditions import (
+    ExternalConditionError,
+    audit_external_condition,
+    discover_request,
+    raw_source_pair_sha256,
+)
 from .recognize import RecognitionError
-from .schema import ResultStatus, canonical_json, canonical_sha256
+from .schema import (
+    ExternalConditionStatus,
+    ResultStatus,
+    canonical_json,
+    canonical_sha256,
+)
 
 
 _FUNCTION_RE = re.compile(
@@ -261,6 +273,23 @@ def compile_corpus(
         )
         for capability in (*[f"neon:{name}" for name in neon_calls], *[f"rvv:{name}" for name in rvv_calls]):
             dependencies.setdefault(capability, set()).add(candidate.program_id)
+        external_request = discover_request(root, candidate.neon_source)
+        external_preflight = None
+        external_error = None
+        if external_request is not None:
+            try:
+                external_preflight = audit_external_condition(
+                    root,
+                    (candidate.neon_source, candidate.rvv_source),
+                    raw_source_pair_sha256(
+                        root, (candidate.neon_source, candidate.rvv_source)
+                    ),
+                    external_request,
+                )
+            except ExternalConditionError as error:
+                external_error = str(error)
+        else:
+            external_error = "no unique same-stem upstream registration was found"
         record: dict[str, Any] = {
             "program_id": candidate.program_id,
             "neon_source": candidate.neon_source.relative_to(root).as_posix(),
@@ -279,6 +308,21 @@ def compile_corpus(
             "missing_intrinsics": list(missing),
             "artifact_index": None,
             "manifest_sha256": None,
+            "external_condition_status": (
+                "audit-unavailable"
+                if external_preflight is None
+                else external_preflight.status.value
+            ),
+            "external_condition_sha256": (
+                None if external_preflight is None else external_preflight.sha256
+            ),
+            "external_condition_detail": (
+                external_error
+                if external_preflight is None
+                else external_preflight.detail
+            ),
+            "counterexample": None,
+            "cross_phase_status": "not-typed",
             "status": ResultStatus.INTRINSIC_MISSING.value,
             "status_layer": "lexical-preflight",
             "detail": "no exact typed parse facade covers this pair",
@@ -306,14 +350,91 @@ def compile_corpus(
                             "riscv64-none-elf",
                             f"SALT.Corpus.{re.sub(r'[^A-Za-z0-9]', '', candidate.program_id)}",
                             program_output,
+                            external_condition=external_request,
                         )
                     )
+                    external = compilation.external_condition
+                    multi_phase = (
+                        compilation.recognition.neon.kind.value == "multi-phase"
+                    )
+                    search_blocked = (
+                        multi_phase
+                        and external is not None
+                        and external.status
+                        is ExternalConditionStatus.REQUIRED_MISSING
+                        and not external.candidate_contract.clauses
+                    )
+                    counterexample = None
+                    cross_phase_status = (
+                        "not-multi-phase"
+                        if not multi_phase
+                        else "blocked-by-missing-external-condition"
+                        if search_blocked
+                        else "no-counterexample-in-bounded-search"
+                    )
+                    if multi_phase and not search_blocked:
+                        try:
+                            counterexample = find_cross_phase_counterexample(
+                                root, compilation
+                            )
+                        except CounterexampleError as error:
+                            cross_phase_status = f"search-inconclusive: {error}"
+                        else:
+                            if counterexample is not None:
+                                cross_phase_status = "lean-checked-counterexample"
+                    generated_status = "spec-generated"
+                    generated_detail = (
+                        "typed manifest, Models, and proof-free Spec generated"
+                    )
+                    if counterexample is not None:
+                        generated_status = ResultStatus.COUNTEREXAMPLE.value
+                        generated_detail = (
+                            "Lean checked a concrete disagreement between generated Neon phases"
+                        )
+                    elif (
+                        external is not None
+                        and external.status
+                        is ExternalConditionStatus.REQUIRED_MISSING
+                    ):
+                        generated_status = (
+                            ResultStatus.EXTERNAL_CONDITION_MISSING.value
+                        )
+                        generated_detail = (
+                            "generated Spec is blocked because external input conditions are unresolved"
+                        )
                     record.update(
-                        status="spec-generated",
+                        status=generated_status,
                         status_layer="typed-generated",
-                        detail="typed manifest, Models, and proof-free Spec generated",
+                        detail=generated_detail,
                         artifact_index=compilation.artifact_index_path.relative_to(output).as_posix(),
                         manifest_sha256=compilation.manifest.sha256,
+                        external_condition_status=(
+                            "not-audited" if external is None else external.status.value
+                        ),
+                        external_condition_sha256=(
+                            None if external is None else external.sha256
+                        ),
+                        external_condition_detail=(
+                            None if external is None else external.detail
+                        ),
+                        counterexample=(
+                            None
+                            if counterexample is None
+                            else {
+                                "path": (
+                                    program_output / "Counterexample.json"
+                                ).relative_to(output).as_posix(),
+                                "sha256": counterexample.sha256,
+                                "claim": counterexample.claim,
+                                "parameters": dict(
+                                    counterexample.parameter_values
+                                ),
+                                "inputs": list(counterexample.input_values),
+                                "left_output": counterexample.left_output,
+                                "right_output": counterexample.right_output,
+                            }
+                        ),
+                        cross_phase_status=cross_phase_status,
                     )
                 except Exception as error:
                     record.update(
@@ -337,6 +458,13 @@ def compile_corpus(
             status: sum(record["status"] == status for record in records)
             for status in sorted({str(record["status"]) for record in records})
         },
+        "external_condition_counts": {
+            status: sum(record["external_condition_status"] == status for record in records)
+            for status in sorted(
+                {str(record["external_condition_status"]) for record in records}
+            )
+        },
+        "counterexample_count": sum(record["counterexample"] is not None for record in records),
         "programs": records,
         "intrinsic_dependencies": [
             {

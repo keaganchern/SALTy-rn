@@ -226,11 +226,14 @@ agent proof, and pointer-step, loop-update, entry-assertion, and active-`vl`
 mutations all fail closed. The complete run leaves every tracked repository file
 byte-identical.
 
-**Confirmed batch/dashboard state:** structural discovery finds twenty elementwise
-pairs: nineteen scalar-lane and one deferred grouped complex layout. The checked-in
-corpus report currently has five `spec-generated`, fourteen `intrinsic-missing`,
-and one `layout-unrecognized`. There are no parser, contract, family, or generation
-failures in the nineteen-program scalar scope. The dashboard reads the report and
+**Confirmed batch state:** structural discovery finds twenty elementwise pairs:
+nineteen scalar-lane and one deferred grouped complex layout. The checked-in
+corpus report now has one Lean-checked `counterexample`, four
+`external-condition-missing`, fourteen `intrinsic-missing`, and one
+`layout-unrecognized`. Its independent external-condition dimension reports
+twelve `not-required` and eight `required-missing`. There are no parser,
+contract, family, or generation failures in the nineteen-program scalar scope.
+The dashboard reads the report and
 verifies every Manifest/Models/Spec/ProofTask/Proof/Result parent hash before
 displaying progress; a modified child becomes `stale-artifact`. It shows value,
 C, and ISA claim layers separately.
@@ -248,20 +251,27 @@ same full chain. Multi-phase Models now project the secondary block to a separat
 it in `fNeon`. This closes the reusable width blocker; it does not prove phase
 equality or supply missing corpus intrinsics and external conditions.
 
-**Confirmed final validation:** the complete repository suite passes with 393
+**Confirmed width-milestone validation:** the complete repository suite passed with 393
 tests. The refreshed twenty-program graph has zero stale nodes, and the checked-in
 legacy generated models pass deterministic regeneration checks. A later
 independent audit at HEAD `a77933b` reran 57 focused compiler/dashboard tests and
 reproduced the 20/19/1 and 5/14/1 counts.
 
-**Independent final audit verdict:** `GO WITH GAPS` for the reusable framework and
+**Confirmed current M2 validation:** the complete repository suite passes with
+402 tests. The refreshed graph has zero stale nodes and reports 14
+`intrinsic-missing`, 4 `external-condition-missing`, 1 Lean-checked
+`counterexample`, and 1 `layout-unrecognized`. An independent convergence review
+reproduced standalone/registered clamp rejection and standalone VMax proof-task
+preparation, then returned `GO`.
+
+**Historical independent audit verdict:** `GO WITH GAPS` for the reusable framework and
 `NO-GO` for claiming all nineteen scalar programs proved. The new
 `/api/elementwise` graph is artifact-driven, but the legacy `/api/state` path still
 uses hardcoded proof/generated-case authorities. Held-out C can be shown by the
 new graph without configuration (manually reproduced by the reviewer), but that
-dashboard integration is not yet a checked-in regression. The terminal
-`counterexample` state has a schema but no producer. All five generated corpus
-programs stop at proof-free Spec; `reviewed_intrinsics` remains zero.
+dashboard integration is not yet a checked-in regression. Its missing
+counterexample-producer finding is now superseded by the external-condition M2
+implementation below. `reviewed_intrinsics` remains zero.
 
 **Confirmed concrete false obligation:** `s8-vclamp`'s 64-byte Neon phase applies
 signed max-with-min and then min-with-max, while its 8-byte and tail phases apply
@@ -274,17 +284,15 @@ the pipeline must report this as a checked counterexample/family-contract failur
 or bind an evidenced external contract, rather than leave it as an unexplained
 `spec-generated` program.
 
-**Confirmed upstream contract source:** the extracted kernel body itself does not
-assert `min <= max`; its local harness merely chooses `min = -100` and `max = 100`.
-In full XNNPACK, subgraph validation rejects an output range with lower bound above
-upper bound, and the registered S8 clamp parameter initializer derives the
-microkernel fields from those validated clamp bounds. The older direct S8 minmax
-initializer also asserts `output_min < output_max`. Thus the intended condition is
-real caller/API evidence that our isolated C pair currently drops. The missing
-work is an implemented, content-addressed external-contract bridge from that
-validation/initializer chain to signed `params.min <= params.max` in the generated
-value model; the architecture documents this artifact, but production code does
-not yet generate or consume it.
+**Confirmed correction to the upstream-condition claim:** the extracted kernel
+body does not assert `min <= max`; its local harness merely chooses one valid
+instance. The pinned registration does select
+`xnn_init_qs8_clamp_scalar_params`, but the first audit incorrectly treated the
+existence of `xnn_subgraph_check_output_min_max` elsewhere in XNNPACK as a call
+edge. The pinned unary clamp path does not call that validator. The positive-scale
+and clamp-order caller guarantees are therefore unresolved. Signed
+`params.min <= params.max` is a useful candidate condition, not established input
+evidence.
 
 **Confirmed external-input audit:** the same category affects eight of the twenty
 elementwise programs, not only `s8-vclamp`. They are the eight quantized-parameter
@@ -294,6 +302,32 @@ constructed/validated outside the isolated kernel entry assertions. Eleven
 programs have no semantic parameter fields; `f32-vlrelu` copies one slope without
 an analogous hidden relation found. See
 `../elementwise-compiler/EXTERNAL_INPUT_AUDIT.md`.
+
+**Confirmed external-condition/counterexample implementation:** every compilation
+now emits a content-addressed input-condition audit. XNNPACK-domain compilation
+binds a local pair to an explicit, uniquely discovered registration, verifies
+the pinned submodule commit, follows the shared Neon/RVV parameter initializer, and
+hash every consulted source in `ExternalCondition.json`. The extractor is
+conservative: it classifies twelve programs `not-required` and all eight audited
+quantized-parameter programs `required-missing`; it currently emits no `resolved`
+condition. Standalone compilation records a distinct
+`local-unconditional-claim` scope, meaning that no caller condition is assumed
+and all modeled parameter values remain in the theorem domain; it is not treated
+as an unaudited success. `Spec.lean` keeps the unconditional claim and, for S8 clamp, exposes
+signed `min <= max` only as a diagnostic candidate. The proof gate rejects a
+missing external condition before creating a ProofTask.
+
+Every generated stack also binds `CrossPhaseAudit.json`; this check is invoked by
+the generic compiler rather than only by the corpus runner. It records
+not-applicable, blocked-external-condition, bounded-no-witness, or counterexample
+without equating a bounded miss with proof. For multi-phase functions it searches
+deterministic parameter and input candidates and can emit a concrete Lean-checked witness. The checked-in
+`s8-vclamp` witness uses `min = 5`, `max = 0`, `x = 0`; the primary phase returns
+0 and the secondary phase returns 5. `Counterexample.json` binds the exact
+Manifest, Models, Spec, checker, Lean file, and toolchain hashes. Programs with a
+missing condition but no expressible candidate are reported as blocked rather
+than spending an unbounded search over unconstrained parameters. A bound checked
+counterexample is terminal: `prepare_proof_task` rejects it before delegation.
 
 ## Immediate Objective
 

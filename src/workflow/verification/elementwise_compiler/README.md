@@ -7,14 +7,35 @@ paths, function names, target triples, facades, namespace, and output directory.
 The generated chain is:
 
 ```text
-Capabilities -> ProgramManifest -> Models.lean -> Spec.lean
+Capabilities + mandatory ExternalCondition.json
+             -> ProgramManifest -> Models.lean -> Spec.lean
+             -> CrossPhaseAudit.json
              -> ProofTask.json -> Proof.lean -> Result.json
+
+Models.lean + Spec.lean -> optional Counterexample.lean/json -> Result.json
 ```
 
 `Models.lean` and `Spec.lean` are generated parents. `Spec.lean` is proof-free.
 An agent may write only the designated `Proof.lean`; the checker validates the
 frozen theorem type, protected closure, forbidden identifiers, transitive axioms,
 toolchain identity, and every parent digest before publishing a result.
+
+`ExternalCondition.json` is never omitted. In the XNNPACK corpus it follows a
+unique registration to its registered parameter initializer and binds every
+consulted file plus the pinned submodule commit. A standalone compilation instead
+records that its generated claim is unconditional over all modeled parameters;
+this does not claim that the theorem is true. A condition suggested by the
+XNNPACK audit remains a **candidate** until the caller-to-kernel guarantee is
+established. The proof gate rejects `required-missing`; a proof agent cannot
+promote the candidate to an assumption.
+
+Every compilation emits `CrossPhaseAudit.json`. For multi-phase programs the
+generic compiler performs a deterministic bounded search over generated scalar
+phase functions; a missing parameter domain is recorded as a separate blocker.
+A found witness is emitted as
+`Counterexample.lean` and checked by Lean before `Counterexample.json` is
+published. The proof gate rejects a checked witness. Absence from this bounded
+search is not a proof of phase equality.
 
 ## Corpus refresh
 
@@ -30,6 +51,11 @@ The scanner discovers paired elementwise-shaped C functions structurally. The
 current checked-in report contains nineteen scalar-lane pairs and one deferred
 grouped complex pair. A lexical missing-intrinsic inventory is only a blocker
 report; it is never presented as a semantic proof.
+
+The report also distinguishes external conditions from intrinsic blockers. At
+the current pinned XNNPACK revision, twelve programs need no external parameter
+condition of this kind and eight quantized programs are `required-missing`.
+`s8-vclamp` additionally has a Lean-checked direct cross-phase counterexample.
 
 ## Claim boundary
 
