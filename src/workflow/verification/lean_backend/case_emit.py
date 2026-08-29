@@ -336,7 +336,9 @@ def _normalized_control_shape(
 
 
 def _byte_tail_control_shape(
-    loop: ControlFact, element_type: str
+    loop: ControlFact,
+    element_type: str,
+    store_widths: tuple[int, ...],
 ) -> tuple[tuple[str, int | None, str, tuple[str, ...], str], ...]:
     return (
         (
@@ -347,26 +349,15 @@ def _byte_tail_control_shape(
             loop.update_text,
         ),
         ("IfStmt", None, "batch != 0", ("batch@1", "constant:0:int"), ""),
-        (
-            "IfStmt",
-            1,
-            f"batch & (4 * sizeof({element_type}))",
-            ("batch@1", "constant:4:int", f"sizeof:{element_type}"),
-            "",
-        ),
-        (
-            "IfStmt",
-            1,
-            f"batch & (2 * sizeof({element_type}))",
-            ("batch@1", "constant:2:int", f"sizeof:{element_type}"),
-            "",
-        ),
-        (
-            "IfStmt",
-            1,
-            f"batch & (1 * sizeof({element_type}))",
-            ("batch@1", "constant:1:int", f"sizeof:{element_type}"),
-            "",
+        *tuple(
+            (
+                "IfStmt",
+                1,
+                f"batch & ({width} * sizeof({element_type}))",
+                ("batch@1", f"constant:{width}:int", f"sizeof:{element_type}"),
+                "",
+            )
+            for width in store_widths
         ),
     )
 
@@ -488,7 +479,11 @@ def _validate_neon_control_shape(
         else:
             raise CaseEmissionError("unsupported two-phase control encoding")
     elif profile.prefix_tail is not None:
-        expected = _byte_tail_control_shape(loop, profile.prefix_tail.element_c_type)
+        expected = _byte_tail_control_shape(
+            loop,
+            profile.prefix_tail.element_c_type,
+            profile.prefix_tail.store_widths,
+        )
     else:
         expected = (
             (
@@ -988,7 +983,7 @@ def _emit_separate_two_phase_tail_value_models(
         )
         if not (
             isinstance(pointer_type, PointerType)
-            and pointer_type.pointee.bit_width == width * 8
+            and pointer_type.pointee.bit_width == width * profile.output_width
             and lane.arguments[0].dependencies == (current_output_dependency,)
             and lane.arguments[1].dependencies == (stored_dependency,)
             and lane.arguments[-1].constant_value == 0
@@ -1063,7 +1058,7 @@ def _emit_separate_two_phase_tail_value_models(
         input_name = profile.inputs[0]
         overread = overread_names[0]
         value_parameters = [
-            f"    ({input_name} {overread} : List (BitVec 8)) : List (BitVec 8) :=",
+            f"    ({input_name} {overread} : {_input_list_type(profile)}) : {_output_list_type(profile)} :=",
         ]
         tail_body = [
             f"      let {loaded_names[0]} := (tail ++ {overread}).take {small}",
@@ -1071,11 +1066,11 @@ def _emit_separate_two_phase_tail_value_models(
             f"    {input_name}",
         ]
         compatibility_parameters = [
-            f"    ({input_name} : List (BitVec 8)) : List (BitVec 8) :=",
+            f"    ({input_name} : {_input_list_type(profile)}) : {_output_list_type(profile)} :=",
         ]
         compatibility_arguments = [
             f"  neonValueLoopWithOverreadFromIntrinsics p {input_name}",
-            f"    (List.replicate {small - 1} (0 : BitVec 8))",
+            f"    (List.replicate {small - 1} (0 : {_input_value_type(profile)}))",
         ]
         schedule = [
             f"  SALT.Kernel.Schedule.runTwoPhaseTail {large} {small} (by decide) (by decide)",
@@ -1088,8 +1083,8 @@ def _emit_separate_two_phase_tail_value_models(
         loaded_a, loaded_b = loaded_names
         overread_a, overread_b = overread_names
         value_parameters = [
-            f"    ({input_a} {input_b} {overread_a} {overread_b} : List (BitVec 8))",
-            f"    (sameLength : {input_a}.length = {input_b}.length) : List (BitVec 8) :=",
+            f"    ({input_a} {input_b} {overread_a} {overread_b} : {_input_list_type(profile)})",
+            f"    (sameLength : {input_a}.length = {input_b}.length) : {_output_list_type(profile)} :=",
         ]
         tail_body = [
             f"      let {loaded_a} := (tailA ++ {overread_a}).take {small}",
@@ -1098,13 +1093,13 @@ def _emit_separate_two_phase_tail_value_models(
             f"    {input_a} {input_b} sameLength",
         ]
         compatibility_parameters = [
-            f"    ({input_a} {input_b} : List (BitVec 8))",
-            f"    (sameLength : {input_a}.length = {input_b}.length) : List (BitVec 8) :=",
+            f"    ({input_a} {input_b} : {_input_list_type(profile)})",
+            f"    (sameLength : {input_a}.length = {input_b}.length) : {_output_list_type(profile)} :=",
         ]
         compatibility_arguments = [
             f"  neonValueLoopWithOverreadFromIntrinsics p {input_a} {input_b}",
-            f"    (List.replicate {small - 1} (0 : BitVec 8))",
-            f"    (List.replicate {small - 1} (0 : BitVec 8)) sameLength",
+            f"    (List.replicate {small - 1} (0 : {_input_value_type(profile)}))",
+            f"    (List.replicate {small - 1} (0 : {_input_value_type(profile)})) sameLength",
         ]
         schedule = [
             f"  SALT.Kernel.Schedule.runTwoPhaseTail2 {large} {small} (by decide) (by decide)",
@@ -1117,13 +1112,13 @@ def _emit_separate_two_phase_tail_value_models(
         "",
         f"/-- Generated {small}-lane secondary block from the extracted call graph. -/",
         f"def neonBlock{small}FromIntrinsics (p : {profile.parameter_type})",
-        f"    ({loaded_parameters} : List (BitVec 8)) : List (BitVec 8) :=",
+        f"    ({loaded_parameters} : {_input_list_type(profile)}) : {_output_list_type(profile)} :=",
         *block.lines,
         f"  {block_output}",
         "",
         f"/-- Generated little-endian live-prefix abstraction of the {'/'.join(map(str, config.store_widths))} stores. -/",
         f"def neonPartialTailLivePrefixFromIntrinsics (p : {profile.parameter_type})",
-        f"    ({loaded_parameters} : List (BitVec 8)) (live : Nat) : List (BitVec 8) :=",
+        f"    ({loaded_parameters} : {_input_list_type(profile)}) (live : Nat) : {_output_list_type(profile)} :=",
         *partial_pipeline_lines,
         *partial.lines[len(partial_pipeline_lines) :],
         "  " + " ++ ".join(f"({value})" for value in stored_values),
@@ -1181,6 +1176,22 @@ def _loaded_argument_names(inputs: tuple[str, ...]) -> tuple[str, ...]:
 
 def _overread_argument_names(inputs: tuple[str, ...]) -> tuple[str, ...]:
     return _role_argument_names("overread", inputs)
+
+
+def _input_value_type(profile: ModelProfile) -> str:
+    return f"BitVec {profile.input_width}"
+
+
+def _output_value_type(profile: ModelProfile) -> str:
+    return f"BitVec {profile.output_width}"
+
+
+def _input_list_type(profile: ModelProfile) -> str:
+    return f"List ({_input_value_type(profile)})"
+
+
+def _output_list_type(profile: ModelProfile) -> str:
+    return f"List ({_output_value_type(profile)})"
 
 
 def _emit_prefix_tail_value_models(
@@ -1316,6 +1327,16 @@ def _emit_prefix_tail_value_models(
         tail_dependency = call.assigned_to
     if tail_value is None or tail_dependency is None:
         raise CaseEmissionError(f"{profile.case_id}: prefix-tail pipeline is empty")
+    tail_source_dependency: str | None = None
+    if value_calls:
+        final_value_spec = emitter._lookup_intrinsic(value_calls[-1].spelling)
+        if (
+            isinstance(final_value_spec, StructuralIntrinsic)
+            and final_value_spec.operation is StructuralOp.TAKE_LOW
+            and len(value_calls[-1].arguments) == 1
+            and len(value_calls[-1].arguments[0].dependencies) == 1
+        ):
+            tail_source_dependency = value_calls[-1].arguments[0].dependencies[0]
 
     main_store_count = sum(
         1
@@ -1339,103 +1360,167 @@ def _emit_prefix_tail_value_models(
             raise CaseEmissionError(
                 f"{profile.case_id}: prefix-tail branch path changed for width {width}"
             )
-        expected_count = 1 if index == len(children) - 1 else 3
-        if len(branch_calls) != expected_count:
+        if not branch_calls:
             raise CaseEmissionError(
-                f"{profile.case_id}: width-{width} branch has {len(branch_calls)} calls; "
-                f"expected {expected_count}"
+                f"{profile.case_id}: width-{width} branch has no store"
             )
-
-        lane_store_index = 0
-        stored_dependency = tail_dependency
-        if len(branch_calls) == 3:
-            bitcast = branch_calls[0]
-            bitcast_spec = emitter._lookup_intrinsic(bitcast.spelling)
+        first_spec = emitter._lookup_intrinsic(branch_calls[0].spelling)
+        full_store = (
+            isinstance(first_spec, StructuralIntrinsic)
+            and first_spec.operation is StructuralOp.STORE
+        )
+        advance: IntrinsicCall | None = None
+        if full_store:
+            if index == len(children) - 1 or len(branch_calls) != 2:
+                raise CaseEmissionError(
+                    f"{profile.case_id}: width-{width} full-store branch needs a following high-half extraction"
+                )
+            store = branch_calls[0]
+            pointer_type = first_spec.signature.parameters[0].type
+            value_type = first_spec.signature.parameters[1].type
             if not (
-                isinstance(bitcast_spec, StructuralIntrinsic)
-                and bitcast_spec.operation is StructuralOp.BITCAST
-                and bitcast.arguments[0].dependencies == (tail_dependency,)
+                isinstance(pointer_type, PointerType)
+                and pointer_type.pointee.bit_width == profile.output_width
+                and isinstance(value_type, VectorType)
+                and value_type.fixed_lanes == width
+                and store.arguments[0].dependencies == (f"output@{output_version}",)
+                and _compact_source(store.arguments[0].source_text) == "output"
+                and not store.arguments[0].semantic_operations
+                and store.arguments[1].dependencies == (tail_dependency,)
+                and not store.arguments[1].semantic_operations
             ):
                 raise CaseEmissionError(
-                    f"{profile.case_id}: width-{width} branch needs a current-value bitcast"
+                    f"{profile.case_id}: width-{width} full-store shape changed"
                 )
-            emitter.emit_registered_call(bitcast)
-            stored_dependency = f"call:{bitcast.node_id}"
-            lane_store_index = 1
+            stored = emitter.emit_registered_call(store)
+            if stored is None:
+                raise CaseEmissionError(
+                    f"{profile.case_id}: width-{width} full store produced no value"
+                )
+            stored_values.append(f"({stored}).take {width}")
+            advance = branch_calls[1]
+            advance_spec = emitter._lookup_intrinsic(advance.spelling)
+            advance_definition = (
+                None
+                if advance.assigned_to is None
+                else emitter.definitions.get(advance.assigned_to)
+            )
+            if not (
+                tail_source_dependency is not None
+                and isinstance(advance_spec, StructuralIntrinsic)
+                and advance_spec.operation is StructuralOp.TAKE_HIGH
+                and isinstance(advance_spec.signature.result, VectorType)
+                and advance_spec.signature.result.fixed_lanes == width
+                and advance.assigned_to is not None
+                and advance_definition is not None
+                and advance_definition.definition_kind == "assignment"
+                and advance_definition.value_call == advance.node_id
+                and advance.arguments[0].dependencies == (tail_source_dependency,)
+            ):
+                raise CaseEmissionError(
+                    f"{profile.case_id}: width-{width} high-half extraction changed"
+                )
+        else:
+            expected_counts = {1} if index == len(children) - 1 else {2, 3}
+            if len(branch_calls) not in expected_counts:
+                raise CaseEmissionError(
+                    f"{profile.case_id}: width-{width} lane-store branch has "
+                    f"{len(branch_calls)} calls; expected {sorted(expected_counts)!r}"
+                )
 
-        lane_store = branch_calls[lane_store_index]
-        lane_spec = emitter._lookup_intrinsic(lane_store.spelling)
-        pointer_type = lane_spec.signature.parameters[0].type
-        pointer_argument = lane_store.arguments[0]
-        value_argument = lane_store.arguments[1]
-        expected_pointer_source = "output" if width == 1 else "(void*)output"
-        expected_pointer_operations = (
-            ()
-            if width == 1
-            else (
-                "explicit-cast:BitCast:void *",
-                f"implicit-cast:BitCast:uint{width * 8}_t *",
+            lane_store_index = 0
+            stored_dependency = tail_dependency
+            if len(branch_calls) == 3:
+                bitcast = branch_calls[0]
+                bitcast_spec = emitter._lookup_intrinsic(bitcast.spelling)
+                if not (
+                    isinstance(bitcast_spec, StructuralIntrinsic)
+                    and bitcast_spec.operation is StructuralOp.BITCAST
+                    and bitcast.arguments[0].dependencies == (tail_dependency,)
+                ):
+                    raise CaseEmissionError(
+                        f"{profile.case_id}: width-{width} branch needs a current-value bitcast"
+                    )
+                emitter.emit_registered_call(bitcast)
+                stored_dependency = f"call:{bitcast.node_id}"
+                lane_store_index = 1
+
+            lane_store = branch_calls[lane_store_index]
+            lane_spec = emitter._lookup_intrinsic(lane_store.spelling)
+            pointer_type = lane_spec.signature.parameters[0].type
+            pointer_argument = lane_store.arguments[0]
+            value_argument = lane_store.arguments[1]
+            expected_pointer_source = "output" if width == 1 else "(void*)output"
+            expected_pointer_operations = (
+                ()
+                if width == 1
+                else (
+                    "explicit-cast:BitCast:void *",
+                    f"implicit-cast:BitCast:uint{width * profile.output_width}_t *",
+                )
             )
-        )
-        if not (
-            isinstance(lane_spec, StructuralIntrinsic)
-            and lane_spec.operation is StructuralOp.LANE_STORE
-            and isinstance(pointer_type, PointerType)
-            and pointer_type.pointee.bit_width == width * 8
-            and pointer_argument.dependencies == (f"output@{output_version}",)
-            and _compact_source(pointer_argument.source_text) == expected_pointer_source
-            and pointer_argument.semantic_operations == expected_pointer_operations
-            and value_argument.dependencies == (stored_dependency,)
-            and not value_argument.semantic_operations
-        ):
-            raise CaseEmissionError(
-                f"{profile.case_id}: width-{width} lane-store shape changed"
+            if not (
+                isinstance(lane_spec, StructuralIntrinsic)
+                and lane_spec.operation is StructuralOp.LANE_STORE
+                and isinstance(pointer_type, PointerType)
+                and pointer_type.pointee.bit_width == width * profile.output_width
+                and pointer_argument.dependencies == (f"output@{output_version}",)
+                and _compact_source(pointer_argument.source_text) == expected_pointer_source
+                and pointer_argument.semantic_operations == expected_pointer_operations
+                and value_argument.dependencies == (stored_dependency,)
+                and not value_argument.semantic_operations
+            ):
+                raise CaseEmissionError(
+                    f"{profile.case_id}: width-{width} lane-store shape changed"
+                )
+            stored_values.append(
+                _consume_little_endian_lane_store(
+                    emitter,
+                    lane_store,
+                    width=width,
+                    bit=width.bit_length() - 1,
+                    name=f"stored{width}",
+                )
             )
-        stored_values.append(
-            _consume_little_endian_lane_store(
-                emitter,
-                lane_store,
-                width=width,
-                bit=width.bit_length() - 1,
-                name=f"stored{width}",
-            )
-        )
+            if index != len(children) - 1:
+                advance = branch_calls[-1]
+                advance_spec = emitter._lookup_intrinsic(advance.spelling)
+                advance_definition = (
+                    None
+                    if advance.assigned_to is None
+                    else emitter.definitions.get(advance.assigned_to)
+                )
+                if not (
+                    isinstance(advance_spec, StructuralIntrinsic)
+                    and advance_spec.operation is StructuralOp.EXTRACT_FROM_CONCAT
+                    and advance.assigned_to is not None
+                    and advance_definition is not None
+                    and advance_definition.definition_kind == "assignment"
+                    and advance_definition.value_call == advance.node_id
+                    and advance.arguments[0].dependencies == (tail_dependency,)
+                    and advance.arguments[1].dependencies == (tail_dependency,)
+                    and advance.arguments[2].constant_value == width
+                ):
+                    raise CaseEmissionError(
+                        f"{profile.case_id}: width-{width} conditional slide changed"
+                    )
 
         if index == len(children) - 1:
             continue
-        slide = branch_calls[-1]
-        slide_spec = emitter._lookup_intrinsic(slide.spelling)
-        slide_definition = (
-            None
-            if slide.assigned_to is None
-            else emitter.definitions.get(slide.assigned_to)
-        )
-        if not (
-            isinstance(slide_spec, StructuralIntrinsic)
-            and slide_spec.operation is StructuralOp.EXTRACT_FROM_CONCAT
-            and slide.assigned_to is not None
-            and slide_definition is not None
-            and slide_definition.definition_kind == "assignment"
-            and slide_definition.value_call == slide.node_id
-            and slide.arguments[0].dependencies == (tail_dependency,)
-            and slide.arguments[1].dependencies == (tail_dependency,)
-            and slide.arguments[2].constant_value == width
-        ):
+        if advance is None:  # pragma: no cover - guarded by the branch validators
+            raise AssertionError("non-final tail store lost its advance operation")
+        shifted = emitter.emit_registered_call(advance)
+        if shifted is None or advance.assigned_to is None:
             raise CaseEmissionError(
-                f"{profile.case_id}: width-{width} conditional slide changed"
-            )
-        shifted = emitter.emit_registered_call(slide)
-        if shifted is None:
-            raise CaseEmissionError(
-                f"{profile.case_id}: width-{width} slide produced no value"
+                f"{profile.case_id}: width-{width} advance produced no value"
             )
         joined = f"after{width}"
         emitter.lines.append(
             f"  let {joined} := if live.testBit {width.bit_length() - 1} "
             f"then {shifted} else {tail_value}"
         )
-        emitter.environment[slide.assigned_to] = joined
-        tail_dependency = slide.assigned_to
+        emitter.environment[advance.assigned_to] = joined
+        tail_dependency = advance.assigned_to
         tail_value = joined
 
         next_version = output_version + 1
@@ -1512,7 +1597,7 @@ def _emit_prefix_tail_value_models(
     if len(input_names) == 1:
         input_name = input_names[0]
         value_loop_parameters = [
-            f"    ({input_name} overread : List (BitVec 8)) : List (BitVec 8) :=",
+            f"    ({input_name} overread : {_input_list_type(profile)}) : {_output_list_type(profile)} :=",
         ]
         tail_loader_lines = [
             f"      let {loaded_names[0]} := (tail ++ overread).take {config.load_lanes}",
@@ -1526,11 +1611,11 @@ def _emit_prefix_tail_value_models(
             f"    {input_name}",
         ]
         compatibility_parameters = [
-            f"    ({input_name} : List (BitVec 8)) : List (BitVec 8) :=",
+            f"    ({input_name} : {_input_list_type(profile)}) : {_output_list_type(profile)} :=",
         ]
         compatibility_arguments = [
             f"  neonValueLoopWithOverreadFromIntrinsics p {input_name}",
-            f"    (List.replicate {padding} (0 : BitVec 8))",
+            f"    (List.replicate {padding} (0 : {_input_value_type(profile)}))",
         ]
     else:
         input_a, input_b = input_names
@@ -1538,8 +1623,8 @@ def _emit_prefix_tail_value_models(
         overread_a, overread_b = overread_names
         loaded_a, loaded_b = loaded_names
         value_loop_parameters = [
-            f"    ({input_a} {input_b} {overread_a} {overread_b} : List (BitVec 8))",
-            f"    (sameLength : {input_a}.length = {input_b}.length) : List (BitVec 8) :=",
+            f"    ({input_a} {input_b} {overread_a} {overread_b} : {_input_list_type(profile)})",
+            f"    (sameLength : {input_a}.length = {input_b}.length) : {_output_list_type(profile)} :=",
         ]
         schedule_lines = [
             f"  SALT.Kernel.Schedule.runFixedChunkTail2 {width} (by decide)",
@@ -1551,13 +1636,13 @@ def _emit_prefix_tail_value_models(
             f"    {input_a} {input_b} sameLength",
         ]
         compatibility_parameters = [
-            f"    ({input_a} {input_b} : List (BitVec 8))",
-            f"    (sameLength : {input_a}.length = {input_b}.length) : List (BitVec 8) :=",
+            f"    ({input_a} {input_b} : {_input_list_type(profile)})",
+            f"    (sameLength : {input_a}.length = {input_b}.length) : {_output_list_type(profile)} :=",
         ]
         compatibility_arguments = [
             f"  neonValueLoopWithOverreadFromIntrinsics p {input_a} {input_b}",
-            f"    (List.replicate {padding} (0 : BitVec 8))",
-            f"    (List.replicate {padding} (0 : BitVec 8)) sameLength",
+            f"    (List.replicate {padding} (0 : {_input_value_type(profile)}))",
+            f"    (List.replicate {padding} (0 : {_input_value_type(profile)})) sameLength",
         ]
 
     lines = [
@@ -1567,7 +1652,7 @@ def _emit_prefix_tail_value_models(
         "This definition does not establish C memory, alignment, aliasing, or endian adequacy.",
         "-/",
         f"def neonPartialTailLivePrefixFromIntrinsics (p : {profile.parameter_type})",
-        f"    ({loaded_parameters} : List (BitVec 8)) (live : Nat) : List (BitVec 8) :=",
+        f"    ({loaded_parameters} : {_input_list_type(profile)}) (live : Nat) : {_output_list_type(profile)} :=",
         *emitter.lines,
         "  " + " ++ ".join(f"({value})" for value in stored_values),
         "",
@@ -1594,7 +1679,7 @@ def _emit_nested_two_phase_tail_value_models(
     registry: Mapping[str, IntrinsicSpec],
     already_consumed: tuple[str, ...],
 ) -> tuple[list[str], tuple[str, ...]]:
-    """Emit a structurally recognized do-while small phase and 4/2/1 tail.
+    """Emit a structurally recognized do-while small phase and prefix tail.
 
     The adapter is parameterized by the two phase widths, input arity, intrinsic
     registry, and extracted dependency graph.  It does not inspect a case id or
@@ -1782,7 +1867,7 @@ def _emit_nested_two_phase_tail_value_models(
         )
         if not (
             isinstance(pointer_type, PointerType)
-            and pointer_type.pointee.bit_width == width * 8
+            and pointer_type.pointee.bit_width == width * profile.output_width
             and lane.arguments[1].dependencies == (stored_dependency,)
             and lane.arguments[-1].constant_value == 0
         ):
@@ -1868,7 +1953,7 @@ def _emit_nested_two_phase_tail_value_models(
         input_name = profile.inputs[0]
         overread = overread_names[0]
         value_parameters = [
-            f"    ({input_name} {overread} : List (BitVec 8)) : List (BitVec 8) :=",
+            f"    ({input_name} {overread} : {_input_list_type(profile)}) : {_output_list_type(profile)} :=",
         ]
         tail_body = [
             f"      let {loaded_names[0]} := (tail ++ {overread}).take {small}",
@@ -1876,19 +1961,19 @@ def _emit_nested_two_phase_tail_value_models(
             f"    {input_name}",
         ]
         compatibility_parameters = [
-            f"    ({input_name} : List (BitVec 8)) : List (BitVec 8) :="
+            f"    ({input_name} : {_input_list_type(profile)}) : {_output_list_type(profile)} :="
         ]
         compatibility_arguments = [
             f"  neonValueLoopWithOverreadFromIntrinsics p {input_name}",
-            f"    (List.replicate {small - 1} (0 : BitVec 8))",
+            f"    (List.replicate {small - 1} (0 : {_input_value_type(profile)}))",
         ]
     else:
         input_a, input_b = profile.inputs
         loaded_a, loaded_b = loaded_names
         overread_a, overread_b = overread_names
         value_parameters = [
-            f"    ({input_a} {input_b} {overread_a} {overread_b} : List (BitVec 8))",
-            f"    (sameLength : {input_a}.length = {input_b}.length) : List (BitVec 8) :=",
+            f"    ({input_a} {input_b} {overread_a} {overread_b} : {_input_list_type(profile)})",
+            f"    (sameLength : {input_a}.length = {input_b}.length) : {_output_list_type(profile)} :=",
         ]
         tail_body = [
             f"      let {loaded_a} := (tailA ++ {overread_a}).take {small}",
@@ -1897,13 +1982,13 @@ def _emit_nested_two_phase_tail_value_models(
             f"    {input_a} {input_b} sameLength",
         ]
         compatibility_parameters = [
-            f"    ({input_a} {input_b} : List (BitVec 8))",
-            f"    (sameLength : {input_a}.length = {input_b}.length) : List (BitVec 8) :=",
+            f"    ({input_a} {input_b} : {_input_list_type(profile)})",
+            f"    (sameLength : {input_a}.length = {input_b}.length) : {_output_list_type(profile)} :=",
         ]
         compatibility_arguments = [
             f"  neonValueLoopWithOverreadFromIntrinsics p {input_a} {input_b}",
-            f"    (List.replicate {small - 1} (0 : BitVec 8))",
-            f"    (List.replicate {small - 1} (0 : BitVec 8)) sameLength",
+            f"    (List.replicate {small - 1} (0 : {_input_value_type(profile)}))",
+            f"    (List.replicate {small - 1} (0 : {_input_value_type(profile)})) sameLength",
         ]
 
     small_application = " ".join(loaded_names)
@@ -1925,13 +2010,13 @@ def _emit_nested_two_phase_tail_value_models(
         "",
         f"/-- Generated {small}-lane secondary block from the extracted call graph. -/",
         f"def neonBlock{small}FromIntrinsics (p : {profile.parameter_type})",
-        f"    ({loaded_parameters} : List (BitVec 8)) : List (BitVec 8) :=",
+        f"    ({loaded_parameters} : {_input_list_type(profile)}) : {_output_list_type(profile)} :=",
         *pipeline_lines,
         f"  {stored_full}",
         "",
-        "/-- Generated little-endian live-prefix abstraction of the 4/2/1 stores. -/",
+        f"/-- Generated little-endian live-prefix abstraction of the {'/'.join(map(str, config.store_widths))} stores. -/",
         f"def neonPartialTailLivePrefixFromIntrinsics (p : {profile.parameter_type})",
-        f"    ({loaded_parameters} : List (BitVec 8)) (live : Nat) : List (BitVec 8) :=",
+        f"    ({loaded_parameters} : {_input_list_type(profile)}) (live : Nat) : {_output_list_type(profile)} :=",
         *pipeline_lines,
         *partial_lines,
         "  " + " ++ ".join(f"({value})" for value in stored_values),
@@ -1955,13 +2040,49 @@ def _selected_rvv_loop(extraction: KernelExtraction, profile: ModelProfile):
         for control in extraction.controls
         if control.kind == "WhileStmt"
         and control.parent_control is None
-        and control.condition_text == "batch > 0"
+        and control.condition_text == f"{profile.rvv_count_variable} > 0"
     ]
     if len(matches) != 1:
         raise CaseEmissionError(
             f"{profile.case_id}: expected one reviewed RVV loop, got {len(matches)}"
         )
     return matches[0]
+
+
+def _bind_rvv_count_definition(
+    extraction: KernelExtraction,
+    profile: ModelProfile,
+    emitter: _CaseBlockEmitter,
+    active_length: str,
+) -> None:
+    count = profile.rvv_count_variable
+    if count == "batch":
+        if profile.input_width != 8:
+            raise CaseEmissionError(
+                f"{profile.case_id}: a {profile.input_width}-bit stream cannot use "
+                "the byte count directly as the RVV element count"
+            )
+        return
+    candidates = [
+        definition
+        for definition in extraction.definitions
+        if definition.value == f"{count}@0"
+        and definition.parent_control is None
+        and definition.definition_kind == "declaration"
+        and definition.value_call is None
+    ]
+    expected_expression = f"{count}=batch/sizeof({profile.element_c_type})"
+    if (
+        len(candidates) != 1
+        or candidates[0].dependencies
+        != ("batch@0", f"sizeof:{profile.element_c_type}")
+        or not _compact_source(candidates[0].expression_text).endswith(expected_expression)
+    ):
+        raise CaseEmissionError(
+            f"{profile.case_id}: RVV element count must be initialized as "
+            f"batch / sizeof({profile.element_c_type})"
+        )
+    emitter.environment[candidates[0].value] = active_length
 
 
 def _validate_rvv_scalar_types(
@@ -2163,6 +2284,7 @@ def _emit_rvv_case(
         registry,
         active_length=active_length,
     )
+    _bind_rvv_count_definition(extraction, profile, emitter, active_length)
     child_controls = [
         control
         for control in extraction.controls
@@ -2223,11 +2345,14 @@ def _emit_rvv_case(
             schedule_argument = call.arguments[0]
             if not _is_exact_local_argument(
                 schedule_argument,
-                dependency="batch@0",
-                source_text="batch",
+                dependency=f"{profile.rvv_count_variable}@0",
+                source_text=profile.rvv_count_variable,
                 type_spelling="unsigned long",
             ):
-                raise CaseEmissionError(f"{profile.case_id}: vsetvl must consume batch")
+                raise CaseEmissionError(
+                    f"{profile.case_id}: vsetvl must consume "
+                    f"{profile.rvv_count_variable}"
+                )
             saw_schedule = True
             emitter.environment[f"call:{call.node_id}"] = active_length
             emitter.environment[call.assigned_to] = active_length
@@ -2319,7 +2444,10 @@ def _emit_rvv_case(
     expected_updates.extend(
         [
             ("output@1", "output += vl"),
-            ("batch@1", "batch -= vl"),
+            (
+                f"{profile.rvv_count_variable}@1",
+                f"{profile.rvv_count_variable} -= vl",
+            ),
         ]
     )
     actual_updates = [
@@ -2362,9 +2490,9 @@ def _parameter_structure(profile: ModelProfile) -> list[str]:
 def _function_header(name: str, profile: ModelProfile) -> list[str]:
     lines = [f"def {name} (p : {profile.parameter_type})"]
     lines.extend(
-        f"    ({input_name} : List (BitVec 8))" for input_name in profile.inputs
+        f"    ({input_name} : {_input_list_type(profile)})" for input_name in profile.inputs
     )
-    lines[-1] = f"{lines[-1]} : List (BitVec 8) :="
+    lines[-1] = f"{lines[-1]} : {_output_list_type(profile)} :="
     return lines
 
 
@@ -2447,10 +2575,10 @@ def emit_case_pair(
             input_name = profile.inputs[0]
             rvv_extra_lines.extend(
                 [
-                    f"    ({input_name} : List (BitVec 8))",
+                    f"    ({input_name} : {_input_list_type(profile)})",
                     "    (schedule : SALT.Kernel.Schedule.PositivePartition "
                     f"{input_name}.length) :",
-                    "    List (BitVec 8) :=",
+                    f"    {_output_list_type(profile)} :=",
                     "  SALT.Kernel.Schedule.processBlocks "
                     f"(rvvChunkFromIntrinsics p) {input_name} schedule",
                 ]
@@ -2459,11 +2587,11 @@ def emit_case_pair(
             input_a, input_b = profile.inputs
             rvv_extra_lines.extend(
                 [
-                    f"    ({input_a} {input_b} : List (BitVec 8))",
+                    f"    ({input_a} {input_b} : {_input_list_type(profile)})",
                     f"    (sameLength : {input_a}.length = {input_b}.length)",
                     "    (schedule : SALT.Kernel.Schedule.PositivePartition "
                     f"{input_a}.length) :",
-                    "    List (BitVec 8) :=",
+                    f"    {_output_list_type(profile)} :=",
                     "  SALT.Kernel.Schedule.processBlocks2 "
                     f"(rvvChunkFromIntrinsics p) {input_a} {input_b} "
                     "sameLength schedule",

@@ -152,6 +152,9 @@ def test_nested_binary_two_phase_pair_generates_the_parameterized_schedule(
     assert result.recognition.neon.phase_widths == (16, 8)
     assert "runTwoPhaseTail2 16 8" in result.stack.models_text
     assert "def neonBlock8FromIntrinsics" in result.stack.models_text
+    assert "def fNeonSecondary" in result.stack.models_text
+    assert "List.zipWith (fNeonSecondary p)" in result.stack.spec_text
+    assert "def neonPhaseFunctionsEqualClaim : Prop" in result.stack.spec_text
     assert "List.zipWith (fNeon p)" in result.stack.spec_text
     assert "theorem " not in result.stack.spec_text
 
@@ -170,6 +173,9 @@ def test_separate_loop_two_phase_pair_uses_the_same_parameterized_schedule(
     assert result.recognition.neon.phase_widths == (64, 8)
     assert "runTwoPhaseTail 64 8" in result.stack.models_text
     assert "def neonBlock8FromIntrinsics" in result.stack.models_text
+    assert "def fNeonSecondary" in result.stack.models_text
+    assert "input.map (fNeonSecondary p)" in result.stack.spec_text
+    assert "def neonPhaseFunctionsEqualClaim : Prop" in result.stack.spec_text
     assert "s8-vclamp" not in result.stack.models_text
     assert "call_0018" not in result.stack.models_text
 

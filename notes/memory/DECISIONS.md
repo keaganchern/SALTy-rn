@@ -353,3 +353,25 @@ and future memory-only commits into their corresponding implementation milestone
 The next delivery series should use no more than roughly eight large semantic
 commits; this limit does not require compressing all work already completed into
 four commits.
+
+## EC-032: Widths, Tail Schedules, and RVV Counts Are Typed Program Facts
+
+**Status:** Accepted and implemented, 2026-08-29.
+
+Carry input width, output width, C element type, RVV count variable, fixed block
+width, and tail-store widths from parsed program facts into generated Models and
+Spec. The generic value layer supports 8-, 16-, and 32-bit streams, including
+distinct input/output widths. A prefix tail is accepted only when its descending
+power-of-two stores cover every non-full live length.
+
+When RVV uses a separate element count, bind it to the logical list length only
+after verifying the exact top-level definition `count = batch / sizeof(T)` and
+that `T` matches the parsed Neon byte-count element type. A wrong divisor must
+fail closed. Floating-point streams are represented as same-width bit vectors at
+this layer; their arithmetic meaning still comes from independently reviewed
+intrinsic definitions.
+
+For a multi-phase Neon schedule, project each parsed phase to its own scalar
+function. Generate phase-to-map claims separately and expose equality between the
+phase functions as an explicit proof obligation. Never define the secondary phase
+through the primary scalar function before that equality has been established.

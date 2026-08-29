@@ -94,8 +94,6 @@ def _field_widths(extractions: Iterable[KernelExtraction]) -> tuple[ParameterFie
                     name = _field(dependency)
                     if name is not None:
                         widths[name] = max(widths.get(name, 0), width)
-    if not widths:
-        raise GenerationError("current integer emitter needs at least one scalar parameter field")
     return tuple(ParameterField(name, widths[name]) for name in sorted(widths))
 
 
@@ -131,8 +129,6 @@ def infer_model_profile(
 ) -> ModelProfile:
     """Construct the old block-emitter interface solely from extracted facts."""
 
-    if recognition.element_width != 8 or recognition.output_width != 8:
-        raise GenerationError("the current block emitter supports 8-bit input/output streams")
     fields = _field_widths((neon, rvv))
     prefix = None
     if recognition.neon.kind in {ScheduleKind.FIXED_TAIL, ScheduleKind.MULTI_PHASE}:
@@ -163,6 +159,10 @@ def infer_model_profile(
             for control in neon.controls
             if control.node_id == recognition.neon.loop_control
         ),
+        input_width=recognition.element_width,
+        output_width=recognition.output_width,
+        element_c_type=recognition.neon.element_c_type,
+        rvv_count_variable=recognition.rvv.count_variable,
         prefix_tail=prefix,
         rvv_signed_shift_branch=bool(recognition.rvv.nested_controls),
         multiphase_widths=(
@@ -177,7 +177,8 @@ def _model_extensions(
     profile: ModelProfile,
     recognition: PairRecognition,
 ) -> list[str]:
-    width = recognition.element_width
+    input_width = recognition.element_width
+    output_width = recognition.output_width
     block_width = recognition.neon.lanes
     inputs = recognition.inputs
     lines = [""]
@@ -188,12 +189,12 @@ def _model_extensions(
         lines.extend(
             [
                 "/-- Scalar action independently projected from the parsed Neon block. -/",
-                f"def fNeon (p : {profile.parameter_type}) ({value} : BitVec {width}) : BitVec {width} :=",
-                f"  ({profile.neon_function} p {neon_args}).headD {value}",
+                f"def fNeon (p : {profile.parameter_type}) ({value} : BitVec {input_width}) : BitVec {output_width} :=",
+                f"  ({profile.neon_function} p {neon_args}).headD (0 : BitVec {output_width})",
                 "",
                 "/-- Scalar action independently projected from the parsed RVV chunk. -/",
-                f"def fRvv (p : {profile.parameter_type}) ({value} : BitVec {width}) : BitVec {width} :=",
-                f"  ({profile.rvv_function} p {rvv_args}).headD {value}",
+                f"def fRvv (p : {profile.parameter_type}) ({value} : BitVec {input_width}) : BitVec {output_width} :=",
+                f"  ({profile.rvv_function} p {rvv_args}).headD (0 : BitVec {output_width})",
             ]
         )
     elif len(inputs) == 2:
@@ -203,16 +204,43 @@ def _model_extensions(
         lines.extend(
             [
                 "/-- Scalar action independently projected from the parsed Neon block. -/",
-                f"def fNeon (p : {profile.parameter_type}) (x y : BitVec {width}) : BitVec {width} :=",
-                f"  ({profile.neon_function} p {neon_args}).headD x",
+                f"def fNeon (p : {profile.parameter_type}) (x y : BitVec {input_width}) : BitVec {output_width} :=",
+                f"  ({profile.neon_function} p {neon_args}).headD (0 : BitVec {output_width})",
                 "",
                 "/-- Scalar action independently projected from the parsed RVV chunk. -/",
-                f"def fRvv (p : {profile.parameter_type}) (x y : BitVec {width}) : BitVec {width} :=",
-                f"  ({profile.rvv_function} p [x] [y]).headD x",
+                f"def fRvv (p : {profile.parameter_type}) (x y : BitVec {input_width}) : BitVec {output_width} :=",
+                f"  ({profile.rvv_function} p [x] [y]).headD (0 : BitVec {output_width})",
             ]
         )
     else:
         raise GenerationError("value specification supports one or two input streams")
+
+    if recognition.neon.kind is ScheduleKind.MULTI_PHASE:
+        small_width = recognition.neon.phase_widths[-1]
+        secondary_function = f"neonBlock{small_width}FromIntrinsics"
+        if len(inputs) == 1:
+            value = inputs[0]
+            lines.extend(
+                [
+                    "",
+                    "/-- Scalar action projected from the parsed secondary Neon block. -/",
+                    f"def fNeonSecondary (p : {profile.parameter_type})",
+                    f"    ({value} : BitVec {input_width}) : BitVec {output_width} :=",
+                    f"  ({secondary_function} p [{value}]).headD "
+                    f"(0 : BitVec {output_width})",
+                ]
+            )
+        else:
+            lines.extend(
+                [
+                    "",
+                    "/-- Scalar action projected from the parsed secondary Neon block. -/",
+                    f"def fNeonSecondary (p : {profile.parameter_type})",
+                    f"    (x y : BitVec {input_width}) : BitVec {output_width} :=",
+                    f"  ({secondary_function} p [x] [y]).headD "
+                    f"(0 : BitVec {output_width})",
+                ]
+            )
 
     if recognition.neon.kind is ScheduleKind.FIXED_NO_TAIL:
         lines.extend([""])
@@ -222,15 +250,15 @@ def _model_extensions(
                 [
                     "/-- Generated fixed-width loop assembly; divisibility stays in Spec. -/",
                     f"def neonValueLoopFromIntrinsics (p : {profile.parameter_type})",
-                    f"    ({name} : List (BitVec {width})) : List (BitVec {width}) :=",
+                    f"    ({name} : List (BitVec {input_width})) : List (BitVec {output_width}) :=",
                     f"  SALT.Kernel.ElementwiseFamily.runFixedNoTail {block_width} (by omega)",
                     f"    ({profile.neon_function} p) {name}",
                     "",
                     "/-- Generated RVV positive-partition assembly. -/",
                     f"def rvvValueLoopFromIntrinsics (p : {profile.parameter_type})",
-                    f"    ({name} : List (BitVec {width}))",
+                    f"    ({name} : List (BitVec {input_width}))",
                     f"    (schedule : SALT.Kernel.Schedule.PositivePartition {name}.length) :",
-                    f"    List (BitVec {width}) :=",
+                    f"    List (BitVec {output_width}) :=",
                     f"  SALT.Kernel.Schedule.processBlocks ({profile.rvv_function} p) {name} schedule",
                 ]
             )
@@ -240,17 +268,17 @@ def _model_extensions(
                 [
                     "/-- Generated synchronized fixed-width loop assembly. -/",
                     f"def neonValueLoopFromIntrinsics (p : {profile.parameter_type})",
-                    f"    ({first} {second} : List (BitVec {width}))",
-                    f"    (sameLength : {first}.length = {second}.length) : List (BitVec {width}) :=",
+                    f"    ({first} {second} : List (BitVec {input_width}))",
+                    f"    (sameLength : {first}.length = {second}.length) : List (BitVec {output_width}) :=",
                     f"  SALT.Kernel.Schedule.runFixedChunkTail2 {block_width} (by omega)",
                     f"    ({profile.neon_function} p) (fun _ _ => []) {first} {second} sameLength",
                     "",
                     "/-- Generated synchronized RVV positive-partition assembly. -/",
                     f"def rvvValueLoopFromIntrinsics (p : {profile.parameter_type})",
-                    f"    ({first} {second} : List (BitVec {width}))",
+                    f"    ({first} {second} : List (BitVec {input_width}))",
                     f"    (sameLength : {first}.length = {second}.length)",
                     f"    (schedule : SALT.Kernel.Schedule.PositivePartition {first}.length) :",
-                    f"    List (BitVec {width}) :=",
+                    f"    List (BitVec {output_width}) :=",
                     f"  SALT.Kernel.Schedule.processBlocks2 ({profile.rvv_function} p)",
                     f"    {first} {second} sameLength schedule",
                 ]
@@ -267,9 +295,9 @@ def _model_extensions(
             name = inputs[0]
             lines.extend(
                 [
-                    f"    ({name} : List (BitVec {width}))",
+                    f"    ({name} : List (BitVec {input_width}))",
                     f"    (schedule : SALT.Kernel.Schedule.PositivePartition {name}.length) :",
-                    f"    List (BitVec {width}) :=",
+                    f"    List (BitVec {output_width}) :=",
                     f"  SALT.Kernel.Schedule.processBlocks ({profile.rvv_function} p) {name} schedule",
                 ]
             )
@@ -277,10 +305,10 @@ def _model_extensions(
             first, second = inputs
             lines.extend(
                 [
-                    f"    ({first} {second} : List (BitVec {width}))",
+                    f"    ({first} {second} : List (BitVec {input_width}))",
                     f"    (sameLength : {first}.length = {second}.length)",
                     f"    (schedule : SALT.Kernel.Schedule.PositivePartition {first}.length) :",
-                    f"    List (BitVec {width}) :=",
+                    f"    List (BitVec {output_width}) :=",
                     f"  SALT.Kernel.Schedule.processBlocks2 ({profile.rvv_function} p)",
                     f"    {first} {second} sameLength schedule",
                 ]
@@ -313,7 +341,7 @@ def _spec_text(
     profile: ModelProfile,
     recognition: PairRecognition,
 ) -> str:
-    width = recognition.element_width
+    input_width = recognition.element_width
     block_width = recognition.neon.lanes
     inputs = recognition.inputs
     binary = len(inputs) == 2
@@ -327,17 +355,22 @@ def _spec_text(
         if not binary
         else f"List.zipWith (fRvv p) {inputs[0]} {inputs[1]}"
     )
+    secondary_map_expr = (
+        f"{inputs[0]}.map (fNeonSecondary p)"
+        if not binary
+        else f"List.zipWith (fNeonSecondary p) {inputs[0]} {inputs[1]}"
+    )
     params = " ".join(inputs)
-    list_binders = f"({params} : List (BitVec {width}))"
+    list_binders = f"({params} : List (BitVec {input_width}))"
     same_length = (
         ""
         if not binary
         else f" ({inputs[0]}.length = {inputs[1]}.length)"
     )
-    element_args = "(x : BitVec {0})".format(width)
+    element_args = "(x : BitVec {0})".format(input_width)
     element_apply = "x"
     if binary:
-        element_args = f"(x y : BitVec {width})"
+        element_args = f"(x y : BitVec {input_width})"
         element_apply = "x y"
     neon_loop_args = f"p {params}"
     rvv_loop_args = f"p {params}"
@@ -351,7 +384,7 @@ def _spec_text(
     if tail_family:
         tail_load_width = recognition.neon.phase_widths[-1]
         overreads = tuple(f"overread{index}" for index in range(len(inputs)))
-        overread_binder = f"({' '.join(overreads)} : List (BitVec {width}))"
+        overread_binder = f"({' '.join(overreads)} : List (BitVec {input_width}))"
         neon_loop_args = f"p {params} {' '.join(overreads)}"
         if binary:
             neon_loop_args += " sameLength"
@@ -412,7 +445,13 @@ def _spec_text(
                     if binary
                     else []
                 ),
-                f"    neonBlock{small_width}FromIntrinsics p {params} = {map_expr}",
+                f"    neonBlock{small_width}FromIntrinsics p {params} = "
+                f"{secondary_map_expr}",
+                "",
+                "def neonPhaseFunctionsEqualClaim : Prop :=",
+                f"  ∀ (p : {profile.parameter_type}) {element_args},",
+                f"    fNeon p {element_apply} = "
+                f"fNeonSecondary p {element_apply}",
             ]
         )
     spec.extend(

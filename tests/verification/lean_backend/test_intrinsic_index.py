@@ -278,6 +278,14 @@ def test_canonical_record_and_digest_cover_complete_lowering_contract() -> None:
     assert forward.variants == backward.variants
 
 
+def test_integer_descriptor_digest_stays_stable_when_float_types_are_added() -> None:
+    spec = QS8_VADD_MINMAX_REGISTRY["vmaxq_s8"]
+
+    assert canonical_spec_digest(spec) == (
+        "4e208d7011b7aac8c30dc62dd81f2d8af2084b9eef84a915e6079910a7e6e7e3"
+    )
+
+
 def test_extracted_source_call_uses_clang_type_and_constants_without_catalog() -> None:
     spec = QS8_VADD_MINMAX_REGISTRY["__riscv_vnclip_wx_i16m4"]
     source = SourceIntrinsicDescriptor(

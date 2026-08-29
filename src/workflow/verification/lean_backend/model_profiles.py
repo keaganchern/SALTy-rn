@@ -7,6 +7,7 @@ model, but still does not establish C byte-memory behavior.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 
 
@@ -41,11 +42,6 @@ class PrefixTailProfile:
         if sum(self.store_widths) != self.load_lanes - 1:
             raise ValueError(
                 "prefix-tail stores must encode every non-full live length"
-            )
-        if self.load_lanes != 8 or self.store_widths != (4, 2, 1):
-            raise ValueError(
-                "the current prefix-tail emitter supports exactly an 8-lane "
-                "load with 4/2/1 stores"
             )
 
 
@@ -110,6 +106,10 @@ class ModelProfile:
     neon_block_lanes: int
     neon_loop_condition: str
     neon_loop_update: str
+    input_width: int = 8
+    output_width: int = 8
+    element_c_type: str = "int8_t"
+    rvv_count_variable: str = "batch"
     prefix_tail: PrefixTailProfile | None = None
     unary_prefix_tail_obligation: UnaryPrefixTailObligationProfile | None = None
     binary_prefix_tail_obligation: BinaryPrefixTailObligationProfile | None = None
@@ -117,6 +117,14 @@ class ModelProfile:
     multiphase_widths: tuple[int, ...] = ()
 
     def __post_init__(self) -> None:
+        if self.input_width not in {8, 16, 32}:
+            raise ValueError("model input width must be 8, 16, or 32 bits")
+        if self.output_width not in {8, 16, 32}:
+            raise ValueError("model output width must be 8, 16, or 32 bits")
+        if not self.element_c_type:
+            raise ValueError("model element C type must be non-empty")
+        if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", self.rvv_count_variable) is None:
+            raise ValueError("RVV count variable must be a C identifier")
         if (
             self.unary_prefix_tail_obligation is not None
             and self.binary_prefix_tail_obligation is not None

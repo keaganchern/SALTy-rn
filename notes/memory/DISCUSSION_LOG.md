@@ -432,3 +432,31 @@ history, should stay within roughly eight large commits.
 
 **Unresolved:** user approval to begin the staged implementation and history
 cleanup; actual intrinsic semantic review remains zero.
+
+## 2026-08-29 — Width and tail generalization milestone
+
+**Question:** Can the compiler remove its 8-bit and exact 8-lane/4-2-1 limits
+without adding any program-specific adapter?
+
+**Conclusion:** yes for the scalar value layer. The profile and generator now
+carry distinct 8/16/32 input and output widths; prefix tails derive their complete
+power-of-two store schedule; and both audited tail-storage encodings are checked
+structurally. Float32 facade types are explicit typed descriptors rather than
+being misclassified as integers. RVV byte-to-element conversion is accepted only
+when its parsed divisor matches the stream C type.
+
+**Evidence:** held-out U16 and U32 fixed-tail copy pairs, an F32 fixed-tail copy,
+and a U16 fixed-no-tail pair all generate Manifest/Models/Spec/ProofTask and
+elaborate in Lean. A mutated U16 RVV divisor using `sizeof(uint32_t)` fails closed.
+The full repository suite passes 393 tests.
+
+**Unresolved:** this milestone does not add the corpus's missing intrinsic
+semantics, external caller-condition evidence, cross-phase counterexample
+producer, or independent review records. Those are the next gates.
+
+**Independent review:** the first review found two blockers: wide RVV code could
+use byte-count `batch` directly, and multi-phase Spec silently reused the primary
+scalar function for its secondary block. Both were fixed with permanent negative
+and generation tests. A second read-only review returned `GO` after 38 passing
+focused tests and temporary generation of both multi-phase corpus shapes. The
+phase-equality proposition remains deliberately unproved for the next milestone.

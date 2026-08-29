@@ -7,6 +7,7 @@ import json
 from typing import Any
 
 from .schema import (
+    FloatingType,
     IntrinsicSpec,
     PointerType,
     ScalarType,
@@ -34,6 +35,12 @@ def canonical_type_record(value_type: object) -> dict[str, Any]:
             "c_spelling": value_type.c_spelling,
             "bit_width": value_type.bit_width,
             "signedness": value_type.signedness.value,
+        }
+    if isinstance(value_type, FloatingType):
+        return {
+            "kind": "floating",
+            "c_spelling": value_type.c_spelling,
+            "bit_width": value_type.bit_width,
         }
     if isinstance(value_type, VectorType):
         return {

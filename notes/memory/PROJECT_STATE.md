@@ -186,9 +186,9 @@ The generic path is exercised on all five existing integer pairs without reading
 their named frontend profiles. Their normalized entry contracts match;
 `qs8-vcvt`'s two local tail assertions remain local facts. Exact intrinsic
 ambiguities are resolved by one program-independent, information-preserving rule;
-true ties fail closed. The compiler recognizes scalar streams, fixed-no-tail,
-fixed-tail with 4/2/1 prefix stores, two-phase 64/8 and nested 16/8 schedules, and
-RVV strip-mining, and hash-binds the
+true ties fail closed. The compiler recognizes 8-, 16-, and 32-bit scalar streams,
+fixed-no-tail, complete power-of-two fixed tails, two-phase schedules, and RVV
+strip-mining, and hash-binds the
 complete parsed call/control/assert/effect inventory. It emits canonical
 `ProgramManifest.json`, capability records, independent `fNeon`/`fRvv`
 definitions, proof-free `Models.lean`/`Spec.lean`, and an artifact index.
@@ -235,17 +235,20 @@ verifies every Manifest/Models/Spec/ProofTask/Proof/Result parent hash before
 displaying progress; a modified child becomes `stale-artifact`. It shows value,
 C, and ISA claim layers separately.
 
-**Post-implementation reviewer correction:** the fourteen blocked scalar programs
-do need exact typed parse facades and reviewed integer/FP intrinsic definitions,
-but those are not yet proven to be the only missing pieces. The current emitter
-also accepts only 8-bit input/output streams, and the prefix-tail emitter accepts
-exactly an 8-lane load with 4/2/1 stores. Capability expansion must expose and
-remove those reusable width/tail limitations before claiming that all nineteen
-scalar-layout programs can be unlocked only by adding intrinsics. `f32-vcmul`
-still needs a grouped complex layout/view. No current corpus program is claimed
-`verified(value)` merely because its Spec was generated.
+**Confirmed width/tail closure:** the production generator now carries distinct
+8/16/32-bit input and output widths through Models and Spec. Prefix tails accept a
+complete descending power-of-two decomposition instead of one memorized 4/2/1
+shape, and accept the two audited storage encodings: lane-store/slide and
+full-vector-store/high-half. RVV byte counts such as `n = batch / sizeof(float)`
+are normalized to logical element counts only after exact type and dependency
+checks. Held-out U16/U32/F32 fixed-tail and U16 fixed-no-tail pairs reach a freshly
+elaborated ProofTask; a mixed I32-to-I16 pair confirms distinct widths through the
+same full chain. Multi-phase Models now project the secondary block to a separate
+`fNeonSecondary` and expose phase equality as an explicit claim instead of hiding
+it in `fNeon`. This closes the reusable width blocker; it does not prove phase
+equality or supply missing corpus intrinsics and external conditions.
 
-**Confirmed final validation:** the complete repository suite passes with 379
+**Confirmed final validation:** the complete repository suite passes with 393
 tests. The refreshed twenty-program graph has zero stale nodes, and the checked-in
 legacy generated models pass deterministic regeneration checks. A later
 independent audit at HEAD `a77933b` reran 57 focused compiler/dashboard tests and
@@ -294,8 +297,8 @@ an analogous hidden relation found. See
 
 ## Immediate Objective
 
-Close the remaining reusable-width/dashboard gaps, then expand reviewed intrinsic
-capabilities through the artifact chain:
+Close the external-condition, cross-phase, and dashboard-authority gaps, then
+expand reviewed intrinsic capabilities through the artifact chain:
 
 ```text
 registered intrinsics/layout/families + discovered C pair
@@ -313,7 +316,7 @@ dashboard.
 
 **Delivery target:** all nineteen scalar-layout programs, with every exact
 intrinsic and every final program carrying separate hash-bound independent review
-records. This is executable only after the width/tail, external-input,
+records. This is executable only after the external-input,
 cross-phase/counterexample, and dashboard-authority gaps are closed; success for
 all nineteen cannot be promised before those checks expose remaining mismatches.
 
@@ -328,3 +331,8 @@ The review is preserved in `notes/reviews/elementwise-compiler-plan-review-2026-
 After the scope narrowed to nineteen scalar-layout pairs and equal entry contracts,
 a fourth quick pass again returned `GO`; it required the fixed-tail checker to
 preserve element-size divisibility in addition to proving remainder bounds.
+
+**Confirmed M1 review:** the width/tail implementation received `GO` after the
+reviewer reproduced the wide direct-byte-count rejection, mixed I32-to-I16 full
+chain, phase-specific `fNeonSecondary` Spec, and integer descriptor digest guard.
+See `notes/reviews/elementwise-width-tail-review-2026-08-29.md`.

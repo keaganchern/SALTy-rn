@@ -150,6 +150,7 @@ _ALLOWED_KINDS = {
     "DeclStmt",
     "DoStmt",
     "ForStmt",
+    "FloatingLiteral",
     "IfStmt",
     "ImplicitCastExpr",
     "IntegerLiteral",
@@ -161,7 +162,7 @@ _ALLOWED_KINDS = {
     "WhileStmt",
 }
 
-_ALLOWED_BINARY_OPS = {"=", "!=", ">", ">=", "&", "*"}
+_ALLOWED_BINARY_OPS = {"=", "!=", ">", ">=", "&", "*", "/"}
 _ALLOWED_COMPOUND_OPS = {"+=", "-="}
 _ALLOWED_UNARY_OPS = {"-"}
 _ALLOWED_CSTYLE_CASTS = {"BitCast", "IntegralCast", "ToVoid"}
@@ -171,7 +172,11 @@ _ALLOWED_IMPLICIT_CASTS = {
     "IntegralCast",
     "LValueToRValue",
 }
-_FLOAT_TYPE_RE = re.compile(r"(^|[^A-Za-z0-9_])(float|double|_Float16)([^A-Za-z0-9_]|$)")
+_UNSUPPORTED_FLOAT_TYPE_RE = re.compile(
+    r"(^|[^A-Za-z0-9_])(double|_Float16)([^A-Za-z0-9_]|$)"
+)
+
+
 def _sha256(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as stream:
@@ -631,7 +636,7 @@ def _audit_function(
                 type_field.get("qualType"),
                 type_field.get("desugaredQualType"),
             ):
-                if spelling and _FLOAT_TYPE_RE.search(str(spelling)):
+                if spelling and _UNSUPPORTED_FLOAT_TYPE_RE.search(str(spelling)):
                     raise UnsupportedConstructError(
                         f"floating type is outside this slice: {spelling}"
                     )

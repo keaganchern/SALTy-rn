@@ -4,12 +4,12 @@ Last updated: 2026-08-29 (Asia/Seoul)
 
 ## Active Milestone
 
-The reusable 8-bit compiler skeleton is complete, but the final independent audit
-found three framework gaps: generalize the 8-bit/8-lane tail emitters, retire the
-legacy dashboard's parallel case authorities, and wire a real counterexample
-producer. The `s8-vclamp` audit also demonstrates that cross-phase single-function
-obligations can be false without an evidenced external contract. Capability
-expansion and these reusable fixes are now active together.
+The width/tail milestone is complete in the working implementation: Models and
+Spec now preserve distinct 8/16/32-bit input/output widths, complete power-of-two
+tails, and typed RVV byte-to-element conversion. The next active milestone is the
+content-addressed external-condition and cross-phase counterexample path. The
+legacy dashboard's parallel case authorities still need retirement before
+capability expansion becomes the only production status source.
 
 ## Canonical Artifact Chain
 
@@ -210,21 +210,21 @@ Exit gates:
 
 ### M6 — Coverage Expansion
 
-**Status:** Active capability work, outside the completed compiler-infrastructure
-milestone.
+**Status:** Active capability work. The reusable width/tail blocker is closed;
+external conditions, counterexamples, dashboard authority, and intrinsic review
+remain.
 
 Fill missing integer intrinsic variants. Then establish reviewed FP semantics and
 new layout/view capabilities, including planar complex grouping, before claiming
 coverage of all 20 audited elementwise pairs.
 
-Before treating the fourteen scalar blockers as intrinsic-only, generalize the
-current emitter beyond 8-bit input/output streams and generalize the prefix-tail
-emitter beyond exactly one 8-lane load plus 4/2/1 stores.
+Before treating the remaining scalar blockers as intrinsic-only, complete the
+external-condition, cross-phase, and dashboard-authority gates below.
 
 ## Immediate Work Queue
 
-1. turn the current 8-bit stream and exact 8-lane 4/2/1-tail restrictions into
-   explicit reusable capabilities or general emitters, with held-out tests;
+1. implement and validate content-addressed external input evidence and checked
+   cross-phase counterexamples;
 2. migrate or retire legacy `/api/state` case authorities and add a checked-in
    held-out-to-dashboard regression;
 3. add independently reviewed integer/FP intrinsic capabilities, starting from
@@ -236,12 +236,11 @@ emitter beyond exactly one 8-lane load plus 4/2/1 stores.
 6. generate proof tasks for newly unblocked programs and delegate only
    `Proof.lean`;
 7. keep grouped `f32-vcmul` deferred until a reviewed complex layout/view exists;
-8. implement the currently unproduced `counterexample` terminal state and use it
-   to explain false cross-phase/equivalence obligations;
-9. implement the content-addressed external-contract path and, for `s8-vclamp`,
-   bind the confirmed upstream range validation plus parameter initializer to the
-   generated signed `min <= max` condition; preserve the false direct claim and
-   never add the condition inside an agent proof.
+8. use the new `counterexample` terminal state to explain false
+   cross-phase/equivalence obligations;
+9. for `s8-vclamp`, bind the confirmed upstream range validation plus parameter
+   initializer to the generated signed `min <= max` condition; preserve the false
+   direct claim and never add the condition inside an agent proof.
 10. until that path exists, mark all eight audited quantized-parameter programs as
     having unchecked external input conditions; do not present them as proof ready
     solely because Models/Spec were generated.
@@ -253,8 +252,8 @@ separate grouped-layout milestone.
 
 ### Stage A — Close Reusable Framework Gaps
 
-1. generalize element widths, phase widths, loads, and tail stores together with
-   the family theorem and generated Spec shape;
+1. **Completed:** generalize element widths, phase widths, loads, and tail stores
+   together with the family theorem and generated Spec shape;
 2. require every phase to implement one scalar action under the bound conditions,
    otherwise emit a concrete counterexample or an explicit missing-condition
    state;
@@ -262,6 +261,28 @@ separate grouped-layout milestone.
    registered parameter initializers;
 4. make the artifact graph the only production dashboard authority and retire the
    legacy case lists.
+
+## Eight-Commit Execution Ledger
+
+1. **Width/tail generalization — completed and independently reviewed:**
+   8/16/32 input/output widths, float facade types, generic fixed tails, strict RVV
+   byte-to-element normalization, phase-specific scalar functions, held-out
+   generation, and Lean elaboration. Reviewer verdict: `GO`.
+2. **External conditions and counterexamples — next:** independently evidenced
+   conditions, explicit missing-condition state, cross-phase checking, and a real
+   counterexample result producer.
+3. **Single artifact/dashboard authority:** retire production case lists and make
+   verified artifact closure the only status source.
+4. **Intrinsic batch 1:** shared high-fanout integer/bitwise/conversion pieces with
+   exact typed definitions and independent review records.
+5. **Intrinsic batch 2:** remaining FP and typed variants with the same review
+   gates.
+6. **Program batch 1:** generate, prove or explicitly fail, and independently
+   review the first scalar-layout program batch.
+7. **Program batch 2:** apply the same pipeline to the remaining scalar-layout
+   programs without framework edits.
+8. **Final audit:** randomized held-out cases, deterministic regeneration, stale
+   mutation tests, full regression, corpus review, dashboard snapshot, and memory.
 
 ### Stage B — Intrinsic Puzzle Completion and Review
 

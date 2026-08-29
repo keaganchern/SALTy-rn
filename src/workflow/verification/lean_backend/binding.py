@@ -22,6 +22,7 @@ from .frontend import ArgumentFact, IntrinsicCall, KernelExtraction, SourceRange
 from .registry import QS8_VADD_MINMAX_REGISTRY
 from .schema import (
     Architecture,
+    FloatingType,
     IntrinsicSpec,
     OperandTransform,
     Parameter,
@@ -112,6 +113,12 @@ def _type_record(value_type: ValueType) -> dict[str, Any]:
             "c_spelling": value_type.c_spelling,
             "bit_width": value_type.bit_width,
             "signedness": value_type.signedness.value,
+        }
+    if isinstance(value_type, FloatingType):
+        return {
+            "kind": "floating",
+            "c_spelling": value_type.c_spelling,
+            "bit_width": value_type.bit_width,
         }
     if isinstance(value_type, VectorType):
         return {
@@ -293,6 +300,8 @@ def _source_type_matches(source_spelling: str, registry_type: ValueType) -> bool
     if isinstance(registry_type, ScalarType):
         allowed = _SCALAR_SOURCE_SPELLINGS.get(registry_type.c_spelling)
         return allowed is not None and actual in allowed
+    if isinstance(registry_type, FloatingType):
+        return actual == _normalized_c_type(registry_type.c_spelling)
     if isinstance(registry_type, VectorType):
         return actual == _normalized_c_type(registry_type.c_spelling)
     if isinstance(registry_type, PointerType):

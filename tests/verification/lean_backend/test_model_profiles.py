@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pytest
 
+from workflow.verification.lean_backend.case_emit import _function_header
 from workflow.verification.lean_backend.model_profiles import (
     BinaryPrefixTailObligationProfile,
     ModelProfile,
@@ -19,12 +20,66 @@ def test_prefix_tail_rejects_non_power_of_two_load_width() -> None:
         )
 
 
-def test_prefix_tail_rejects_unimplemented_power_of_two_shape() -> None:
-    with pytest.raises(ValueError, match="supports exactly"):
+@pytest.mark.parametrize(
+    ("load_lanes", "store_widths"),
+    ((4, (2, 1)), (8, (4, 2, 1)), (16, (8, 4, 2, 1))),
+)
+def test_prefix_tail_accepts_complete_power_of_two_shapes(
+    load_lanes: int, store_widths: tuple[int, ...]
+) -> None:
+    profile = PrefixTailProfile(
+        element_c_type="uint32_t",
+        load_lanes=load_lanes,
+        store_widths=store_widths,
+    )
+    assert profile.store_widths == store_widths
+
+
+def test_prefix_tail_rejects_incomplete_power_of_two_shape() -> None:
+    with pytest.raises(ValueError, match="every non-full live length"):
         PrefixTailProfile(
             element_c_type="int8_t",
             load_lanes=16,
-            store_widths=(8, 4, 2, 1),
+            store_widths=(8, 4, 2),
+        )
+
+
+def test_block_header_keeps_input_and_output_widths_distinct() -> None:
+    profile = ModelProfile(
+        case_id="example",
+        lean_namespace="Example.Generated",
+        parameter_type="Params",
+        parameter_fields=(),
+        rvv_scalar_types=(),
+        inputs=("input",),
+        neon_block_lanes=4,
+        neon_loop_condition="batch >= 4",
+        neon_loop_update="batch -= 4",
+        input_width=32,
+        output_width=16,
+    )
+
+    assert _function_header("block", profile) == [
+        "def block (p : Params)",
+        "    (input : List (BitVec 32)) : List (BitVec 16) :=",
+    ]
+
+
+@pytest.mark.parametrize(("field", "width"), (("input_width", 64), ("output_width", 1)))
+def test_model_rejects_unsupported_stream_width(field: str, width: int) -> None:
+    arguments = {field: width}
+    with pytest.raises(ValueError, match="must be 8, 16, or 32 bits"):
+        ModelProfile(
+            case_id="example",
+            lean_namespace="Example.Generated",
+            parameter_type="Params",
+            parameter_fields=(),
+            rvv_scalar_types=(),
+            inputs=("input",),
+            neon_block_lanes=4,
+            neon_loop_condition="batch >= 4",
+            neon_loop_update="batch -= 4",
+            **arguments,
         )
 
 

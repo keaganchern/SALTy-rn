@@ -16,6 +16,10 @@ from workflow.verification.lean_backend.frontend import (
     KernelExtraction,
     parse_kernel_explicit,
 )
+from workflow.verification.lean_backend.intrinsic_index import (
+    CANONICAL_INTRINSIC_INDEX,
+    CanonicalIntrinsicIndex,
+)
 from workflow.verification.lean_backend.schema import Architecture as BackendArchitecture
 
 from .capabilities import IntrinsicCapability
@@ -200,12 +204,21 @@ def _parse(request: CompilerRequest) -> tuple[KernelExtraction, KernelExtraction
     return neon, rvv
 
 
-def compile_pair(request: CompilerRequest) -> Compilation:
+def compile_pair(
+    request: CompilerRequest,
+    *,
+    intrinsic_index: CanonicalIntrinsicIndex = CANONICAL_INTRINSIC_INDEX,
+) -> Compilation:
     root = request.repository_root.resolve()
     output = request.output_directory.resolve()
     neon, rvv = _parse(request)
     recognition = recognize_pair(neon, rvv, repository_root=root)
-    intrinsics = resolve_intrinsics(neon, rvv, repository_root=root)
+    intrinsics = resolve_intrinsics(
+        neon,
+        rvv,
+        repository_root=root,
+        index=intrinsic_index,
+    )
     manifest = ProgramManifest(
         compiler_sha256=_compiler_digest(root),
         sources=(

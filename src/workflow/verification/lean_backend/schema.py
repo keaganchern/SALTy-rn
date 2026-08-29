@@ -103,9 +103,24 @@ class ScalarType:
 
 
 @dataclass(frozen=True, slots=True)
+class FloatingType:
+    c_spelling: str
+    bit_width: int
+
+    def __post_init__(self) -> None:
+        if not self.c_spelling:
+            raise SchemaError("floating C spelling must not be empty")
+        if self.bit_width <= 0:
+            raise SchemaError("floating bit width must be positive")
+
+
+ScalarValueType: TypeAlias = ScalarType | FloatingType
+
+
+@dataclass(frozen=True, slots=True)
 class VectorType:
     c_spelling: str
-    element: ScalarType
+    element: ScalarValueType
     fixed_lanes: int | None = None
     lmul: str | None = None
 
@@ -128,7 +143,7 @@ class VectorType:
 
 @dataclass(frozen=True, slots=True)
 class PointerType:
-    pointee: ScalarType
+    pointee: ScalarValueType
     const: bool = False
 
     @property
@@ -146,7 +161,7 @@ class VoidType:
             raise SchemaError("VoidType has the unique spelling 'void'")
 
 
-ValueType: TypeAlias = ScalarType | VectorType | PointerType | VoidType
+ValueType: TypeAlias = ScalarValueType | VectorType | PointerType | VoidType
 
 
 def render_clang_type(value_type: ValueType) -> str:
