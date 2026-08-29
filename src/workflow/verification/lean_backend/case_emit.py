@@ -964,7 +964,9 @@ def _consume_little_endian_lane_store(
 
 
 def _emit_multiphase_64_8_tail_value_models(
-    extraction: KernelExtraction, registry: Mapping[str, IntrinsicSpec]
+    extraction: KernelExtraction,
+    registry: Mapping[str, IntrinsicSpec],
+    parameter_type: str,
 ) -> tuple[list[str], tuple[str, ...]]:
     """Emit the exact S8 8-lane and live-prefix value adapters.
 
@@ -1025,7 +1027,7 @@ def _emit_multiphase_64_8_tail_value_models(
     lines = [
         "",
         "/-- Generated value model of the source's reversed-order 8-lane block. -/",
-        "def neonBlock8FromIntrinsics (p : S8ClampParams)",
+        f"def neonBlock8FromIntrinsics (p : {parameter_type})",
         "    (input : List (BitVec 8)) : List (BitVec 8) :=",
         *block.lines,
         f"  {block_output}",
@@ -1034,7 +1036,7 @@ def _emit_multiphase_64_8_tail_value_models(
         "",
         "This definition does not establish C memory, alignment, aliasing, or endian adequacy.",
         "-/",
-        "def neonPartialTailLivePrefixFromIntrinsics (p : S8ClampParams)",
+        f"def neonPartialTailLivePrefixFromIntrinsics (p : {parameter_type})",
         "    (loaded : List (BitVec 8)) (live : Nat) : List (BitVec 8) :=",
         *partial.lines,
         f"  ({stored4}) ++ ({stored2}) ++ ({stored1})",
@@ -1044,7 +1046,7 @@ def _emit_multiphase_64_8_tail_value_models(
         "`overread` supplies the bytes physically loaded beyond a nonempty short tail.",
         "This definition does not establish that those bytes are legally readable.",
         "-/",
-        "def neonValueLoopWithOverreadFromIntrinsics (p : S8ClampParams)",
+        f"def neonValueLoopWithOverreadFromIntrinsics (p : {parameter_type})",
         "    (input overread : List (BitVec 8)) : List (BitVec 8) :=",
         "  SALT.Kernel.Schedule.runFixedChunkTail 64 (by decide)",
         "    (neonBlock64FromIntrinsics p)",
@@ -1056,7 +1058,7 @@ def _emit_multiphase_64_8_tail_value_models(
         "    input",
         "",
         "/-- Zero-filled compatibility specialization of the arbitrary-overread model. -/",
-        "def neonValueLoopFromIntrinsics (p : S8ClampParams)",
+        f"def neonValueLoopFromIntrinsics (p : {parameter_type})",
         "    (input : List (BitVec 8)) : List (BitVec 8) :=",
         "  neonValueLoopWithOverreadFromIntrinsics p input",
         "    (List.replicate 7 (0 : BitVec 8))",
@@ -1944,7 +1946,7 @@ def emit_case_pair(
     neon_extra_lines: list[str] = []
     if profile.multiphase_widths:
         neon_extra_lines, tail_consumed = _emit_multiphase_64_8_tail_value_models(
-            neon, neon_registry
+            neon, neon_registry, profile.parameter_type
         )
         overlap = set(neon_consumed) & set(tail_consumed)
         if overlap:

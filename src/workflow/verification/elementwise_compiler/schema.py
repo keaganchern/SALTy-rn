@@ -447,32 +447,53 @@ class CapabilityRef:
 @dataclass(frozen=True, slots=True)
 class LayoutInstance:
     capability: CapabilityRef
-    element_c_type: str
+    stream_c_types: tuple[tuple[str, str], ...]
     input_streams: tuple[str, ...]
     output_streams: tuple[str, ...]
 
     def __post_init__(self) -> None:
-        _text(self.element_c_type, "layout element C type")
         for field, values in (("input streams", self.input_streams), ("output streams", self.output_streams)):
             if not values or tuple(sorted(set(values))) != values:
                 raise ElementwiseSchemaError(f"{field} must be non-empty, sorted, and unique")
             for value in values:
                 _text(value, field)
+        stream_names = self.input_streams + self.output_streams
+        type_names = tuple(name for name, _ in self.stream_c_types)
+        if type_names != tuple(sorted(stream_names)):
+            raise ElementwiseSchemaError(
+                "layout stream C types must name every input/output stream exactly once"
+            )
+        for name, c_type in self.stream_c_types:
+            _text(name, "layout stream name")
+            _text(c_type, "layout stream C type")
 
     def to_record(self) -> dict[str, Any]:
         return {
             "capability": self.capability.to_record(),
-            "element_c_type": self.element_c_type,
+            "stream_c_types": [
+                {"stream": stream, "c_type": c_type}
+                for stream, c_type in self.stream_c_types
+            ],
             "input_streams": list(self.input_streams),
             "output_streams": list(self.output_streams),
         }
 
     @classmethod
     def from_record(cls, data: Mapping[str, Any]) -> "LayoutInstance":
-        _exact_keys(data, {"capability", "element_c_type", "input_streams", "output_streams"}, "layout instance")
+        _exact_keys(data, {"capability", "stream_c_types", "input_streams", "output_streams"}, "layout instance")
+        stream_types: list[tuple[str, str]] = []
+        for item in _sequence(data["stream_c_types"], "layout stream C types"):
+            record = _mapping(item, "layout stream C type")
+            _exact_keys(record, {"stream", "c_type"}, "layout stream C type")
+            stream_types.append(
+                (
+                    _text(record["stream"], "layout stream name"),
+                    _text(record["c_type"], "layout stream C type"),
+                )
+            )
         return cls(
             capability=CapabilityRef.from_record(_mapping(data["capability"], "layout capability")),
-            element_c_type=_text(data["element_c_type"], "layout element C type"),
+            stream_c_types=tuple(stream_types),
             input_streams=tuple(_text(item, "input stream") for item in _sequence(data["input_streams"], "input streams")),
             output_streams=tuple(_text(item, "output stream") for item in _sequence(data["output_streams"], "output streams")),
         )

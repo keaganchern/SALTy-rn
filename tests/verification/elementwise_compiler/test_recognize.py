@@ -66,6 +66,21 @@ def test_scalar_fixed_tail_and_rvv_are_recognized_from_structure(
     assert result.contracts.neon == result.contracts.rvv
 
 
+@pytest.mark.parametrize(
+    ("case", "phase_widths"),
+    (("qs8-vadd-minmax", (16, 8)), ("s8-vclamp", (64, 8))),
+)
+def test_two_phase_schedule_is_selected_from_control_structure(
+    case: str, phase_widths: tuple[int, int]
+) -> None:
+    result = recognize_pair(*_pair(case), repository_root=ROOT)
+
+    assert result.neon.kind is ScheduleKind.MULTI_PHASE
+    assert result.neon.phase_widths == phase_widths
+    assert result.neon.store_widths == (4, 2, 1)
+    assert result.schedules[0].capability.capability_id == "schedule:neon:multi-phase"
+
+
 def test_tail_store_plan_mutation_fails_family_recognition(tmp_path: Path) -> None:
     source = ROOT / "kernels/source/qs8-vcvt.c"
     mutated = tmp_path / "arbitrary.c"

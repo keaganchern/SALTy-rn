@@ -51,7 +51,12 @@ def _manifest() -> ProgramManifest:
     intrinsic = CapabilityRef("intrinsic:vmax:s8", 1, D)
     layout_capability = CapabilityRef("layout:scalar-lane", 1, E)
     schedule_capability = CapabilityRef("schedule:fixed-tail", 1, F)
-    layout = LayoutInstance(layout_capability, "int8_t", ("input",), ("output",))
+    layout = LayoutInstance(
+        layout_capability,
+        (("input", "int8_t"), ("output", "int8_t")),
+        ("input",),
+        ("output",),
+    )
     schedules = (
         ScheduleInstance(Architecture.NEON, schedule_capability, (("lanes", 8),), D),
         ScheduleInstance(Architecture.RVV, CapabilityRef("schedule:rvv-stripmine", 1, D), (("sew", 8),), E),
@@ -110,7 +115,7 @@ def test_manifest_round_trip_is_strict_and_content_addressed() -> None:
     assert len(manifest.sha256) == 64
 
     changed = copy.deepcopy(record)
-    changed["layout"]["element_c_type"] = "uint8_t"
+    changed["layout"]["stream_c_types"][0]["c_type"] = "uint8_t"
     with pytest.raises(ElementwiseSchemaError, match="digest disagrees"):
         ProgramManifest.from_record(changed)
 

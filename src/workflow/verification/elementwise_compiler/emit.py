@@ -131,8 +131,8 @@ def infer_model_profile(
 ) -> ModelProfile:
     """Construct the old block-emitter interface solely from extracted facts."""
 
-    if recognition.element_width != 8:
-        raise GenerationError("the current block emitter supports 8-bit streams")
+    if recognition.element_width != 8 or recognition.output_width != 8:
+        raise GenerationError("the current block emitter supports 8-bit input/output streams")
     fields = _field_widths((neon, rvv))
     prefix = None
     if recognition.neon.kind is ScheduleKind.FIXED_TAIL:
@@ -161,6 +161,11 @@ def infer_model_profile(
         ),
         prefix_tail=prefix,
         rvv_signed_shift_branch=bool(recognition.rvv.nested_controls),
+        multiphase_widths=(
+            recognition.neon.phase_widths
+            if recognition.neon.kind is ScheduleKind.MULTI_PHASE
+            else ()
+        ),
     )
 
 
@@ -246,6 +251,23 @@ def _model_extensions(
                     f"    {first} {second} sameLength schedule",
                 ]
             )
+    elif recognition.neon.kind is ScheduleKind.MULTI_PHASE:
+        if len(inputs) != 1:
+            raise GenerationError(
+                "the current multi-phase value emitter supports one input stream"
+            )
+        name = inputs[0]
+        lines.extend(
+            [
+                "",
+                "/-- Generated RVV positive-partition assembly. -/",
+                f"def rvvValueLoopFromIntrinsics (p : {profile.parameter_type})",
+                f"    ({name} : List (BitVec {width}))",
+                f"    (schedule : SALT.Kernel.Schedule.PositivePartition {name}.length) :",
+                f"    List (BitVec {width}) :=",
+                f"  SALT.Kernel.Schedule.processBlocks ({profile.rvv_function} p) {name} schedule",
+            ]
+        )
     return lines
 
 
@@ -303,14 +325,19 @@ def _spec_text(
     if binary:
         neon_loop_args += " sameLength"
         rvv_loop_args += " sameLength"
-    if recognition.neon.kind is ScheduleKind.FIXED_TAIL:
+    tail_family = recognition.neon.kind in {
+        ScheduleKind.FIXED_TAIL,
+        ScheduleKind.MULTI_PHASE,
+    }
+    if tail_family:
+        tail_load_width = recognition.neon.phase_widths[-1]
         overreads = tuple(f"overread{index}" for index in range(len(inputs)))
         overread_binder = f"({' '.join(overreads)} : List (BitVec {width}))"
         neon_loop_args = f"p {params} {' '.join(overreads)}"
         if binary:
             neon_loop_args += " sameLength"
         overread_condition = " ∧ ".join(
-            f"{block_width - 1} ≤ {name}.length" for name in overreads
+            f"{tail_load_width - 1} ≤ {name}.length" for name in overreads
         )
     else:
         overread_binder = ""
@@ -322,7 +349,7 @@ def _spec_text(
     )
     neon_precondition = (
         f"{overread_condition} →"
-        if recognition.neon.kind is ScheduleKind.FIXED_TAIL
+        if tail_family
         else f"{block_width} ∣ {inputs[0]}.length →"
     )
     spec = [
@@ -351,6 +378,17 @@ def _spec_text(
             [
                 f"    {inputs[0]}.length = {block_width} →",
                 f"    {profile.neon_function} p {params} = {map_expr}",
+            ]
+        )
+    if recognition.neon.kind is ScheduleKind.MULTI_PHASE:
+        small_width = recognition.neon.phase_widths[-1]
+        spec.extend(
+            [
+                "",
+                "def neonSecondaryBlockEqualsMapClaim : Prop :=",
+                f"  ∀ (p : {profile.parameter_type}) {list_binders},",
+                f"    {inputs[0]}.length = {small_width} →",
+                f"    neonBlock{small_width}FromIntrinsics p {params} = {map_expr}",
             ]
         )
     spec.extend(
