@@ -206,3 +206,30 @@ node. The old profile entry point still passes its regression tests.
 spellings with multiple configured lowering descriptors. Stage 2 must either bind
 one reviewed program-independent capability or return `intrinsic-ambiguous`; it
 must not choose by former case provenance.
+
+## 2026-08-29 — Implementation stage 2: generic manifest and Models/Spec generation
+
+**Question:** Can real unary, binary, tail, and no-tail pairs be generated without
+selecting a named program profile, and can the specification remain separate from
+the proof?
+
+**Conclusion:** yes for the current 8-bit scalar-layout slice. The explicit
+compiler now resolves exact intrinsics with one global information-preserving rule,
+recognizes scalar stream layout plus fixed/RVV schedules, verifies all parsed
+calls/control/assert/effects are consumed, and emits a canonical manifest,
+capabilities, independent Models, proof-free Spec, and artifact index. The same
+path generated `qs8-vcvt`, `qu8-vadd-minmax`, and a normalized synthetic `s8-vmax`.
+Their generated Lean Models and Specs elaborate. Deleting and regenerating output
+is byte deterministic.
+
+The remaining legacy S8 multiphase emitter selection was changed from a program-id
+test to structural `multiphase_widths`; the production compiler itself accepts no
+case id. This is groundwork, not yet proof that all nineteen programs compile.
+
+**Evidence:** 129 focused Python regressions; Lean builds of
+`SALT.Kernel.ElementwiseLayout`, the generated unary/binary/no-tail smoke modules,
+and `SALT.Example.S8VMax.Audit`.
+
+**Unresolved:** build and validate ProofTask/Result; run held-out and mutation
+gates; batch-classify all nineteen; add general multi-phase recognition and missing
+integer/FP semantics; drive the dashboard from the artifact graph.

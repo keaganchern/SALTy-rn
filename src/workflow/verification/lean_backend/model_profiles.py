@@ -114,6 +114,7 @@ class ModelProfile:
     unary_prefix_tail_obligation: UnaryPrefixTailObligationProfile | None = None
     binary_prefix_tail_obligation: BinaryPrefixTailObligationProfile | None = None
     rvv_signed_shift_branch: bool = False
+    multiphase_widths: tuple[int, ...] = ()
 
     def __post_init__(self) -> None:
         if (
@@ -127,6 +128,14 @@ class ModelProfile:
         ):
             raise ValueError(
                 "a prefix-tail load width must match the fixed Neon block width"
+            )
+        if self.multiphase_widths and (
+            self.multiphase_widths[0] != self.neon_block_lanes
+            or tuple(sorted(set(self.multiphase_widths), reverse=True))
+            != self.multiphase_widths
+        ):
+            raise ValueError(
+                "multi-phase widths must be unique, descending, and start at the main width"
             )
         if self.unary_prefix_tail_obligation is not None:
             if self.prefix_tail is None:
@@ -164,6 +173,7 @@ S8_VCLAMP_MODEL = ModelProfile(
     neon_block_lanes=64,
     neon_loop_condition="batch >= 64",
     neon_loop_update="batch -= 64",
+    multiphase_widths=(64, 8),
 )
 
 QS8_VCVT_MODEL = ModelProfile(

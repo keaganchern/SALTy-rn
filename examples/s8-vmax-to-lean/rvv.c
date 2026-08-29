@@ -6,6 +6,7 @@ void test_rvv(
     const struct salt_s8_vmax_params* restrict params) XNN_OOB_READS
 {
   assert(batch != 0);
+  assert(batch % 16 == 0);
   assert(input != NULL);
   assert(output != NULL);
 

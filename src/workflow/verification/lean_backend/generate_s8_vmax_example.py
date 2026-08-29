@@ -102,6 +102,7 @@ S8_VMAX_EXAMPLE_FRONTEND = FrontendProfile(
         parameters=_PARAMETERS,
         assertions=(
             FrontendAssertion("assert(batch!=0);", None),
+            FrontendAssertion("assert(batch%16==0);", None),
             FrontendAssertion("assert(input!=NULL);", None),
             FrontendAssertion("assert(output!=NULL);", None),
         ),

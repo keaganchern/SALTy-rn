@@ -325,6 +325,7 @@ def _clang_ast(
     facade: Path,
     clang: str,
     target_triple: str,
+    extra_args: Sequence[str] = (),
 ) -> tuple[dict[str, Any], tuple[str, ...], tuple[str, ...], str, str]:
     command = (
         clang,
@@ -338,6 +339,7 @@ def _clang_ast(
         "-Werror=backslash-newline-escape",
         "-include",
         str(facade),
+        *extra_args,
         "-Xclang",
         "-ast-dump=json",
         str(source),
@@ -366,6 +368,7 @@ def _clang_ast(
         "-P",
         "-include",
         str(facade),
+        *extra_args,
         str(source),
     )
     try:
@@ -1170,6 +1173,7 @@ def parse_kernel_explicit(
     facade: str | Path,
     target_triple: str,
     clang: str = "clang",
+    clang_args: Sequence[str] = (),
 ) -> KernelExtraction:
     """Parse one kernel without any case, path, or function-name fallback.
 
@@ -1196,7 +1200,7 @@ def parse_kernel_explicit(
     _reject_source_preprocessor_directives(source_path)
 
     ast, command, preprocess_command, clang_version, preprocessed_sha256 = _clang_ast(
-        source_path, facade_path, clang, target_triple
+        source_path, facade_path, clang, target_triple, clang_args
     )
     function = _find_function(ast, source_path, function_name)
     _validate_explicit_kernel_signature(function)

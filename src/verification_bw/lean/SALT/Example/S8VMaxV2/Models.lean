@@ -21,9 +21,9 @@ def fRvv (p : S8VMaxParams) (x : BitVec 8) : BitVec 8 :=
 def neonSourceAsserts (batch : Nat) : Prop :=
   batch ≠ 0 ∧ batch % 16 = 0
 
-/-- Direct translation of the value-relevant RVV assertion. -/
+/-- Direct translation of the value-relevant RVV assertions. -/
 def rvvSourceAsserts (batch : Nat) : Prop :=
-  batch ≠ 0
+  batch ≠ 0 ∧ batch % 16 = 0
 
 /-- Generated assembly of the fixed-width Neon loop. The empty tail is safe
     only under `batch % 16 = 0`, which remains explicit in `Spec.lean`. -/

@@ -205,3 +205,28 @@ restricted parser translates side-effect-free C conditions into typed normalized
 trees. Entry assertions form the side contract; nested assertions remain local
 obligations. No handwritten expected-assertion list participates in the production
 path.
+
+## EC-021: Ambiguous Intrinsics Use One Information-Preserving Global Rule
+
+**Status:** Accepted and implemented, 2026-08-29.
+
+When several configured exact typed descriptors share a source spelling, argument
+types, result type, and architecture, select only by descriptor information: retain
+more semantic operands, prefer identity operand transforms, and erase fewer source
+constraints. Program name, path, function name, namespace, and former profile
+provenance are forbidden inputs. A remaining tie is `intrinsic-ambiguous`.
+
+Capability records bind both the selected descriptor and implementation digests.
+This resolves the five existing integer fixtures without pretending the selected
+definitions have independent architecture review.
+
+## EC-022: Generated Models and Specifications Are Separate Frozen Parents
+
+**Status:** Accepted and implemented, 2026-08-29.
+
+`Models.lean` contains the independently projected Neon/RVV value models and loop
+assembly. `Spec.lean` imports Models and declares proof-free named propositions:
+each loop equals its map/zipWith form, the two element functions agree, and the
+complete value observations agree. Neither artifact contains proof search output.
+The later `ProofTask.json` binds their hashes and designates `Proof.lean` as the
+only mutable proof artifact.

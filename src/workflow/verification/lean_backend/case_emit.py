@@ -350,7 +350,11 @@ def _byte_tail_control_shape(
 def _validate_neon_control_shape(
     extraction: KernelExtraction, profile: ModelProfile, loop: ControlFact
 ) -> None:
-    if profile.case_id == "s8-vclamp":
+    if profile.multiphase_widths:
+        if profile.multiphase_widths != (64, 8):
+            raise CaseEmissionError(
+                f"unsupported multi-phase widths {profile.multiphase_widths!r}"
+            )
         expected = _S8_VCLAMP_NEON_CONTROL_SHAPE
     elif profile.prefix_tail is not None:
         expected = _byte_tail_control_shape(loop, profile.prefix_tail.element_c_type)
@@ -959,7 +963,7 @@ def _consume_little_endian_lane_store(
     return name
 
 
-def _emit_s8_tail_value_models(
+def _emit_multiphase_64_8_tail_value_models(
     extraction: KernelExtraction, registry: Mapping[str, IntrinsicSpec]
 ) -> tuple[list[str], tuple[str, ...]]:
     """Emit the exact S8 8-lane and live-prefix value adapters.
@@ -1938,20 +1942,20 @@ def emit_case_pair(
         neon, profile, neon_registry
     )
     neon_extra_lines: list[str] = []
-    if profile.case_id == "s8-vclamp":
-        neon_extra_lines, tail_consumed = _emit_s8_tail_value_models(
+    if profile.multiphase_widths:
+        neon_extra_lines, tail_consumed = _emit_multiphase_64_8_tail_value_models(
             neon, neon_registry
         )
         overlap = set(neon_consumed) & set(tail_consumed)
         if overlap:
             raise CaseEmissionError(
-                f"s8-vclamp: duplicate Neon call consumption {sorted(overlap)!r}"
+                f"multi-phase: duplicate Neon call consumption {sorted(overlap)!r}"
             )
         combined = set(neon_consumed) | set(tail_consumed)
         all_calls = {call.node_id for call in neon.calls}
         if combined != all_calls:
             raise CaseEmissionError(
-                "s8-vclamp: complete Neon value-call coverage mismatch: "
+                "multi-phase: complete Neon value-call coverage mismatch: "
                 f"missing={sorted(all_calls - combined)!r}, "
                 f"extra={sorted(combined - all_calls)!r}"
             )
@@ -2017,7 +2021,7 @@ def emit_case_pair(
             )
     schedule_import = (
         ["import SALT.Kernel.Schedule"]
-        if profile.case_id == "s8-vclamp" or profile.prefix_tail is not None
+        if profile.multiphase_widths or profile.prefix_tail is not None
         else []
     )
     lines = [

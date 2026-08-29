@@ -173,7 +173,7 @@ isolation.
 
 ## Current Implementation
 
-**Confirmed:** implementation stage 1 now provides strict content-addressed
+**Confirmed:** implementation stages 1 and 2 now provide strict content-addressed
 schemas for intrinsic/layout/schedule capabilities, typed entry contracts,
 program manifests, generated artifacts, proof tasks, and terminal results. It also
 adds a profile-free Clang entry point: callers explicitly provide both C paths,
@@ -183,18 +183,29 @@ their control context and translated by a fail-closed typed expression parser.
 
 The generic path has been exercised on all five existing integer pairs without
 reading their named frontend profiles. Their normalized entry contracts match;
-`qs8-vcvt`'s two local tail assertions remain local facts. Forty-eight focused
-schema/frontend tests pass.
+`qs8-vcvt`'s two local tail assertions remain local facts. Exact intrinsic
+ambiguities are resolved by one program-independent, information-preserving rule;
+true ties fail closed. The compiler recognizes scalar streams, fixed-no-tail,
+fixed-tail with 4/2/1 prefix stores, and RVV strip-mining, and hash-binds the
+complete parsed call/control/assert/effect inventory. It emits canonical
+`ProgramManifest.json`, capability records, independent `fNeon`/`fRvv`
+definitions, proof-free `Models.lean`/`Spec.lean`, and an artifact index.
 
-**Remaining gap:** intrinsic ambiguity resolution, whole-function effect
-accounting, layout/schedule recognition, generated Models/Spec, proof execution,
-held-out tests, and artifact-driven dashboard integration are not yet complete.
-The old case-scoped backend remains only as regression evidence while those pieces
-move to the new path.
+Generated unary tail (`qs8-vcvt`), binary tail (`qu8-vadd-minmax`), and synthetic
+fixed-no-tail (`s8-vmax`) outputs elaborate in Lean. Output deletion and
+regeneration is byte deterministic. The old named profiles remain regression
+adapters; the production compiler accepts no case id and its generation path no
+longer dispatches on one.
+
+**Remaining gap:** ProofTask/proof/result execution, held-out mutation gates,
+artifact-driven dashboard integration, batch coverage reporting for all nineteen,
+multi-phase recognition, and broader integer/FP intrinsic semantics are not yet
+complete.
 
 ## Immediate Objective
 
-Make fixed-no-tail generation pass the two-positive/one-negative held-out gate:
+Generate and check ProofTask/Result, then make fixed-no-tail generation pass the
+two-positive/one-negative held-out gate:
 
 ```text
 registered intrinsics/layout/families + two positive C pairs + one mutation

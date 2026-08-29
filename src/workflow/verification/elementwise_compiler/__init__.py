@@ -14,6 +14,12 @@ from .contracts import (
     parse_assertion,
     translate_assertions,
 )
+from .intrinsics import (
+    IntrinsicResolutionError,
+    ResolvedIntrinsicSet,
+    resolve_intrinsics,
+)
+from .recognize import PairRecognition, RecognitionError, recognize_pair
 from .schema import (
     BOOL,
     SIZE_T,
@@ -58,6 +64,7 @@ __all__ = [
     "EntryContract",
     "GeneratedArtifact",
     "IntrinsicCapability",
+    "IntrinsicResolutionError",
     "IntrinsicRole",
     "LayoutInstance",
     "LayoutKind",
@@ -65,9 +72,12 @@ __all__ = [
     "LocalAssertionFact",
     "ProgramManifest",
     "ParsedAssertion",
+    "PairRecognition",
     "ProofTask",
     "Result",
     "ResultStatus",
+    "RecognitionError",
+    "ResolvedIntrinsicSet",
     "ScheduleInstance",
     "ScheduleFamilyCapability",
     "ScheduleKind",
@@ -75,5 +85,7 @@ __all__ = [
     "canonical_json",
     "canonical_sha256",
     "parse_assertion",
+    "recognize_pair",
+    "resolve_intrinsics",
     "translate_assertions",
 ]

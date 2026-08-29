@@ -4,9 +4,8 @@ Last updated: 2026-08-29 (Asia/Seoul)
 
 ## Active Milestone
 
-Define the minimum capability, assumption, artifact, and result schemas needed by
-one real vertical slice. Do not extend the old case-scoped path or design the full
-dashboard against hypothetical files.
+Close the proof/result integrity gate around the generated Models/Spec vertical
+slice. Do not broaden the dashboard before the accepted result artifact exists.
 
 The first production gate remains: take two fixed-no-tail C pairs whose typed
 intrinsics already exist and generate/check the entire stack with zero Python/Lean
@@ -76,7 +75,7 @@ Exit gates:
 
 ### M1b — Thin Generic Fixed-No-Tail Slice
 
-**Status:** In progress.
+**Status:** Completed in implementation stage 2, including fixed-tail reuse.
 
 Deliver the narrowest real compiler path before broad dashboard work:
 
@@ -176,7 +175,8 @@ Exit gates:
 
 ### M4 — Fixed Tail and Binary Reuse
 
-**Status:** Pending.
+**Status:** Core generation completed early in implementation stage 2; mutation
+and held-out gates remain part of M2.
 
 Deliver:
 
@@ -217,17 +217,13 @@ coverage of all 20 audited elementwise pairs.
 
 Only the first incomplete item is active:
 
-1. implement the explicit-entry generic frontend and fixed-no-tail manifest;
-   the explicit frontend and typed contract translation are complete, while
-   intrinsic resolution, effect accounting, and family recognition remain;
-2. generate Models/Spec from that manifest;
-3. generate/check ProofTask/Result;
-4. run the two-positive/one-negative held-out matrix;
-5. make the dashboard read those real artifacts;
-6. migrate fixed-tail unary/binary fixtures;
-7. add multi-phase composition;
-8. expand integer intrinsics;
-9. add FP and grouped logical-element layouts.
+1. generate/check ProofTask/Result and protect the frozen parent closure;
+2. run the two-positive/one-negative held-out matrix plus structural mutations;
+3. make the dashboard read those real artifacts;
+4. batch-classify the nineteen scalar-layout pairs from explicit inputs;
+5. add multi-phase composition for the three identified programs;
+6. expand integer intrinsics;
+7. add reviewed FP semantics; keep grouped `f32-vcmul` deferred.
 
 ## Global Acceptance Gates
 

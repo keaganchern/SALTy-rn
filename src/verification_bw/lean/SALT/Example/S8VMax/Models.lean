@@ -7,11 +7,11 @@ namespace SALT.Example.S8VMax
 def neonSourceSha256 : String :=
   "fa1d4cdfcdfa9f19312377664f7524cb3c4f48f052cb13f7ddaecedbe3ab2ade"
 def rvvSourceSha256 : String :=
-  "3b204e9cb0ac317bd8a2123daa552e2a13faffc075905a2886ce180a39805b33"
+  "f408598c97b9a64d325ca4a15bd42385912823ae7cd8393ecab48e60fe9a88c3"
 def neonPreprocessedSha256 : String :=
   "89ccace9e5a75e65a5ed2ad359129651f956861e26dcab971837e65aa57db16b"
 def rvvPreprocessedSha256 : String :=
-  "5b6c8dcf07364bf3737645e46a6528dee2667f31b2e65988559e9c7a2c7fc6c3"
+  "869da9b1c99372a850983c3bc23e6b5442bef19f9180f4aa3e011ad35b38061d"
 def parseFacadeSha256 : String :=
   "eff6d9864387e1b66d1b6980dcae589ac17dc7d8bf65e650bfee350a1c5655c4"
 def registrySha256 : String :=

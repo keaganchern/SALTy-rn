@@ -11,6 +11,8 @@ import SALT.Kernel.QS8VAdd.Neon
 import SALT.Kernel.QS8VAdd.RVV
 import SALT.Kernel.QS8VAdd.Equivalence
 import SALT.Kernel.Schedule
+import SALT.Kernel.ElementwiseLayout
+import SALT.Kernel.ElementwiseFamily
 import SALT.Generated.QS8VAddMinmax.Proof
 import SALT.Generated.S8VClamp.Proof
 import SALT.Generated.S8VClamp.AllLengths
