@@ -147,3 +147,16 @@ runs in a clean temporary checkout/output root, randomizes the second fixture's
 paths and function/module identities, deletes and regenerates outputs, and leaves
 tracked framework files unchanged. The generic path forbids path-based defaults,
 case ids, and manually listed proof targets.
+
+## EC-017: Translation Uses Source-Domain Contract Refinement
+
+**Status:** Accepted, 2026-08-29. Supersedes the domain rule in EC-013 while
+preserving EC-013 as review history.
+
+Do not prove the primary translation theorem under the conjunction of every Neon
+and RVV assertion. For directed Neon-to-RVV correctness, use the Neon entry
+contract as the caller domain and prove that it implies the RVV entry contract.
+Otherwise a stronger target assertion can silently remove source-valid inputs from
+the theorem. Assertions nested under control flow are local proof obligations at
+their program point, not function-entry assumptions. Unsupported assertion syntax
+fails closed; the proof agent cannot turn it into a new assumption.

@@ -59,7 +59,8 @@ Deliver only the schemas and canonical hashing needed by the vertical slice:
 - global exact `IntrinsicCapability` without `supported_cases` authority;
 - scalar-lane `LayoutViewCapability`;
 - fixed-no-tail and RVV-strip-mine `ScheduleFamilyCapability` identities;
-- separate Neon/RVV extracted assumption trees plus family/intrinsic legality;
+- typed entry contracts, local assertion obligations, and a directional
+  Neon-contract-implies-RVV-contract check;
 - canonical `ProgramManifest`, `ProofTask`, and terminal `Result` schemas;
 - explicit parent hashes and stable failure-state enum.
 
@@ -80,7 +81,7 @@ Exit gates:
 Deliver the narrowest real compiler path before broad dashboard work:
 
 - generic explicit-entry frontend with no path-based/default-profile fallback;
-- typed source assertion extraction into separate side assumption trees;
+- typed assertion extraction with entry-versus-local control context;
 - exact global intrinsic binding;
 - scalar-lane layout and fixed-no-tail/RVV schedule recognition;
 - whole-function consumed-statement/effect accounting;
@@ -93,6 +94,10 @@ Exit gates:
   generation;
 - call signature, pointer step, loop/count update, assertion, or `vl` mutations
   change the manifest or fail closed;
+- a stronger RVV entry assertion that is not implied by the Neon contract is
+  rejected instead of being added to the theorem precondition;
+- tail-local assertions are proved from the path condition and current remainder,
+  not copied into the function-entry contract;
 - generated family instances bind the exact parsed control/effect inventory;
 - no code branch depends on kernel id, input path, basename, function name, or
   generated namespace;

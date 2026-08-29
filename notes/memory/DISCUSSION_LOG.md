@@ -84,3 +84,32 @@ amendments were applied before committing the review baseline.
 
 **Unresolved:** begin M1a and enforce its schema/hash exit gates before implementing
 the generic frontend.
+
+## 2026-08-29 — Concrete assertion audit and contract correction
+
+**Question:** Is taking all Neon and RVV assertions as a conjunction correct, and
+what exactly should the held-out gate test?
+
+**Conclusion:** no. Shared assertions are insufficient, but conjoining every
+assertion also hides a target that is stricter than the source. Directed
+translation must use the Neon entry contract as its domain and prove it implies
+the RVV entry contract. Assertions nested under a branch or loop are local proof
+obligations using the current symbolic state and reach condition. This supersedes
+the domain formula in EC-013 through EC-017.
+
+The first acceptance gate is a compiler/framework generalization test, not another
+semantic axiom and not a per-program proof substitute. At least one unseen
+same-family positive and one semantic/structural negative are necessary evidence
+for the claimed zero-framework-edit automation. Name/path randomization is a cheap
+regression check against the current case-scoped architecture, not part of the
+trusted computing base.
+
+**Evidence:** `examples/s8-vmax-to-lean` has a Neon-only `batch % 16 == 0` entry
+assertion; dropping it admits inputs for which the fixed-no-tail Neon loop and RVV
+loop differ. `kernels/source/f32-f16-vcvt.c` has bounds on the reduced `batch`
+inside its tail branch; treating those as entry assumptions incorrectly excludes
+larger valid inputs. A target-only stronger divisibility assertion demonstrates
+why taking the union/intersection of both sides can hide a translation-domain gap.
+
+**Unresolved:** implement the supported assertion-expression grammar, implication
+checking, and local path-obligation generation in M1a/M1b.

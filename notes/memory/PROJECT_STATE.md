@@ -149,11 +149,13 @@ The proof agent may not add axioms, weaken a frozen goal, or invent a preconditi
 A false or unsupported direct claim returns failure or a counterexample. An
 optional contextual claim is regenerated only from separately supplied evidence.
 
-Direct paired claims retain the complete separate Neon and RVV assumption sets and
-add family/intrinsic legality. They do not reduce the domain to assertion text
-shared by both sides. Generated artifacts form a canonical content-addressed chain
-from manifest through result; proof acceptance uses before/after protected-closure
-digests and is an integrity gate, not process isolation.
+For directed Neon-to-RVV correctness, the theorem uses the Neon entry contract as
+its caller domain and separately proves that it implies the RVV entry contract.
+It neither keeps only shared assertion text nor intersects every assertion from
+both files. Assertions below a branch or loop are local reach-point obligations,
+not entry assumptions. Generated artifacts form a canonical content-addressed
+chain from manifest through result; proof acceptance uses before/after
+protected-closure digests and is an integrity gate, not process isolation.
 
 ## Current Gap
 

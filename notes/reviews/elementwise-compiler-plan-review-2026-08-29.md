@@ -121,3 +121,13 @@ precisely. All five were applied.
 
 These deferrals must remain visible dashboard layers and cannot be inferred from a
 value proof.
+
+## Post-Review Correction: Assertion Direction
+
+A subsequent concrete audit found that the round-two recommendation to conjoin
+the complete per-side assumption sets was too weak for directed translation and
+wrong for control-local assertions. The accepted correction is EC-017: use the
+Neon entry contract as the source-call domain, prove it implies the RVV entry
+contract, and prove nested assertions at their actual program points. This keeps
+the useful review finding--shared-text intersection is unsound--without hiding a
+stronger target precondition inside the theorem domain.
