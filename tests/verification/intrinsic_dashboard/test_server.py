@@ -20,9 +20,16 @@ from src.workflow.verification.intrinsic_dashboard.server import (
 
 
 @contextmanager
-def running_server(state_provider) -> Iterator[tuple[DashboardHTTPServer, int]]:
+def running_server(
+    state_provider,
+    elementwise_provider=lambda: {"schema_version": 1, "available": False},
+) -> Iterator[tuple[DashboardHTTPServer, int]]:
     try:
-        server = create_server(port=0, state_provider=state_provider)
+        server = create_server(
+            port=0,
+            state_provider=state_provider,
+            elementwise_provider=elementwise_provider,
+        )
     except PermissionError as error:
         pytest.skip(f"sandbox forbids binding a loopback test port: {error}")
     thread = threading.Thread(target=server.serve_forever, daemon=True)
@@ -100,6 +107,7 @@ def test_server_is_loopback_only_and_serves_injected_state() -> None:
         ("/index.html", "text/html; charset=utf-8", b"Intrinsic verification"),
         ("/styles.css", "text/css; charset=utf-8", b":root"),
         ("/app.js", "text/javascript; charset=utf-8", b'"use strict"'),
+        ("/elementwise.js", "text/javascript; charset=utf-8", b'"use strict"'),
     ],
 )
 def test_server_serves_only_the_dashboard_assets(
@@ -160,6 +168,15 @@ def test_state_failure_is_generic_and_does_not_stop_server() -> None:
         status, _, body = request(port, "GET", "/api/health")
         assert status == 200
         assert json.loads(body) == {"status": "ok"}
+
+
+def test_elementwise_endpoint_uses_the_injected_artifact_provider() -> None:
+    graph = {"schema_version": 1, "available": True, "programs": [{"program_id": "held-out"}]}
+    with running_server(lambda: {}, lambda: graph) as (_, port):
+        status, headers, body = request(port, "GET", "/api/elementwise")
+        assert status == 200
+        assert headers["Content-Type"] == "application/json; charset=utf-8"
+        assert json.loads(body) == graph
 
 
 def test_large_state_is_gzipped_only_when_the_client_accepts_it() -> None:

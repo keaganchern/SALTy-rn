@@ -26,10 +26,12 @@ _STATIC_FILES: Mapping[str, tuple[str, str]] = {
     "/index.html": ("index.html", "text/html; charset=utf-8"),
     "/styles.css": ("styles.css", "text/css; charset=utf-8"),
     "/app.js": ("app.js", "text/javascript; charset=utf-8"),
+    "/elementwise.js": ("elementwise.js", "text/javascript; charset=utf-8"),
 }
 _MALFORMED_ESCAPE = re.compile(r"%(?![0-9A-Fa-f]{2})")
 _GZIP_MINIMUM_BYTES = 1024
 _DEFAULT_PROVIDER: StateProvider | None = None
+_DEFAULT_ELEMENTWISE_PROVIDER: StateProvider | None = None
 _DEFAULT_PROVIDER_LOCK = threading.Lock()
 
 
@@ -46,6 +48,19 @@ def _default_state_provider() -> Any:
     return _DEFAULT_PROVIDER()
 
 
+def _default_elementwise_provider() -> Any:
+    """Resolve the artifact-graph projection only when its endpoint is read."""
+
+    global _DEFAULT_ELEMENTWISE_PROVIDER
+    if _DEFAULT_ELEMENTWISE_PROVIDER is None:
+        with _DEFAULT_PROVIDER_LOCK:
+            if _DEFAULT_ELEMENTWISE_PROVIDER is None:
+                from .elementwise_graph import create_elementwise_provider
+
+                _DEFAULT_ELEMENTWISE_PROVIDER = create_elementwise_provider()
+    return _DEFAULT_ELEMENTWISE_PROVIDER()
+
+
 class DashboardHTTPServer(ThreadingHTTPServer):
     """A threaded server carrying immutable dashboard configuration."""
 
@@ -56,9 +71,11 @@ class DashboardHTTPServer(ThreadingHTTPServer):
         self,
         port: int,
         state_provider: StateProvider,
+        elementwise_provider: StateProvider,
         web_root: Path = WEB_ROOT,
     ) -> None:
         self.state_provider = state_provider
+        self.elementwise_provider = elementwise_provider
         self.web_root = web_root.resolve(strict=True)
         super().__init__((DEFAULT_HOST, port), DashboardRequestHandler)
 
@@ -85,6 +102,23 @@ class DashboardRequestHandler(BaseHTTPRequestHandler):
                 self._send_json(
                     HTTPStatus.INTERNAL_SERVER_ERROR,
                     {"error": "dashboard state is unavailable"},
+                )
+                return
+            self._send_bytes(
+                HTTPStatus.OK,
+                encoded,
+                "application/json; charset=utf-8",
+                allow_gzip=True,
+            )
+            return
+        if path == "/api/elementwise":
+            try:
+                state = self.server.elementwise_provider()
+                encoded = self._encode_json(state)
+            except Exception:
+                self._send_json(
+                    HTTPStatus.INTERNAL_SERVER_ERROR,
+                    {"error": "elementwise artifact graph is unavailable"},
                 )
                 return
             self._send_bytes(
@@ -253,13 +287,19 @@ def create_server(
     *,
     port: int = DEFAULT_PORT,
     state_provider: StateProvider | None = None,
+    elementwise_provider: StateProvider | None = None,
 ) -> DashboardHTTPServer:
     """Create a loopback-only server; ``port=0`` asks the OS for a test port."""
 
     if type(port) is not int or not 0 <= port <= 65535:
         raise ValueError("port must be an integer in the range 0..65535")
     provider = _default_state_provider if state_provider is None else state_provider
-    return DashboardHTTPServer(port, provider)
+    elementwise = (
+        _default_elementwise_provider
+        if elementwise_provider is None
+        else elementwise_provider
+    )
+    return DashboardHTTPServer(port, provider, elementwise)
 
 
 def serve(

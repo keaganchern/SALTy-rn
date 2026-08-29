@@ -1,0 +1,65 @@
+{
+  "artifact_index": null,
+  "detail": "no exact typed parse facade covers this pair",
+  "entry_contract_preflight": "equal",
+  "input_streams": [
+    "input"
+  ],
+  "layout_preflight": "scalar-lane",
+  "manifest_sha256": null,
+  "missing_intrinsics": [
+    "neon:vbslq_f32",
+    "neon:vcltq_s32",
+    "neon:vdupq_n_f32",
+    "neon:vget_high_f32",
+    "neon:vget_low_f32",
+    "neon:vld1q_f32",
+    "neon:vmovq_n_s32",
+    "neon:vmulq_f32",
+    "neon:vreinterpretq_s32_f32",
+    "neon:vst1_f32",
+    "neon:vst1_lane_f32",
+    "neon:vst1q_f32",
+    "rvv:__riscv_vfmul_vf_f32m8",
+    "rvv:__riscv_vle32_v_f32m8",
+    "rvv:__riscv_vmerge_vvm_f32m8",
+    "rvv:__riscv_vmslt_vx_i32m8_b4",
+    "rvv:__riscv_vreinterpret_v_f32m8_i32m8",
+    "rvv:__riscv_vse32_v_f32m8",
+    "rvv:__riscv_vsetvl_e32m8"
+  ],
+  "neon_function": "test_neon",
+  "neon_intrinsics": [
+    "vbslq_f32",
+    "vcltq_s32",
+    "vdupq_n_f32",
+    "vget_high_f32",
+    "vget_low_f32",
+    "vld1q_f32",
+    "vmovq_n_s32",
+    "vmulq_f32",
+    "vreinterpretq_s32_f32",
+    "vst1_f32",
+    "vst1_lane_f32",
+    "vst1q_f32"
+  ],
+  "neon_source": "kernels/source/f32-vlrelu.c",
+  "output_streams": [
+    "output"
+  ],
+  "program_id": "f32-vlrelu",
+  "rvv_function": "test_rvv",
+  "rvv_intrinsics": [
+    "__riscv_vfmul_vf_f32m8",
+    "__riscv_vle32_v_f32m8",
+    "__riscv_vmerge_vvm_f32m8",
+    "__riscv_vmslt_vx_i32m8_b4",
+    "__riscv_vreinterpret_v_f32m8_i32m8",
+    "__riscv_vse32_v_f32m8",
+    "__riscv_vsetvl_e32m8"
+  ],
+  "rvv_source": "kernels/target/f32-vlrelu.c",
+  "schedule_preflight": "fixed-tail",
+  "status": "intrinsic-missing",
+  "status_layer": "lexical-preflight"
+}

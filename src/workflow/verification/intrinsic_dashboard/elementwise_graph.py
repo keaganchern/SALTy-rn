@@ -1,0 +1,320 @@
+"""Read the elementwise compiler's content-addressed artifacts for the dashboard.
+
+The projection is deliberately derived from CorpusReport/ArtifactIndex records.
+It has no program catalogue and treats a missing, changed, or unbound artifact as
+stale instead of inferring progress from file presence.
+"""
+
+from __future__ import annotations
+
+import hashlib
+import json
+from pathlib import Path
+from typing import Any, Mapping
+
+from workflow.verification.elementwise_compiler.capabilities import (
+    IntrinsicCapability,
+    LayoutViewCapability,
+    ScheduleFamilyCapability,
+)
+from workflow.verification.elementwise_compiler.schema import (
+    ArtifactKind,
+    GeneratedArtifact,
+    ProgramManifest,
+    ProofTask,
+    Result,
+    ResultStatus,
+    canonical_sha256,
+)
+
+
+REPOSITORY_ROOT = Path(__file__).resolve().parents[4]
+DEFAULT_CORPUS_ROOT = REPOSITORY_ROOT / "verification/elementwise-compiler"
+
+
+class ElementwiseGraphError(RuntimeError):
+    """A report or artifact binding is malformed."""
+
+
+def _json(path: Path) -> Mapping[str, Any]:
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as error:
+        raise ElementwiseGraphError(f"cannot read {path.name}") from error
+    if not isinstance(value, Mapping) or any(not isinstance(key, str) for key in value):
+        raise ElementwiseGraphError(f"{path.name} is not a JSON object")
+    return value
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _bound_path(root: Path, value: object, field: str) -> Path:
+    if not isinstance(value, str) or not value:
+        raise ElementwiseGraphError(f"{field} is missing")
+    candidate = (root / value).resolve()
+    try:
+        candidate.relative_to(root.resolve())
+    except ValueError as error:
+        raise ElementwiseGraphError(f"{field} escapes the artifact root") from error
+    return candidate
+
+
+def _verify_report(root: Path) -> Mapping[str, Any]:
+    report = _json(root / "CorpusReport.json")
+    digest = report.get("report_sha256")
+    unsigned = dict(report)
+    unsigned.pop("report_sha256", None)
+    if digest != canonical_sha256(unsigned):
+        raise ElementwiseGraphError("CorpusReport digest disagrees with contents")
+    if report.get("artifact_kind") != "elementwise-corpus-report":
+        raise ElementwiseGraphError("unexpected corpus report kind")
+    if not isinstance(report.get("programs"), list) or not isinstance(
+        report.get("intrinsic_dependencies"), list
+    ):
+        raise ElementwiseGraphError("CorpusReport collections are malformed")
+    return report
+
+
+def _parse_capability(record: Mapping[str, Any]) -> object:
+    kind = record.get("artifact_kind")
+    if kind == "intrinsic-capability":
+        return IntrinsicCapability.from_record(record)
+    if kind == "layout-view-capability":
+        return LayoutViewCapability.from_record(record)
+    if kind == "schedule-family-capability":
+        return ScheduleFamilyCapability.from_record(record)
+    raise ElementwiseGraphError(f"unsupported capability artifact {kind!r}")
+
+
+def _verify_generated(program_root: Path, record: Mapping[str, Any]) -> GeneratedArtifact:
+    artifact = GeneratedArtifact.from_record(record)
+    path = _bound_path(program_root, artifact.path, f"{artifact.kind.value} path")
+    if not path.is_file() or _sha256(path) != artifact.sha256:
+        raise ElementwiseGraphError(f"{artifact.kind.value} file digest mismatch")
+    return artifact
+
+
+def _verify_stack(corpus_root: Path, relative_index: object) -> dict[str, Any]:
+    index_path = _bound_path(corpus_root, relative_index, "artifact index")
+    index = _json(index_path)
+    unsigned_index = dict(index)
+    stack_digest = unsigned_index.pop("stack_sha256", None)
+    if stack_digest != canonical_sha256(unsigned_index):
+        raise ElementwiseGraphError("ArtifactIndex digest disagrees with contents")
+    program_root = index_path.parent
+
+    manifest_binding = index.get("manifest")
+    if not isinstance(manifest_binding, Mapping):
+        raise ElementwiseGraphError("manifest binding is malformed")
+    manifest_path = _bound_path(program_root, manifest_binding.get("path"), "manifest path")
+    manifest = ProgramManifest.from_record(_json(manifest_path))
+    if manifest_binding.get("sha256") != manifest.sha256:
+        raise ElementwiseGraphError("manifest binding digest mismatch")
+
+    models_record = index.get("models")
+    spec_record = index.get("spec")
+    if not isinstance(models_record, Mapping) or not isinstance(spec_record, Mapping):
+        raise ElementwiseGraphError("Models/Spec bindings are malformed")
+    models = _verify_generated(program_root, models_record)
+    spec = _verify_generated(program_root, spec_record)
+    if models.kind is not ArtifactKind.MODELS or models.parent_sha256 != manifest.sha256:
+        raise ElementwiseGraphError("Models is not bound to the manifest")
+    if spec.kind is not ArtifactKind.SPEC or spec.parent_sha256 != models.sha256:
+        raise ElementwiseGraphError("Spec is not bound to Models")
+
+    capability_ids: list[str] = []
+    intrinsic_capabilities: list[IntrinsicCapability] = []
+    bindings = index.get("capabilities")
+    if not isinstance(bindings, list):
+        raise ElementwiseGraphError("capability bindings are malformed")
+    for binding in bindings:
+        if not isinstance(binding, Mapping):
+            raise ElementwiseGraphError("capability binding is malformed")
+        path = _bound_path(program_root, binding.get("path"), "capability path")
+        parsed = _parse_capability(_json(path))
+        capability_id = getattr(parsed, "capability_id")
+        capability_sha = getattr(parsed, "sha256")
+        if binding.get("capability_id") != capability_id or binding.get("sha256") != capability_sha:
+            raise ElementwiseGraphError("capability binding digest mismatch")
+        capability_ids.append(capability_id)
+        if isinstance(parsed, IntrinsicCapability):
+            intrinsic_capabilities.append(parsed)
+
+    task: ProofTask | None = None
+    task_binding = index.get("proof_task")
+    if task_binding is not None:
+        if not isinstance(task_binding, Mapping):
+            raise ElementwiseGraphError("proof-task binding is malformed")
+        task_path = _bound_path(program_root, task_binding.get("path"), "proof-task path")
+        task = ProofTask.from_record(_json(task_path))
+        if task_binding.get("sha256") != task.sha256:
+            raise ElementwiseGraphError("proof-task binding digest mismatch")
+        if task.manifest_sha256 != manifest.sha256 or task.models != models or task.spec != spec:
+            raise ElementwiseGraphError("proof task is not bound to the generated stack")
+
+    result: Result | None = None
+    result_binding = index.get("result")
+    if result_binding is not None:
+        if task is None or not isinstance(result_binding, Mapping):
+            raise ElementwiseGraphError("result has no valid proof task")
+        result_path = _bound_path(program_root, result_binding.get("path"), "result path")
+        result = Result.from_record(_json(result_path))
+        if result_binding.get("sha256") != result.sha256 or result_binding.get("status") != result.status.value:
+            raise ElementwiseGraphError("result binding digest mismatch")
+        if result.proof_task_sha256 is not None and result.proof_task_sha256 != task.sha256:
+            raise ElementwiseGraphError("result is bound to another proof task")
+
+    return {
+        "manifest": manifest,
+        "models": models,
+        "spec": spec,
+        "capability_ids": tuple(sorted(capability_ids)),
+        "intrinsic_capabilities": tuple(intrinsic_capabilities),
+        "task": task,
+        "result": result,
+    }
+
+
+def _program_node(corpus_root: Path, record: Mapping[str, Any]) -> tuple[dict[str, Any], tuple[IntrinsicCapability, ...]]:
+    program_id = record.get("program_id")
+    if not isinstance(program_id, str) or not program_id:
+        raise ElementwiseGraphError("program id is malformed")
+    status = str(record.get("status", "generation-failed"))
+    layer = str(record.get("status_layer", "corpus"))
+    artifacts: dict[str, object] = {
+        "manifest": False,
+        "models": False,
+        "spec": False,
+        "proof_task": False,
+        "result": False,
+    }
+    claim = {"value": "not-checked", "c": "not-established", "isa": "not-established"}
+    stale = False
+    detail = str(record.get("detail", "no detail"))
+    intrinsic_capabilities: tuple[IntrinsicCapability, ...] = ()
+    if record.get("artifact_index") is not None:
+        try:
+            stack = _verify_stack(corpus_root, record["artifact_index"])
+            manifest = stack["manifest"]
+            if record.get("manifest_sha256") != manifest.sha256:
+                raise ElementwiseGraphError("CorpusReport manifest binding mismatch")
+            task = stack["task"]
+            result = stack["result"]
+            artifacts.update(manifest=True, models=True, spec=True, proof_task=task is not None, result=result is not None)
+            intrinsic_capabilities = stack["intrinsic_capabilities"]
+            if result is not None:
+                status = result.status.value
+                layer = "checked-result"
+                claim["value"] = "verified" if result.status is ResultStatus.VERIFIED_VALUE else "failed"
+                detail = result.detail
+            elif task is not None:
+                status = "proof-ready"
+                layer = "frozen-proof-task"
+                claim["value"] = "ready"
+            else:
+                status = "spec-generated"
+                layer = "typed-generated"
+                claim["value"] = "spec-generated"
+        except Exception as error:
+            status = "stale-artifact"
+            layer = "artifact-integrity"
+            stale = True
+            detail = f"{type(error).__name__}: {error}"
+
+    return (
+        {
+            "program_id": program_id,
+            "status": status,
+            "status_layer": layer,
+            "layout": str(record.get("layout_preflight", "unknown")),
+            "schedule": str(record.get("schedule_preflight", "unknown")),
+            "contract": str(record.get("entry_contract_preflight", "unknown")),
+            "missing_intrinsics": list(record.get("missing_intrinsics", [])),
+            "artifacts": artifacts,
+            "claim": claim,
+            "stale": stale,
+            "detail": detail,
+        },
+        intrinsic_capabilities,
+    )
+
+
+def build_elementwise_graph(corpus_root: str | Path = DEFAULT_CORPUS_ROOT) -> dict[str, Any]:
+    """Build a fail-closed UI projection from the generated artifact graph."""
+
+    root = Path(corpus_root).resolve()
+    report_path = root / "CorpusReport.json"
+    if not report_path.is_file():
+        return {
+            "schema_version": 1,
+            "available": False,
+            "message": f"Run the elementwise corpus compiler to create {report_path.name}",
+            "summary": {},
+            "programs": [],
+            "capabilities": [],
+        }
+    report = _verify_report(root)
+    program_nodes: list[dict[str, Any]] = []
+    typed_capabilities: dict[str, IntrinsicCapability] = {}
+    for raw in report["programs"]:
+        if not isinstance(raw, Mapping):
+            raise ElementwiseGraphError("program record is malformed")
+        node, capabilities = _program_node(root, raw)
+        program_nodes.append(node)
+        for capability in capabilities:
+            typed_capabilities[capability.capability_id] = capability
+
+    dependency_nodes: list[dict[str, Any]] = []
+    for raw in report["intrinsic_dependencies"]:
+        if not isinstance(raw, Mapping):
+            raise ElementwiseGraphError("intrinsic dependency is malformed")
+        intrinsic = str(raw.get("intrinsic", ""))
+        architecture, separator, spelling = intrinsic.partition(":")
+        if separator != ":" or architecture not in {"neon", "rvv"} or not spelling:
+            raise ElementwiseGraphError("intrinsic dependency id is malformed")
+        matching = [
+            item for item in typed_capabilities.values()
+            if item.architecture.value == architecture and item.spelling == spelling
+        ]
+        dependency_nodes.append(
+            {
+                "id": intrinsic,
+                "architecture": architecture,
+                "spelling": spelling,
+                "configured": bool(raw.get("configured")) and bool(matching),
+                "reviewed": bool(matching) and all(item.review_evidence_sha256 is not None for item in matching),
+                "typed_variants": len(matching),
+                "programs": list(raw.get("programs", [])),
+            }
+        )
+
+    status_counts: dict[str, int] = {}
+    for node in program_nodes:
+        status_counts[node["status"]] = status_counts.get(node["status"], 0) + 1
+    return {
+        "schema_version": 1,
+        "available": True,
+        "report_sha256": report["report_sha256"],
+        "summary": {
+            "discovered_elementwise": report["discovered_elementwise"],
+            "scalar_layout_scope": report["scalar_layout_scope"],
+            "grouped_layout_deferred": report["grouped_layout_deferred"],
+            "status_counts": status_counts,
+            "configured_intrinsics": sum(item["configured"] for item in dependency_nodes),
+            "reviewed_intrinsics": sum(item["reviewed"] for item in dependency_nodes),
+            "intrinsic_dependencies": len(dependency_nodes),
+        },
+        "programs": sorted(program_nodes, key=lambda item: item["program_id"]),
+        "capabilities": sorted(dependency_nodes, key=lambda item: item["id"]),
+    }
+
+
+def create_elementwise_provider(corpus_root: str | Path = DEFAULT_CORPUS_ROOT):
+    root = Path(corpus_root)
+    return lambda: build_elementwise_graph(root)

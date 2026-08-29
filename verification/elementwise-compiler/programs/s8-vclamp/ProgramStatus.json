@@ -1,0 +1,47 @@
+{
+  "artifact_index": "programs/s8-vclamp/ArtifactIndex.json",
+  "detail": "typed manifest, Models, and proof-free Spec generated",
+  "entry_contract_preflight": "equal",
+  "input_streams": [
+    "input"
+  ],
+  "layout_preflight": "scalar-lane",
+  "manifest_sha256": "1bd29e3b25d955e9769730862a3d5081da96c98b750e5840ad2ad29588438d8d",
+  "missing_intrinsics": [],
+  "neon_function": "test_neon",
+  "neon_intrinsics": [
+    "vdupq_n_s8",
+    "vext_s8",
+    "vget_low_s8",
+    "vld1_s8",
+    "vld1q_s8",
+    "vmax_s8",
+    "vmaxq_s8",
+    "vmin_s8",
+    "vminq_s8",
+    "vreinterpret_u16_s8",
+    "vreinterpret_u32_s8",
+    "vst1_lane_s8",
+    "vst1_lane_u16",
+    "vst1_lane_u32",
+    "vst1_s8",
+    "vst1q_s8"
+  ],
+  "neon_source": "kernels/source/s8-vclamp.c",
+  "output_streams": [
+    "output"
+  ],
+  "program_id": "s8-vclamp",
+  "rvv_function": "test_rvv",
+  "rvv_intrinsics": [
+    "__riscv_vle8_v_i8m8",
+    "__riscv_vmax_vx_i8m8",
+    "__riscv_vmin_vx_i8m8",
+    "__riscv_vse8_v_i8m8",
+    "__riscv_vsetvl_e8m8"
+  ],
+  "rvv_source": "kernels/target/s8-vclamp.c",
+  "schedule_preflight": "multi-phase",
+  "status": "spec-generated",
+  "status_layer": "typed-generated"
+}

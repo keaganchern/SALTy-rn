@@ -1,0 +1,50 @@
+{
+  "artifact_index": null,
+  "detail": "no exact typed parse facade covers this pair",
+  "entry_contract_preflight": "equal",
+  "input_streams": [
+    "input_a",
+    "input_b"
+  ],
+  "layout_preflight": "scalar-lane",
+  "manifest_sha256": null,
+  "missing_intrinsics": [
+    "neon:vget_high_f32",
+    "neon:vget_low_f32",
+    "neon:vld1q_f32",
+    "neon:vmulq_f32",
+    "neon:vst1_f32",
+    "neon:vst1_lane_f32",
+    "neon:vst1q_f32",
+    "rvv:__riscv_vfmul_vv_f32m8",
+    "rvv:__riscv_vle32_v_f32m8",
+    "rvv:__riscv_vse32_v_f32m8",
+    "rvv:__riscv_vsetvl_e32m8"
+  ],
+  "neon_function": "test_neon",
+  "neon_intrinsics": [
+    "vget_high_f32",
+    "vget_low_f32",
+    "vld1q_f32",
+    "vmulq_f32",
+    "vst1_f32",
+    "vst1_lane_f32",
+    "vst1q_f32"
+  ],
+  "neon_source": "kernels/source/f32-vmul.c",
+  "output_streams": [
+    "output"
+  ],
+  "program_id": "f32-vmul",
+  "rvv_function": "test_rvv",
+  "rvv_intrinsics": [
+    "__riscv_vfmul_vv_f32m8",
+    "__riscv_vle32_v_f32m8",
+    "__riscv_vse32_v_f32m8",
+    "__riscv_vsetvl_e32m8"
+  ],
+  "rvv_source": "kernels/target/f32-vmul.c",
+  "schedule_preflight": "fixed-tail",
+  "status": "intrinsic-missing",
+  "status_layer": "lexical-preflight"
+}

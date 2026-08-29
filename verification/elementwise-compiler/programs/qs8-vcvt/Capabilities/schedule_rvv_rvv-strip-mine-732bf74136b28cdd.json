@@ -1,0 +1,14 @@
+{
+  "architecture": "rvv",
+  "artifact_kind": "schedule-family-capability",
+  "capability_id": "schedule:rvv:rvv-strip-mine",
+  "capability_sha256": "732bf74136b28cdd955801bdc2ac7e18f1b5417b950b044c299a7773f2b370ef",
+  "kind": "rvv-strip-mine",
+  "recognizer_sha256": "797061c8e451b8aedaa514c18571b8c79b82ad37167b724ce2e6cea4cffc0d64",
+  "schema_version": 1,
+  "theorem_sha256": "897130edc05871cfdc640be180067320fa18a8f92a94fdacc3a9ad82fe2216dd",
+  "theorem_symbols": [
+    "SALT.Kernel.Schedule.processBlocks_eq_map"
+  ],
+  "version": 1
+}

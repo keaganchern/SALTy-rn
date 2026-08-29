@@ -1,0 +1,56 @@
+{
+  "artifact_index": "programs/qs8-vlrelu/ArtifactIndex.json",
+  "detail": "typed manifest, Models, and proof-free Spec generated",
+  "entry_contract_preflight": "equal",
+  "input_streams": [
+    "input"
+  ],
+  "layout_preflight": "scalar-lane",
+  "manifest_sha256": "8c8fe6c60f2e5665ea775cd388a19e8930a6ae377a5ccccf1a6124fd7bba3c19",
+  "missing_intrinsics": [],
+  "neon_function": "test_neon",
+  "neon_intrinsics": [
+    "vbslq_s16",
+    "vcltq_s16",
+    "vdupq_n_s16",
+    "vext_s8",
+    "vld1_s8",
+    "vmovq_n_s16",
+    "vqaddq_s16",
+    "vqmovn_s16",
+    "vqrdmulhq_s16",
+    "vreinterpret_u16_s8",
+    "vreinterpret_u32_s8",
+    "vshlq_n_s16",
+    "vst1_lane_s8",
+    "vst1_lane_u16",
+    "vst1_lane_u32",
+    "vst1_s8",
+    "vsubw_s8"
+  ],
+  "neon_source": "kernels/source/qs8-vlrelu.c",
+  "output_streams": [
+    "output"
+  ],
+  "program_id": "qs8-vlrelu",
+  "rvv_function": "test_rvv",
+  "rvv_intrinsics": [
+    "__riscv_vle8_v_i8m2",
+    "__riscv_vmerge_vxm_i16m4",
+    "__riscv_vmslt_vx_i16m4_b4",
+    "__riscv_vmv_v_x_i16m4",
+    "__riscv_vnclip_wx_i16m4",
+    "__riscv_vnclip_wx_i8m2",
+    "__riscv_vrsub_vx_i16m4",
+    "__riscv_vsadd_vx_i16m4",
+    "__riscv_vse8_v_i8m2",
+    "__riscv_vsetvl_e8m2",
+    "__riscv_vsext_vf2_i16m4",
+    "__riscv_vsll_vx_i16m4",
+    "__riscv_vwmul_vv_i32m8"
+  ],
+  "rvv_source": "kernels/target/qs8-vlrelu.c",
+  "schedule_preflight": "fixed-tail",
+  "status": "spec-generated",
+  "status_layer": "typed-generated"
+}

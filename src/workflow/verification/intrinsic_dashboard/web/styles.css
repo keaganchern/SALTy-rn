@@ -698,6 +698,124 @@ summary {
   font-size: 0.72rem;
 }
 
+.elementwise-section {
+  margin-top: 24px;
+}
+
+.elementwise-message {
+  margin: 0 0 14px;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.elementwise-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.elementwise-summary-card {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.elementwise-summary-card strong {
+  font-size: 1.1rem;
+}
+
+.elementwise-summary-card span,
+.elementwise-status + small,
+.program-detail {
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+
+.elementwise-table td:first-child strong,
+.elementwise-table td:first-child span,
+.elementwise-table td:nth-child(2) span,
+.elementwise-table td:nth-child(2) small,
+.elementwise-table td:last-child span {
+  display: block;
+}
+
+.program-detail {
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.elementwise-status {
+  font-weight: 700;
+}
+
+.status-spec-generated,
+.status-proof-ready,
+.status-verified-value- {
+  color: var(--approved-fg);
+}
+
+.artifact-chain {
+  display: flex;
+  gap: 4px;
+}
+
+.artifact-chain span {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font-size: 0.68rem;
+  font-weight: 750;
+}
+
+.artifact-done {
+  color: var(--approved-fg);
+  background: var(--approved-bg);
+}
+
+.artifact-missing {
+  color: var(--muted);
+  background: var(--surface-strong);
+  border: 1px solid var(--line);
+}
+
+.elementwise-missing {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  max-width: 360px;
+}
+
+.elementwise-missing code {
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: var(--surface-strong);
+  color: var(--muted);
+  font-size: 0.65rem;
+}
+
+.claim-value {
+  color: var(--ink);
+  font-weight: 650;
+}
+
+.claim-outside {
+  color: var(--muted);
+  font-size: 0.68rem;
+}
+
+.stale-row {
+  background: var(--rejected-bg);
+}
+
 .all-clear {
   color: var(--approved-fg);
   font-weight: 650;

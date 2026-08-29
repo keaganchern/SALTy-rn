@@ -7,6 +7,7 @@
     <title>SALTy-rn intrinsic verification</title>
     <link rel="stylesheet" href="styles.css">
     <script src="app.js" defer></script>
+    <script src="elementwise.js" defer></script>
   </head>
   <body>
     <a class="skip-link" href="#main-content">Skip to dashboard</a>
@@ -29,6 +30,35 @@
     <div id="connection-banner" class="connection-banner" role="status" hidden></div>
 
     <main id="main-content">
+      <section class="data-section elementwise-section" aria-labelledby="elementwise-title">
+        <div class="section-heading table-section-heading">
+          <div>
+            <p class="section-kicker">Generated artifact graph</p>
+            <h2 id="elementwise-title">Element-wise compiler puzzle</h2>
+          </div>
+          <div id="elementwise-counts" class="section-counts" aria-live="polite">Loading</div>
+        </div>
+        <p id="elementwise-message" class="elementwise-message">Reading CorpusReport and its content-addressed children.</p>
+        <div id="elementwise-summary" class="elementwise-summary" aria-live="polite"></div>
+        <div class="table-shell" tabindex="0" role="region" aria-labelledby="elementwise-title">
+          <table class="elementwise-table">
+            <caption class="sr-only">Element-wise program generation and proof progress</caption>
+            <thead>
+              <tr>
+                <th scope="col">Program</th>
+                <th scope="col">Current state</th>
+                <th scope="col">Layout</th>
+                <th scope="col">Schedule</th>
+                <th scope="col">Generated chain</th>
+                <th scope="col">Missing intrinsic pieces</th>
+                <th scope="col">Claim boundary</th>
+              </tr>
+            </thead>
+            <tbody id="elementwise-body"></tbody>
+          </table>
+        </div>
+      </section>
+
       <section class="activity-section" aria-labelledby="activity-title">
         <div class="section-heading">
           <div>
