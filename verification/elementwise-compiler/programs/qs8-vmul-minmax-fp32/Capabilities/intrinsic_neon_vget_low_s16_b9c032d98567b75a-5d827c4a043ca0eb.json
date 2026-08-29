@@ -1,0 +1,16 @@
+{
+  "architecture": "neon",
+  "argument_count": 1,
+  "artifact_kind": "intrinsic-capability",
+  "capability_id": "intrinsic:neon:vget_low_s16:b9c032d98567b75a",
+  "capability_sha256": "5d827c4a043ca0eb5311e3fe608c8999a637ed8eaed343a15ccc0e561ba654b0",
+  "descriptor_sha256": "867baa816c92b73e6890a2cc4ad57e7b1df6446598fe5a35b5e58ce5534c0102",
+  "function_type": "int16x4_t (int16x8_t)",
+  "implementation_sha256": "4328be58020b2e21ba108b5b1deae9e73fe810ce1fd7c5cba97f3681ffa05dea",
+  "review_evidence_sha256": null,
+  "role": "structural",
+  "schema_version": 1,
+  "semantic_symbol": null,
+  "spelling": "vget_low_s16",
+  "version": 1
+}

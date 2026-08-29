@@ -191,8 +191,17 @@ def _facade_for(
     rvv_calls: tuple[str, ...],
 ) -> Path | None:
     required = set(neon_calls) | set(rvv_calls)
-    matches = [path for path in facades if required <= _facade_spellings(path)]
-    return matches[0] if len(matches) == 1 else None
+    matches = [
+        (len(spellings - required), path)
+        for path in facades
+        for spellings in (_facade_spellings(path),)
+        if required <= spellings
+    ]
+    if not matches:
+        return None
+    best_score = min(score for score, _ in matches)
+    best = sorted(path for score, path in matches if score == best_score)
+    return best[0] if len(best) == 1 else None
 
 
 def _entry_assertions(source: str) -> tuple[str, ...]:

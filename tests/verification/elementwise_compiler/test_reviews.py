@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -67,8 +68,11 @@ def test_intrinsic_review_round_trip_is_strict_and_content_addressed() -> None:
 
     changed = copy.deepcopy(record)
     changed["descriptor_sha256"] = E
-    with pytest.raises(ElementwiseSchemaError, match="digest disagrees"):
+    with pytest.raises(ElementwiseSchemaError, match="id disagrees with source key"):
         IntrinsicReview.from_record(changed)
+
+    other_descriptor = replace(review, descriptor_sha256=E)
+    assert other_descriptor.review_id != review.review_id
 
 
 def test_review_loader_rechecks_policy_hash_and_rejects_duplicates(tmp_path: Path) -> None:

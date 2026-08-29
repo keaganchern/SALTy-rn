@@ -6,7 +6,7 @@ import SALT.Kernel.ElementwiseFamily
 
 namespace SALT.Corpus.qs8vlrelu
 
-def programManifestSha256 : String := "d3c276208da8d9e9ccd1808595f752ae3c1b1a4713333ec8f331876ea175a93a"
+def programManifestSha256 : String := "c85a9c943ccfd52e3ac2818d4aa082a04a8ea673494de71c72105a0840f1f490"
 def consumedEffectsSha256 : String := "d30399e898565c2d5a52ec29fc644b6a03bda52f527d97c7551bab5ad0e8afa5"
 
 def neonSourceSha256 : String :=
@@ -20,13 +20,13 @@ def rvvPreprocessedSha256 : String :=
 def parseFacadeSha256 : String :=
   "142f6d01509954ce78c98dc713664c26c9e1017ca79aa6eb2a25ee717f8b808b"
 def registrySha256 : String :=
-  "9f807ee06d7c437f5215164a0b3b6ad0c6c18905346243cd0d48bce04a3f8dbb"
+  "a8c3de67cb54252bc0c2c52a3a79f9e997bb9ee1cbb4b1e4160675179230d780"
 
 structure qs8vlreluParams where
-  input_zero_point : BitVec 16
-  negative_multiplier : BitVec 16
-  output_zero_point : BitVec 16
-  positive_multiplier : BitVec 16
+  input_zero_point : BitVec 32
+  negative_multiplier : BitVec 32
+  output_zero_point : BitVec 32
+  positive_multiplier : BitVec 32
   deriving Repr, DecidableEq
 
 def neonBlock8FromIntrinsics (p : qs8vlreluParams)

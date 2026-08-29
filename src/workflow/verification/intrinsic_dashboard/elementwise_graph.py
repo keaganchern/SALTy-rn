@@ -475,7 +475,7 @@ def build_elementwise_graph(
     report_path = root / "CorpusReport.json"
     if not report_path.is_file():
         return {
-            "schema_version": 2,
+            "schema_version": 3,
             "available": False,
             "message": f"Run the elementwise corpus compiler to create {report_path.name}",
             "summary": {},
@@ -491,20 +491,21 @@ def build_elementwise_graph(
         for capability, _ in registry_variants
     }
     program_nodes: list[dict[str, Any]] = []
-    typed_capabilities: dict[str, IntrinsicCapability] = {}
+    used_by_program: dict[tuple[str, str], set[str]] = {}
     for raw in report["programs"]:
         if not isinstance(raw, Mapping):
             raise ElementwiseGraphError("program record is malformed")
         node, capabilities = _program_node(root, raw)
         program_nodes.append(node)
         for capability in capabilities:
-            if (capability.capability_id, capability.sha256) not in registry_by_identity:
+            identity = (capability.capability_id, capability.sha256)
+            if identity not in registry_by_identity:
                 raise ElementwiseGraphError(
                     "program capability is absent from the bound intrinsic registry"
                 )
-            typed_capabilities[capability.capability_id] = capability
+            used_by_program.setdefault(identity, set()).add(str(node["program_id"]))
 
-    dependency_nodes: list[dict[str, Any]] = []
+    spelling_nodes: list[dict[str, Any]] = []
     for raw in report["intrinsic_dependencies"]:
         if not isinstance(raw, Mapping):
             raise ElementwiseGraphError("intrinsic dependency is malformed")
@@ -526,7 +527,12 @@ def build_elementwise_graph(
         independently_reviewed = bool(matching) and all(
             review is not None for _, review in matching
         )
-        dependency_nodes.append(
+        used_matching = [
+            capability
+            for capability, _ in matching
+            if (capability.capability_id, capability.sha256) in used_by_program
+        ]
+        spelling_nodes.append(
             {
                 "id": intrinsic,
                 "architecture": architecture,
@@ -537,6 +543,7 @@ def build_elementwise_graph(
                 "reviewed": independently_reviewed,
                 "independently_reviewed": independently_reviewed,
                 "typed_variants": len(matching),
+                "used_typed_variants": len(used_matching),
                 "review_sha256": sorted(
                     review.sha256 for _, review in matching if review is not None
                 ),
@@ -544,11 +551,40 @@ def build_elementwise_graph(
             }
         )
 
+    variant_nodes: list[dict[str, Any]] = []
+    for capability, review in registry_variants:
+        identity = (capability.capability_id, capability.sha256)
+        programs = sorted(used_by_program.get(identity, set()))
+        lean_checked = review is not None and any(
+            check.name == "lean-elaboration" for check in review.checks
+        )
+        variant_nodes.append(
+            {
+                "id": capability.capability_id,
+                "sha256": capability.sha256,
+                "architecture": capability.architecture.value,
+                "spelling": capability.spelling,
+                "function_type": capability.function_type,
+                "argument_count": capability.argument_count,
+                "role": capability.role.value,
+                "semantic_symbol": capability.semantic_symbol,
+                "descriptor_sha256": capability.descriptor_sha256,
+                "implementation_sha256": capability.implementation_sha256,
+                "defined": True,
+                "used": bool(programs),
+                "lean_checked": lean_checked,
+                "reviewed": review is not None,
+                "independently_reviewed": review is not None,
+                "review_sha256": None if review is None else review.sha256,
+                "programs": programs,
+            }
+        )
+
     status_counts: dict[str, int] = {}
     for node in program_nodes:
         status_counts[node["status"]] = status_counts.get(node["status"], 0) + 1
     return {
-        "schema_version": 2,
+        "schema_version": 3,
         "available": True,
         "report_sha256": report["report_sha256"],
         "authority": {
@@ -561,14 +597,27 @@ def build_elementwise_graph(
             "scalar_layout_scope": report["scalar_layout_scope"],
             "grouped_layout_deferred": report["grouped_layout_deferred"],
             "status_counts": status_counts,
-            "configured_intrinsics": sum(
-                item["configured"] for item in dependency_nodes
+            "configured_intrinsic_spellings": sum(
+                item["configured"] for item in spelling_nodes
             ),
-            "reviewed_intrinsics": sum(item["reviewed"] for item in dependency_nodes),
-            "lean_checked_intrinsics": sum(
-                item["lean_checked"] for item in dependency_nodes
+            "reviewed_intrinsic_spellings": sum(
+                item["reviewed"] for item in spelling_nodes
             ),
-            "intrinsic_dependencies": len(dependency_nodes),
+            "lean_checked_intrinsic_spellings": sum(
+                item["lean_checked"] for item in spelling_nodes
+            ),
+            "intrinsic_spelling_dependencies": len(spelling_nodes),
+            "registry_intrinsic_variants": len(variant_nodes),
+            "used_intrinsic_variants": sum(item["used"] for item in variant_nodes),
+            "reviewed_registry_intrinsic_variants": sum(
+                item["reviewed"] for item in variant_nodes
+            ),
+            "reviewed_used_intrinsic_variants": sum(
+                item["reviewed"] and item["used"] for item in variant_nodes
+            ),
+            "lean_checked_used_intrinsic_variants": sum(
+                item["lean_checked"] and item["used"] for item in variant_nodes
+            ),
             "input_condition_counts": {
                 status: sum(
                     node["input_condition"]["status"] == status
@@ -589,7 +638,10 @@ def build_elementwise_graph(
             },
         },
         "programs": sorted(program_nodes, key=lambda item: item["program_id"]),
-        "capabilities": sorted(dependency_nodes, key=lambda item: item["id"]),
+        "intrinsic_spellings": sorted(spelling_nodes, key=lambda item: item["id"]),
+        "capabilities": sorted(
+            variant_nodes, key=lambda item: (item["architecture"], item["spelling"], item["id"])
+        ),
     }
 
 

@@ -4,12 +4,12 @@ Last updated: 2026-08-29 (Asia/Seoul)
 
 ## Active Milestone
 
-The first three framework milestones and the first nine-item intrinsic batch are
-complete and independently reviewed. Models and Spec preserve distinct
-8/16/32-bit widths; external audits remain fail closed; the dashboard has one
-artifact authority; and the first F32 structural/schedule puzzle pieces have exact
-review bindings. The active milestone is the remaining high-fanout semantic
-intrinsic families, followed by program proof/review batches.
+The shared compiler now generates Manifest/Models/proof-free Spec for all nineteen
+scalar-layout programs. Widths, tails, multi-phase schedules, external audits,
+counterexamples, and the schema-v3 artifact dashboard are independently reviewed.
+The active milestone is independent review of the 180 exact intrinsic variants
+used by those programs, followed by proof/result and program-review batches. The
+older nine approvals are stale after implementation changes and count as zero.
 
 ## Canonical Artifact Chain
 
@@ -217,16 +217,11 @@ Exit gates:
 
 ### M6 — Coverage Expansion
 
-**Status:** Active capability work. The reusable width/tail blocker is closed;
-external conditions, counterexamples, dashboard authority, and intrinsic review
-remain.
-
-Fill missing integer intrinsic variants. Then establish reviewed FP semantics and
-new layout/view capabilities, including planar complex grouping, before claiming
-coverage of all 20 audited elementwise pairs.
-
-Before treating the remaining scalar blockers as intrinsic-only, complete the
-external-condition, cross-phase, and dashboard-authority gates below.
+**Status:** All nineteen scalar-layout programs generate typed artifacts through
+the shared compiler. Seven quantized programs remain blocked by external caller
+conditions and one has a checked counterexample. Exact intrinsic review, program
+proof/result generation, and program review remain active. The grouped complex
+layout for `f32-vcmul` stays deferred outside the nineteen-program target.
 
 ## Immediate Work Queue
 
@@ -237,22 +232,25 @@ external-condition, cross-phase, and dashboard-authority gates below.
    verified artifact closure; a checked-in held-out VMax reaches `proof-ready`
    without dashboard configuration, and the UI exposes conditions, phase audit,
    witnesses, and M/E/D/S/A/C/T/R;
-3. **Active:** add independently reviewed integer/FP intrinsic capabilities, starting from
-   the dependencies shared by the largest number of the fourteen blocked scalar
-   programs;
-4. add parse facades as mechanical typed declarations where missing;
-5. rerun `workflow.verification.elementwise_compiler.corpus` and require the
+3. **Completed and independently reviewed:** all nineteen scalar-layout programs
+   generate Manifest/Models/Spec through the shared compiler; exact review identity
+   and schema-v3 dashboard accounting distinguish 178/186 spellings, 189 registry
+   variants, and 180 variants used by the current nineteen-program closure;
+4. **Active:** independently review the 180 used exact variants, starting from
+   shared semantic families and retaining 189 as the complete registry backlog;
+5. add parse facades as mechanical typed declarations where missing;
+6. rerun `workflow.verification.elementwise_compiler.corpus` and require the
    checked-in report/dashboard to change only through the artifact graph;
-6. generate proof tasks for newly unblocked programs and delegate only
+7. generate proof tasks for newly unblocked programs and delegate only
    `Proof.lean`;
-7. keep grouped `f32-vcmul` deferred until a reviewed complex layout/view exists;
-8. use the new `counterexample` terminal state to explain false
+8. keep grouped `f32-vcmul` deferred until a reviewed complex layout/view exists;
+9. use the new `counterexample` terminal state to explain false
    cross-phase/equivalence obligations;
-9. for `s8-vclamp`, preserve the false direct claim and candidate signed
+10. for `s8-vclamp`, preserve the false direct claim and candidate signed
    `min <= max`, but keep it unresolved until an actual caller/initializer
    guarantee is established; the pinned unary clamp path does not call the
    previously cited output-range validator.
-10. keep all eight audited quantized-parameter programs in
+11. keep all eight audited quantized-parameter programs in
     `required-missing` until their reusable initializer/caller postconditions are
     checked; generated Models/Spec alone are not proof ready.
 
@@ -300,9 +298,13 @@ separate grouped-layout milestone.
    and implementation bindings, pinned primary evidence, Lean/negative checks,
    and generated dashboard registry. Reviewer verdict: `GO` after the lane-store
    immediate bug was fixed without narrowing the legal lane set.
-5. **Intrinsic batch 2 — active:** remaining arithmetic, conversion, integer, and
-   FP typed variants with the same review
-   gates.
+5. **Shared scalar compiler and exact audit identity — completed and independently
+   reviewed:** all nineteen scalar programs generate typed artifacts; FP32 value
+   definitions, scalar broadcast, facade-width preservation, safe source
+   conditionals, and remaining descriptors are present. Exact IDs and dashboard
+   rows distinguish all 189 registry variants and the 180 used by the current
+   nineteen-program closure. Reviewer verdict changed from `NO-GO` to `GO` after
+   the identity/dashboard correction.
 6. **Program batch 1:** generate, prove or explicitly fail, and independently
    review the first scalar-layout program batch.
 7. **Program batch 2:** apply the same pipeline to the remaining scalar-layout

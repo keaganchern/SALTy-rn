@@ -62,6 +62,23 @@ def _vmax_request(output: Path, namespace: str = "SALT.Generated.HeldoutVMax"):
     )
 
 
+def _shared_request(case: str, output: Path, namespace: str):
+    facade = FACADE_ROOT / "elementwise_shared.h"
+    return CompilerRequest(
+        repository_root=ROOT,
+        neon_source=ROOT / "kernels/source" / f"{case}.c",
+        rvv_source=ROOT / "kernels/target" / f"{case}.c",
+        neon_function="test_neon",
+        rvv_function="test_rvv",
+        neon_facade=facade,
+        rvv_facade=facade,
+        neon_target="aarch64-none-elf",
+        rvv_target="riscv64-none-elf",
+        namespace=namespace,
+        output_directory=output,
+    )
+
+
 def _tree_digest(root: Path) -> str:
     digest = hashlib.sha256()
     for path in sorted(item for item in root.rglob("*") if item.is_file()):
@@ -136,6 +153,52 @@ def test_binary_pair_uses_same_compiler_and_schedule_capabilities(
     )
     assert "List.zipWith (fNeon p)" in binary.stack.spec_text
     assert "SALT.Randomized.Deep.BinaryFixture" in binary.stack.models_text
+
+
+def test_scalar_broadcast_pair_remains_a_unary_map(tmp_path: Path) -> None:
+    result = compile_pair(
+        _shared_request(
+            "f32-vmulc",
+            tmp_path / "f32-vmulc",
+            "SALT.Generated.F32VMulCBroadcast",
+        )
+    )
+
+    assert result.recognition.inputs == ("input_a",)
+    assert result.recognition.broadcast_inputs == ("input_b",)
+    assert result.recognition.layout_capability.kind.value == (
+        "scalar-lane-with-broadcast"
+    )
+    assert result.manifest.layout.broadcast_input_streams == ("input_b",)
+    assert "broadcast_input_b : BitVec 32" in result.stack.models_text
+    assert "List.replicate 4 (p.broadcast_input_b)" in result.stack.models_text
+    assert "vfmul_vf_f32 (va_0) (p.broadcast_input_b)" in result.stack.models_text
+    assert "input_a.map (fNeon p)" in result.stack.spec_text
+    assert "List.zipWith (fNeon p)" not in result.stack.spec_text
+
+
+def test_parameter_storage_widths_come_from_the_c_facade(tmp_path: Path) -> None:
+    result = compile_pair(
+        _shared_request(
+            "qs8-vmul-minmax-fp32",
+            tmp_path / "qs8-vmul",
+            "SALT.Generated.QS8VMulStorageWidths",
+        )
+    )
+    models = result.stack.models_text
+
+    for declaration in (
+        "a_zero_point : BitVec 8",
+        "b_zero_point : BitVec 8",
+        "output_zero_point : BitVec 16",
+        "output_min : BitVec 8",
+        "output_max : BitVec 8",
+        "scale : BitVec 32",
+    ):
+        assert declaration in models
+    assert "(p.output_zero_point).signExtend 32" in models
+    assert "vfcvt_x_f_v_i32_rne" in models
+    assert "vqmovn_high_s32" in models
 
 
 def test_nested_binary_two_phase_pair_generates_the_parameterized_schedule(

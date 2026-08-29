@@ -25,6 +25,7 @@ from .schema import (
     LayoutInstance,
     LocalAssertionFact,
     ScheduleInstance,
+    canonical_json,
     canonical_sha256,
 )
 
@@ -66,6 +67,7 @@ class PairRecognition:
     local_assertions: tuple[LocalAssertionFact, ...]
     consumed_effects_sha256: str
     inputs: tuple[str, ...]
+    broadcast_inputs: tuple[str, ...]
     output: str
     stream_c_types: tuple[tuple[str, str], ...]
     element_c_type: str
@@ -151,10 +153,14 @@ def _layout_streams(
     outputs: list[str] = []
     stream_types: dict[str, str] = {}
     for parameter in extraction.parameters:
+        if parameter.name == "params":
+            continue
         pointer = _pointer_element(parameter.type_spelling)
         if pointer is None:
             continue
         element, is_const = pointer
+        if element == "void":
+            continue
         stream_types[parameter.name] = element
         (inputs if is_const else outputs).append(parameter.name)
     if not inputs or len(outputs) != 1:
@@ -188,7 +194,9 @@ def _layout_streams(
     )
 
 
-def _capabilities(repository_root: Path) -> tuple[
+def _capabilities(
+    repository_root: Path, *, has_broadcast_input: bool
+) -> tuple[
     LayoutViewCapability,
     dict[tuple[Architecture, ScheduleKind], ScheduleFamilyCapability],
 ]:
@@ -217,10 +225,19 @@ def _capabilities(repository_root: Path) -> tuple[
     two_phase_sha = _sha256(two_phase_path)
     family_sha = _sha256(family_path)
     layout_sha = _sha256(layout_path)
+    layout_kind = (
+        LayoutKind.SCALAR_LANE_WITH_BROADCAST
+        if has_broadcast_input
+        else LayoutKind.SCALAR_LANE
+    )
     layout = LayoutViewCapability(
-        LayoutKind.SCALAR_LANE,
+        layout_kind,
         recognizer,
-        "SALT.Kernel.ElementwiseLayout.scalarLaneView_eq_self",
+        (
+            "SALT.Kernel.ElementwiseLayout.scalarLaneWithBroadcastView_eq_self"
+            if has_broadcast_input
+            else "SALT.Kernel.ElementwiseLayout.scalarLaneView_eq_self"
+        ),
         layout_sha,
     )
     result: dict[tuple[Architecture, ScheduleKind], ScheduleFamilyCapability] = {}
@@ -452,10 +469,12 @@ def _recognize_fixed(extraction: KernelExtraction) -> FixedSchedule:
 
 def _recognize_rvv(extraction: KernelExtraction) -> RvvSchedule:
     top = _top_controls(extraction)
-    loops = tuple(control for control in top if control.kind == "WhileStmt")
+    loops = tuple(
+        control for control in top if control.kind in {"WhileStmt", "ForStmt"}
+    )
     if len(loops) != 1 or len(top) != 1:
         raise RecognitionError(
-            "family-unrecognized", "RVV needs one top-level strip-mined while loop"
+            "family-unrecognized", "RVV needs one top-level positive strip-mined loop"
         )
     loop = loops[0]
     match = re.fullmatch(r"\s*([A-Za-z_][A-Za-z0-9_]*)\s*>\s*0\s*", loop.condition_text)
@@ -520,7 +539,7 @@ def _derive_local_assertions(
                 _assertion_digest(assertion.source_text),
             )
         )
-    return tuple(sorted(result, key=lambda item: canonical_sha256(item.to_record())))
+    return tuple(sorted(result, key=lambda item: canonical_json(item.to_record())))
 
 
 def _stable_source_range(value: dict[str, Any]) -> dict[str, Any]:
@@ -616,6 +635,29 @@ def recognize_pair(
         raise RecognitionError(
             "layout-unrecognized", "Neon/RVV scalar stream layouts differ"
         )
+    def input_roles(
+        extraction: KernelExtraction, inputs: tuple[str, ...]
+    ) -> tuple[tuple[str, ...], tuple[str, ...]]:
+        advanced = {
+            definition.variable
+            for definition in extraction.definitions
+            if definition.definition_kind.startswith("compound-")
+        }
+        varying = tuple(sorted(name for name in inputs if name in advanced))
+        broadcast = tuple(sorted(name for name in inputs if name not in advanced))
+        if not varying:
+            raise RecognitionError(
+                "layout-unrecognized", "scalar layout needs a varying input stream"
+            )
+        return varying, broadcast
+
+    neon_varying, neon_broadcast = input_roles(neon, neon_inputs)
+    rvv_varying, rvv_broadcast = input_roles(rvv, rvv_inputs)
+    if (neon_varying, neon_broadcast) != (rvv_varying, rvv_broadcast):
+        raise RecognitionError(
+            "layout-unrecognized", "Neon/RVV input stream roles differ"
+        )
+
     neon_entry, neon_local = translate_assertions(
         neon.assertions, parameters=neon.parameters
     )
@@ -641,14 +683,17 @@ def recognize_pair(
         )
     local_facts = _derive_local_assertions(neon_local, fixed)
     root = Path(repository_root).resolve()
-    layout_capability, schedule_capabilities = _capabilities(root)
+    layout_capability, schedule_capabilities = _capabilities(
+        root, has_broadcast_input=bool(neon_broadcast)
+    )
     control_neon = canonical_sha256(_effect_record(neon)["controls"])
     control_rvv = canonical_sha256(_effect_record(rvv)["controls"])
     layout = LayoutInstance(
         layout_capability.ref,
         neon_stream_types,
-        tuple(sorted(neon_inputs)),
+        neon_varying,
         (neon_output,),
+        neon_broadcast,
     )
     schedules = (
         ScheduleInstance(
@@ -700,7 +745,8 @@ def recognize_pair(
         schedules,
         local_facts,
         consumed,
-        neon_inputs,
+        neon_varying,
+        neon_broadcast,
         neon_output,
         neon_stream_types,
         neon_element,

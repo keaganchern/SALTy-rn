@@ -1,0 +1,16 @@
+{
+  "architecture": "neon",
+  "argument_count": 2,
+  "artifact_kind": "intrinsic-capability",
+  "capability_id": "intrinsic:neon:vaddq_u16:c810e0f98c6e03f1",
+  "capability_sha256": "872dadf3a955be581b8cff94d8fbbecf6620cd81a5a86de9fe94fee5974b9301",
+  "descriptor_sha256": "17d0dca2dda908df6f643bcfb1c57d1bb6b4a9ba73d7358eb5a4f64b12656d90",
+  "function_type": "uint16x8_t (uint16x8_t, uint16x8_t)",
+  "implementation_sha256": "577aac37eb78329c0390e8639d8685591de7bed6b5b25f84edfc0b225edd5f9f",
+  "review_evidence_sha256": null,
+  "role": "semantic",
+  "schema_version": 1,
+  "semantic_symbol": "SALT.Intrinsics.Neon.vadd_u16",
+  "spelling": "vaddq_u16",
+  "version": 1
+}

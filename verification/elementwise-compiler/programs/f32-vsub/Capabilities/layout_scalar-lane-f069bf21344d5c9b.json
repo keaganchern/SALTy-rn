@@ -1,0 +1,12 @@
+{
+  "artifact_kind": "layout-view-capability",
+  "capability_id": "layout:scalar-lane",
+  "capability_sha256": "f069bf21344d5c9b568c88dd00faf0313dbe57c9fbeb4840cb91baa71109805c",
+  "kind": "scalar-lane",
+  "logical_index_rule": "stream[i]",
+  "recognizer_sha256": "a55dafbd6358e51b9e55f981036e69f5b6af324bc00dabdc31126bf0522e6de4",
+  "schema_version": 1,
+  "theorem_sha256": "6373ab7b2c38567699d824f1d0cee32defd2fb23f04a9becb4d8468fb43017ca",
+  "theorem_symbol": "SALT.Kernel.ElementwiseLayout.scalarLaneView_eq_self",
+  "version": 1
+}

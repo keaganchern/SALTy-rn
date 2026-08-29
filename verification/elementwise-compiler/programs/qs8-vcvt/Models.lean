@@ -6,7 +6,7 @@ import SALT.Kernel.ElementwiseFamily
 
 namespace SALT.Corpus.qs8vcvt
 
-def programManifestSha256 : String := "a1b161284ee2777cee9fb2a5f5e4a16bcb03de5143a2331ba6d462aad14246ac"
+def programManifestSha256 : String := "0e087e9285d5654a263330d2c12c5890c90850c23283648d2a2e590a68c2cb15"
 def consumedEffectsSha256 : String := "42f6ee6e9d155f5e5ce6ec28cc078b562bdfff34581e44f6082c5a83392cfb6f"
 
 def neonSourceSha256 : String :=
@@ -20,11 +20,11 @@ def rvvPreprocessedSha256 : String :=
 def parseFacadeSha256 : String :=
   "6e8a1a41f53ecd88abdff17e8a4ca08aa47199a189155d4a7bbc551f4891fa54"
 def registrySha256 : String :=
-  "5c5140777e73d94d7ebba23dc5e316cca60334c191fc2426e6f25892c3c867aa"
+  "2ca873731faf478cd5fe0aef5c666b9945ea09ecc83ecca3d6ec9e6588353f36"
 
 structure qs8vcvtParams where
   input_zero_point : BitVec 16
-  multiplier : BitVec 16
+  multiplier : BitVec 32
   output_zero_point : BitVec 16
   deriving Repr, DecidableEq
 

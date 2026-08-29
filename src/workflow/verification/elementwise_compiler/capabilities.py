@@ -93,12 +93,18 @@ class IntrinsicCapability:
 
     @property
     def capability_id(self) -> str:
+        # A source spelling/signature is not an exact intrinsic variant.  The
+        # registry contains cases where the same C declaration is lowered to
+        # different typed descriptors (for example, distinct narrowing modes).
+        # Bind the descriptor identity here so one reviewed variant can never
+        # satisfy another variant with the same spelling.
         source_key = canonical_sha256(
             {
                 "architecture": self.architecture.value,
                 "spelling": self.spelling,
                 "function_type": self.function_type,
                 "argument_count": self.argument_count,
+                "descriptor_sha256": self.descriptor_sha256,
             }
         )[:16]
         return f"intrinsic:{self.architecture.value}:{self.spelling}:{source_key}"
@@ -180,6 +186,7 @@ class IntrinsicCapability:
 
 class LayoutKind(str, Enum):
     SCALAR_LANE = "scalar-lane"
+    SCALAR_LANE_WITH_BROADCAST = "scalar-lane-with-broadcast"
 
 
 @dataclass(frozen=True, slots=True)
@@ -202,13 +209,18 @@ class LayoutViewCapability:
         return f"layout:{self.kind.value}"
 
     def unsigned_record(self) -> dict[str, Any]:
+        logical_index_rule = (
+            "stream[i]"
+            if self.kind is LayoutKind.SCALAR_LANE
+            else "stream[i], broadcast[0]"
+        )
         return {
             "artifact_kind": "layout-view-capability",
             "schema_version": SCHEMA_VERSION,
             "capability_id": self.capability_id,
             "version": self.version,
             "kind": self.kind.value,
-            "logical_index_rule": "stream[i]",
+            "logical_index_rule": logical_index_rule,
             "recognizer_sha256": self.recognizer_sha256,
             "theorem_symbol": self.theorem_symbol,
             "theorem_sha256": self.theorem_sha256,
@@ -235,12 +247,17 @@ class LayoutViewCapability:
         _exact(data, expected, "layout-view capability")
         if data["artifact_kind"] != "layout-view-capability" or data["schema_version"] != SCHEMA_VERSION:
             raise ElementwiseSchemaError("invalid layout-view capability header")
-        if data["logical_index_rule"] != "stream[i]":
-            raise ElementwiseSchemaError("unsupported scalar-lane logical index rule")
         try:
             kind = LayoutKind(data["kind"])
         except (TypeError, ValueError) as error:
             raise ElementwiseSchemaError("invalid layout kind") from error
+        expected_rule = (
+            "stream[i]"
+            if kind is LayoutKind.SCALAR_LANE
+            else "stream[i], broadcast[0]"
+        )
+        if data["logical_index_rule"] != expected_rule:
+            raise ElementwiseSchemaError("unsupported scalar-lane logical index rule")
         version = data["version"]
         if type(version) is not int:
             raise ElementwiseSchemaError("layout version must be an integer")
@@ -339,4 +356,3 @@ class ScheduleFamilyCapability:
         if data["capability_id"] != result.capability_id or data["capability_sha256"] != result.sha256:
             raise ElementwiseSchemaError("schedule capability identity disagrees with contents")
         return result
-

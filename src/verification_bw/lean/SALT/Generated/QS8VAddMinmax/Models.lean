@@ -18,7 +18,7 @@ def rvvPreprocessedSha256 : String :=
 def parseFacadeSha256 : String :=
   "bf718e923d59d83073524c04af8881ded5413be50005bba97889f08cb154e8df"
 def registrySourceSha256 : String :=
-  "2b2f7949952cdf9571b4312653df8d5701bb38a6c431d400159d3e1ce4cc2b16"
+  "f5054a8b4b263af58ba71267db7b554cea04f08a2aef80094c0cad79960c35e5"
 
 def neonBlock16FromIntrinsics (p : QS8AddMinmaxParams)
     (chunk_a chunk_b : List (BitVec 8)) : List (BitVec 8) :=

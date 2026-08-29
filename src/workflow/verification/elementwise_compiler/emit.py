@@ -8,7 +8,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, Mapping
 
-from workflow.verification.lean_backend.case_emit import emit_case_pair
+from workflow.verification.lean_backend.case_emit import (
+    _facade_scalar_field_type,
+    emit_case_pair,
+)
 from workflow.verification.lean_backend.frontend import KernelExtraction
 from workflow.verification.lean_backend.model_profiles import (
     ModelProfile,
@@ -64,6 +67,8 @@ _INTEGER_WIDTHS = {
     "unsigned long": 64,
     "int64_t": 64,
     "uint64_t": 64,
+    "float": 32,
+    "double": 64,
 }
 
 
@@ -84,7 +89,7 @@ def _field(dependency: str) -> str | None:
 
 
 def _field_widths(extractions: Iterable[KernelExtraction]) -> tuple[ParameterField, ...]:
-    widths: dict[str, int] = {}
+    source_types: dict[str, str] = {}
     for extraction in extractions:
         for definition in extraction.definitions:
             width = _integer_width(definition.type_spelling)
@@ -93,7 +98,15 @@ def _field_widths(extractions: Iterable[KernelExtraction]) -> tuple[ParameterFie
             for dependency in definition.dependencies:
                 name = _field(dependency)
                 if name is not None:
-                    widths[name] = max(widths.get(name, 0), width)
+                    source_type = _normalized_integer(
+                        _facade_scalar_field_type(extraction, name)
+                    )
+                    previous = source_types.setdefault(name, source_type)
+                    if previous != source_type:
+                        raise GenerationError(
+                            f"parameter field {name!r} has inconsistent C types "
+                            f"{previous!r} and {source_type!r}"
+                        )
         for call in extraction.calls:
             for argument in call.arguments:
                 width = _integer_width(argument.type_spelling)
@@ -102,8 +115,19 @@ def _field_widths(extractions: Iterable[KernelExtraction]) -> tuple[ParameterFie
                 for dependency in argument.dependencies:
                     name = _field(dependency)
                     if name is not None:
-                        widths[name] = max(widths.get(name, 0), width)
-    return tuple(ParameterField(name, widths[name]) for name in sorted(widths))
+                        source_type = _normalized_integer(
+                            _facade_scalar_field_type(extraction, name)
+                        )
+                        previous = source_types.setdefault(name, source_type)
+                        if previous != source_type:
+                            raise GenerationError(
+                                f"parameter field {name!r} has inconsistent C types "
+                                f"{previous!r} and {source_type!r}"
+                            )
+    return tuple(
+        ParameterField(name, _INTEGER_WIDTHS[source_types[name]])
+        for name in sorted(source_types)
+    )
 
 
 def _rvv_scalar_types(extraction: KernelExtraction) -> tuple[tuple[str, str], ...]:
@@ -139,16 +163,41 @@ def infer_model_profile(
     """Construct the old block-emitter interface solely from extracted facts."""
 
     fields = _field_widths((neon, rvv))
+    stream_types = dict(recognition.stream_c_types)
+    broadcast_fields = tuple(
+        ParameterField(f"broadcast_{name}", _INTEGER_WIDTHS[stream_types[name]])
+        for name in recognition.broadcast_inputs
+    )
+    if {field.name for field in fields} & {field.name for field in broadcast_fields}:
+        raise GenerationError("broadcast input collides with a parameter field")
+    fields = tuple(sorted((*fields, *broadcast_fields), key=lambda item: item.name))
     prefix = None
     if recognition.neon.kind in {ScheduleKind.FIXED_TAIL, ScheduleKind.MULTI_PHASE}:
+        tail_parent = recognition.neon.tail_control
+        tail_load_lanes = (
+            recognition.neon.phase_widths[-1]
+            if recognition.neon.kind is ScheduleKind.MULTI_PHASE
+            else recognition.neon.lanes
+        )
+        tail_advances = {
+            name: any(
+                definition.parent_control == tail_parent
+                and definition.definition_kind.startswith("compound-")
+                and re.sub(r"\s+", "", definition.expression_text)
+                == f"{name}+={tail_load_lanes}"
+                for definition in neon.definitions
+            )
+            for name in recognition.inputs
+        }
+        if len(set(tail_advances.values())) != 1:
+            raise GenerationError(
+                "tail input pointers must either all advance or all remain fixed"
+            )
         prefix = PrefixTailProfile(
             recognition.neon.element_c_type,
-            (
-                recognition.neon.phase_widths[-1]
-                if recognition.neon.kind is ScheduleKind.MULTI_PHASE
-                else recognition.neon.lanes
-            ),
+            tail_load_lanes,
             recognition.neon.store_widths,
+            next(iter(tail_advances.values())),
         )
     return ModelProfile(
         case_id=f"manifest-{recognition.consumed_effects_sha256[:16]}",
@@ -157,6 +206,7 @@ def infer_model_profile(
         parameter_fields=fields,
         rvv_scalar_types=_rvv_scalar_types(rvv),
         inputs=recognition.inputs,
+        broadcast_inputs=recognition.broadcast_inputs,
         neon_block_lanes=recognition.neon.lanes,
         neon_loop_condition=next(
             control.condition_text
@@ -352,7 +402,7 @@ def _external_expr(expr: ContractExpr, profile: ModelProfile) -> str:
             raise GenerationError("external-condition variables must start with params.")
         field = expr.value.removeprefix("params.")
         widths = {item.name: item.width for item in profile.parameter_fields}
-        if field not in widths or widths[field] != expr.type.bit_width:
+        if field not in widths or widths[field] < expr.type.bit_width:
             raise GenerationError(
                 f"external-condition field {field!r} is absent or has the wrong width"
             )

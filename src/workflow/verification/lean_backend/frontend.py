@@ -20,6 +20,7 @@ import hashlib
 import json
 import re
 import subprocess
+import struct
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable, Iterator, Sequence
@@ -162,9 +163,9 @@ _ALLOWED_KINDS = {
     "WhileStmt",
 }
 
-_ALLOWED_BINARY_OPS = {"=", "!=", ">", ">=", "&", "*", "/"}
+_ALLOWED_BINARY_OPS = {"=", "!=", ">", ">=", "&", "*", "/", "-", ","}
 _ALLOWED_COMPOUND_OPS = {"+=", "-="}
-_ALLOWED_UNARY_OPS = {"-"}
+_ALLOWED_UNARY_OPS = {"-", "*"}
 _ALLOWED_CSTYLE_CASTS = {"BitCast", "IntegralCast", "ToVoid"}
 _ALLOWED_IMPLICIT_CASTS = {
     "BitCast",
@@ -238,7 +239,15 @@ def _strip_c_comments_preserving_lines(text: str) -> str:
     return "".join(result)
 
 
-def _reject_source_preprocessor_directives(path: Path) -> None:
+def _audit_source_preprocessor_directives(path: Path) -> None:
+    """Allow only target-selected Arm64 conditional branches.
+
+    The raw source and Clang-preprocessed source are both hash-bound in the
+    extraction.  Macro definitions, pragmas, includes, alternative directive
+    spellings, and every other source directive remain rejected.  This admits
+    the common ACLE spelling split without permitting the source to redefine
+    an intrinsic or its parse facade.
+    """
     try:
         text = path.read_bytes().decode("ascii")
     except UnicodeDecodeError as error:
@@ -247,11 +256,30 @@ def _reject_source_preprocessor_directives(path: Path) -> None:
         ) from error
     phase_two = re.sub(r"\\[^\S\r\n]*\r?\n", "", text)
     stripped = _strip_c_comments_preserving_lines(phase_two)
+    conditional_stack: list[tuple[int, bool]] = []
     for line_number, line in enumerate(stripped.splitlines(), 1):
-        if re.match(r"^\s*(?:#|%:|\?\?=)", line):
-            raise UnsupportedConstructError(
-                f"preprocessor directive at {path}:{line_number} is outside this slice"
-            )
+        if re.match(r"^\s*(?:#|%:|\?\?=)", line) is None:
+            continue
+        directive = line.strip()
+        if directive == "#if XNN_ARCH_ARM64":
+            conditional_stack.append((line_number, False))
+            continue
+        if directive == "#else" and conditional_stack:
+            opening, saw_else = conditional_stack[-1]
+            if not saw_else:
+                conditional_stack[-1] = (opening, True)
+                continue
+        if directive == "#endif" and conditional_stack:
+            conditional_stack.pop()
+            continue
+        raise UnsupportedConstructError(
+            f"preprocessor directive at {path}:{line_number} is outside this slice"
+        )
+    if conditional_stack:
+        opening, _ = conditional_stack[-1]
+        raise UnsupportedConstructError(
+            f"unterminated Arm64 conditional at {path}:{opening}"
+        )
 
 
 def _children(node: dict[str, Any]) -> list[dict[str, Any]]:
@@ -605,7 +633,19 @@ def _constant_value(node: dict[str, Any], source_text: str) -> int | str | None:
         if len(children) != 1:
             return None
         value = _constant_value(children[0], source_text.removeprefix("-").strip())
+        if children[0].get("kind") == "FloatingLiteral" and isinstance(value, int):
+            return value ^ (1 << 31)
         return -value if isinstance(value, int) else None
+    if current.get("kind") == "FloatingLiteral":
+        if _type_spelling(current) != "float":
+            return None
+        try:
+            value = float(str(current.get("value")))
+            return struct.unpack("<I", struct.pack("<f", value))[0]
+        except (OverflowError, TypeError, ValueError, struct.error) as error:
+            raise UnsupportedConstructError(
+                f"Clang emitted a malformed float literal value: {current.get('value')!r}"
+            ) from error
     if current.get("kind") != "IntegerLiteral":
         return None
     try:
@@ -909,6 +949,8 @@ class _Extractor:
             )
         if kind == "IntegerLiteral":
             return _ExprValue((f"constant:{node.get('value')}:{_type_spelling(node)}",))
+        if kind == "FloatingLiteral":
+            return _ExprValue((f"constant:{node.get('value')}:{_type_spelling(node)}",))
         if kind == "UnaryExprOrTypeTraitExpr":
             arg_type = node.get("argType") or {}
             spelling = arg_type.get("qualType") or arg_type.get("desugaredQualType") or "?"
@@ -1048,6 +1090,13 @@ class _Extractor:
                 parent_control,
             )
             return
+        if kind == "BinaryOperator" and node.get("opcode") == ",":
+            children = _children(node)
+            if len(children) != 2:
+                raise UnsupportedConstructError("comma expression must have two operands")
+            self._statement(children[0], parent_control)
+            self._statement(children[1], parent_control)
+            return
         if kind == "CompoundAssignOperator":
             children = _children(node)
             if len(children) != 2:
@@ -1072,17 +1121,13 @@ class _Extractor:
         if kind == "ForStmt":
             raw = node.get("inner", [])
             meaningful = _children(node)
-            condition = next(
-                (child for child in meaningful if child.get("kind") == "BinaryOperator"), None
-            )
-            update = next(
-                (child for child in meaningful if child.get("kind") == "CompoundAssignOperator"),
-                None,
-            )
             body = next(
                 (child for child in meaningful if child.get("kind") == "CompoundStmt"), None
             )
-            if len(raw) != 5 or condition is None or update is None or body is None:
+            controls = [child for child in meaningful if child is not body]
+            condition = controls[0] if controls else None
+            update = controls[1] if len(controls) == 2 else None
+            if len(raw) != 5 or len(controls) != 2 or body is None:
                 raise UnsupportedConstructError("unsupported ForStmt shape")
             control_id = self._new_control(node, parent_control, condition, update)
             self._statement(body, control_id)
@@ -1202,7 +1247,7 @@ def parse_kernel_explicit(
         raise FrontendError(f"kernel source does not exist: {source_path}")
     if not facade_path.is_file():
         raise FrontendError(f"parse facade does not exist: {facade_path}")
-    _reject_source_preprocessor_directives(source_path)
+    _audit_source_preprocessor_directives(source_path)
 
     ast, command, preprocess_command, clang_version, preprocessed_sha256 = _clang_ast(
         source_path, facade_path, clang, target_triple, clang_args
@@ -1218,7 +1263,10 @@ def parse_kernel_explicit(
         str(parameter.get("name"))
         for parameter in _children(function)
         if parameter.get("kind") == "ParmVarDecl"
-        and "struct " in _type_spelling(parameter)
+        and any(
+            aggregate in _type_spelling(parameter)
+            for aggregate in ("struct ", "union ")
+        )
     )
     source = _Source(source_path)
     parameters, calls, definitions, controls, assertions = _Extractor(
@@ -1303,7 +1351,7 @@ def parse_kernel(
     )
     if not facade_path.is_file():
         raise FrontendError(f"parse facade does not exist: {facade_path}")
-    _reject_source_preprocessor_directives(source_path)
+    _audit_source_preprocessor_directives(source_path)
 
     ast, command, preprocess_command, clang_version, preprocessed_sha256 = _clang_ast(
         source_path, facade_path, clang, profile.target_triple

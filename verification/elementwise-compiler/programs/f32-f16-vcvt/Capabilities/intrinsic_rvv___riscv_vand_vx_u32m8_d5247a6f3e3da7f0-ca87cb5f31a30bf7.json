@@ -1,0 +1,16 @@
+{
+  "architecture": "rvv",
+  "argument_count": 3,
+  "artifact_kind": "intrinsic-capability",
+  "capability_id": "intrinsic:rvv:__riscv_vand_vx_u32m8:d5247a6f3e3da7f0",
+  "capability_sha256": "ca87cb5f31a30bf79c5ba2188851d8149dfcfea6c9ad397c0fb8236c31935c8b",
+  "descriptor_sha256": "30bec5968e4a50b04d93331e1c72e5af72bb25fee17d690fc714ea151648d7da",
+  "function_type": "vuint32m8_t (vuint32m8_t, uint32_t, size_t)",
+  "implementation_sha256": "ae52b0b3f11ea1c05c91a9ab66f853a0e4353e48be7bf03e12befcaf89de2e4f",
+  "review_evidence_sha256": null,
+  "role": "semantic",
+  "schema_version": 1,
+  "semantic_symbol": "SALT.Intrinsics.RVV.vand_vx_u32",
+  "spelling": "__riscv_vand_vx_u32m8",
+  "version": 1
+}

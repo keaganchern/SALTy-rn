@@ -1,0 +1,16 @@
+{
+  "architecture": "neon",
+  "argument_count": 2,
+  "artifact_kind": "intrinsic-capability",
+  "capability_id": "intrinsic:neon:vcombine_s8:ce04da71bb59db90",
+  "capability_sha256": "a12ea8d656092d9093bf2c7c892f3a967c05c603a85b7f2b346c09138125455d",
+  "descriptor_sha256": "6cca478ed2867434b4a562c8eabf5eaad622a1db20959366296f382313c9c181",
+  "function_type": "int8x16_t (int8x8_t, int8x8_t)",
+  "implementation_sha256": "4328be58020b2e21ba108b5b1deae9e73fe810ce1fd7c5cba97f3681ffa05dea",
+  "review_evidence_sha256": null,
+  "role": "structural",
+  "schema_version": 1,
+  "semantic_symbol": null,
+  "spelling": "vcombine_s8",
+  "version": 1
+}

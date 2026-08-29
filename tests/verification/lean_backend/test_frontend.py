@@ -8,11 +8,13 @@ import pytest
 from workflow.verification.lean_backend.frontend import (
     UnsupportedConstructError,
     parse_kernel,
+    parse_kernel_explicit,
 )
 from workflow.verification.lean_backend.profiles import (
     FRONTEND_PROFILES,
     QS8_VADD_MINMAX,
 )
+from workflow.verification.lean_backend.schema import Architecture
 
 
 pytestmark = pytest.mark.skipif(shutil.which("clang") is None, reason="system clang required")
@@ -363,6 +365,36 @@ def test_source_pragma_cannot_redirect_intrinsic_linkage(tmp_path: Path) -> None
         1,
     )
     path = tmp_path / "redirected-intrinsic.c"
+    path.write_text(mutated, encoding="utf-8")
+
+    with pytest.raises(UnsupportedConstructError, match="preprocessor directive"):
+        parse_kernel(path, function_name="test_neon")
+
+
+def test_exact_arm64_value_spelling_conditional_is_accepted() -> None:
+    result = parse_kernel_explicit(
+        ROOT / "kernels/source/qs8-vmul-minmax-fp32.c",
+        architecture=Architecture.NEON,
+        function_name="test_neon",
+        facade=(
+            ROOT
+            / "src/workflow/verification/lean_backend/facade/elementwise_shared.h"
+        ),
+        target_triple="aarch64-none-elf",
+    )
+
+    assert any(call.spelling == "vqmovn_high_s32" for call in result.calls)
+
+
+def test_arm64_conditional_cannot_define_a_source_macro(tmp_path: Path) -> None:
+    mutated = NEON.read_text(encoding="utf-8").replace(
+        "void test_neon(",
+        "#if XNN_ARCH_ARM64\n#define vmax_s8(a, b) vmin_s8((a), (b))\n"
+        "#else\n#define vmax_s8(a, b) vmin_s8((a), (b))\n#endif\n\n"
+        "void test_neon(",
+        1,
+    )
+    path = tmp_path / "conditional-macro.c"
     path.write_text(mutated, encoding="utf-8")
 
     with pytest.raises(UnsupportedConstructError, match="preprocessor directive"):

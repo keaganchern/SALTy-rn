@@ -223,11 +223,11 @@ def test_frontend_consumes_only_the_authoritative_projection() -> None:
         assert legacy_field not in script
 
 
-def test_elementwise_frontend_uses_only_schema_v2_artifact_graph_fields() -> None:
+def test_elementwise_frontend_uses_exact_schema_v3_artifact_graph_fields() -> None:
     script = (WEB / "elementwise.js").read_text(encoding="utf-8")
     html = (WEB / "index.html").read_text(encoding="utf-8")
 
-    assert "payload.schema_version !== 2" in script
+    assert "payload.schema_version !== 3" in script
     for artifact in (
         "manifest",
         "external_condition",
@@ -251,6 +251,11 @@ def test_elementwise_frontend_uses_only_schema_v2_artifact_graph_fields() -> Non
     assert "capability.lean_checked" in script
     assert "capability.independently_reviewed" in script
     assert "capability.review_sha256" in script
+    assert "capability.id" in script
+    assert "capability.function_type" in script
+    assert "capability.used" in script
+    assert "reviewed_registry_intrinsic_variants" in script
+    assert "reviewed_used_intrinsic_variants" in script
     assert "Reusable intrinsic pieces" in html
     for witness_field in (
         "counterexample.claim",

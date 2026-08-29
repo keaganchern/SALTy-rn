@@ -1,0 +1,16 @@
+{
+  "architecture": "neon",
+  "argument_count": 1,
+  "artifact_kind": "intrinsic-capability",
+  "capability_id": "intrinsic:neon:vreinterpretq_s16_u16:8aef24ee424bc477",
+  "capability_sha256": "e77e5dcd0738590b6c33175d8486f14e7a248562f92838f0c2ad776902a90889",
+  "descriptor_sha256": "0070088329f486a8b522a11f7e853737115458efab63aef1e9518e1c3bc6cb91",
+  "function_type": "int16x8_t (uint16x8_t)",
+  "implementation_sha256": "4328be58020b2e21ba108b5b1deae9e73fe810ce1fd7c5cba97f3681ffa05dea",
+  "review_evidence_sha256": null,
+  "role": "structural",
+  "schema_version": 1,
+  "semantic_symbol": null,
+  "spelling": "vreinterpretq_s16_u16",
+  "version": 1
+}

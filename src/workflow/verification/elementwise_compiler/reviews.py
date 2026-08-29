@@ -191,12 +191,17 @@ class IntrinsicReview:
 
     @property
     def review_id(self) -> str:
+        # Review records use the same exact-variant source identity as
+        # IntrinsicCapability.  Implementation changes still invalidate the
+        # content digest and review binding without silently renaming the
+        # descriptor being reviewed.
         source_key = canonical_sha256(
             {
                 "architecture": self.architecture.value,
                 "spelling": self.spelling,
                 "function_type": self.function_type,
                 "argument_count": self.argument_count,
+                "descriptor_sha256": self.descriptor_sha256,
             }
         )[:16]
         return f"intrinsic-review:{self.architecture.value}:{self.spelling}:{source_key}"

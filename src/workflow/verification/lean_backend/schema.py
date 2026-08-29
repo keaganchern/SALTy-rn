@@ -66,6 +66,7 @@ class OperationShape(str, Enum):
 
 class StructuralOp(str, Enum):
     BROADCAST = "broadcast"
+    LOAD_BROADCAST = "load-broadcast"
     LOAD = "load"
     STORE = "store"
     LANE_STORE = "lane_store"

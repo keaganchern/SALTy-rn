@@ -16,7 +16,7 @@ def rvvPreprocessedSha256 : String :=
 def parseFacadeSha256 : String :=
   "4634c40f29c8b24bf6a032a0d91e273f050111ff2db230a2c24358ef0a101da0"
 def registrySha256 : String :=
-  "dd7fde5214bde0ca34f9b9679644ee5c7d5cc33d9a5d40616fa45e9911dd08e6"
+  "d98975603372ffaaa301bb185a32dd33ce7f8488e7757745fb43f7cf85bebaf4"
 
 structure S8ClampParams where
   min : BitVec 32

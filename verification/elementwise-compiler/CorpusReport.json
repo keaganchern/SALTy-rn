@@ -10,7 +10,7 @@
   "grouped_layout_deferred": 1,
   "intrinsic_dependencies": [
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "neon:vabsq_f32",
       "programs": [
         "f32-f16-vcvt",
@@ -18,14 +18,14 @@
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "neon:vadd_u16",
       "programs": [
         "f32-f16-vcvt"
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "neon:vaddq_f32",
       "programs": [
         "f32-f16-vcvt",
@@ -35,63 +35,63 @@
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "neon:vaddq_u16",
       "programs": [
         "f32-f16-vcvt"
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "neon:vaddq_u32",
       "programs": [
         "f32-f16-vcvt"
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "neon:vaddw_s8",
       "programs": [
         "qs8-f32-vcvt"
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "neon:vaddw_u8",
       "programs": [
         "qu8-f32-vcvt"
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "neon:vand_u16",
       "programs": [
         "f32-f16-vcvt"
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "neon:vandq_u16",
       "programs": [
         "f32-f16-vcvt"
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "neon:vandq_u32",
       "programs": [
         "f32-f16-vcvt"
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "neon:vbsl_u16",
       "programs": [
         "f32-f16-vcvt"
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "neon:vbslq_f32",
       "programs": [
         "f32-vlrelu",
@@ -106,21 +106,21 @@
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "neon:vbslq_u16",
       "programs": [
         "f32-f16-vcvt"
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "neon:vcaltq_f32",
       "programs": [
         "f32-vrndne"
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "neon:vcgtq_u32",
       "programs": [
         "f32-f16-vcvt"
@@ -134,7 +134,7 @@
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "neon:vcltq_s32",
       "programs": [
         "f32-vlrelu"
@@ -157,14 +157,14 @@
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "neon:vcombine_u16",
       "programs": [
         "f32-f16-vcvt"
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "neon:vcvtq_f32_s32",
       "programs": [
         "qs8-f32-vcvt",
@@ -173,7 +173,7 @@
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "neon:vdivq_f32",
       "programs": [
         "f32-vdiv"
@@ -195,7 +195,7 @@
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "neon:vdupq_n_f32",
       "programs": [
         "f32-f16-vcvt",
@@ -235,14 +235,14 @@
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "neon:vdupq_n_u16",
       "programs": [
         "f32-f16-vcvt"
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "neon:vdupq_n_u32",
       "programs": [
         "f32-f16-vcvt"
@@ -260,7 +260,7 @@
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "neon:vext_u16",
       "programs": [
         "f32-f16-vcvt"
@@ -342,7 +342,7 @@
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "neon:vget_low_u16",
       "programs": [
         "f32-f16-vcvt"
@@ -369,7 +369,7 @@
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "neon:vld1q_dup_f32",
       "programs": [
         "f32-vmulc"
@@ -417,7 +417,7 @@
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "neon:vmaxq_f32",
       "programs": [
         "f32-vmax"
@@ -432,7 +432,7 @@
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "neon:vmaxq_u32",
       "programs": [
         "f32-f16-vcvt"
@@ -455,7 +455,7 @@
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "neon:vminq_f32",
       "programs": [
         "f32-vmin"
@@ -502,7 +502,7 @@
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "neon:vmovn_u32",
       "programs": [
         "f32-f16-vcvt"
@@ -516,28 +516,28 @@
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "neon:vmovq_n_s32",
       "programs": [
         "f32-vlrelu"
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "neon:vmovq_n_u32",
       "programs": [
         "f32-vrndne"
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "neon:vmull_s16",
       "programs": [
         "qs8-vmul-minmax-fp32"
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "neon:vmulq_f32",
       "programs": [
         "f32-f16-vcvt",
@@ -559,21 +559,21 @@
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "neon:vorr_u16",
       "programs": [
         "f32-f16-vcvt"
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "neon:vorrq_u16",
       "programs": [
         "f32-f16-vcvt"
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "neon:vorrq_u32",
       "programs": [
         "f32-vrndne"
@@ -590,7 +590,7 @@
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "neon:vqmovn_high_s32",
       "programs": [
         "qs8-vmul-minmax-fp32"
@@ -631,7 +631,7 @@
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "neon:vqsubq_s32",
       "programs": [
         "qs8-vmul-minmax-fp32"
@@ -667,7 +667,7 @@
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "neon:vreinterpret_u32_u16",
       "programs": [
         "f32-f16-vcvt"
@@ -681,7 +681,7 @@
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "neon:vreinterpretq_f32_u32",
       "programs": [
         "f32-f16-vcvt",
@@ -697,7 +697,7 @@
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "neon:vreinterpretq_s32_f32",
       "programs": [
         "f32-vlrelu",
@@ -705,14 +705,14 @@
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "neon:vreinterpretq_u16_s16",
       "programs": [
         "qu8-f32-vcvt"
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "neon:vreinterpretq_u32_f32",
       "programs": [
         "f32-f16-vcvt"
@@ -735,14 +735,14 @@
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "neon:vshrn_n_u32",
       "programs": [
         "f32-f16-vcvt"
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "neon:vsqrtq_f32",
       "programs": [
         "f32-vsqrt"
@@ -842,7 +842,7 @@
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "neon:vst1_u16",
       "programs": [
         "f32-f16-vcvt"
@@ -883,7 +883,7 @@
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "neon:vst1q_u16",
       "programs": [
         "f32-f16-vcvt"
@@ -905,7 +905,7 @@
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "neon:vsubq_f32",
       "programs": [
         "f32-vrndne",
@@ -921,49 +921,49 @@
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "rvv:__riscv_vadd_vv_u16m4",
       "programs": [
         "f32-f16-vcvt"
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "rvv:__riscv_vadd_vx_i32m8",
       "programs": [
         "qs8-vmul-minmax-fp32"
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "rvv:__riscv_vadd_vx_u16m4",
       "programs": [
         "qu8-f32-vcvt"
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "rvv:__riscv_vadd_vx_u32m8",
       "programs": [
         "f32-f16-vcvt"
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "rvv:__riscv_vand_vx_u16m4",
       "programs": [
         "f32-f16-vcvt"
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "rvv:__riscv_vand_vx_u32m8",
       "programs": [
         "f32-f16-vcvt"
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "rvv:__riscv_vfabs_v_f32m8",
       "programs": [
         "f32-f16-vcvt",
@@ -971,7 +971,7 @@
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "rvv:__riscv_vfadd_vf_f32m8",
       "programs": [
         "f32-vrndne"
@@ -985,7 +985,7 @@
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "rvv:__riscv_vfadd_vv_f32m8",
       "programs": [
         "f32-f16-vcvt",
@@ -993,7 +993,7 @@
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "rvv:__riscv_vfcvt_f_x_v_f32m8",
       "programs": [
         "qs8-f32-vcvt",
@@ -1002,35 +1002,35 @@
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "rvv:__riscv_vfcvt_x_f_v_i32m8",
       "programs": [
         "qs8-vmul-minmax-fp32"
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "rvv:__riscv_vfdiv_vv_f32m8",
       "programs": [
         "f32-vdiv"
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "rvv:__riscv_vfmax_vv_f32m8",
       "programs": [
         "f32-vmax"
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "rvv:__riscv_vfmin_vv_f32m8",
       "programs": [
         "f32-vmin"
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "rvv:__riscv_vfmul_vf_f32m8",
       "programs": [
         "f32-f16-vcvt",
@@ -1049,28 +1049,28 @@
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "rvv:__riscv_vfmul_vv_f32m8",
       "programs": [
         "f32-vmul"
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "rvv:__riscv_vfsgnj_vv_f32m8",
       "programs": [
         "f32-vrndne"
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "rvv:__riscv_vfsqrt_v_f32m8",
       "programs": [
         "f32-vsqrt"
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "rvv:__riscv_vfsub_vf_f32m8",
       "programs": [
         "f32-vrndne"
@@ -1084,7 +1084,7 @@
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "rvv:__riscv_vfsub_vv_f32m8",
       "programs": [
         "f32-vsub"
@@ -1171,7 +1171,7 @@
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "rvv:__riscv_vmaxu_vx_u32m8",
       "programs": [
         "f32-f16-vcvt"
@@ -1185,7 +1185,7 @@
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "rvv:__riscv_vmerge_vvm_f32m8",
       "programs": [
         "f32-vlrelu",
@@ -1200,21 +1200,21 @@
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "rvv:__riscv_vmerge_vxm_u16m4",
       "programs": [
         "f32-f16-vcvt"
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "rvv:__riscv_vmfgt_vf_f32m8_b4",
       "programs": [
         "f32-vrndne"
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "rvv:__riscv_vmfne_vv_f32m8_b4",
       "programs": [
         "f32-vrndne"
@@ -1243,7 +1243,7 @@
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "rvv:__riscv_vmsgtu_vx_u32m8_b4",
       "programs": [
         "f32-f16-vcvt"
@@ -1257,7 +1257,7 @@
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "rvv:__riscv_vmslt_vx_i32m8_b4",
       "programs": [
         "f32-vlrelu"
@@ -1307,35 +1307,35 @@
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "rvv:__riscv_vnsrl_wx_u16m4",
       "programs": [
         "f32-f16-vcvt"
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "rvv:__riscv_vor_vv_u16m4",
       "programs": [
         "f32-f16-vcvt"
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "rvv:__riscv_vor_vx_u32m8",
       "programs": [
         "f32-vrndne"
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "rvv:__riscv_vreinterpret_v_f32m8_i32m8",
       "programs": [
         "f32-vlrelu"
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "rvv:__riscv_vreinterpret_v_f32m8_u32m8",
       "programs": [
         "f32-f16-vcvt",
@@ -1358,7 +1358,7 @@
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "rvv:__riscv_vreinterpret_v_u32m8_f32m8",
       "programs": [
         "f32-f16-vcvt",
@@ -1384,7 +1384,7 @@
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "rvv:__riscv_vse16_v_u16m4",
       "programs": [
         "f32-f16-vcvt"
@@ -1528,7 +1528,7 @@
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "rvv:__riscv_vsub_vx_i16m4",
       "programs": [
         "qs8-f32-vcvt",
@@ -1565,7 +1565,7 @@
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "rvv:__riscv_vzext_vf2_u16m4",
       "programs": [
         "qu8-f32-vcvt"
@@ -1574,68 +1574,24 @@
   ],
   "intrinsic_registry": {
     "path": "IntrinsicRegistry.json",
-    "sha256": "b606951b0d2e0007a64501fa83f4f165ec0afe1d19314768f9159116c9bfac2e"
+    "sha256": "41ef1892ccee47707563e6afa2ae2fd0b2ed08fa45f6abbe3e1da6cd20a4d8f2"
   },
   "programs": [
     {
-      "artifact_index": null,
+      "artifact_index": "programs/f32-f16-vcvt/ArtifactIndex.json",
       "counterexample": null,
-      "cross_phase_status": "not-typed",
-      "detail": "no exact typed parse facade covers this pair",
+      "cross_phase_status": "no-counterexample-in-bounded-search",
+      "detail": "typed manifest, Models, and proof-free Spec generated",
       "entry_contract_preflight": "equal",
       "external_condition_detail": "local kernels do not read semantic parameter fields",
-      "external_condition_sha256": "584f0f426270b6bcf222bbabcfe05da7c922ae8dc565d04d94ed0cfa515f334a",
+      "external_condition_sha256": "c624f5287400e640868dadfd20c12949be2ee73b5c2bbeb325b8a4138a783593",
       "external_condition_status": "not-required",
       "input_streams": [
         "input"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": null,
-      "missing_intrinsics": [
-        "neon:vabsq_f32",
-        "neon:vadd_u16",
-        "neon:vaddq_f32",
-        "neon:vaddq_u16",
-        "neon:vaddq_u32",
-        "neon:vand_u16",
-        "neon:vandq_u16",
-        "neon:vandq_u32",
-        "neon:vbsl_u16",
-        "neon:vbslq_u16",
-        "neon:vcgtq_u32",
-        "neon:vcombine_u16",
-        "neon:vdupq_n_f32",
-        "neon:vdupq_n_u16",
-        "neon:vdupq_n_u32",
-        "neon:vext_u16",
-        "neon:vget_low_u16",
-        "neon:vmaxq_u32",
-        "neon:vmovn_u32",
-        "neon:vmulq_f32",
-        "neon:vorr_u16",
-        "neon:vorrq_u16",
-        "neon:vreinterpret_u32_u16",
-        "neon:vreinterpretq_f32_u32",
-        "neon:vreinterpretq_u32_f32",
-        "neon:vshrn_n_u32",
-        "neon:vst1_u16",
-        "neon:vst1q_u16",
-        "rvv:__riscv_vadd_vv_u16m4",
-        "rvv:__riscv_vadd_vx_u32m8",
-        "rvv:__riscv_vand_vx_u16m4",
-        "rvv:__riscv_vand_vx_u32m8",
-        "rvv:__riscv_vfabs_v_f32m8",
-        "rvv:__riscv_vfadd_vv_f32m8",
-        "rvv:__riscv_vfmul_vf_f32m8",
-        "rvv:__riscv_vmaxu_vx_u32m8",
-        "rvv:__riscv_vmerge_vxm_u16m4",
-        "rvv:__riscv_vmsgtu_vx_u32m8_b4",
-        "rvv:__riscv_vnsrl_wx_u16m4",
-        "rvv:__riscv_vor_vv_u16m4",
-        "rvv:__riscv_vreinterpret_v_f32m8_u32m8",
-        "rvv:__riscv_vreinterpret_v_u32m8_f32m8",
-        "rvv:__riscv_vse16_v_u16m4"
-      ],
+      "manifest_sha256": "d384f9dae1e6a7b136e81e3783aa1d4e752a3d8f075ee5207f9b3b1a4fa897e3",
+      "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
         "vabsq_f32",
@@ -1698,28 +1654,25 @@
       ],
       "rvv_source": "kernels/target/f32-f16-vcvt.c",
       "schedule_preflight": "multi-phase",
-      "status": "intrinsic-missing",
-      "status_layer": "lexical-preflight"
+      "status": "spec-generated",
+      "status_layer": "typed-generated"
     },
     {
-      "artifact_index": null,
+      "artifact_index": "programs/f32-vadd/ArtifactIndex.json",
       "counterexample": null,
-      "cross_phase_status": "not-typed",
-      "detail": "no exact typed parse facade covers this pair",
+      "cross_phase_status": "not-multi-phase",
+      "detail": "typed manifest, Models, and proof-free Spec generated",
       "entry_contract_preflight": "equal",
       "external_condition_detail": "local kernels do not read semantic parameter fields",
-      "external_condition_sha256": "824e1ebe5ae180b8093f3d950d604e13a9261d99603f0ef15edf72e05b92753c",
+      "external_condition_sha256": "c41993ce9651868c6a65bc64007f3ce351bc12d282dfa84340dddd57a1c3539a",
       "external_condition_status": "not-required",
       "input_streams": [
         "input_a",
         "input_b"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": null,
-      "missing_intrinsics": [
-        "neon:vaddq_f32",
-        "rvv:__riscv_vfadd_vv_f32m8"
-      ],
+      "manifest_sha256": "b3a7bd6bf5bfcae5bb8771867c824d441b5e3736efc2e7145f8b1e0e59982189",
+      "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
         "vaddq_f32",
@@ -1745,8 +1698,8 @@
       ],
       "rvv_source": "kernels/target/f32-vadd.c",
       "schedule_preflight": "fixed-tail",
-      "status": "intrinsic-missing",
-      "status_layer": "lexical-preflight"
+      "status": "spec-generated",
+      "status_layer": "typed-generated"
     },
     {
       "artifact_index": null,
@@ -1766,7 +1719,6 @@
       "missing_intrinsics": [
         "neon:vmlaq_f32",
         "neon:vmlsq_f32",
-        "neon:vmulq_f32",
         "rvv:__riscv_vfadd_vv_f32m4",
         "rvv:__riscv_vfmul_vv_f32m4",
         "rvv:__riscv_vfsub_vv_f32m4",
@@ -1807,24 +1759,21 @@
       "status_layer": "lexical-preflight"
     },
     {
-      "artifact_index": null,
+      "artifact_index": "programs/f32-vdiv/ArtifactIndex.json",
       "counterexample": null,
-      "cross_phase_status": "not-typed",
-      "detail": "no exact typed parse facade covers this pair",
+      "cross_phase_status": "not-multi-phase",
+      "detail": "typed manifest, Models, and proof-free Spec generated",
       "entry_contract_preflight": "equal",
       "external_condition_detail": "local kernels do not read semantic parameter fields",
-      "external_condition_sha256": "cf84b2ccff0a4519e8a04fff1dbe66794a99ed05a06a08972c97547d088da9e7",
+      "external_condition_sha256": "13d80166539646531d2a3898a426b7b85c1ce509cec0fa07cb5a204972aeded5",
       "external_condition_status": "not-required",
       "input_streams": [
         "input_a",
         "input_b"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": null,
-      "missing_intrinsics": [
-        "neon:vdivq_f32",
-        "rvv:__riscv_vfdiv_vv_f32m8"
-      ],
+      "manifest_sha256": "07946933fd0a27a90dc4493eb9a5e67df83bf83847a9a438dd5d6257d2bc65ab",
+      "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
         "vdivq_f32",
@@ -1850,35 +1799,24 @@
       ],
       "rvv_source": "kernels/target/f32-vdiv.c",
       "schedule_preflight": "fixed-tail",
-      "status": "intrinsic-missing",
-      "status_layer": "lexical-preflight"
+      "status": "spec-generated",
+      "status_layer": "typed-generated"
     },
     {
-      "artifact_index": null,
+      "artifact_index": "programs/f32-vlrelu/ArtifactIndex.json",
       "counterexample": null,
-      "cross_phase_status": "not-typed",
-      "detail": "no exact typed parse facade covers this pair",
+      "cross_phase_status": "not-multi-phase",
+      "detail": "typed manifest, Models, and proof-free Spec generated",
       "entry_contract_preflight": "equal",
       "external_condition_detail": "initializer directly copies an unconstrained unary scalar parameter",
-      "external_condition_sha256": "fec766aaea63bfe68ffb8f9c54d8527d3706df58d1cabc37ac3e5c56648502a5",
+      "external_condition_sha256": "05b5597d06dd7f4c3aa02e31345003b17824a48d18f9f42b736e2a27c55a3ecd",
       "external_condition_status": "not-required",
       "input_streams": [
         "input"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": null,
-      "missing_intrinsics": [
-        "neon:vbslq_f32",
-        "neon:vcltq_s32",
-        "neon:vdupq_n_f32",
-        "neon:vmovq_n_s32",
-        "neon:vmulq_f32",
-        "neon:vreinterpretq_s32_f32",
-        "rvv:__riscv_vfmul_vf_f32m8",
-        "rvv:__riscv_vmerge_vvm_f32m8",
-        "rvv:__riscv_vmslt_vx_i32m8_b4",
-        "rvv:__riscv_vreinterpret_v_f32m8_i32m8"
-      ],
+      "manifest_sha256": "7ebec620516835c5b5db35a335b1f6d6fdffd0e38120b7a96c65f075c85634e0",
+      "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
         "vbslq_f32",
@@ -1912,28 +1850,25 @@
       ],
       "rvv_source": "kernels/target/f32-vlrelu.c",
       "schedule_preflight": "fixed-tail",
-      "status": "intrinsic-missing",
-      "status_layer": "lexical-preflight"
+      "status": "spec-generated",
+      "status_layer": "typed-generated"
     },
     {
-      "artifact_index": null,
+      "artifact_index": "programs/f32-vmax/ArtifactIndex.json",
       "counterexample": null,
-      "cross_phase_status": "not-typed",
-      "detail": "no exact typed parse facade covers this pair",
+      "cross_phase_status": "not-multi-phase",
+      "detail": "typed manifest, Models, and proof-free Spec generated",
       "entry_contract_preflight": "equal",
       "external_condition_detail": "local kernels do not read semantic parameter fields",
-      "external_condition_sha256": "9ee75d886805aef2eed3d1c80aa0cd53010a55930fd8eee1e7fcea1be33908f1",
+      "external_condition_sha256": "7a94df02cf2bd7546e8068c30af8cc02fe86e091bd6bb126b116744216975f78",
       "external_condition_status": "not-required",
       "input_streams": [
         "input_a",
         "input_b"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": null,
-      "missing_intrinsics": [
-        "neon:vmaxq_f32",
-        "rvv:__riscv_vfmax_vv_f32m8"
-      ],
+      "manifest_sha256": "bc1240fa61d109a4a2e92b17b2905e012335874ca07abe5e6bd9b57d8a1ad994",
+      "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
         "vget_high_f32",
@@ -1959,28 +1894,25 @@
       ],
       "rvv_source": "kernels/target/f32-vmax.c",
       "schedule_preflight": "fixed-tail",
-      "status": "intrinsic-missing",
-      "status_layer": "lexical-preflight"
+      "status": "spec-generated",
+      "status_layer": "typed-generated"
     },
     {
-      "artifact_index": null,
+      "artifact_index": "programs/f32-vmin/ArtifactIndex.json",
       "counterexample": null,
-      "cross_phase_status": "not-typed",
-      "detail": "no exact typed parse facade covers this pair",
+      "cross_phase_status": "not-multi-phase",
+      "detail": "typed manifest, Models, and proof-free Spec generated",
       "entry_contract_preflight": "equal",
       "external_condition_detail": "local kernels do not read semantic parameter fields",
-      "external_condition_sha256": "6aaa1ad5710d4aadfd7c10f5bc67a2113f84725340fd7d22eef53e3c8e6e71ae",
+      "external_condition_sha256": "1bbf5b20a53ddfc9d7284353899c9c6a92b8407e558453dabad7d7622068629a",
       "external_condition_status": "not-required",
       "input_streams": [
         "input_a",
         "input_b"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": null,
-      "missing_intrinsics": [
-        "neon:vminq_f32",
-        "rvv:__riscv_vfmin_vv_f32m8"
-      ],
+      "manifest_sha256": "24f3eb83009fc81ca8e0abad9df72854c7c78853ee45684c6d0eaac3d8542919",
+      "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
         "vget_high_f32",
@@ -2006,28 +1938,25 @@
       ],
       "rvv_source": "kernels/target/f32-vmin.c",
       "schedule_preflight": "fixed-tail",
-      "status": "intrinsic-missing",
-      "status_layer": "lexical-preflight"
+      "status": "spec-generated",
+      "status_layer": "typed-generated"
     },
     {
-      "artifact_index": null,
+      "artifact_index": "programs/f32-vmul/ArtifactIndex.json",
       "counterexample": null,
-      "cross_phase_status": "not-typed",
-      "detail": "no exact typed parse facade covers this pair",
+      "cross_phase_status": "not-multi-phase",
+      "detail": "typed manifest, Models, and proof-free Spec generated",
       "entry_contract_preflight": "equal",
       "external_condition_detail": "local kernels do not read semantic parameter fields",
-      "external_condition_sha256": "b2cb245a80388f226571f6950b625fbae625d4b5597e4067ea907596265a0622",
+      "external_condition_sha256": "b5d444ae7c71dcf10e2c40680ad8b71390074f1e89017d9d4fa4ecc151110633",
       "external_condition_status": "not-required",
       "input_streams": [
         "input_a",
         "input_b"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": null,
-      "missing_intrinsics": [
-        "neon:vmulq_f32",
-        "rvv:__riscv_vfmul_vv_f32m8"
-      ],
+      "manifest_sha256": "7dd1088c01782333dc85e2c93d0a7834c45ab595cdb5920d3204c7908db47327",
+      "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
         "vget_high_f32",
@@ -2053,29 +1982,25 @@
       ],
       "rvv_source": "kernels/target/f32-vmul.c",
       "schedule_preflight": "fixed-tail",
-      "status": "intrinsic-missing",
-      "status_layer": "lexical-preflight"
+      "status": "spec-generated",
+      "status_layer": "typed-generated"
     },
     {
-      "artifact_index": null,
+      "artifact_index": "programs/f32-vmulc/ArtifactIndex.json",
       "counterexample": null,
-      "cross_phase_status": "not-typed",
-      "detail": "no exact typed parse facade covers this pair",
+      "cross_phase_status": "not-multi-phase",
+      "detail": "typed manifest, Models, and proof-free Spec generated",
       "entry_contract_preflight": "equal",
       "external_condition_detail": "local kernels do not read semantic parameter fields",
-      "external_condition_sha256": "97a1fa4a87baf9d7867f7f09cfcde11187e47f9c38a313a0d3681132887601ca",
+      "external_condition_sha256": "4eaecb4fa7df033b16f50b264c1c1f57a830012cf0bfdd93f043662977253f1b",
       "external_condition_status": "not-required",
       "input_streams": [
         "input_a",
         "input_b"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": null,
-      "missing_intrinsics": [
-        "neon:vld1q_dup_f32",
-        "neon:vmulq_f32",
-        "rvv:__riscv_vfmul_vf_f32m8"
-      ],
+      "manifest_sha256": "76d33c621c9322fc0c94595d937193ab5c07932cb2d9376077ff6a8358994627",
+      "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
         "vget_high_f32",
@@ -2102,43 +2027,24 @@
       ],
       "rvv_source": "kernels/target/f32-vmulc.c",
       "schedule_preflight": "fixed-tail",
-      "status": "intrinsic-missing",
-      "status_layer": "lexical-preflight"
+      "status": "spec-generated",
+      "status_layer": "typed-generated"
     },
     {
-      "artifact_index": null,
+      "artifact_index": "programs/f32-vrndne/ArtifactIndex.json",
       "counterexample": null,
-      "cross_phase_status": "not-typed",
-      "detail": "no exact typed parse facade covers this pair",
+      "cross_phase_status": "not-multi-phase",
+      "detail": "typed manifest, Models, and proof-free Spec generated",
       "entry_contract_preflight": "equal",
       "external_condition_detail": "local kernels do not read semantic parameter fields",
-      "external_condition_sha256": "610782c17ad3f30fbf92c02598307eab276512e2142db08569ae163224a34e06",
+      "external_condition_sha256": "5c4dbfecbb524d96b7ae9d4a00523e8af4caa41c5e8b146d6962cf4ab83a59a2",
       "external_condition_status": "not-required",
       "input_streams": [
         "input"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": null,
-      "missing_intrinsics": [
-        "neon:vabsq_f32",
-        "neon:vaddq_f32",
-        "neon:vbslq_f32",
-        "neon:vcaltq_f32",
-        "neon:vmovq_n_u32",
-        "neon:vorrq_u32",
-        "neon:vreinterpretq_f32_u32",
-        "neon:vsubq_f32",
-        "rvv:__riscv_vfabs_v_f32m8",
-        "rvv:__riscv_vfadd_vf_f32m8",
-        "rvv:__riscv_vfsgnj_vv_f32m8",
-        "rvv:__riscv_vfsub_vf_f32m8",
-        "rvv:__riscv_vmerge_vvm_f32m8",
-        "rvv:__riscv_vmfgt_vf_f32m8_b4",
-        "rvv:__riscv_vmfne_vv_f32m8_b4",
-        "rvv:__riscv_vor_vx_u32m8",
-        "rvv:__riscv_vreinterpret_v_f32m8_u32m8",
-        "rvv:__riscv_vreinterpret_v_u32m8_f32m8"
-      ],
+      "manifest_sha256": "25ec9d05e2f0aecce08096486bc67ab193641ae7b4ccc128d3dc1286707d2f5f",
+      "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
         "vabsq_f32",
@@ -2180,28 +2086,25 @@
       ],
       "rvv_source": "kernels/target/f32-vrndne.c",
       "schedule_preflight": "fixed-tail",
-      "status": "intrinsic-missing",
-      "status_layer": "lexical-preflight"
+      "status": "spec-generated",
+      "status_layer": "typed-generated"
     },
     {
-      "artifact_index": null,
+      "artifact_index": "programs/f32-vsqrt/ArtifactIndex.json",
       "counterexample": null,
-      "cross_phase_status": "not-typed",
-      "detail": "no exact typed parse facade covers this pair",
+      "cross_phase_status": "not-multi-phase",
+      "detail": "typed manifest, Models, and proof-free Spec generated",
       "entry_contract_preflight": "equal",
       "external_condition_detail": "local kernels do not read semantic parameter fields",
-      "external_condition_sha256": "67c24ed782143c07b05b136d4d48480b3c4fb0bc586553cc8c63d60b50aad965",
+      "external_condition_sha256": "8eb36f4e679c4874c297c3aee3c0ed97c3d0a5e0a1eaf3d1069140afa7f55813",
       "external_condition_status": "not-required",
       "input_streams": [
         "input",
         "unused_params"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": null,
-      "missing_intrinsics": [
-        "neon:vsqrtq_f32",
-        "rvv:__riscv_vfsqrt_v_f32m8"
-      ],
+      "manifest_sha256": "5b3d9938a12592e445971dcc0d6a2e44cc657b5214c277276c98b634065c1839",
+      "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
         "vget_high_f32",
@@ -2227,28 +2130,25 @@
       ],
       "rvv_source": "kernels/target/f32-vsqrt.c",
       "schedule_preflight": "fixed-tail",
-      "status": "intrinsic-missing",
-      "status_layer": "lexical-preflight"
+      "status": "spec-generated",
+      "status_layer": "typed-generated"
     },
     {
-      "artifact_index": null,
+      "artifact_index": "programs/f32-vsub/ArtifactIndex.json",
       "counterexample": null,
-      "cross_phase_status": "not-typed",
-      "detail": "no exact typed parse facade covers this pair",
+      "cross_phase_status": "not-multi-phase",
+      "detail": "typed manifest, Models, and proof-free Spec generated",
       "entry_contract_preflight": "equal",
       "external_condition_detail": "local kernels do not read semantic parameter fields",
-      "external_condition_sha256": "d7e14cd20055341ccc6f22b89d244e3e58f0e7b437a5d4c693ff586d2bca6a71",
+      "external_condition_sha256": "1d4b9a4e8820327c5bdf5ba16a54841b457791947cde34e54d2a8c20b473dd09",
       "external_condition_status": "not-required",
       "input_streams": [
         "input_a",
         "input_b"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": null,
-      "missing_intrinsics": [
-        "neon:vsubq_f32",
-        "rvv:__riscv_vfsub_vv_f32m8"
-      ],
+      "manifest_sha256": "24f7ea4845763206f84808f184e99cf8397ac108343b066a25b206b2ff24de53",
+      "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
         "vget_high_f32",
@@ -2274,32 +2174,24 @@
       ],
       "rvv_source": "kernels/target/f32-vsub.c",
       "schedule_preflight": "fixed-tail",
-      "status": "intrinsic-missing",
-      "status_layer": "lexical-preflight"
+      "status": "spec-generated",
+      "status_layer": "typed-generated"
     },
     {
-      "artifact_index": null,
+      "artifact_index": "programs/qs8-f32-vcvt/ArtifactIndex.json",
       "counterexample": null,
-      "cross_phase_status": "not-typed",
-      "detail": "no exact typed parse facade covers this pair",
+      "cross_phase_status": "not-multi-phase",
+      "detail": "generated Spec is blocked because external input conditions are unresolved",
       "entry_contract_preflight": "equal",
       "external_condition_detail": "initializer transforms or validates semantic parameters, but no complete caller-to-kernel guarantee has been established",
-      "external_condition_sha256": "2e878b84ad60bbeedf86ce02f8f9bbe5296d70236a3786d9a3533fdb0b84a9c9",
+      "external_condition_sha256": "526562299432b1b907b0aa39cf63eeb09a156e4c1fdee4c72686bee85eb15256",
       "external_condition_status": "required-missing",
       "input_streams": [
         "input"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": null,
-      "missing_intrinsics": [
-        "neon:vaddw_s8",
-        "neon:vcvtq_f32_s32",
-        "neon:vdupq_n_f32",
-        "neon:vmulq_f32",
-        "rvv:__riscv_vfcvt_f_x_v_f32m8",
-        "rvv:__riscv_vfmul_vf_f32m8",
-        "rvv:__riscv_vsub_vx_i16m4"
-      ],
+      "manifest_sha256": "476abecb6e3a0e2c71fda7604ae1454642647f40dba6a8d759893f775047eace",
+      "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
         "vaddw_s8",
@@ -2336,8 +2228,8 @@
       ],
       "rvv_source": "kernels/target/qs8-f32-vcvt.c",
       "schedule_preflight": "fixed-tail",
-      "status": "intrinsic-missing",
-      "status_layer": "lexical-preflight"
+      "status": "external-condition-missing",
+      "status_layer": "typed-generated"
     },
     {
       "artifact_index": "programs/qs8-vadd-minmax/ArtifactIndex.json",
@@ -2353,7 +2245,7 @@
         "input_b"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": "cc7595cc1a7d04d7e86616c8db70271b3178bb1cdc2369b407873a2bd44cf609",
+      "manifest_sha256": "ec705eb7660bc16b42a3b47ba36b2185a273f2449d79884164e1a1f89727a39a",
       "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
@@ -2428,7 +2320,7 @@
         "input"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": "a1b161284ee2777cee9fb2a5f5e4a16bcb03de5143a2331ba6d462aad14246ac",
+      "manifest_sha256": "0e087e9285d5654a263330d2c12c5890c90850c23283648d2a2e590a68c2cb15",
       "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
@@ -2485,7 +2377,7 @@
         "input"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": "d3c276208da8d9e9ccd1808595f752ae3c1b1a4713333ec8f331876ea175a93a",
+      "manifest_sha256": "c85a9c943ccfd52e3ac2818d4aa082a04a8ea673494de71c72105a0840f1f490",
       "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
@@ -2535,35 +2427,21 @@
       "status_layer": "typed-generated"
     },
     {
-      "artifact_index": null,
+      "artifact_index": "programs/qs8-vmul-minmax-fp32/ArtifactIndex.json",
       "counterexample": null,
-      "cross_phase_status": "not-typed",
-      "detail": "no exact typed parse facade covers this pair",
+      "cross_phase_status": "not-multi-phase",
+      "detail": "generated Spec is blocked because external input conditions are unresolved",
       "entry_contract_preflight": "equal",
       "external_condition_detail": "initializer transforms or validates semantic parameters, but no complete caller-to-kernel guarantee has been established",
-      "external_condition_sha256": "755cb3a2851fe5fd8f4d0c803f8e1ef60d9260f5639c444e6f1879026abb1e04",
+      "external_condition_sha256": "025893cde478c4dcbf2ce3a76473b6e1d3219e6c03daec96f137e70282a569e5",
       "external_condition_status": "required-missing",
       "input_streams": [
         "input_a",
         "input_b"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": null,
-      "missing_intrinsics": [
-        "neon:vaddq_f32",
-        "neon:vcvtq_f32_s32",
-        "neon:vdupq_n_f32",
-        "neon:vmull_s16",
-        "neon:vmulq_f32",
-        "neon:vqmovn_high_s32",
-        "neon:vqsubq_s32",
-        "neon:vreinterpretq_s32_f32",
-        "rvv:__riscv_vadd_vx_i32m8",
-        "rvv:__riscv_vfcvt_f_x_v_f32m8",
-        "rvv:__riscv_vfcvt_x_f_v_i32m8",
-        "rvv:__riscv_vfmul_vf_f32m8",
-        "rvv:__riscv_vsub_vx_i16m4"
-      ],
+      "manifest_sha256": "b602d7a5556d81579a231638fa9bc509cc2556bdade79be098000fb875e98293",
+      "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
         "vaddq_f32",
@@ -2618,34 +2496,24 @@
       ],
       "rvv_source": "kernels/target/qs8-vmul-minmax-fp32.c",
       "schedule_preflight": "fixed-tail",
-      "status": "intrinsic-missing",
-      "status_layer": "lexical-preflight"
+      "status": "external-condition-missing",
+      "status_layer": "typed-generated"
     },
     {
-      "artifact_index": null,
+      "artifact_index": "programs/qu8-f32-vcvt/ArtifactIndex.json",
       "counterexample": null,
-      "cross_phase_status": "not-typed",
-      "detail": "no exact typed parse facade covers this pair",
+      "cross_phase_status": "not-multi-phase",
+      "detail": "generated Spec is blocked because external input conditions are unresolved",
       "entry_contract_preflight": "equal",
       "external_condition_detail": "initializer transforms or validates semantic parameters, but no complete caller-to-kernel guarantee has been established",
-      "external_condition_sha256": "cb26b1cf248a3c6b23d09674022c6965203a9ccdb4571fa9bb79eded6d6f6b32",
+      "external_condition_sha256": "ed5d99f300adb6673aae1fb1b4f295347847ea22e9d9edb3ca7a9997a6fb2357",
       "external_condition_status": "required-missing",
       "input_streams": [
         "input"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": null,
-      "missing_intrinsics": [
-        "neon:vaddw_u8",
-        "neon:vcvtq_f32_s32",
-        "neon:vdupq_n_f32",
-        "neon:vmulq_f32",
-        "neon:vreinterpretq_u16_s16",
-        "rvv:__riscv_vadd_vx_u16m4",
-        "rvv:__riscv_vfcvt_f_x_v_f32m8",
-        "rvv:__riscv_vfmul_vf_f32m8",
-        "rvv:__riscv_vzext_vf2_u16m4"
-      ],
+      "manifest_sha256": "ec18252625b26b03e34a3aabe7dc6d2b00d13b26297fea359974e330add71006",
+      "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
         "vaddw_u8",
@@ -2685,8 +2553,8 @@
       ],
       "rvv_source": "kernels/target/qu8-f32-vcvt.c",
       "schedule_preflight": "fixed-tail",
-      "status": "intrinsic-missing",
-      "status_layer": "lexical-preflight"
+      "status": "external-condition-missing",
+      "status_layer": "typed-generated"
     },
     {
       "artifact_index": "programs/qu8-vadd-minmax/ArtifactIndex.json",
@@ -2702,7 +2570,7 @@
         "input_b"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": "2c994efdaee21b1118801123275d69c05d71e3db3a890cd4c1999b7268c936cb",
+      "manifest_sha256": "c10a270d35b7488f0454d4f63c256103d247eb32f25e67bf4bb47add1f5dfc72",
       "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
@@ -2777,7 +2645,7 @@
         },
         "path": "programs/s8-vclamp/Counterexample.json",
         "right_output": 5,
-        "sha256": "2a8d0e8e373027f9930e98a48618bc7b1a04c5265c3fd4cc8fe0d8fd8af17907"
+        "sha256": "72a93d4895a6eb879849380c46c0568c6d4b8fc4c29bfa05498a2d12e917a166"
       },
       "cross_phase_status": "lean-checked-counterexample",
       "detail": "Lean checked a concrete disagreement between generated Neon phases",
@@ -2789,7 +2657,7 @@
         "input"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": "834eb4a825afe9afa322341c9aaddeb8bd407095b07155ebfbdc31726ac3da3e",
+      "manifest_sha256": "ffd3290a91960ab9970cb027e19da706714afdae97214708a6b0e1388aa69f02",
       "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
@@ -2830,13 +2698,13 @@
       "status_layer": "typed-generated"
     }
   ],
-  "report_sha256": "20ba0a07638eae07dfd8d2d00da2462b2fdf068e32153e6a517271bee663cb6d",
+  "report_sha256": "38d9687dd3b7dd574710fc001d9e4beda6b94a315516e9f207fb36b3e156f8e7",
   "scalar_layout_scope": 19,
   "schema_version": 2,
   "status_counts": {
     "counterexample": 1,
-    "external-condition-missing": 4,
-    "intrinsic-missing": 14,
-    "layout-unrecognized": 1
+    "external-condition-missing": 7,
+    "layout-unrecognized": 1,
+    "spec-generated": 11
   }
 }

@@ -1,22 +1,19 @@
 {
-  "artifact_index": null,
+  "artifact_index": "programs/f32-vmin/ArtifactIndex.json",
   "counterexample": null,
-  "cross_phase_status": "not-typed",
-  "detail": "no exact typed parse facade covers this pair",
+  "cross_phase_status": "not-multi-phase",
+  "detail": "typed manifest, Models, and proof-free Spec generated",
   "entry_contract_preflight": "equal",
   "external_condition_detail": "local kernels do not read semantic parameter fields",
-  "external_condition_sha256": "6aaa1ad5710d4aadfd7c10f5bc67a2113f84725340fd7d22eef53e3c8e6e71ae",
+  "external_condition_sha256": "1bbf5b20a53ddfc9d7284353899c9c6a92b8407e558453dabad7d7622068629a",
   "external_condition_status": "not-required",
   "input_streams": [
     "input_a",
     "input_b"
   ],
   "layout_preflight": "scalar-lane",
-  "manifest_sha256": null,
-  "missing_intrinsics": [
-    "neon:vminq_f32",
-    "rvv:__riscv_vfmin_vv_f32m8"
-  ],
+  "manifest_sha256": "24f3eb83009fc81ca8e0abad9df72854c7c78853ee45684c6d0eaac3d8542919",
+  "missing_intrinsics": [],
   "neon_function": "test_neon",
   "neon_intrinsics": [
     "vget_high_f32",
@@ -41,6 +38,6 @@
   ],
   "rvv_source": "kernels/target/f32-vmin.c",
   "schedule_preflight": "fixed-tail",
-  "status": "intrinsic-missing",
-  "status_layer": "lexical-preflight"
+  "status": "spec-generated",
+  "status_layer": "typed-generated"
 }

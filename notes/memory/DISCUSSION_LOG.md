@@ -585,3 +585,33 @@ and the complete 412-test repository suite.
 eight quantized programs retain their independently visible external-condition
 dimension. Batch 2 must add and review semantic families without weakening either
 condition or cross-phase gates.
+
+## 2026-08-29 — All scalar programs generated and exact review identity closed
+
+**Question:** Does the generic compiler now generate the complete scalar-layout
+corpus, and does the website count the same reusable puzzle pieces that reviewers
+actually approve?
+
+**Conclusion:** all nineteen scalar-layout pairs now pass one profile-free compiler
+path and emit content-addressed Manifest/Models/proof-free Spec artifacts. Eleven
+are ready for proof-task work, seven remain blocked by missing external caller
+conditions, and `s8-vclamp` retains its checked counterexample. The grouped
+`f32-vcmul` remains intentionally deferred.
+
+The first independent review returned `NO-GO` because 189 registry variants were
+collapsed into 178 spelling-level identities; nine groups could share an identity
+despite distinct descriptors. Capability and review IDs now include the descriptor
+digest. The schema-v3 graph produces 189 unique exact rows, derives 180 used exact
+variants from program artifact closures, and separately reports 178 configured of
+186 spelling dependencies. The convergence review reran corpus, graph, and web
+tests and returned `GO`.
+
+**Evidence:** generic `compile_pair`/`compile_corpus` path; refreshed checked-in
+schema-v3 graph with zero stale nodes; exact-identity, scalar-broadcast, and
+parameter-width tests; fresh temporary Lean build and theorem audit; 418 passing
+repository tests; independent reviewer verdict in the active thread.
+
+**Unresolved:** current implementation changes intentionally stale the nine prior
+F32 approvals, so exact review progress is 0/189 globally and 0/180 for the current
+nineteen-program closure. Seven external domains and program proof/review batches
+remain.

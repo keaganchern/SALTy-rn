@@ -1,28 +1,18 @@
 {
-  "artifact_index": null,
+  "artifact_index": "programs/qu8-f32-vcvt/ArtifactIndex.json",
   "counterexample": null,
-  "cross_phase_status": "not-typed",
-  "detail": "no exact typed parse facade covers this pair",
+  "cross_phase_status": "not-multi-phase",
+  "detail": "generated Spec is blocked because external input conditions are unresolved",
   "entry_contract_preflight": "equal",
   "external_condition_detail": "initializer transforms or validates semantic parameters, but no complete caller-to-kernel guarantee has been established",
-  "external_condition_sha256": "cb26b1cf248a3c6b23d09674022c6965203a9ccdb4571fa9bb79eded6d6f6b32",
+  "external_condition_sha256": "ed5d99f300adb6673aae1fb1b4f295347847ea22e9d9edb3ca7a9997a6fb2357",
   "external_condition_status": "required-missing",
   "input_streams": [
     "input"
   ],
   "layout_preflight": "scalar-lane",
-  "manifest_sha256": null,
-  "missing_intrinsics": [
-    "neon:vaddw_u8",
-    "neon:vcvtq_f32_s32",
-    "neon:vdupq_n_f32",
-    "neon:vmulq_f32",
-    "neon:vreinterpretq_u16_s16",
-    "rvv:__riscv_vadd_vx_u16m4",
-    "rvv:__riscv_vfcvt_f_x_v_f32m8",
-    "rvv:__riscv_vfmul_vf_f32m8",
-    "rvv:__riscv_vzext_vf2_u16m4"
-  ],
+  "manifest_sha256": "ec18252625b26b03e34a3aabe7dc6d2b00d13b26297fea359974e330add71006",
+  "missing_intrinsics": [],
   "neon_function": "test_neon",
   "neon_intrinsics": [
     "vaddw_u8",
@@ -61,6 +51,6 @@
   ],
   "rvv_source": "kernels/target/qu8-f32-vcvt.c",
   "schedule_preflight": "fixed-tail",
-  "status": "intrinsic-missing",
-  "status_layer": "lexical-preflight"
+  "status": "external-condition-missing",
+  "status_layer": "typed-generated"
 }

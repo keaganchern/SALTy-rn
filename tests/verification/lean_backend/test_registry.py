@@ -253,8 +253,12 @@ class FailClosedTests(unittest.TestCase):
             resolve_call(lane_store.spelling, operands_for(lane_store, {2: 0})),
             StructuralNode,
         )
+        self.assertIsInstance(
+            resolve_call(lane_store.spelling, operands_for(lane_store, {2: 7})),
+            StructuralNode,
+        )
         with self.assertRaises(ImmediateConstraintError):
-            resolve_call(lane_store.spelling, operands_for(lane_store, {2: 1}))
+            resolve_call(lane_store.spelling, operands_for(lane_store, {2: 8}))
 
     def test_node_variant_tracks_operation_class(self):
         load = lookup_intrinsic("vld1_s8")

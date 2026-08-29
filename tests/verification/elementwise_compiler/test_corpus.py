@@ -48,9 +48,9 @@ def test_corpus_report_is_deterministic_and_tracks_real_blockers(tmp_path: Path)
     assert first["scalar_layout_scope"] == 19
     assert first["status_counts"] == {
         "counterexample": 1,
-        "external-condition-missing": 4,
-        "intrinsic-missing": 14,
+        "external-condition-missing": 7,
         "layout-unrecognized": 1,
+        "spec-generated": 11,
     }
     assert first["external_condition_counts"] == {
         "not-required": 12,
@@ -64,8 +64,8 @@ def test_corpus_report_is_deterministic_and_tracks_real_blockers(tmp_path: Path)
     registry_sha256 = unsigned_registry.pop("registry_sha256")
     assert registry_sha256 == canonical_sha256(unsigned_registry)
     assert first["intrinsic_registry"]["sha256"] == registry_sha256
-    assert len(registry["variants"]) == 105
-    assert sum(item["review"] is not None for item in registry["variants"]) == 9
+    assert len(registry["variants"]) == 189
+    assert sum(item["review"] is not None for item in registry["variants"]) == 0
     assert all(
         program["entry_contract_preflight"] == "equal"
         for program in first["programs"]
@@ -75,7 +75,7 @@ def test_corpus_report_is_deterministic_and_tracks_real_blockers(tmp_path: Path)
         for program in first["programs"]
         if program["artifact_index"] is not None
     ]
-    assert len(generated) == 5
+    assert len(generated) == 19
     assert all(program["artifact_index"] for program in generated)
     assert all(program["manifest_sha256"] for program in generated)
     counterexample = next(

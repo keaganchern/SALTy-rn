@@ -1,0 +1,14 @@
+{
+  "architecture": "neon",
+  "artifact_kind": "schedule-family-capability",
+  "capability_id": "schedule:neon:fixed-tail",
+  "capability_sha256": "4eeeb40446de410557e7f4f6a1c900c4b3c3f23158be9516dc4f13f677510d33",
+  "kind": "fixed-tail",
+  "recognizer_sha256": "a55dafbd6358e51b9e55f981036e69f5b6af324bc00dabdc31126bf0522e6de4",
+  "schema_version": 1,
+  "theorem_sha256": "5375b7922f243d5f2e404791a4b5a75d12a6e274c6229625ff14edffbc624924",
+  "theorem_symbols": [
+    "SALT.Kernel.Schedule.runFixedChunkTail_eq_map"
+  ],
+  "version": 1
+}

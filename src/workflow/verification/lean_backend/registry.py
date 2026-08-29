@@ -255,7 +255,7 @@ QS8_VADD_MINMAX_NEON_SPECS: tuple[IntrinsicSpec, ...] = (
     _structural(
         "vst1_lane_u32", Architecture.NEON,
         _signature(VOID, ("base", U32_PTR), ("value", U32X2), ("lane", INT)),
-        OperationShape.LANE_STORE, StructuralOp.LANE_STORE, _constraint(2, 0),
+        OperationShape.LANE_STORE, StructuralOp.LANE_STORE, _constraint(2, 0, 1),
     ),
     _structural(
         "vext_s8", Architecture.NEON,
@@ -269,12 +269,13 @@ QS8_VADD_MINMAX_NEON_SPECS: tuple[IntrinsicSpec, ...] = (
     _structural(
         "vst1_lane_u16", Architecture.NEON,
         _signature(VOID, ("base", U16_PTR), ("value", U16X4), ("lane", INT)),
-        OperationShape.LANE_STORE, StructuralOp.LANE_STORE, _constraint(2, 0),
+        OperationShape.LANE_STORE, StructuralOp.LANE_STORE, _constraint(2, 0, 1, 2, 3),
     ),
     _structural(
         "vst1_lane_s8", Architecture.NEON,
         _signature(VOID, ("base", I8_PTR), ("value", I8X8), ("lane", INT)),
-        OperationShape.LANE_STORE, StructuralOp.LANE_STORE, _constraint(2, 0),
+        OperationShape.LANE_STORE, StructuralOp.LANE_STORE,
+        _constraint(2, 0, 1, 2, 3, 4, 5, 6, 7),
     ),
 )
 

@@ -72,7 +72,7 @@
       "theorem": "SALT.Generated.S8VClamp.allLengthsValueEqualWithOverread"
     }
   },
-  "protected_lean_project_sha256": "033de525398c8618cdf79c661d547e06fda80db516dc70b1e77c0116b848d710",
+  "protected_lean_project_sha256": "c1dbdf744fa2c49f89b755954d0df2cd519830bb9030321e94e476f6ef157680",
   "schema_version": 4,
   "toolchain": {
     "lake_sha256": "0e56506385ec20d56bffd7c031c4d48573ab5fdb74e5246ec8c45a220bebc68b",

@@ -65,10 +65,10 @@ def test_configured_index_merges_equal_variants_and_preserves_provenance() -> No
 
 
 def test_configured_index_exposes_all_canonical_variants() -> None:
-    assert len(CANONICAL_INTRINSIC_INDEX.variants) == 105
+    assert len(CANONICAL_INTRINSIC_INDEX.variants) == 189
     assert (
         sum(len(variant.provenance) for variant in CANONICAL_INTRINSIC_INDEX.variants)
-        == 170
+        == 255
     )
 
 

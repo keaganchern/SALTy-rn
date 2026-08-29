@@ -1,0 +1,16 @@
+{
+  "architecture": "neon",
+  "argument_count": 2,
+  "artifact_kind": "intrinsic-capability",
+  "capability_id": "intrinsic:neon:vst1q_s8:6cf6c0440c47fdb6",
+  "capability_sha256": "6cfd9cb0d24934cccd9caa2787880fab4d22852a95ca0557753e776f90417ea6",
+  "descriptor_sha256": "c4ff80d822660fa9925ae23ca6d74d82201c6592fd453c81711f67543f658a79",
+  "function_type": "void (int8_t *, int8x16_t)",
+  "implementation_sha256": "4328be58020b2e21ba108b5b1deae9e73fe810ce1fd7c5cba97f3681ffa05dea",
+  "review_evidence_sha256": null,
+  "role": "structural",
+  "schema_version": 1,
+  "semantic_symbol": null,
+  "spelling": "vst1q_s8",
+  "version": 1
+}

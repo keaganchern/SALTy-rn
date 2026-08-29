@@ -1,8 +1,121 @@
 import SALT.Basic
+import SALT.Intrinsics.FP32
 
 namespace SALT.Intrinsics.RVV
 
 open SALT
+
+/-- RVV wrappers deliberately remain distinct from the Neon wrappers while both
+    refer to the same binary32 value operation at claim layer 1. -/
+def vfadd_vv_f32 (a b : List (BitVec 32)) : List (BitVec 32) :=
+  List.zipWith FP32.add a b
+
+def vfsub_vv_f32 (a b : List (BitVec 32)) : List (BitVec 32) :=
+  List.zipWith FP32.sub a b
+
+def vfmul_vv_f32 (a b : List (BitVec 32)) : List (BitVec 32) :=
+  List.zipWith FP32.mul a b
+
+def vfmul_vf_f32 (a : List (BitVec 32)) (scalar : BitVec 32) : List (BitVec 32) :=
+  a.map (fun value => FP32.mul value scalar)
+
+def vfdiv_vv_f32 (a b : List (BitVec 32)) : List (BitVec 32) :=
+  List.zipWith FP32.div a b
+
+def vfsqrt_v_f32 (a : List (BitVec 32)) : List (BitVec 32) :=
+  a.map FP32.sqrt
+
+def vfabs_v_f32 (a : List (BitVec 32)) : List (BitVec 32) :=
+  a.map FP32.abs
+
+def vmslt_vx_i32 (a : List (BitVec 32)) (scalar : BitVec 32) : List Bool :=
+  a.map (fun value => decide (value.toInt < scalar.toInt))
+
+def vmerge_vvm_f32 (base replacement : List (BitVec 32))
+    (mask : List Bool) : List (BitVec 32) :=
+  List.zipWith (fun values selected => if selected then values.2 else values.1)
+    (List.zip base replacement) mask
+
+def vfadd_vf_f32 (a : List (BitVec 32)) (scalar : BitVec 32) : List (BitVec 32) :=
+  a.map (fun value => FP32.add value scalar)
+
+def vfsub_vf_f32 (a : List (BitVec 32)) (scalar : BitVec 32) : List (BitVec 32) :=
+  a.map (fun value => FP32.sub value scalar)
+
+def vmfgt_vf_f32 (a : List (BitVec 32)) (scalar : BitVec 32) : List Bool :=
+  a.map (fun value => FP32.gt value scalar)
+
+def vmfne_vv_f32 (a b : List (BitVec 32)) : List Bool :=
+  List.zipWith FP32.ne a b
+
+def vfsgnj_vv_f32 (magnitude signSource : List (BitVec 32)) : List (BitVec 32) :=
+  List.zipWith
+    (fun value sign => (value &&& 0x7FFFFFFF) ||| (sign &&& 0x80000000))
+    magnitude signSource
+
+def vor_vx_u32 (a : List (BitVec 32)) (scalar : BitVec 32) : List (BitVec 32) :=
+  a.map (fun value => value ||| scalar)
+
+def vsub_vx_i16 (value : List (BitVec 16))
+    (scalar : BitVec 16) : List (BitVec 16) :=
+  value.map (fun lane => lane - scalar)
+
+def vadd_vx_u16 (value : List (BitVec 16))
+    (scalar : BitVec 16) : List (BitVec 16) :=
+  value.map (fun lane => lane + scalar)
+
+def vzext_vf2_u16 (value : List (BitVec 8)) : List (BitVec 16) :=
+  value.map (fun lane => lane.zeroExtend 16)
+
+def vfcvt_f_x_v_f32 (value : List (BitVec 32)) : List (BitVec 32) :=
+  value.map FP32.ofInt32
+
+def vadd_vx_u32 (value : List (BitVec 32))
+    (scalar : BitVec 32) : List (BitVec 32) :=
+  value.map (fun lane => lane + scalar)
+
+def vand_vx_u32 (value : List (BitVec 32))
+    (scalar : BitVec 32) : List (BitVec 32) :=
+  value.map (fun lane => lane &&& scalar)
+
+def vmsgtu_vx_u32 (value : List (BitVec 32)) (scalar : BitVec 32) : List Bool :=
+  value.map (fun lane => decide (lane.toNat > scalar.toNat))
+
+def vmaxu_vx_u32 (value : List (BitVec 32))
+    (scalar : BitVec 32) : List (BitVec 32) :=
+  value.map (fun lane => if lane.toNat >= scalar.toNat then lane else scalar)
+
+def vnsrl_wx_u16 (value : List (BitVec 32)) (shift : Nat) : List (BitVec 16) :=
+  value.map (fun lane => (lane.ushiftRight shift).truncate 16)
+
+def vand_vx_u16 (value : List (BitVec 16))
+    (scalar : BitVec 16) : List (BitVec 16) :=
+  value.map (fun lane => lane &&& scalar)
+
+def vadd_vv_u16 (left right : List (BitVec 16)) : List (BitVec 16) :=
+  List.zipWith (· + ·) left right
+
+def vmerge_vxm_u16 (base : List (BitVec 16)) (replacement : BitVec 16)
+    (mask : List Bool) : List (BitVec 16) :=
+  List.zipWith (fun lane selected => if selected then replacement else lane) base mask
+
+def vor_vv_u16 (left right : List (BitVec 16)) : List (BitVec 16) :=
+  List.zipWith (· ||| ·) left right
+
+def vfmax_vv_f32 (left right : List (BitVec 32)) : List (BitVec 32) :=
+  List.zipWith FP32.maxNumber left right
+
+def vfmin_vv_f32 (left right : List (BitVec 32)) : List (BitVec 32) :=
+  List.zipWith FP32.minNumber left right
+
+/-- Wrapping vector-scalar addition for signed 32-bit lanes. -/
+def vadd_vx_i32 (value : List (BitVec 32))
+    (scalar : BitVec 32) : List (BitVec 32) :=
+  value.map (fun lane => lane + scalar)
+
+/-- Binary32-to-signed-i32 conversion under the explicit RNE value model. -/
+def vfcvt_x_f_v_i32_rne (value : List (BitVec 32)) : List (BitVec 32) :=
+  value.map FP32.toInt32RNE
 
 -- ============================================================================
 -- vwsub_vx: Widening subtract (8→16 bit)

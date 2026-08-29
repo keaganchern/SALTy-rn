@@ -1,0 +1,16 @@
+{
+  "architecture": "neon",
+  "argument_count": 1,
+  "artifact_kind": "intrinsic-capability",
+  "capability_id": "intrinsic:neon:vmovl_s16:80fcf2de82e52014",
+  "capability_sha256": "379a952d89776c2dcee7d7cc44a59f2d401f34e009718d0739982866be262e2f",
+  "descriptor_sha256": "e45d76a2cc32f930af8b87ed0a591ba28154bdd613a92274653ae0b321f7cf82",
+  "function_type": "int32x4_t (int16x4_t)",
+  "implementation_sha256": "577aac37eb78329c0390e8639d8685591de7bed6b5b25f84edfc0b225edd5f9f",
+  "review_evidence_sha256": null,
+  "role": "semantic",
+  "schema_version": 1,
+  "semantic_symbol": "SALT.Intrinsics.Neon.vmovl_s16",
+  "spelling": "vmovl_s16",
+  "version": 1
+}

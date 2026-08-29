@@ -100,14 +100,6 @@ program names have local assertions: twelve have only derived invariants, while
 `f32-dwconv-minmax` and `f32-igemm-minmax` contain real pointer-table non-null
 constraints. See `../elementwise-compiler/ASSERT_AUDIT.md`.
 
-**Historical intrinsic snapshot before M4:** the configured index had 96 exact typed variants:
-54 Neon variants under 49 spellings and 42 RVV variants under 36 spellings. The
-local corpus contains 190 Neon and 165 RVV lexical spellings. Semantic adequacy is
-not established and there are zero configured independent reviewers.
-
-These numbers are an audit snapshot, not live status. The dashboard/generated
-manifest must own future counts.
-
 ## Reusable Assets
 
 Retain and generalize:
@@ -128,28 +120,12 @@ Retire as production authorities:
 - `case_id` branches in emitters;
 - hardcoded dashboard `PROOF_CASES` and `supported_cases` dependency filtering.
 
-## S8 VMax Prototype
+## S8 VMax Regression
 
-**Confirmed:** commit `986acd4` adds a Lean-checked target structure using the
-existing generated S8 vmax block/chunk models and existing max intrinsics. It
-proves:
-
-```text
-Neon loop = map fNeon
-RVV loop  = map fRvv
-forall x, fNeon x = fRvv x
-therefore Neon logical output = RVV logical output
-```
-
-`fNeon` and `fRvv` are defined independently through their respective intrinsic
-expressions. `Spec.lean` contains proof-free frozen propositions; `Proof.lean` is
-the designated agent-owned artifact; `Audit.lean` checks the exported claim and
-axioms. The current repository-local process is not a write sandbox.
-
-**Historical prototype limitation, superseded:** at commit `986acd4`, the Python
-backend generated only the local block/chunk model, so loop assembly and Spec were
-manually staged. The current explicit compiler and randomized held-out gate now
-generate the complete stack without framework edits.
+**Confirmed:** the original `986acd4` prototype established the three-part
+loop-to-map/map-to-map proof shape. Its manual generation limitation is superseded:
+the randomized held-out VMax gate now generates and proves the complete stack with
+zero framework edits.
 
 ## Assertion and Contract Rule
 
@@ -226,17 +202,15 @@ agent proof, and pointer-step, loop-update, entry-assertion, and active-`vl`
 mutations all fail closed. The complete run leaves every tracked repository file
 byte-identical.
 
-**Confirmed batch state:** structural discovery finds twenty elementwise pairs:
-nineteen scalar-lane and one deferred grouped complex layout. The checked-in
-corpus report now has one Lean-checked `counterexample`, four
-`external-condition-missing`, fourteen `intrinsic-missing`, and one
-`layout-unrecognized`. Its independent external-condition dimension reports
-twelve `not-required` and eight `required-missing`. There are no parser,
-contract, family, or generation failures in the nineteen-program scalar scope.
-The dashboard reads the report and
-verifies every Manifest/Models/Spec/ProofTask/Proof/Result parent hash before
-displaying progress; a modified child becomes `stale-artifact`. It shows value,
-C, and ISA claim layers separately.
+**Confirmed current batch state:** structural discovery finds twenty elementwise
+pairs: nineteen scalar-layout and one deferred grouped complex layout. All nineteen
+scalar programs pass the same profile-free parse/recognize/resolve/emit path and
+have content-addressed Manifest/Models/proof-free Spec artifacts. Eleven are
+`spec-generated`, seven are `external-condition-missing`, and `s8-vclamp` has a
+Lean-checked counterexample. `f32-vcmul` remains `layout-unrecognized` outside the
+nineteen. There are no parser, contract, intrinsic, family, or generation failures
+in the scalar scope. The external-condition dimension remains twelve
+`not-required` and eight `required-missing`.
 
 **Confirmed width/tail closure:** the production generator now carries distinct
 8/16/32-bit input and output widths through Models and Spec. Prefix tails accept a
@@ -251,48 +225,33 @@ same full chain. Multi-phase Models now project the secondary block to a separat
 it in `fNeon`. This closes the reusable width blocker; it does not prove phase
 equality or supply missing corpus intrinsics and external conditions.
 
-**Confirmed width-milestone validation:** the complete repository suite passed with 393
-tests. The refreshed twenty-program graph has zero stale nodes, and the checked-in
-legacy generated models pass deterministic regeneration checks. A later
-independent audit at HEAD `a77933b` reran 57 focused compiler/dashboard tests and
-reproduced the 20/19/1 and 5/14/1 counts.
-
-**Confirmed current M2 validation:** the complete repository suite passes with
-402 tests. The refreshed graph has zero stale nodes and reports 14
-`intrinsic-missing`, 4 `external-condition-missing`, 1 Lean-checked
-`counterexample`, and 1 `layout-unrecognized`. An independent convergence review
-reproduced standalone/registered clamp rejection and standalone VMax proof-task
-preparation, then returned `GO`.
-
 **Confirmed dashboard-authority closure:** `/api/elementwise` derives discovery and
 status only from `CorpusReport.json` plus the content-addressed M/E/D/S/A/C/T/R
 artifact closure. A checked-in held-out VMax pair reaches `proof-ready` without a
 dashboard case entry. The page displays input-condition scope/status, cross-phase
 status/trial count, concrete counterexample witnesses, and separate value/C/ISA
 claims. The retained legacy table is labeled historical and cannot affect the
-elementwise projection. An independent review first found three missing evidence
-fields in the UI; after they were added, convergence review returned `GO`.
-The generated intrinsic registry now has 105 exact typed variants. Across the
-twenty-program dependency graph, 94 architecture/spelling pieces are configured;
-the first nine F32 structural/schedule pieces are Lean-checked and independently
-reviewed. The active milestone is the remaining semantic intrinsic families.
+elementwise projection. The schema-v3 page distinguishes three counts that must
+not be conflated: 186 architecture/spelling dependencies, of which 178 are
+configured; 189 exact registry variants; and 180 exact variants actually used by
+the nineteen-program artifact closure. Exact capability and review identities bind
+the descriptor hash, so different typed descriptors with one spelling cannot
+share approval. Each of the 189 variants has a distinct dashboard row.
 
-**Confirmed first intrinsic-review batch:** one program-independent typed library
-adds exact F32 load/store, low/high extraction, lane store, RVV load/store, and
-active-length descriptors. Its parse facade is mechanically rendered from that
-library. Nine content-addressed review records bind exact source type, descriptor,
-the real generic/context-specific lowering files, pinned Arm ACLE or RISC-V Vector
-C Intrinsics evidence, check outputs, policy, and reviewer. A first audit found
-that `vst1_lane_f32` accepted lane 1 but always modeled lane 0; the lowering now
-uses `drop (lane * width)` and rejects lane 2. Convergence review returned `GO`.
-These approvals establish repository value-model evidence only, not complete C or
-ISA correctness.
+**Confirmed current review state:** current implementation changes invalidate the
+older nine F32 review bindings as intended. Their records remain as historical
+evidence, but the generated registry honestly reports 0/189 reviewed and 0/180
+reviewed among variants used by the nineteen programs. A first independent M5
+audit returned `NO-GO` after finding the old spelling-level identity collision;
+after exact identities and schema-v3 counts were added, the same reviewer reran
+the corpus/graph/web checks and returned `GO`.
 
-**Confirmed intrinsic-batch validation:** the complete repository suite passes
-412 tests. Rebuilding the checked-in corpus twice produces the same complete tree
-digest; the graph has zero stale program nodes and reports 9/94 reviewed dependency
-pieces. The independent convergence audit returned `GO` for all nine exact
-variants after reproducing the lane-1 positive and lane-2 rejection tests.
+**Confirmed current validation:** fresh temporary-root Lean compilation audited
+all five retained legacy theorem types and found only `Classical.choice`,
+`Quot.sound`, and `propext`. The complete repository suite passes 418 tests. The
+default checked-in artifact root was cleanly regenerated: schema v3 reports 19
+scalar manifests, 189 unique exact variants, 180 used variants, and zero stale
+program nodes.
 
 **Confirmed concrete false obligation:** `s8-vclamp`'s 64-byte Neon phase applies
 signed max-with-min and then min-with-max, while its 8-byte and tail phases apply
@@ -305,50 +264,19 @@ the pipeline must report this as a checked counterexample/family-contract failur
 or bind an evidenced external contract, rather than leave it as an unexplained
 `spec-generated` program.
 
-**Confirmed correction to the upstream-condition claim:** the extracted kernel
-body does not assert `min <= max`; its local harness merely chooses one valid
-instance. The pinned registration does select
-`xnn_init_qs8_clamp_scalar_params`, but the first audit incorrectly treated the
-existence of `xnn_subgraph_check_output_min_max` elsewhere in XNNPACK as a call
-edge. The pinned unary clamp path does not call that validator. The positive-scale
-and clamp-order caller guarantees are therefore unresolved. Signed
-`params.min <= params.max` is a useful candidate condition, not established input
-evidence.
-
-**Confirmed external-input audit:** the same category affects eight of the twenty
-elementwise programs, not only `s8-vclamp`. They are the eight quantized-parameter
-programs: S8 clamp, QS8/QU8 add, QS8 conversion, QS8 LReLU, QS8 multiply, and the
-QS8/QU8-to-F32 conversions. Their legal parameter ranges or relations are
-constructed/validated outside the isolated kernel entry assertions. Eleven
-programs have no semantic parameter fields; `f32-vlrelu` copies one slope without
-an analogous hidden relation found. See
-`../elementwise-compiler/EXTERNAL_INPUT_AUDIT.md`.
-
 **Confirmed external-condition/counterexample implementation:** every compilation
-now emits a content-addressed input-condition audit. XNNPACK-domain compilation
-binds a local pair to an explicit, uniquely discovered registration, verifies
-the pinned submodule commit, follows the shared Neon/RVV parameter initializer, and
-hash every consulted source in `ExternalCondition.json`. The extractor is
-conservative: it classifies twelve programs `not-required` and all eight audited
-quantized-parameter programs `required-missing`; it currently emits no `resolved`
-condition. Standalone compilation records a distinct
-`local-unconditional-claim` scope, meaning that no caller condition is assumed
-and all modeled parameter values remain in the theorem domain; it is not treated
-as an unaudited success. `Spec.lean` keeps the unconditional claim and, for S8 clamp, exposes
-signed `min <= max` only as a diagnostic candidate. The proof gate rejects a
-missing external condition before creating a ProofTask.
+binds `ExternalCondition.json` and `CrossPhaseAudit.json`. Registered XNNPACK runs
+pin and hash the discovered registration/initializer path; standalone runs make an
+explicit unconditional claim. Twelve programs need no external semantic parameter
+condition, while all eight quantized programs remain `required-missing`; no caller
+condition is fabricated. The pinned S8 clamp path does not call the separately
+found output-range validator, so signed `min <= max` remains only a candidate.
 
-Every generated stack also binds `CrossPhaseAudit.json`; this check is invoked by
-the generic compiler rather than only by the corpus runner. It records
-not-applicable, blocked-external-condition, bounded-no-witness, or counterexample
-without equating a bounded miss with proof. For multi-phase functions it searches
-deterministic parameter and input candidates and can emit a concrete Lean-checked witness. The checked-in
-`s8-vclamp` witness uses `min = 5`, `max = 0`, `x = 0`; the primary phase returns
-0 and the secondary phase returns 5. `Counterexample.json` binds the exact
-Manifest, Models, Spec, checker, Lean file, and toolchain hashes. Programs with a
-missing condition but no expressible candidate are reported as blocked rather
-than spending an unbounded search over unconstrained parameters. A bound checked
-counterexample is terminal: `prepare_proof_task` rejects it before delegation.
+The cross-phase checker distinguishes not-applicable, missing-condition,
+bounded-no-witness, and Lean-checked counterexample states. Its checked S8 clamp
+witness is `min = 5`, `max = 0`, `x = 0`, producing 0 and 5 in the two Neon phases.
+A bounded miss is diagnostic only; a bound counterexample is terminal and blocks
+proof delegation. See `../elementwise-compiler/EXTERNAL_INPUT_AUDIT.md`.
 
 ## Immediate Objective
 
@@ -375,19 +303,10 @@ records. This is executable only after the external-input,
 cross-phase/counterexample, and dashboard-authority gaps are closed; success for
 all nineteen cannot be promised before those checks expose remaining mismatches.
 
-## Independent Plan Review
+## Independent Reviews
 
-**Confirmed, 2026-08-29:** a separate reviewer agent first returned
-`GO WITH REQUIRED REVISIONS`. After layout/view capability, exact assumption
-domains, content-addressed parent hashes, honest proof-process wording, milestone
-reordering, and a stronger anti-special-casing gate were incorporated, its
-convergence review returned `GO`: no remaining design-document defect blocks M1a.
-The review is preserved in `notes/reviews/elementwise-compiler-plan-review-2026-08-29.md`.
-After the scope narrowed to nineteen scalar-layout pairs and equal entry contracts,
-a fourth quick pass again returned `GO`; it required the fixed-tail checker to
-preserve element-size divisibility in addition to proving remainder bounds.
-
-**Confirmed M1 review:** the width/tail implementation received `GO` after the
-reviewer reproduced the wide direct-byte-count rejection, mixed I32-to-I16 full
-chain, phase-specific `fNeonSecondary` Spec, and integer descriptor digest guard.
-See `notes/reviews/elementwise-width-tail-review-2026-08-29.md`.
+**Confirmed:** the design, width/tail, external-condition, dashboard-authority,
+first intrinsic batch, and current shared-scalar/exact-identity milestones all
+received convergence `GO` after their initial findings were fixed. Detailed
+records are under `notes/reviews/` and `DISCUSSION_LOG.md`; the latest reviewer
+specifically reproduced 189 unique exact rows and 180 used variants.

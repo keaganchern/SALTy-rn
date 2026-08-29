@@ -1,0 +1,16 @@
+{
+  "artifact_kind": "elementwise-cross-phase-audit",
+  "checker_sha256": null,
+  "claim": "SALT.Corpus.f32vmin.completeValueEquivalenceClaim",
+  "counterexample_sha256": null,
+  "cross_phase_audit_sha256": "b3e921800c4fdd1425de665bb5d5ff8b53e3705a575d37bfe8b3c5d76dd701a0",
+  "detail": "generated Neon schedule has only one scalar phase function",
+  "external_condition_sha256": null,
+  "manifest_sha256": "24f3eb83009fc81ca8e0abad9df72854c7c78853ee45684c6d0eaac3d8542919",
+  "models_sha256": "bc91a0bc5bababfa5cf32d8c8b617a9fb9f1ef807d7cd8f72f91b45cd4778ba3",
+  "schema_version": 1,
+  "spec_sha256": "aaa0a14f0b06346a649ddda1f84cb6e2f03eb510f80f25eb14b31ac542f15314",
+  "status": "not-applicable",
+  "toolchain_sha256": null,
+  "trial_count": 0
+}

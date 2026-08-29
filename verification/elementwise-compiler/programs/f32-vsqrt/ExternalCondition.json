@@ -1,0 +1,37 @@
+{
+  "artifact_kind": "elementwise-external-condition",
+  "candidate_contract": {
+    "clauses": []
+  },
+  "derivation": "local-kernel-parameter-use-v1",
+  "detail": "local kernels do not read semantic parameter fields",
+  "external_condition_sha256": "8eb36f4e679c4874c297c3aee3c0ed97c3d0a5e0a1eaf3d1069140afa7f55813",
+  "extractor_sha256": "a47a1ff67f330a0989538f51f450694cf5bd634ceb0f609426ceebc9a195f5e9",
+  "initializer": "NULL",
+  "local_sources_sha256": "aad4257041a274621d2a734e1270fb8d937499e91eb59be636cacd225b18806b",
+  "parameter_type": "struct xnn_f32_default_params",
+  "schema_version": 2,
+  "scope": "xnnpack-registered-domain",
+  "sources": [
+    {
+      "path": "benchmark/XNNPACK/src/f32-vsqrt/f32-vsqrt.inc",
+      "role": "kernel-registration",
+      "sha256": "91cc74a3218430423078c95512fec7117a128760918ac19048e078e0ed31fcb5",
+      "symbols": [
+        "xnn_f32_vsqrt_ukernel__aarch64_neon_sqrt_u16",
+        "xnn_f32_vsqrt_ukernel__aarch64_neon_sqrt_u4",
+        "xnn_f32_vsqrt_ukernel__aarch64_neon_sqrt_u8",
+        "xnn_f32_vsqrt_ukernel__neon_rsqrt_u16",
+        "xnn_f32_vsqrt_ukernel__neon_rsqrt_u4",
+        "xnn_f32_vsqrt_ukernel__neon_rsqrt_u8",
+        "xnn_f32_vsqrt_ukernel__rvv_sqrt_u1v",
+        "xnn_f32_vsqrt_ukernel__rvv_sqrt_u2v",
+        "xnn_f32_vsqrt_ukernel__rvv_sqrt_u4v",
+        "xnn_f32_vsqrt_ukernel__rvv_sqrt_u8v"
+      ]
+    }
+  ],
+  "status": "not-required",
+  "upstream_commit": "867d5a344790802ee067be62f572c2e2722bf6fb",
+  "upstream_root": "benchmark/XNNPACK"
+}

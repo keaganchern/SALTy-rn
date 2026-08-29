@@ -106,6 +106,7 @@ class ModelProfile:
     neon_block_lanes: int
     neon_loop_condition: str
     neon_loop_update: str
+    broadcast_inputs: tuple[str, ...] = ()
     input_width: int = 8
     output_width: int = 8
     element_c_type: str = "int8_t"
@@ -123,6 +124,10 @@ class ModelProfile:
             raise ValueError("model output width must be 8, 16, or 32 bits")
         if not self.element_c_type:
             raise ValueError("model element C type must be non-empty")
+        if tuple(sorted(set(self.broadcast_inputs))) != self.broadcast_inputs:
+            raise ValueError("broadcast input names must be sorted and unique")
+        if set(self.inputs) & set(self.broadcast_inputs):
+            raise ValueError("varying and broadcast model inputs overlap")
         if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", self.rvv_count_variable) is None:
             raise ValueError("RVV count variable must be a C identifier")
         if (
@@ -188,6 +193,7 @@ S8_VCLAMP_MODEL = ModelProfile(
         element_c_type="int8_t",
         load_lanes=8,
         store_widths=(4, 2, 1),
+        input_advances_after_load=True,
     ),
     multiphase_widths=(64, 8),
 )

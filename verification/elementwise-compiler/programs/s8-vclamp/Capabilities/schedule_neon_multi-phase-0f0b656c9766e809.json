@@ -1,0 +1,14 @@
+{
+  "architecture": "neon",
+  "artifact_kind": "schedule-family-capability",
+  "capability_id": "schedule:neon:multi-phase",
+  "capability_sha256": "0f0b656c9766e8097842f573e9bcb8fbf16a73d8ec1e0bfe922465b99659916d",
+  "kind": "multi-phase",
+  "recognizer_sha256": "a55dafbd6358e51b9e55f981036e69f5b6af324bc00dabdc31126bf0522e6de4",
+  "schema_version": 1,
+  "theorem_sha256": "3ada7dc695419bca1e768c5a18b6a858d51a8017c0db5b63a3e29d6881081800",
+  "theorem_symbols": [
+    "SALT.Kernel.Schedule.runTwoPhaseTail_eq_map"
+  ],
+  "version": 1
+}

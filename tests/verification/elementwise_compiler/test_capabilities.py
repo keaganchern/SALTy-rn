@@ -44,6 +44,31 @@ def test_intrinsic_capability_is_global_strict_and_content_addressed() -> None:
         IntrinsicCapability.from_record(changed)
 
 
+def test_exact_descriptor_variants_cannot_share_a_capability_identity() -> None:
+    first = IntrinsicCapability(
+        Architecture.NEON,
+        "vmax_s8",
+        "int8x8_t (int8x8_t, int8x8_t)",
+        2,
+        IntrinsicRole.SEMANTIC,
+        D,
+        E,
+        "SALT.Intrinsics.Neon.vmax_s8",
+    )
+    second = IntrinsicCapability(
+        Architecture.NEON,
+        "vmax_s8",
+        "int8x8_t (int8x8_t, int8x8_t)",
+        2,
+        IntrinsicRole.SEMANTIC,
+        "2" * 64,
+        E,
+        "SALT.Intrinsics.Neon.vmax_s8_other",
+    )
+
+    assert first.capability_id != second.capability_id
+
+
 def test_layout_and_schedule_capabilities_round_trip_without_program_names() -> None:
     layout = LayoutViewCapability(
         LayoutKind.SCALAR_LANE,
@@ -76,4 +101,3 @@ def test_semantic_intrinsic_requires_a_bound_lean_symbol() -> None:
             E,
             None,
         )
-

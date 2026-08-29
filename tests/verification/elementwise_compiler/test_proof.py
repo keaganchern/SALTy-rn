@@ -201,3 +201,32 @@ def test_heldout_new_program_and_mutation_matrix() -> None:
         "active-vl",
     }
     assert report["framework_unchanged"] is True
+
+
+def test_scalar_broadcast_models_and_spec_elaborate(tmp_path: Path) -> None:
+    output = tmp_path / "f32-vmulc"
+    facade = (
+        ROOT
+        / "src/workflow/verification/lean_backend/facade/elementwise_shared.h"
+    )
+    compile_pair(
+        CompilerRequest(
+            ROOT,
+            ROOT / "kernels/source/f32-vmulc.c",
+            ROOT / "kernels/target/f32-vmulc.c",
+            "test_neon",
+            "test_rvv",
+            facade,
+            facade,
+            "aarch64-none-elf",
+            "riscv64-none-elf",
+            "SALT.Generated.F32VMulCElaboration",
+            output,
+        )
+    )
+
+    task = prepare_proof_task(ROOT, output)
+
+    assert task.claim == (
+        "SALT.Generated.F32VMulCElaboration.completeValueEquivalenceClaim"
+    )

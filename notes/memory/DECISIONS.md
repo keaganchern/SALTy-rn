@@ -458,3 +458,20 @@ change invalidates approval rather than allowing a stale green puzzle piece.
 Legal immediate sets come from primary evidence and may not be narrowed merely to
 make a review pass. The `vst1_lane_f32` lane-1 counterexample is now a permanent
 positive/negative regression.
+
+## EC-038: Spelling Counts Are Not Exact Review Units
+
+**Status:** Accepted and implemented after M5 independent review, 2026-08-29.
+
+Architecture plus spelling is useful for showing missing C intrinsic names, but it
+is not an approval identity. The same spelling and Clang function type may have
+multiple exact typed descriptors. `IntrinsicCapability.capability_id` and
+`IntrinsicReview.review_id` therefore bind the descriptor digest in addition to
+architecture, spelling, type, and arity. Implementation changes retain the exact
+descriptor identity but invalidate the capability content hash and review binding.
+
+The elementwise dashboard reports spelling dependencies and exact variants as
+separate quantities. For the current corpus these are 178 configured spellings of
+186 dependencies, 189 exact configured variants, and 180 exact variants used by
+the nineteen scalar programs. Review and Lean-check progress is counted per exact
+variant; a spelling-level aggregate cannot satisfy an exact review gate.

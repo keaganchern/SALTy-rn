@@ -305,6 +305,7 @@ def _verify_stack(
 
 _LEAN_DEPENDENCIES = (
     "SALT/Basic.lean",
+    "SALT/Intrinsics/FP32.lean",
     "SALT/Intrinsics/Neon.lean",
     "SALT/Intrinsics/RVV.lean",
     "SALT/Kernel/Schedule.lean",

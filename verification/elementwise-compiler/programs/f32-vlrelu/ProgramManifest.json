@@ -1,0 +1,514 @@
+{
+  "artifact_kind": "elementwise-program-manifest",
+  "compiler_sha256": "5bea16b17f1dffc4ff5012b2d0d690ef1c3e0888873eef67d92cc128e2df06c2",
+  "consumed_effects_sha256": "5f9b0ffa4d7ddc26972dc0c9140860a6cff87e2f0aba85a8fe951b6080beb327",
+  "contracts": {
+    "neon": {
+      "clauses": [
+        {
+          "args": [
+            {
+              "args": [],
+              "op": "integer",
+              "type": {
+                "bit_width": 64,
+                "c_spelling": "size_t",
+                "kind": "integer",
+                "signed": false
+              },
+              "value": 0
+            },
+            {
+              "args": [],
+              "op": "variable",
+              "type": {
+                "bit_width": 64,
+                "c_spelling": "size_t",
+                "kind": "integer",
+                "signed": false
+              },
+              "value": "batch"
+            }
+          ],
+          "op": "ne",
+          "type": {
+            "bit_width": null,
+            "c_spelling": "_Bool",
+            "kind": "bool",
+            "signed": null
+          },
+          "value": null
+        },
+        {
+          "args": [
+            {
+              "args": [],
+              "op": "integer",
+              "type": {
+                "bit_width": 64,
+                "c_spelling": "size_t",
+                "kind": "integer",
+                "signed": false
+              },
+              "value": 0
+            },
+            {
+              "args": [
+                {
+                  "args": [],
+                  "op": "variable",
+                  "type": {
+                    "bit_width": 64,
+                    "c_spelling": "size_t",
+                    "kind": "integer",
+                    "signed": false
+                  },
+                  "value": "batch"
+                },
+                {
+                  "args": [],
+                  "op": "sizeof",
+                  "type": {
+                    "bit_width": 64,
+                    "c_spelling": "size_t",
+                    "kind": "integer",
+                    "signed": false
+                  },
+                  "value": "float"
+                }
+              ],
+              "op": "mod",
+              "type": {
+                "bit_width": 64,
+                "c_spelling": "size_t",
+                "kind": "integer",
+                "signed": false
+              },
+              "value": null
+            }
+          ],
+          "op": "eq",
+          "type": {
+            "bit_width": null,
+            "c_spelling": "_Bool",
+            "kind": "bool",
+            "signed": null
+          },
+          "value": null
+        },
+        {
+          "args": [
+            {
+              "args": [],
+              "op": "null",
+              "type": {
+                "bit_width": 64,
+                "c_spelling": "const float *",
+                "kind": "pointer",
+                "signed": null
+              },
+              "value": "NULL"
+            },
+            {
+              "args": [],
+              "op": "variable",
+              "type": {
+                "bit_width": 64,
+                "c_spelling": "const float *",
+                "kind": "pointer",
+                "signed": null
+              },
+              "value": "input"
+            }
+          ],
+          "op": "ne",
+          "type": {
+            "bit_width": null,
+            "c_spelling": "_Bool",
+            "kind": "bool",
+            "signed": null
+          },
+          "value": null
+        },
+        {
+          "args": [
+            {
+              "args": [],
+              "op": "null",
+              "type": {
+                "bit_width": 64,
+                "c_spelling": "float *",
+                "kind": "pointer",
+                "signed": null
+              },
+              "value": "NULL"
+            },
+            {
+              "args": [],
+              "op": "variable",
+              "type": {
+                "bit_width": 64,
+                "c_spelling": "float *",
+                "kind": "pointer",
+                "signed": null
+              },
+              "value": "output"
+            }
+          ],
+          "op": "ne",
+          "type": {
+            "bit_width": null,
+            "c_spelling": "_Bool",
+            "kind": "bool",
+            "signed": null
+          },
+          "value": null
+        }
+      ]
+    },
+    "rvv": {
+      "clauses": [
+        {
+          "args": [
+            {
+              "args": [],
+              "op": "integer",
+              "type": {
+                "bit_width": 64,
+                "c_spelling": "size_t",
+                "kind": "integer",
+                "signed": false
+              },
+              "value": 0
+            },
+            {
+              "args": [],
+              "op": "variable",
+              "type": {
+                "bit_width": 64,
+                "c_spelling": "size_t",
+                "kind": "integer",
+                "signed": false
+              },
+              "value": "batch"
+            }
+          ],
+          "op": "ne",
+          "type": {
+            "bit_width": null,
+            "c_spelling": "_Bool",
+            "kind": "bool",
+            "signed": null
+          },
+          "value": null
+        },
+        {
+          "args": [
+            {
+              "args": [],
+              "op": "integer",
+              "type": {
+                "bit_width": 64,
+                "c_spelling": "size_t",
+                "kind": "integer",
+                "signed": false
+              },
+              "value": 0
+            },
+            {
+              "args": [
+                {
+                  "args": [],
+                  "op": "variable",
+                  "type": {
+                    "bit_width": 64,
+                    "c_spelling": "size_t",
+                    "kind": "integer",
+                    "signed": false
+                  },
+                  "value": "batch"
+                },
+                {
+                  "args": [],
+                  "op": "sizeof",
+                  "type": {
+                    "bit_width": 64,
+                    "c_spelling": "size_t",
+                    "kind": "integer",
+                    "signed": false
+                  },
+                  "value": "float"
+                }
+              ],
+              "op": "mod",
+              "type": {
+                "bit_width": 64,
+                "c_spelling": "size_t",
+                "kind": "integer",
+                "signed": false
+              },
+              "value": null
+            }
+          ],
+          "op": "eq",
+          "type": {
+            "bit_width": null,
+            "c_spelling": "_Bool",
+            "kind": "bool",
+            "signed": null
+          },
+          "value": null
+        },
+        {
+          "args": [
+            {
+              "args": [],
+              "op": "null",
+              "type": {
+                "bit_width": 64,
+                "c_spelling": "const float *",
+                "kind": "pointer",
+                "signed": null
+              },
+              "value": "NULL"
+            },
+            {
+              "args": [],
+              "op": "variable",
+              "type": {
+                "bit_width": 64,
+                "c_spelling": "const float *",
+                "kind": "pointer",
+                "signed": null
+              },
+              "value": "input"
+            }
+          ],
+          "op": "ne",
+          "type": {
+            "bit_width": null,
+            "c_spelling": "_Bool",
+            "kind": "bool",
+            "signed": null
+          },
+          "value": null
+        },
+        {
+          "args": [
+            {
+              "args": [],
+              "op": "null",
+              "type": {
+                "bit_width": 64,
+                "c_spelling": "float *",
+                "kind": "pointer",
+                "signed": null
+              },
+              "value": "NULL"
+            },
+            {
+              "args": [],
+              "op": "variable",
+              "type": {
+                "bit_width": 64,
+                "c_spelling": "float *",
+                "kind": "pointer",
+                "signed": null
+              },
+              "value": "output"
+            }
+          ],
+          "op": "ne",
+          "type": {
+            "bit_width": null,
+            "c_spelling": "_Bool",
+            "kind": "bool",
+            "signed": null
+          },
+          "value": null
+        }
+      ]
+    },
+    "shared_sha256": "975d9a1465f41171800166191628db06656867d156777bfd7f02d7da40428d8d"
+  },
+  "external_condition": {
+    "path": "ExternalCondition.json",
+    "sha256": "05b5597d06dd7f4c3aa02e31345003b17824a48d18f9f42b736e2a27c55a3ecd",
+    "status": "not-required"
+  },
+  "intrinsic_capabilities": [
+    {
+      "capability_id": "intrinsic:neon:vbslq_f32:77a354be995a3c54",
+      "sha256": "7e5338aa14c80426858e442208a924668264cd9ff65ae0a36bb2840e7ae61172",
+      "version": 1
+    },
+    {
+      "capability_id": "intrinsic:neon:vcltq_s32:1382204ad11c49a2",
+      "sha256": "051c4187805d53ed1253f9bb0f99fbd6a9330759ec6e7b1f83953c27fb57f0d3",
+      "version": 1
+    },
+    {
+      "capability_id": "intrinsic:neon:vdupq_n_f32:8249edeb665b3be9",
+      "sha256": "c95831999497a6e5b12519b0b15ad939a6768f999bdc0fd5e555727021a99598",
+      "version": 1
+    },
+    {
+      "capability_id": "intrinsic:neon:vget_high_f32:ce38d747fe1b6927",
+      "sha256": "8b73072ac48419d1e28caef78b000268f673bcbc96aafda0f476a0da3c8e8be1",
+      "version": 1
+    },
+    {
+      "capability_id": "intrinsic:neon:vget_low_f32:8a95cadbc4dbff95",
+      "sha256": "92064f1a70fe439ae79b5e0cecda242bca051c892a2baf6f6b3e338b94dddd7d",
+      "version": 1
+    },
+    {
+      "capability_id": "intrinsic:neon:vld1q_f32:2cd0ee0c55f9163a",
+      "sha256": "0d5d7b8dbab18b04c5c892dc96d76ea3be6fc342e9609f10f0ea2ca93b20bed6",
+      "version": 1
+    },
+    {
+      "capability_id": "intrinsic:neon:vmovq_n_s32:37020083c1d321ac",
+      "sha256": "0a427127dcbef6f9b50220b80b665fd006998812dfd708526ebb26f27e21ae76",
+      "version": 1
+    },
+    {
+      "capability_id": "intrinsic:neon:vmulq_f32:dcf54b26c84f1dc6",
+      "sha256": "718ad687ebf0c8d92be7f6bc796b73ad65d07e767932c291aa9279d5d7dc8d64",
+      "version": 1
+    },
+    {
+      "capability_id": "intrinsic:neon:vreinterpretq_s32_f32:2cd2659eac58f991",
+      "sha256": "e7cb9962dd05fa600904c0b7ecebdedc14583ca734387da27590ae9a83af9b78",
+      "version": 1
+    },
+    {
+      "capability_id": "intrinsic:neon:vst1_f32:ad0241ade4926fdb",
+      "sha256": "9655cc35f240ab3f9c87cae71ee869b08160edb3617be6b57a4409f4b849b1c9",
+      "version": 1
+    },
+    {
+      "capability_id": "intrinsic:neon:vst1_lane_f32:0d7385dd67f03980",
+      "sha256": "793e1b1cb104311712697b589ad2256c62a4099cac4720b04216eb55a712cc95",
+      "version": 1
+    },
+    {
+      "capability_id": "intrinsic:neon:vst1q_f32:22522d502967a1ae",
+      "sha256": "50877675aab5e93c3d8f869181c39e3a40f7e3b8f611c5a74e1357118d9a150a",
+      "version": 1
+    },
+    {
+      "capability_id": "intrinsic:rvv:__riscv_vfmul_vf_f32m8:ab30ef11484ca4d1",
+      "sha256": "c08f24f9df2ce212b5ac73b718627747ce0b60cc412a42f6b3d51dae04fc982b",
+      "version": 1
+    },
+    {
+      "capability_id": "intrinsic:rvv:__riscv_vle32_v_f32m8:18bc0ec588792246",
+      "sha256": "b05ecd68c279d8b6ca84b0590847637d7bd4fb4db8cd365b0fde9acb7aadbc04",
+      "version": 1
+    },
+    {
+      "capability_id": "intrinsic:rvv:__riscv_vmerge_vvm_f32m8:c2bb824d2d068845",
+      "sha256": "3754becfcba89a75cce8e3b74ddfe9829d0816e983a92ab39c6de753655f49f3",
+      "version": 1
+    },
+    {
+      "capability_id": "intrinsic:rvv:__riscv_vmslt_vx_i32m8_b4:6f757660c9f87bdf",
+      "sha256": "cdb26af92deaa2abf15a2d5e0449cf07c626822898aa3a65e643b77ab1dafe5b",
+      "version": 1
+    },
+    {
+      "capability_id": "intrinsic:rvv:__riscv_vreinterpret_v_f32m8_i32m8:3e094f133b6e8fb2",
+      "sha256": "accc31aa10a4dd7639be77073423d059a580584ea137abdb18a6740c32237595",
+      "version": 1
+    },
+    {
+      "capability_id": "intrinsic:rvv:__riscv_vse32_v_f32m8:53d23aae8d2de69e",
+      "sha256": "03c69c16e26857530ab8233311d46c5fe66c336590b807dd0cf238b476f72495",
+      "version": 1
+    },
+    {
+      "capability_id": "intrinsic:rvv:__riscv_vsetvl_e32m8:8646d4d736c771fa",
+      "sha256": "4c1f5fbc177f274d863514ae5246ef7030de6dd7b3414ace75e6d796d8d5960a",
+      "version": 1
+    }
+  ],
+  "layout": {
+    "broadcast_input_streams": [],
+    "capability": {
+      "capability_id": "layout:scalar-lane",
+      "sha256": "f069bf21344d5c9b568c88dd00faf0313dbe57c9fbeb4840cb91baa71109805c",
+      "version": 1
+    },
+    "input_streams": [
+      "input"
+    ],
+    "output_streams": [
+      "output"
+    ],
+    "stream_c_types": [
+      {
+        "c_type": "float",
+        "stream": "input"
+      },
+      {
+        "c_type": "float",
+        "stream": "output"
+      }
+    ]
+  },
+  "local_assertions": [],
+  "manifest_sha256": "7ebec620516835c5b5db35a335b1f6d6fdffd0e38120b7a96c65f075c85634e0",
+  "schedules": [
+    {
+      "architecture": "neon",
+      "capability": {
+        "capability_id": "schedule:neon:fixed-tail",
+        "sha256": "4eeeb40446de410557e7f4f6a1c900c4b3c3f23158be9516dc4f13f677510d33",
+        "version": 1
+      },
+      "control_sha256": "94e78a8c42246607d039bedc599402bf6b2b2cfb2fb5820fb748cd9b5087a392",
+      "parameters": {
+        "count_variable": "batch",
+        "element_c_type": "float",
+        "lanes": 4,
+        "phase_widths": "4",
+        "store_widths": "2,1"
+      }
+    },
+    {
+      "architecture": "rvv",
+      "capability": {
+        "capability_id": "schedule:rvv:rvv-strip-mine",
+        "sha256": "ae5b0d08037bb0ad205937ca70eaea28ae6071bde05bcc42413a052d680b6aa7",
+        "version": 1
+      },
+      "control_sha256": "98aba78946d1111296bee4b1a836cc56d1b86cefa0b7e08780f0d235b757e37e",
+      "parameters": {
+        "count_variable": "n",
+        "nested_controls": 0
+      }
+    }
+  ],
+  "schema_version": 2,
+  "sources": [
+    {
+      "architecture": "neon",
+      "facade_path": "src/workflow/verification/lean_backend/facade/elementwise_shared.h",
+      "facade_sha256": "829b8b0358b2a31d50a784422681ac9e821a4369619812194f800dc63287c4bc",
+      "function": "test_neon",
+      "path": "kernels/source/f32-vlrelu.c",
+      "preprocessed_sha256": "b1814538fd15b0b525535ed5e2085d76b3917a7368db6249f1ff794077766fb7",
+      "source_sha256": "4c8689e540b354176daea7b00a01e854917c738f74ba4a3fcca01f944118e3b6"
+    },
+    {
+      "architecture": "rvv",
+      "facade_path": "src/workflow/verification/lean_backend/facade/elementwise_shared.h",
+      "facade_sha256": "829b8b0358b2a31d50a784422681ac9e821a4369619812194f800dc63287c4bc",
+      "function": "test_rvv",
+      "path": "kernels/target/f32-vlrelu.c",
+      "preprocessed_sha256": "ec2ad64d76293d5a7102547fd0f214587e6409848a7ca811049d41fdf5751788",
+      "source_sha256": "682d136f5c7ac833199fcf0e5f9f83f8c169634de72cc55a0effa99676c5516e"
+    }
+  ]
+}

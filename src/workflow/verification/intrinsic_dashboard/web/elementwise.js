@@ -73,7 +73,7 @@
     clear(summary);
     clear(body);
     clear(capabilityBody);
-    if (!payload || payload.schema_version !== 2 || payload.available !== true) {
+    if (!payload || payload.schema_version !== 3 || payload.available !== true) {
       counts.textContent = "No generated report";
       message.textContent = payload && payload.message ? payload.message : "Elementwise artifact graph is unavailable.";
       return;
@@ -87,9 +87,10 @@
     summary.append(
       summaryCard("ordinary scalar layout", data.scalar_layout_scope || 0),
       summaryCard("deferred grouped layout", data.grouped_layout_deferred || 0),
-      summaryCard("intrinsics configured", `${data.configured_intrinsics || 0}/${data.intrinsic_dependencies || 0}`),
-      summaryCard("intrinsics Lean checked", `${data.lean_checked_intrinsics || 0}/${data.intrinsic_dependencies || 0}`),
-      summaryCard("intrinsics reviewed", `${data.reviewed_intrinsics || 0}/${data.intrinsic_dependencies || 0}`),
+      summaryCard("intrinsic spellings configured", `${data.configured_intrinsic_spellings || 0}/${data.intrinsic_spelling_dependencies || 0}`),
+      summaryCard("exact variants reviewed", `${data.reviewed_registry_intrinsic_variants || 0}/${data.registry_intrinsic_variants || 0}`),
+      summaryCard("used exact variants reviewed", `${data.reviewed_used_intrinsic_variants || 0}/${data.used_intrinsic_variants || 0}`),
+      summaryCard("used exact variants Lean checked", `${data.lean_checked_used_intrinsic_variants || 0}/${data.used_intrinsic_variants || 0}`),
       summaryCard("input condition blocked", statusCounts["external-condition-missing"] || 0),
       summaryCard("checked counterexample", statusCounts.counterexample || 0),
       summaryCard("proof ready", statusCounts["proof-ready"] || 0),
@@ -136,16 +137,20 @@
       const intrinsicCell = document.createElement("td");
       intrinsicCell.append(text("strong", capability.spelling || "unknown"));
       intrinsicCell.append(text("small", capability.architecture || "unknown"));
+      intrinsicCell.append(text("code", capability.id || "missing exact identity"));
+      const signature = text("small", capability.function_type || "unknown signature");
+      signature.title = capability.semantic_symbol || capability.role || "";
+      intrinsicCell.append(signature);
       row.append(intrinsicCell);
       row.append(text("td", capability.defined ? "yes" : "missing", capability.defined ? "piece-done" : "piece-missing"));
       row.append(text("td", capability.lean_checked ? "passed" : "pending", capability.lean_checked ? "piece-done" : "piece-missing"));
       const reviewCell = document.createElement("td");
       reviewCell.append(text("span", capability.independently_reviewed ? "approved" : "pending", capability.independently_reviewed ? "piece-done" : "piece-missing"));
-      if (capability.independently_reviewed && Array.isArray(capability.review_sha256)) {
-        for (const digest of capability.review_sha256) reviewCell.append(text("code", String(digest).slice(0, 12)));
+      if (capability.independently_reviewed && capability.review_sha256) {
+        reviewCell.append(text("code", String(capability.review_sha256).slice(0, 12)));
       }
       row.append(reviewCell);
-      row.append(text("td", capability.typed_variants || 0));
+      row.append(text("td", capability.used ? "yes" : "no", capability.used ? "piece-done" : "piece-missing"));
       const programsCell = document.createElement("td");
       programsCell.append(missingList(capability.programs));
       row.append(programsCell);

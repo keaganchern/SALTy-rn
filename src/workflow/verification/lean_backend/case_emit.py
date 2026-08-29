@@ -70,6 +70,8 @@ _C_INTEGER_WIDTHS = {
     "uint32_t": 32,
     "int64_t": 64,
     "uint64_t": 64,
+    "float": 32,
+    "double": 64,
 }
 
 _REVIEWED_CASTS_BY_DESTINATION = {
@@ -109,14 +111,45 @@ def _field_name(dependency: str) -> str:
     return field
 
 
-def _converted_field(field: str, width: int, *, negated: bool = False) -> str:
+def _converted_field(
+    field: str,
+    width: int,
+    *,
+    source_c_type: str,
+    negated: bool = False,
+) -> str:
+    source_width = _integer_width(source_c_type)
     source = f"p.{field}"
     if negated:
         source = f"(-{source})"
-    return f"({source}).truncate {width}"
+    if width == source_width:
+        # Keep field-to-intrinsic conversion explicit even when it is an
+        # identity.  Besides making the generated term self-describing, this
+        # preserves the normal form consumed by generic scalar proofs.
+        return f"({source}).truncate {width}"
+    return _converted_scalar(source, source_c_type=source_c_type, width=width)
 
 
-def _reviewed_field_argument(argument: ArgumentFact) -> tuple[str, bool]:
+def _converted_scalar(source: str, *, source_c_type: str, width: int) -> str:
+    source_width = _integer_width(source_c_type)
+    if width < source_width:
+        return f"({source}).truncate {width}"
+    if width > source_width:
+        normalized = _normalized_integer_type(source_c_type)
+        extension = (
+            "zeroExtend"
+            if normalized.startswith("u")
+            or normalized.startswith("unsigned")
+            or normalized in {"float", "double"}
+            else "signExtend"
+        )
+        return f"({source}).{extension} {width}"
+    return source
+
+
+def _reviewed_field_argument(
+    argument: ArgumentFact, *, source_c_type: str
+) -> tuple[str, bool]:
     field = _field_name(_single_dependency(argument))
     expected = f"params->scalar.{field}"
     compact = re.sub(r"\s+", "", argument.source_text)
@@ -141,7 +174,58 @@ def _reviewed_field_argument(argument: ArgumentFact) -> tuple[str, bool]:
     # Keep the sign operation separate.  The base emitter uses the Boolean to
     # distinguish a negated broadcast from a plain one and applies the negation
     # exactly once when materializing the vector value.
-    return _converted_field(field, _integer_width(argument.type_spelling)), negated
+    return (
+        _converted_field(
+            field,
+            _integer_width(argument.type_spelling),
+            source_c_type=source_c_type,
+        ),
+        negated,
+    )
+
+
+def _reviewed_constant_minus_field_argument(
+    extraction: KernelExtraction, argument: ArgumentFact
+) -> str:
+    fields = tuple(
+        dependency
+        for dependency in argument.dependencies
+        if dependency.startswith("field:params@0.scalar.")
+    )
+    constants = tuple(
+        dependency
+        for dependency in argument.dependencies
+        if dependency.startswith("constant:")
+    )
+    if len(fields) != 1 or len(constants) != 1 or len(argument.dependencies) != 2:
+        raise CaseEmissionError(
+            f"unsupported broadcast scalar dependencies {argument.dependencies!r}"
+        )
+    constant_match = re.fullmatch(r"constant:(-?[0-9]+):int", constants[0])
+    field = _field_name(fields[0])
+    expected = f"params->scalar.{field}"
+    source = re.sub(r"\s+", "", argument.source_text)
+    if (
+        constant_match is None
+        or re.fullmatch(
+            rf"(?:INT32_C\()?0[xX][0-9A-Fa-f]+\)?-\(int32_t\)"
+            rf"{re.escape(expected)}",
+            source,
+        )
+        is None
+        or argument.semantic_operations
+        != ("explicit-cast:IntegralCast:int", "binary:-")
+        or _normalized_integer_type(argument.type_spelling) not in {"int", "int32_t"}
+    ):
+        raise CaseEmissionError(
+            f"unsupported constant-minus-field expression {argument.source_text!r}"
+        )
+    field_value = _converted_field(
+        field,
+        32,
+        source_c_type=_facade_scalar_field_type(extraction, field),
+    )
+    return f"(BitVec.ofNat 32 {int(constant_match.group(1))}) - ({field_value})"
 
 
 def _facade_scalar_field_type(extraction: KernelExtraction, field: str) -> str:
@@ -151,9 +235,30 @@ def _facade_scalar_field_type(extraction: KernelExtraction, field: str) -> str:
         source = Path(extraction.facade_path).read_text(encoding="utf-8")
     except (OSError, UnicodeError) as error:
         raise CaseEmissionError("cannot read the hash-bound parse facade") from error
-    matches = re.findall(
-        rf"\b((?:u?int(?:8|16|32|64)_t)|(?:signed|unsigned)\s+(?:char|short|int|long)|(?:char|short|int|long))\s+{re.escape(field)}\s*;",
+    params = next(
+        (parameter for parameter in extraction.parameters if parameter.name == "params"),
+        None,
+    )
+    aggregate = (
+        None
+        if params is None
+        else re.search(r"\b(?:struct|union)\s+([A-Za-z_][A-Za-z0-9_]*)", params.type_spelling)
+    )
+    if aggregate is None:
+        raise CaseEmissionError("cannot resolve the facade parameter aggregate")
+    scalar_match = re.search(
+        rf"\b(?:struct|union)\s+{re.escape(aggregate.group(1))}\s*\{{\s*"
+        r"struct\s*\{(?P<body>[^{}]*)\}\s*scalar\s*;",
         source,
+        re.DOTALL,
+    )
+    if scalar_match is None:
+        raise CaseEmissionError(
+            f"cannot resolve facade scalar aggregate {aggregate.group(1)!r}"
+        )
+    matches = re.findall(
+        rf"\b((?:u?int(?:8|16|32|64)_t)|(?:signed|unsigned)\s+(?:char|short|int|long)|(?:char|short|int|long|float|double))\s+{re.escape(field)}\s*;",
+        scalar_match.group("body"),
     )
     if len(matches) != 1:
         raise CaseEmissionError(
@@ -167,7 +272,16 @@ def _reviewed_scalar_definition(
     *,
     source_c_type: str,
 ) -> str:
-    field = _field_name(definition.dependencies[0])
+    field_dependencies = tuple(
+        dependency
+        for dependency in definition.dependencies
+        if dependency.startswith("field:params@0.scalar.")
+    )
+    if len(field_dependencies) != 1:
+        raise CaseEmissionError(
+            f"definition {definition.value} needs one parameter field dependency"
+        )
+    field = _field_name(field_dependencies[0])
     if "=" not in definition.expression_text:
         raise CaseEmissionError(
             f"definition {definition.value} has no initializer: "
@@ -175,6 +289,47 @@ def _reviewed_scalar_definition(
         )
     initializer = definition.expression_text.split("=", 1)[1].strip()
     expected = f"params->scalar.{field}"
+    constant_minus_field = re.fullmatch(
+        rf"INT32_C\((?P<constant>0[xX][0-9A-Fa-f]+|[0-9]+)\)-"
+        rf"\(int32_t\){re.escape(expected)}",
+        re.sub(r"\s+", "", initializer),
+    )
+    if constant_minus_field is not None:
+        if _normalized_integer_type(definition.type_spelling) not in {"int", "int32_t"}:
+            raise CaseEmissionError(
+                f"definition {definition.value} has a non-i32 constant subtraction"
+            )
+        field_value = _converted_field(
+            field,
+            32,
+            source_c_type=source_c_type,
+        )
+        constant = int(constant_minus_field.group("constant"), 0)
+        return f"(BitVec.ofNat 32 {constant}) - ({field_value})"
+    modular_negation = re.fullmatch(
+        rf"\((?P<outer>[A-Za-z_][A-Za-z0-9_ ]*)\)\s*\(\s*-\s*"
+        rf"\((?P<inner>[A-Za-z_][A-Za-z0-9_ ]*)\)\s*{re.escape(expected)}\s*\)",
+        initializer,
+    )
+    if modular_negation is not None:
+        destination = _normalized_integer_type(definition.type_spelling)
+        outer = _normalized_integer_type(modular_negation.group("outer"))
+        inner = _normalized_integer_type(modular_negation.group("inner"))
+        if (
+            outer not in _REVIEWED_CASTS_BY_DESTINATION.get(destination, frozenset())
+            or _integer_width(inner) != _integer_width(source_c_type)
+            or not (inner.startswith("u") or inner.startswith("unsigned"))
+        ):
+            raise CaseEmissionError(
+                f"definition {definition.value} has an unreviewed modular negation"
+            )
+        inner_width = _integer_width(inner)
+        inner_value = _converted_field(
+            field,
+            inner_width,
+            source_c_type=source_c_type,
+        )
+        return f"(-({inner_value})).truncate {_integer_width(definition.type_spelling)}"
     match = re.fullmatch(
         rf"(?:\((?P<cast>[A-Za-z_][A-Za-z0-9_ ]*)\)\s*)?"
         rf"(?P<negated>-?)\s*{re.escape(expected)}",
@@ -206,6 +361,7 @@ def _reviewed_scalar_definition(
     return _converted_field(
         field,
         _integer_width(definition.type_spelling),
+        source_c_type=source_c_type,
         negated=negated,
     )
 
@@ -234,6 +390,7 @@ class _CaseBlockEmitter(_BlockEmitter):
         registry: Mapping[str, IntrinsicSpec],
         *,
         active_length: str | None = None,
+        broadcast_inputs: tuple[str, ...] = (),
     ) -> None:
         super().__init__(
             extraction,
@@ -241,23 +398,67 @@ class _CaseBlockEmitter(_BlockEmitter):
             registry=registry,
             active_length=active_length,
         )
+        for name in broadcast_inputs:
+            dependency = f"{name}@0"
+            scalar = f"p.broadcast_{name}"
+            self.environment[dependency] = scalar
+            parameter = next(
+                (item for item in extraction.parameters if item.name == name),
+                None,
+            )
+            if parameter is None or "*" not in parameter.type_spelling:
+                raise CaseEmissionError(
+                    f"broadcast input {name!r} is not a pointer parameter"
+                )
+            scalar_definitions = [
+                definition
+                for definition in extraction.definitions
+                if definition.parent_control is None
+                and definition.definition_kind == "declaration"
+                and definition.value_call is None
+                and definition.dependencies == (dependency,)
+                and re.fullmatch(
+                    rf".*{re.escape(definition.variable)}=\*{re.escape(name)}",
+                    _compact_source(definition.expression_text),
+                )
+            ]
+            if architecture is Architecture.RVV:
+                if len(scalar_definitions) != 1:
+                    raise CaseEmissionError(
+                        f"RVV broadcast input {name!r} needs one scalar dereference"
+                    )
+                self.environment[scalar_definitions[0].value] = scalar
         for definition in extraction.definitions:
+            field_dependencies = tuple(
+                dependency
+                for dependency in definition.dependencies
+                if dependency.startswith("field:params@0.scalar.")
+            )
             if (
                 definition.value_call is None
-                and len(definition.dependencies) == 1
-                and definition.dependencies[0].startswith("field:params@0.scalar.")
+                and len(field_dependencies) == 1
+                and all(
+                    dependency == field_dependencies[0]
+                    or dependency.startswith("constant:")
+                    for dependency in definition.dependencies
+                )
                 and definition.definition_kind != "parameter"
                 and definition.parent_control is None
             ):
+                field = _field_name(field_dependencies[0])
                 self.environment[definition.value] = _reviewed_scalar_definition(
                     definition,
                     source_c_type=_facade_scalar_field_type(
-                        extraction, _field_name(definition.dependencies[0])
+                        extraction, field
                     ),
                 )
 
     def _checked_field_source(self, argument: ArgumentFact) -> tuple[str, bool]:
-        return _reviewed_field_argument(argument)
+        field = _field_name(_single_dependency(argument))
+        return _reviewed_field_argument(
+            argument,
+            source_c_type=_facade_scalar_field_type(self.extraction, field),
+        )
 
     def _resolve(self, argument: ArgumentFact) -> str:
         if (
@@ -268,6 +469,23 @@ class _CaseBlockEmitter(_BlockEmitter):
             )
         ):
             return "0"
+        if len(argument.dependencies) == 1:
+            dependency = argument.dependencies[0]
+            definition = self.definitions.get(dependency)
+            expected_casts = {
+                (f"explicit-cast:IntegralCast:{argument.type_spelling}",),
+                (f"implicit-cast:IntegralCast:{argument.type_spelling}",),
+            }
+            if (
+                dependency in self.environment
+                and definition is not None
+                and argument.semantic_operations in expected_casts
+            ):
+                return _converted_scalar(
+                    self.environment[dependency],
+                    source_c_type=definition.type_spelling,
+                    width=_integer_width(argument.type_spelling),
+                )
         return super()._resolve(argument)
 
     def _structural_expression(
@@ -285,17 +503,45 @@ class _CaseBlockEmitter(_BlockEmitter):
                     f"scalable broadcast {call.spelling} has no active-length binding"
                 )
             argument = call.arguments[0]
-            dependency = _single_dependency(argument)
             if argument.constant_value is not None:
                 scalar = self._resolve(argument)
-            elif not argument.semantic_operations and dependency in self.environment:
-                scalar = self.environment[dependency]
+            elif (
+                len(argument.dependencies) == 1
+                and not argument.semantic_operations
+                and argument.dependencies[0] in self.environment
+            ):
+                scalar = self.environment[argument.dependencies[0]]
+            elif len(argument.dependencies) == 2:
+                scalar = _reviewed_constant_minus_field_argument(
+                    self.extraction, argument
+                )
             else:
                 scalar, is_negated = self._checked_field_source(argument)
                 if is_negated:
                     scalar = f"-{scalar}"
             length = str(lanes) if lanes is not None else self.active_length
             return f"List.replicate {length} ({scalar})"
+        if spec.operation is StructuralOp.LOAD_BROADCAST:
+            result = spec.signature.result
+            if not isinstance(result, VectorType) or result.fixed_lanes is None:
+                raise CaseEmissionError(
+                    f"{call.spelling} needs a fixed-width broadcast result"
+                )
+            argument = call.arguments[0]
+            dependency = _single_dependency(argument)
+            base = dependency.split("@", 1)[0]
+            if (
+                dependency not in self.environment
+                or argument.source_text.strip() != base
+                or argument.semantic_operations
+            ):
+                raise CaseEmissionError(
+                    f"{call.spelling} has an unsupported scalar-load base"
+                )
+            return (
+                f"List.replicate {result.fixed_lanes} "
+                f"({self.environment[dependency]})"
+            )
         return super()._structural_expression(call, spec)
 
 
@@ -313,6 +559,29 @@ def _selected_neon_loop(extraction: KernelExtraction, profile: ModelProfile):
             f"{profile.case_id}: expected one reviewed Neon block loop, got {len(matches)}"
         )
     return matches[0]
+
+
+def _output_pointer_base(extraction: KernelExtraction) -> tuple[str, str]:
+    """Return the output cursor name and its initial SSA dependency."""
+
+    aliases = [
+        definition
+        for definition in extraction.definitions
+        if definition.parent_control is None
+        and definition.definition_kind == "declaration"
+        and definition.value_call is None
+        and definition.dependencies == ("output@0",)
+        and "*" in definition.type_spelling
+        and re.fullmatch(
+            rf".*\b{re.escape(definition.variable)}\s*=\s*output",
+            _compact_source(definition.expression_text),
+        )
+    ]
+    if len(aliases) > 1:
+        raise CaseEmissionError("multiple output pointer aliases are unsupported")
+    if not aliases:
+        return "output", "output@0"
+    return aliases[0].variable, aliases[0].value
 
 
 def _normalized_control_shape(
@@ -404,28 +673,68 @@ def _validate_neon_control_shape(
                 for control in controls
                 if control.parent_control == root.node_id
             ]
+            byte_scaled = [
+                f"sizeof({profile.element_c_type})" in control.condition_text
+                for control in top_loops
+            ]
+            if len(set(byte_scaled)) != 1:
+                raise CaseEmissionError(
+                    "two-phase loops disagree on byte-versus-element counting"
+                )
+
+            def phase(width: int, version: int) -> tuple[str, tuple[str, ...], str]:
+                if byte_scaled[0]:
+                    return (
+                        f"batch >= {width} * sizeof({profile.element_c_type})",
+                        (
+                            f"batch@{version}",
+                            f"constant:{width}:int",
+                            f"sizeof:{profile.element_c_type}",
+                        ),
+                        f"batch -= {width} * sizeof({profile.element_c_type})",
+                    )
+                return (
+                    f"batch >= {width}",
+                    (f"batch@{version}", f"constant:{width}:int"),
+                    f"batch -= {width}",
+                )
+
+            large_condition, large_dependencies, large_update = phase(large, 0)
+            small_condition, small_dependencies, small_update = phase(small, 1)
             expected = (
                 (
                     "ForStmt",
                     None,
-                    f"batch >= {large}",
-                    ("batch@0", f"constant:{large}:int"),
-                    f"batch -= {large}",
+                    large_condition,
+                    large_dependencies,
+                    large_update,
                 ),
                 (
                     "ForStmt",
                     None,
-                    f"batch >= {small}",
-                    ("batch@1", f"constant:{small}:int"),
-                    f"batch -= {small}",
+                    small_condition,
+                    small_dependencies,
+                    small_update,
                 ),
                 ("IfStmt", None, "batch != 0", ("batch@2", "constant:0:int"), ""),
                 *tuple(
                     (
                         "IfStmt",
                         2,
-                        f"batch & {width}",
-                        ("batch@2", f"constant:{width}:int"),
+                        (
+                            f"batch & ({width} * sizeof({profile.element_c_type}))"
+                            if byte_scaled[0]
+                            else f"batch & {width}"
+                        ),
+                        (
+                            (
+                                "batch@2",
+                                f"constant:{width}:int",
+                                f"sizeof:{profile.element_c_type}",
+                            )
+                            if byte_scaled[0]
+                            else ("batch@2", f"constant:{width}:int")
+                        ),
                         "",
                     )
                     for width in store_widths
@@ -517,7 +826,15 @@ def _emit_neon_case(
             f"{profile.case_id}: nested Neon block control is unsupported"
         )
     _validate_neon_control_shape(extraction, profile, loop)
-    emitter = _CaseBlockEmitter(extraction, Architecture.NEON, registry)
+    emitter = _CaseBlockEmitter(
+        extraction,
+        Architecture.NEON,
+        registry,
+        broadcast_inputs=profile.broadcast_inputs,
+    )
+    output_base, output_initial = _output_pointer_base(extraction)
+    if output_base != "output":
+        emitter.environment[output_initial] = "output"
 
     selected_calls = [
         call for call in extraction.calls if call.parent_control in {None, loop.node_id}
@@ -525,9 +842,10 @@ def _emit_neon_case(
     for call in selected_calls:
         if call.parent_control is None:
             spec = emitter._lookup_intrinsic(call.spelling)
-            if not (
+            if isinstance(spec, ScheduleIntrinsic) or (
                 isinstance(spec, StructuralIntrinsic)
-                and spec.operation is StructuralOp.BROADCAST
+                and spec.operation
+                in {StructuralOp.LOAD, StructuralOp.STORE, StructuralOp.LANE_STORE}
             ):
                 raise CaseEmissionError(
                     f"{profile.case_id}: unsupported top-level Neon call {call.spelling}"
@@ -594,8 +912,8 @@ def _emit_neon_case(
         ):
             store_base = call.arguments[0]
             if (
-                store_base.dependencies != (f"output@{store_version}",)
-                or store_base.source_text.strip() != "output"
+                store_base.dependencies != (f"{output_base}@{store_version}",)
+                or store_base.source_text.strip() != output_base
                 or store_base.semantic_operations
             ):
                 raise CaseEmissionError(
@@ -617,7 +935,10 @@ def _emit_neon_case(
             output_update_widths.append(vector.fixed_lanes)
             store_version += 1
             pointer_updates.append(
-                (f"output@{store_version}", f"output += {vector.fixed_lanes}")
+                (
+                    f"{output_base}@{store_version}",
+                    f"{output_base} += {vector.fixed_lanes}",
+                )
             )
             stores.append(result)
 
@@ -736,11 +1057,33 @@ def _emit_separate_two_phase_tail_value_models(
         for control in extraction.controls
         if control.kind == "ForStmt" and control.parent_control is None
     ]
+    byte_scaled = all(
+        f"sizeof({config.element_c_type})" in control.condition_text
+        for control in loops
+    )
+    if any(
+        (f"sizeof({config.element_c_type})" in control.condition_text)
+        != byte_scaled
+        for control in loops
+    ):
+        raise CaseEmissionError(
+            "separate two-phase loops disagree on byte-versus-element counting"
+        )
+    small_condition = (
+        f"batch>={small}*sizeof({config.element_c_type})"
+        if byte_scaled
+        else f"batch>={small}"
+    )
+    small_update = (
+        f"batch-={small}*sizeof({config.element_c_type})"
+        if byte_scaled
+        else f"batch-={small}"
+    )
     small_loops = [
         control
         for control in loops
-        if _compact_source(control.condition_text) == f"batch>={small}"
-        and _compact_source(control.update_text) == f"batch-={small}"
+        if _compact_source(control.condition_text) == small_condition
+        and _compact_source(control.update_text) == small_update
     ]
     roots = [
         control
@@ -757,9 +1100,17 @@ def _emit_separate_two_phase_tail_value_models(
         for control in extraction.controls
         if control.parent_control == root.node_id
     ]
-    if [_compact_source(control.condition_text) for control in children] != [
-        f"batch&{width}" for width in config.store_widths
-    ]:
+    expected_tail_conditions = [
+        (
+            f"batch&({width}*sizeof({config.element_c_type}))"
+            if byte_scaled
+            else f"batch&{width}"
+        )
+        for width in config.store_widths
+    ]
+    if [
+        _compact_source(control.condition_text) for control in children
+    ] != expected_tail_conditions:
         raise CaseEmissionError("separate two-phase live-prefix branch order changed")
 
     consumed_before = set(already_consumed)
@@ -777,19 +1128,22 @@ def _emit_separate_two_phase_tail_value_models(
         raise CaseEmissionError("calls remain outside the separate two-phase regions")
 
     prologue_calls = [call for call in extraction.calls if call.parent_control is None]
+    output_base, output_initial = _output_pointer_base(extraction)
 
     def new_emitter() -> _CaseBlockEmitter:
-        emitter = _CaseBlockEmitter(extraction, Architecture.NEON, registry)
-        for call in prologue_calls:
-            spec = emitter._lookup_intrinsic(call.spelling)
-            if not (
-                isinstance(spec, StructuralIntrinsic)
-                and spec.operation is StructuralOp.BROADCAST
-            ):
-                raise CaseEmissionError(
-                    "separate two-phase prologue must contain broadcasts only"
-                )
-            emitter.emit_registered_call(call)
+        emitter = _CaseBlockEmitter(
+            extraction,
+            Architecture.NEON,
+            registry,
+            broadcast_inputs=profile.broadcast_inputs,
+        )
+        if output_base != "output":
+            emitter.environment[output_initial] = "output"
+        _emit_pure_neon_prologue(
+            emitter,
+            prologue_calls,
+            context="separate two-phase prologue",
+        )
         return emitter
 
     compound = [
@@ -801,10 +1155,14 @@ def _emit_separate_two_phase_tail_value_models(
     expected_update_expressions = sorted(
         [
             *(f"{name}+={small}" for name in profile.inputs),
-            f"output+={small}",
-            f"batch-={small}",
-            *(f"{name}+={small}" for name in profile.inputs),
-            *(f"output+={width}" for width in config.store_widths[:-1]),
+            f"{output_base}+={small}",
+            small_update,
+            *(
+                (f"{name}+={small}" for name in profile.inputs)
+                if config.input_advances_after_load
+                else ()
+            ),
+            *(f"{output_base}+={width}" for width in config.store_widths[:-1]),
         ]
     )
     if (
@@ -830,11 +1188,18 @@ def _emit_separate_two_phase_tail_value_models(
         name: unique_update(small_loop.node_id, f"{name}+={small}")
         for name in profile.inputs
     }
-    output_loop_update = unique_update(small_loop.node_id, f"output+={small}")
-    unique_update(small_loop.node_id, f"batch-={small}")
-    input_tail_updates = {
-        name: unique_update(root.node_id, f"{name}+={small}") for name in profile.inputs
-    }
+    output_loop_update = unique_update(
+        small_loop.node_id, f"{output_base}+={small}"
+    )
+    unique_update(small_loop.node_id, small_update)
+    input_tail_updates = (
+        {
+            name: unique_update(root.node_id, f"{name}+={small}")
+            for name in profile.inputs
+        }
+        if config.input_advances_after_load
+        else {}
+    )
 
     loaded_names = _loaded_argument_names(profile.inputs)
     block_calls = [
@@ -910,14 +1275,18 @@ def _emit_separate_two_phase_tail_value_models(
     for load, input_name, loaded_name in zip(root_loads, profile.inputs, loaded_names):
         spec = partial._lookup_intrinsic(load.spelling)
         loop_update = input_loop_updates[input_name]
-        tail_update = input_tail_updates[input_name]
+        tail_update = input_tail_updates.get(input_name)
         if not (
             isinstance(spec, StructuralIntrinsic)
             and spec.operation is StructuralOp.LOAD
             and isinstance(spec.signature.result, VectorType)
             and spec.signature.result.fixed_lanes == small
             and load.arguments[0].dependencies == (loop_update.value,)
-            and tail_update.dependencies == (loop_update.value, f"constant:{small}:int")
+            and (
+                tail_update is None
+                or tail_update.dependencies
+                == (loop_update.value, f"constant:{small}:int")
+            )
             and load.arguments[0].source_text.strip() == input_name
             and not load.arguments[0].semantic_operations
         ):
@@ -1031,7 +1400,7 @@ def _emit_separate_two_phase_tail_value_models(
         partial.environment[slide.assigned_to] = joined
         current_dependency = slide.assigned_to
         tail_value = joined
-        output_update = unique_update(child.node_id, f"output+={width}")
+        output_update = unique_update(child.node_id, f"{output_base}+={width}")
         if output_update.dependencies != (
             current_output_dependency,
             f"constant:{width}:int",
@@ -1203,6 +1572,27 @@ def _output_list_type(profile: ModelProfile) -> str:
     return f"List ({_output_value_type(profile)})"
 
 
+def _emit_pure_neon_prologue(
+    emitter: _CaseBlockEmitter,
+    calls: list[IntrinsicCall],
+    *,
+    context: str,
+) -> None:
+    """Emit an extracted, dependency-ordered vector-constant expression DAG."""
+
+    for call in calls:
+        spec = emitter._lookup_intrinsic(call.spelling)
+        if isinstance(spec, ScheduleIntrinsic) or (
+            isinstance(spec, StructuralIntrinsic)
+            and spec.operation
+            in {StructuralOp.LOAD, StructuralOp.STORE, StructuralOp.LANE_STORE}
+        ):
+            raise CaseEmissionError(
+                f"{context} contains an impure top-level Neon call {call.spelling}"
+            )
+        emitter.emit_registered_call(call)
+
+
 def _emit_prefix_tail_value_models(
     extraction: KernelExtraction,
     profile: ModelProfile,
@@ -1258,18 +1648,18 @@ def _emit_prefix_tail_value_models(
             f"{profile.case_id}: calls outside the reviewed prefix-tail remain"
         )
 
-    emitter = _CaseBlockEmitter(extraction, Architecture.NEON, registry)
+    emitter = _CaseBlockEmitter(
+        extraction,
+        Architecture.NEON,
+        registry,
+        broadcast_inputs=profile.broadcast_inputs,
+    )
     prologue_calls = [call for call in extraction.calls if call.parent_control is None]
-    for call in prologue_calls:
-        spec = emitter._lookup_intrinsic(call.spelling)
-        if not (
-            isinstance(spec, StructuralIntrinsic)
-            and spec.operation is StructuralOp.BROADCAST
-        ):
-            raise CaseEmissionError(
-                f"{profile.case_id}: prefix-tail prologue must contain broadcasts only"
-            )
-        emitter.emit_registered_call(call)
+    _emit_pure_neon_prologue(
+        emitter,
+        prologue_calls,
+        context=f"{profile.case_id}: prefix-tail prologue",
+    )
 
     root_calls = [call for call in tail_calls if call.parent_control == root.node_id]
     if not root_calls:
@@ -1307,45 +1697,51 @@ def _emit_prefix_tail_value_models(
     tail_value: str | None = None
     tail_dependency: str | None = None
     value_calls = root_calls[len(input_names) :]
-    for index, call in enumerate(value_calls):
-        spec = emitter._lookup_intrinsic(call.spelling)
-        if isinstance(spec, StructuralIntrinsic) and spec.operation in {
-            StructuralOp.LOAD,
-            StructuralOp.STORE,
-            StructuralOp.LANE_STORE,
-        }:
-            raise CaseEmissionError(
-                f"{profile.case_id}: load or store appeared inside the tail value pipeline"
-            )
-        emitted_value = emitter.emit_registered_call(call)
-        if emitted_value is None:
-            raise CaseEmissionError(
-                f"{profile.case_id}: tail value pipeline call produced no value"
-            )
-        if call.assigned_to is None:
-            dependency = f"call:{call.node_id}"
-            if not any(
-                dependency in later.dependencies for later in value_calls[index + 1 :]
+    tail_source_dependency: str | None = None
+    call_positions = {
+        call.node_id: index for index, call in enumerate(extraction.calls)
+    }
+    pending_value_calls = list(value_calls)
+
+    def emit_root_pipeline(calls: list[IntrinsicCall]) -> None:
+        nonlocal tail_value, tail_dependency, tail_source_dependency
+        for call in calls:
+            spec = emitter._lookup_intrinsic(call.spelling)
+            if isinstance(spec, ScheduleIntrinsic) or (
+                isinstance(spec, StructuralIntrinsic)
+                and spec.operation
+                in {StructuralOp.LOAD, StructuralOp.STORE, StructuralOp.LANE_STORE}
             ):
                 raise CaseEmissionError(
-                    f"{profile.case_id}: expression-only tail call {call.spelling} "
-                    "is not consumed by a later call"
+                    f"{profile.case_id}: impure call appeared inside the tail value pipeline"
                 )
-            continue
-        tail_value = emitted_value
-        tail_dependency = call.assigned_to
-    if tail_value is None or tail_dependency is None:
-        raise CaseEmissionError(f"{profile.case_id}: prefix-tail pipeline is empty")
-    tail_source_dependency: str | None = None
-    if value_calls:
-        final_value_spec = emitter._lookup_intrinsic(value_calls[-1].spelling)
-        if (
-            isinstance(final_value_spec, StructuralIntrinsic)
-            and final_value_spec.operation is StructuralOp.TAKE_LOW
-            and len(value_calls[-1].arguments) == 1
-            and len(value_calls[-1].arguments[0].dependencies) == 1
-        ):
-            tail_source_dependency = value_calls[-1].arguments[0].dependencies[0]
+            emitted_value = emitter.emit_registered_call(call)
+            if emitted_value is None:
+                raise CaseEmissionError(
+                    f"{profile.case_id}: tail value pipeline call produced no value"
+                )
+            if call.assigned_to is None:
+                dependency = f"call:{call.node_id}"
+                if not any(
+                    call_positions[later.node_id] > call_positions[call.node_id]
+                    and dependency in later.dependencies
+                    for later in tail_calls
+                ):
+                    raise CaseEmissionError(
+                        f"{profile.case_id}: expression-only tail call {call.spelling} "
+                        "is not consumed by a later call"
+                    )
+                continue
+            tail_value = emitted_value
+            tail_dependency = call.assigned_to
+            tail_source_dependency = None
+            if (
+                isinstance(spec, StructuralIntrinsic)
+                and spec.operation is StructuralOp.TAKE_LOW
+                and len(call.arguments) == 1
+                and len(call.arguments[0].dependencies) == 1
+            ):
+                tail_source_dependency = call.arguments[0].dependencies[0]
 
     main_store_count = sum(
         1
@@ -1373,16 +1769,31 @@ def _emit_prefix_tail_value_models(
             raise CaseEmissionError(
                 f"{profile.case_id}: width-{width} branch has no store"
             )
+        branch_position = call_positions[branch_calls[0].node_id]
+        ready = [
+            call
+            for call in pending_value_calls
+            if call_positions[call.node_id] < branch_position
+        ]
+        emit_root_pipeline(ready)
+        pending_value_calls = [
+            call for call in pending_value_calls if call not in ready
+        ]
+        if tail_value is None or tail_dependency is None:
+            raise CaseEmissionError(
+                f"{profile.case_id}: prefix-tail store precedes its value pipeline"
+            )
         first_spec = emitter._lookup_intrinsic(branch_calls[0].spelling)
         full_store = (
             isinstance(first_spec, StructuralIntrinsic)
             and first_spec.operation is StructuralOp.STORE
         )
         advance: IntrinsicCall | None = None
+        shifted: str | None = None
         if full_store:
-            if index == len(children) - 1 or len(branch_calls) != 2:
+            if index == len(children) - 1 or len(branch_calls) < 2:
                 raise CaseEmissionError(
-                    f"{profile.case_id}: width-{width} full-store branch needs a following high-half extraction"
+                    f"{profile.case_id}: width-{width} full-store branch needs a following pure value pipeline"
                 )
             store = branch_calls[0]
             pointer_type = first_spec.signature.parameters[0].type
@@ -1406,8 +1817,29 @@ def _emit_prefix_tail_value_models(
                 raise CaseEmissionError(
                     f"{profile.case_id}: width-{width} full store produced no value"
                 )
-            stored_values.append(f"({stored}).take {width}")
-            advance = branch_calls[1]
+            stored_name = f"stored{width}"
+            emitter.lines.append(
+                f"  let {stored_name} := if live.testBit {width.bit_length() - 1} "
+                f"then ({stored}).take {width} else []"
+            )
+            stored_values.append(stored_name)
+            suffix = branch_calls[1:]
+            for suffix_call in suffix:
+                suffix_spec = emitter._lookup_intrinsic(suffix_call.spelling)
+                if isinstance(suffix_spec, ScheduleIntrinsic) or (
+                    isinstance(suffix_spec, StructuralIntrinsic)
+                    and suffix_spec.operation
+                    in {StructuralOp.LOAD, StructuralOp.STORE, StructuralOp.LANE_STORE}
+                ):
+                    raise CaseEmissionError(
+                        f"{profile.case_id}: width-{width} advance pipeline is impure"
+                    )
+                shifted = emitter.emit_registered_call(suffix_call)
+                if shifted is None:
+                    raise CaseEmissionError(
+                        f"{profile.case_id}: width-{width} advance produced no value"
+                    )
+            advance = suffix[-1]
             advance_spec = emitter._lookup_intrinsic(advance.spelling)
             advance_definition = (
                 None
@@ -1415,16 +1847,23 @@ def _emit_prefix_tail_value_models(
                 else emitter.definitions.get(advance.assigned_to)
             )
             if not (
-                tail_source_dependency is not None
-                and isinstance(advance_spec, StructuralIntrinsic)
-                and advance_spec.operation is StructuralOp.TAKE_HIGH
-                and isinstance(advance_spec.signature.result, VectorType)
+                isinstance(advance_spec.signature.result, VectorType)
                 and advance_spec.signature.result.fixed_lanes == width
                 and advance.assigned_to is not None
                 and advance_definition is not None
                 and advance_definition.definition_kind == "assignment"
                 and advance_definition.value_call == advance.node_id
-                and advance.arguments[0].dependencies == (tail_source_dependency,)
+            ):
+                raise CaseEmissionError(
+                    f"{profile.case_id}: width-{width} advance pipeline result changed"
+                )
+            if (
+                isinstance(advance_spec, StructuralIntrinsic)
+                and advance_spec.operation is StructuralOp.TAKE_HIGH
+                and (
+                    tail_source_dependency is None
+                    or advance.arguments[0].dependencies != (tail_source_dependency,)
+                )
             ):
                 raise CaseEmissionError(
                     f"{profile.case_id}: width-{width} high-half extraction changed"
@@ -1518,7 +1957,8 @@ def _emit_prefix_tail_value_models(
             continue
         if advance is None:  # pragma: no cover - guarded by the branch validators
             raise AssertionError("non-final tail store lost its advance operation")
-        shifted = emitter.emit_registered_call(advance)
+        if shifted is None:
+            shifted = emitter.emit_registered_call(advance)
         if shifted is None or advance.assigned_to is None:
             raise CaseEmissionError(
                 f"{profile.case_id}: width-{width} advance produced no value"
@@ -1543,6 +1983,12 @@ def _emit_prefix_tail_value_models(
             )
         )
         output_version = next_version
+
+    if pending_value_calls:
+        raise CaseEmissionError(
+            f"{profile.case_id}: tail value calls remain after the final store: "
+            f"{[call.spelling for call in pending_value_calls]!r}"
+        )
 
     if config.input_advances_after_load:
         expected_updates[0:0] = [
@@ -1759,18 +2205,18 @@ def _emit_nested_two_phase_tail_value_models(
     ):
         raise CaseEmissionError("calls remain outside the nested two-phase regions")
 
-    emitter = _CaseBlockEmitter(extraction, Architecture.NEON, registry)
+    emitter = _CaseBlockEmitter(
+        extraction,
+        Architecture.NEON,
+        registry,
+        broadcast_inputs=profile.broadcast_inputs,
+    )
     prologue_calls = [call for call in extraction.calls if call.parent_control is None]
-    for call in prologue_calls:
-        spec = emitter._lookup_intrinsic(call.spelling)
-        if not (
-            isinstance(spec, StructuralIntrinsic)
-            and spec.operation is StructuralOp.BROADCAST
-        ):
-            raise CaseEmissionError(
-                "nested two-phase prologue must contain broadcasts only"
-            )
-        emitter.emit_registered_call(call)
+    _emit_pure_neon_prologue(
+        emitter,
+        prologue_calls,
+        context="nested two-phase prologue",
+    )
 
     do_calls = [call for call in tail_calls if call.parent_control == do.node_id]
     if len(do_calls) <= len(profile.inputs):
@@ -2047,7 +2493,7 @@ def _selected_rvv_loop(extraction: KernelExtraction, profile: ModelProfile):
     matches = [
         control
         for control in extraction.controls
-        if control.kind == "WhileStmt"
+        if control.kind in {"WhileStmt", "ForStmt"}
         and control.parent_control is None
         and control.condition_text == f"{profile.rvv_count_variable} > 0"
     ]
@@ -2292,7 +2738,11 @@ def _emit_rvv_case(
         Architecture.RVV,
         registry,
         active_length=active_length,
+        broadcast_inputs=profile.broadcast_inputs,
     )
+    output_base, output_initial = _output_pointer_base(extraction)
+    if output_base != "output":
+        emitter.environment[output_initial] = "output"
     _bind_rvv_count_definition(extraction, profile, emitter, active_length)
     child_controls = [
         control
@@ -2331,6 +2781,7 @@ def _emit_rvv_case(
         )
 
     saw_schedule = False
+    active_length_dependency: str | None = None
     output: str | None = None
     branch_consumed = False
     loaded_inputs: list[str] = []
@@ -2363,8 +2814,22 @@ def _emit_rvv_case(
                     f"{profile.rvv_count_variable}"
                 )
             saw_schedule = True
+            active_length_dependency = call.assigned_to
             emitter.environment[f"call:{call.node_id}"] = active_length
             emitter.environment[call.assigned_to] = active_length
+            declaration = next(
+                (
+                    definition
+                    for definition in extraction.definitions
+                    if definition.variable == call.assigned_to.split("@", 1)[0]
+                    and definition.definition_kind == "declaration"
+                    and definition.value_call is None
+                    and not definition.dependencies
+                ),
+                None,
+            )
+            if declaration is not None:
+                emitter.environment[declaration.value] = active_length
             emitter.consumed.add(call.node_id)
             continue
         if not saw_schedule:
@@ -2379,7 +2844,7 @@ def _emit_rvv_case(
         for index in vl_indices:
             if not _is_exact_local_argument(
                 call.arguments[index],
-                dependency="vl@0",
+                dependency=active_length_dependency or "",
                 source_text="vl",
                 type_spelling="unsigned long",
             ):
@@ -2418,8 +2883,8 @@ def _emit_rvv_case(
         ):
             store_base = call.arguments[0]
             if (
-                store_base.dependencies != ("output@0",)
-                or store_base.source_text.strip() != "output"
+                store_base.dependencies != (output_initial,)
+                or store_base.source_text.strip() != output_base
                 or store_base.semantic_operations
             ):
                 raise CaseEmissionError(
@@ -2452,7 +2917,7 @@ def _emit_rvv_case(
     ]
     expected_updates.extend(
         [
-            ("output@1", "output += vl"),
+            (f"{output_base}@1", f"{output_base} += vl"),
             (
                 f"{profile.rvv_count_variable}@1",
                 f"{profile.rvv_count_variable} -= vl",
@@ -2465,7 +2930,7 @@ def _emit_rvv_case(
         if definition.parent_control == loop.node_id
         and definition.definition_kind.startswith("compound-")
     ]
-    if actual_updates != expected_updates:
+    if sorted(actual_updates) != sorted(expected_updates):
         raise CaseEmissionError(
             f"{profile.case_id}: RVV pointer/count updates changed: "
             f"{actual_updates!r}"

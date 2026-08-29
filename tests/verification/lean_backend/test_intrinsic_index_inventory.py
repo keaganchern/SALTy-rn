@@ -1,4 +1,4 @@
-"""Golden inventory checks for the five configured integer kernel catalogs.
+"""Golden inventory checks for the complete configured elementwise catalogs.
 
 The three inventory levels are intentionally distinct:
 
@@ -76,20 +76,20 @@ def test_configured_inventory_counts_and_architecture_split_are_stable() -> None
     variants = CANONICAL_INTRINSIC_INDEX.variants
     grouped = _variants_by_architecture_and_spelling()
 
-    assert sum(len(variant.provenance) for variant in variants) == 170
-    assert len(grouped) == 94
-    assert len(variants) == 105
+    assert sum(len(variant.provenance) for variant in variants) == 255
+    assert len(grouped) == 178
+    assert len(variants) == 189
 
     assert Counter(
         origin.architecture
         for variant in variants
         for origin in variant.provenance
-    ) == Counter({Architecture.NEON: 108, Architecture.RVV: 62})
+    ) == Counter({Architecture.NEON: 157, Architecture.RVV: 98})
     assert Counter(architecture for architecture, _ in grouped) == Counter(
-        {Architecture.NEON: 55, Architecture.RVV: 39}
+        {Architecture.NEON: 103, Architecture.RVV: 75}
     )
     assert Counter(variant.spec.architecture for variant in variants) == Counter(
-        {Architecture.NEON: 60, Architecture.RVV: 45}
+        {Architecture.NEON: 108, Architecture.RVV: 81}
     )
 
 
@@ -108,7 +108,7 @@ def test_exact_variant_case_support_distribution_is_stable() -> None:
         for variant in CANONICAL_INTRINSIC_INDEX.variants
     )
 
-    assert support_counts == Counter({1: 69, 2: 21, 3: 3, 4: 10, 5: 2})
+    assert support_counts == Counter({1: 153, 2: 21, 3: 3, 4: 10, 5: 1, 6: 1})
 
 
 def test_shared_parse_facade_is_generated_from_the_typed_library() -> None:

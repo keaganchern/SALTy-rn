@@ -1,8 +1,119 @@
 import SALT.Basic
+import SALT.Intrinsics.FP32
 
 namespace SALT.Intrinsics.Neon
 
 open SALT
+
+/-- Binary32 lane operations used by the FP elementwise compiler. The separate
+    architecture wrapper is retained so generated Neon and RVV models do not
+    share an intrinsic symbol. -/
+def vaddq_f32 (a b : List (BitVec 32)) : List (BitVec 32) :=
+  List.zipWith FP32.add a b
+
+def vsubq_f32 (a b : List (BitVec 32)) : List (BitVec 32) :=
+  List.zipWith FP32.sub a b
+
+def vmulq_f32 (a b : List (BitVec 32)) : List (BitVec 32) :=
+  List.zipWith FP32.mul a b
+
+def vdivq_f32 (a b : List (BitVec 32)) : List (BitVec 32) :=
+  List.zipWith FP32.div a b
+
+def vsqrtq_f32 (a : List (BitVec 32)) : List (BitVec 32) :=
+  a.map FP32.sqrt
+
+def vabsq_f32 (a : List (BitVec 32)) : List (BitVec 32) :=
+  a.map FP32.abs
+
+def vcltq_s32 (a b : List (BitVec 32)) : List (BitVec 32) :=
+  List.zipWith
+    (fun left right =>
+      if left.toInt < right.toInt then BitVec.allOnes 32 else BitVec.ofNat 32 0)
+    a b
+
+def vbslq_f32 (mask onTrue onFalse : List (BitVec 32)) : List (BitVec 32) :=
+  List.zipWith
+    (fun select values => (select &&& values.1) ||| ((~~~select) &&& values.2))
+    mask (List.zip onTrue onFalse)
+
+def vcaltq_f32 (left right : List (BitVec 32)) : List (BitVec 32) :=
+  List.zipWith
+    (fun x y =>
+      if FP32.lt (FP32.abs x) (FP32.abs y) then
+        BitVec.allOnes 32
+      else BitVec.ofNat 32 0)
+    left right
+
+def vorrq_u32 (left right : List (BitVec 32)) : List (BitVec 32) :=
+  List.zipWith (· ||| ·) left right
+
+def vaddw_s8 (wide : List (BitVec 16))
+    (narrow : List (BitVec 8)) : List (BitVec 16) :=
+  List.zipWith (fun left right => left + sext right 16) wide narrow
+
+def vaddw_u8 (wide : List (BitVec 16))
+    (narrow : List (BitVec 8)) : List (BitVec 16) :=
+  List.zipWith (fun left right => left + right.zeroExtend 16) wide narrow
+
+def vcvtq_f32_s32 (value : List (BitVec 32)) : List (BitVec 32) :=
+  value.map FP32.ofInt32
+
+def vreinterpretq_u16_s16 (value : List (BitVec 16)) : List (BitVec 16) :=
+  value
+
+def vadd_u32 (left right : List (BitVec 32)) : List (BitVec 32) :=
+  List.zipWith (· + ·) left right
+
+def vand_u32 (left right : List (BitVec 32)) : List (BitVec 32) :=
+  List.zipWith (· &&& ·) left right
+
+def vcgt_u32 (left right : List (BitVec 32)) : List (BitVec 32) :=
+  List.zipWith
+    (fun x y => if x.toNat > y.toNat then BitVec.allOnes 32 else 0)
+    left right
+
+def vmax_u32 (left right : List (BitVec 32)) : List (BitVec 32) :=
+  List.zipWith (fun x y => if x.toNat >= y.toNat then x else y) left right
+
+def vmovn_u32 (value : List (BitVec 32)) : List (BitVec 16) :=
+  value.map (·.truncate 16)
+
+def vshrn_n_u32 (value : List (BitVec 32)) (shift : Nat) : List (BitVec 16) :=
+  value.map (fun lane => (lane.ushiftRight shift).truncate 16)
+
+def vadd_u16 (left right : List (BitVec 16)) : List (BitVec 16) :=
+  List.zipWith (· + ·) left right
+
+def vand_u16 (left right : List (BitVec 16)) : List (BitVec 16) :=
+  List.zipWith (· &&& ·) left right
+
+def vbsl_u16 (mask onTrue onFalse : List (BitVec 16)) : List (BitVec 16) :=
+  List.zipWith
+    (fun select values => (select &&& values.1) ||| ((~~~select) &&& values.2))
+    mask (List.zip onTrue onFalse)
+
+def vorr_u16 (left right : List (BitVec 16)) : List (BitVec 16) :=
+  List.zipWith (· ||| ·) left right
+
+def vmaxq_f32 (left right : List (BitVec 32)) : List (BitVec 32) :=
+  List.zipWith FP32.maxPropagatingNaN left right
+
+def vminq_f32 (left right : List (BitVec 32)) : List (BitVec 32) :=
+  List.zipWith FP32.minPropagatingNaN left right
+
+/-- Signed 16-bit lane multiplication widened to a signed 32-bit result. -/
+def vmull_s16 (left right : List (BitVec 16)) : List (BitVec 32) :=
+  List.zipWith (fun x y => BitVec.ofInt 32 (x.toInt * y.toInt)) left right
+
+/-- Insert a saturated 32-to-16 high half after an existing 16-bit low half. -/
+def vqmovn_high_s32 (low : List (BitVec 16))
+    (high : List (BitVec 32)) : List (BitVec 16) :=
+  low ++ high.map (fun lane => signedClamp lane 16)
+
+/-- Signed saturating subtraction on 32-bit lanes. -/
+def vqsubq_s32 (left right : List (BitVec 32)) : List (BitVec 32) :=
+  List.zipWith signedSatSub left right
 
 -- ============================================================================
 -- vsubl_s8: Signed subtract long (8→16 bit)

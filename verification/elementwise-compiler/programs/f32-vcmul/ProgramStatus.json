@@ -16,7 +16,6 @@
   "missing_intrinsics": [
     "neon:vmlaq_f32",
     "neon:vmlsq_f32",
-    "neon:vmulq_f32",
     "rvv:__riscv_vfadd_vv_f32m4",
     "rvv:__riscv_vfmul_vv_f32m4",
     "rvv:__riscv_vfsub_vv_f32m4",

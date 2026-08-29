@@ -70,7 +70,7 @@ def test_graph_is_derived_from_the_twenty_discovered_programs(tmp_path: Path) ->
 
     graph = build_elementwise_graph(output)
 
-    assert graph["schema_version"] == 2
+    assert graph["schema_version"] == 3
     assert graph["available"] is True
     assert graph["authority"] == {
         "program_discovery": "paired-single-output-vsetvl-vector-load-store-v1",
@@ -82,25 +82,22 @@ def test_graph_is_derived_from_the_twenty_discovered_programs(tmp_path: Path) ->
     assert graph["summary"]["grouped_layout_deferred"] == 1
     assert graph["summary"]["status_counts"] == {
         "counterexample": 1,
-        "external-condition-missing": 4,
-        "intrinsic-missing": 14,
+        "external-condition-missing": 7,
         "layout-unrecognized": 1,
+        "spec-generated": 11,
     }
-    assert graph["summary"]["configured_intrinsics"] == 94
-    assert graph["summary"]["lean_checked_intrinsics"] == 9
-    assert graph["summary"]["reviewed_intrinsics"] == 9
+    assert graph["summary"]["configured_intrinsic_spellings"] == 178
+    assert graph["summary"]["intrinsic_spelling_dependencies"] == 186
+    assert graph["summary"]["registry_intrinsic_variants"] == 189
+    assert graph["summary"]["used_intrinsic_variants"] == 180
+    assert graph["summary"]["lean_checked_used_intrinsic_variants"] == 0
+    assert graph["summary"]["reviewed_registry_intrinsic_variants"] == 0
+    assert graph["summary"]["reviewed_used_intrinsic_variants"] == 0
+    assert len(graph["capabilities"]) == 189
+    assert len({item["id"] for item in graph["capabilities"]}) == 189
+    assert sum(item["used"] for item in graph["capabilities"]) == 180
     reviewed = {item["id"] for item in graph["capabilities"] if item["reviewed"]}
-    assert reviewed == {
-        "neon:vget_high_f32",
-        "neon:vget_low_f32",
-        "neon:vld1q_f32",
-        "neon:vst1_f32",
-        "neon:vst1_lane_f32",
-        "neon:vst1q_f32",
-        "rvv:__riscv_vle32_v_f32m8",
-        "rvv:__riscv_vse32_v_f32m8",
-        "rvv:__riscv_vsetvl_e32m8",
-    }
+    assert reviewed == set()
     assert all(
         item["lean_checked"] and item["independently_reviewed"]
         for item in graph["capabilities"]
@@ -109,10 +106,11 @@ def test_graph_is_derived_from_the_twenty_discovered_programs(tmp_path: Path) ->
     generated = [
         item for item in graph["programs"] if item["artifacts"]["manifest"]
     ]
-    assert len(generated) == 5
+    assert len(generated) == 19
     assert all(item["artifacts"]["manifest"] for item in generated)
-    assert sum(item["claim"]["value"] == "blocked" for item in generated) == 4
+    assert sum(item["claim"]["value"] == "blocked" for item in generated) == 7
     assert sum(item["claim"]["value"] == "failed" for item in generated) == 1
+    assert sum(item["claim"]["value"] == "spec-generated" for item in generated) == 11
     assert all(item["claim"]["c"] == "not-established" for item in generated)
     assert all(item["claim"]["isa"] == "not-established" for item in generated)
     clamp = next(item for item in generated if item["program_id"] == "s8-vclamp")
@@ -183,7 +181,7 @@ def test_changed_intrinsic_registry_is_rejected_fail_closed(tmp_path: Path) -> N
 
 def test_missing_report_is_explicitly_unavailable(tmp_path: Path) -> None:
     graph = build_elementwise_graph(tmp_path)
-    assert graph["schema_version"] == 2
+    assert graph["schema_version"] == 3
     assert graph["available"] is False
     assert graph["programs"] == []
 

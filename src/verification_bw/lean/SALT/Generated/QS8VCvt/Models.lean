@@ -16,7 +16,7 @@ def rvvPreprocessedSha256 : String :=
 def parseFacadeSha256 : String :=
   "6e8a1a41f53ecd88abdff17e8a4ca08aa47199a189155d4a7bbc551f4891fa54"
 def registrySha256 : String :=
-  "de5dd90a7df5f87e96da3117c989da05a0bbdab03b599447842cb9abd28ebe9d"
+  "2347642afba36a08ffc0ed941d4442344cd87618c5f2c7fd96579ced69bea09c"
 
 structure QS8CvtParams where
   input_zero_point : BitVec 16
