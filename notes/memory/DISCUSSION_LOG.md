@@ -113,3 +113,27 @@ why taking the union/intersection of both sides can hide a translation-domain ga
 
 **Unresolved:** implement the supported assertion-expression grammar, implication
 checking, and local path-obligation generation in M1a/M1b.
+
+## 2026-08-29 — Common-domain claim and corpus layout/assert counts
+
+**Question:** Is the intended theorem equality only where both supplied programs
+are valid, how common are grouped elements, and what do inline assertions mean?
+
+**Conclusion:** the user confirmed the phase-one goal is paired-program equivalence
+on the intersection of entry contracts. Adopt that as the default while reporting
+contract implications separately; retain source-domain refinement as an optional
+stronger replacement claim. Local assertions are proved at their program point and
+never intersected into the entry domain.
+
+Of twenty audited elementwise pairs, nineteen use ordinary same-index scalar
+streams, one (`f32-vcmul`) uses planar complex grouping, and none uses an
+overlapping adjacent-index window. Five elementwise Neon files have eleven
+tail-local remainder assertions; all twenty pairs' entry assertions match, and the
+corresponding RVV files have no local assertions.
+
+**Evidence:** direct classification of all twenty source/target C pairs at commit
+`3dc22b2`; the tail assertions in `f32-f16-vcvt`, `qs8-f32-vcvt`, `qs8-vcvt`,
+`qs8-vlrelu`, and `qu8-f32-vcvt`; the planar pointer derivations in `f32-vcmul`.
+
+**Unresolved:** expose common-domain, Neon-implies-RVV, and RVV-implies-Neon as
+separate generated/result fields and dashboard states.

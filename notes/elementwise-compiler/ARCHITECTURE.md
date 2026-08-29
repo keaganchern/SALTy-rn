@@ -81,6 +81,12 @@ multi-output elementwise programs remain `layout-unrecognized` until a reusable
 view exists. They do not require a new schedule family merely because their layout
 differs.
 
+Multiple flat input streams at the same coordinate remain ordinary elementwise
+`zipWith`: for example `output[i] = add(inputA[i], inputB[i])`. Non-overlapping
+groups such as `(input[2*i], input[2*i+1])` may later use a grouped-element view.
+Overlapping neighborhoods such as `(input[i], input[i+1])` are window/stencil
+semantics, not this elementwise family.
+
 ## Family Interface
 
 A family capability supplies:
@@ -125,25 +131,31 @@ Classify each assertion by where it executes:
   program point, using the current symbolic values and reach condition;
 - an unsupported or effectful assertion expression fails closed.
 
-For the directed Neon-to-RVV translation claim, let `C_neon` be the supported
-Neon entry contract and let `C_rvv` be the RVV entry contract. The compiler must
-generate and check:
+Let `C_neon` be the supported Neon entry contract and let `C_rvv` be the RVV entry
+contract. The phase-one paired-program theorem proves output equality under the
+common valid domain `C_neon && C_rvv`. This matches the claim that the two supplied
+programs agree whenever both are specified to run.
 
-1. `C_neon -> C_rvv`, so the translation does not reject a source-valid call;
-2. every reachable local assertion on each side from the corresponding entry
-   contract and path condition;
-3. every dynamic layout, schedule, and intrinsic safety condition from the same
-   domain, unless it is supplied by separately hash-bound caller/API evidence;
-4. output equality under `C_neon` and the explicitly named memory/environment
-   assumptions of the selected claim layer.
+The compiler must keep domain coverage separate from result equality. It reports
+whether `C_neon -> C_rvv`, `C_rvv -> C_neon`, or neither. A stronger replacement
+claim--that RVV can replace Neon for every Neon-valid call--additionally requires
+`C_neon -> C_rvv` and proves equality under `C_neon`; it is not inferred from a
+common-domain proof.
+
+For both claim modes, the compiler checks:
+
+1. every reachable local assertion on each side from that side's entry contract
+   and path condition;
+2. every dynamic layout, schedule, and intrinsic safety condition in the stated
+   theorem domain, unless supplied by separately hash-bound caller/API evidence;
+3. output equality under the selected domain and explicitly named
+   memory/environment assumptions of the selected claim layer.
 
 Static intrinsic restrictions, such as an immediate operand range, are checked by
 the compiler rather than added to the theorem precondition. A missing or incorrect
 intrinsic semantic definition never becomes a precondition.
 
-An optional bidirectional API-equivalence claim additionally requires
-`C_neon <-> C_rvv`; it is stronger than translation correctness and is not the
-phase-one default.
+An optional equal-domain API claim additionally requires `C_neon <-> C_rvv`.
 
 In phase one, entry `assert(...)` is an audited contract declaration under the
 pinned preprocessing policy. This is not a theorem about debug abort behavior,

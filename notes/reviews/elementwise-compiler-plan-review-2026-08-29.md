@@ -131,3 +131,9 @@ Neon entry contract as the source-call domain, prove it implies the RVV entry
 contract, and prove nested assertions at their actual program points. This keeps
 the useful review finding--shared-text intersection is unsound--without hiding a
 stronger target precondition inside the theorem domain.
+
+The user subsequently clarified that phase one compares two supplied programs only
+where both entry contracts hold, rather than claiming RVV accepts every Neon-valid
+call. EC-018 therefore makes common-domain equality the default and retains EC-017
+as a separately labeled stronger replacement theorem. Local-assert handling is
+unchanged: nested assertions remain program-point obligations.

@@ -87,6 +87,16 @@ paths, and 36 nonempty pairs. Twenty nonempty pairs are elementwise. Seventeen u
 the strict fixed-main-loop plus optional-tail shape; three require a compositional
 multi-phase stream (`f32-f16-vcvt`, `qs8-vadd-minmax`, and `s8-vclamp`).
 
+**Confirmed layout audit:** nineteen of the twenty elementwise pairs use ordinary
+same-coordinate scalar streams. One, `f32-vcmul`, groups planar real/imaginary
+streams into a logical complex element. None of the twenty uses an overlapping
+`i, i+1` window; such kernels belong to a window/stencil family.
+
+**Confirmed assertion audit:** all twenty pairs have textually equal entry
+assertions. Five Neon files contain eleven tail-local remainder assertions while
+their RVV partners contain no local assertion. These are program-point invariants,
+not extra function-entry restrictions.
+
 **Confirmed intrinsic snapshot:** the configured index has 96 exact typed variants:
 54 Neon variants under 49 spellings and 42 RVV variants under 36 spellings. The
 local corpus contains 190 Neon and 165 RVV lexical spellings. Semantic adequacy is
@@ -149,10 +159,10 @@ The proof agent may not add axioms, weaken a frozen goal, or invent a preconditi
 A false or unsupported direct claim returns failure or a counterexample. An
 optional contextual claim is regenerated only from separately supplied evidence.
 
-For directed Neon-to-RVV correctness, the theorem uses the Neon entry contract as
-its caller domain and separately proves that it implies the RVV entry contract.
-It neither keeps only shared assertion text nor intersects every assertion from
-both files. Assertions below a branch or loop are local reach-point obligations,
+The phase-one pair theorem uses the conjunction of Neon and RVV entry contracts,
+matching equivalence where both supplied programs are valid. Contract implication
+results remain separate, so this theorem is not mislabeled as full RVV replacement
+coverage. Assertions below a branch or loop are local reach-point obligations,
 not entry assumptions. Generated artifacts form a canonical content-addressed
 chain from manifest through result; proof acceptance uses before/after
 protected-closure digests and is an integrity gate, not process isolation.

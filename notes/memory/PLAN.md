@@ -59,8 +59,8 @@ Deliver only the schemas and canonical hashing needed by the vertical slice:
 - global exact `IntrinsicCapability` without `supported_cases` authority;
 - scalar-lane `LayoutViewCapability`;
 - fixed-no-tail and RVV-strip-mine `ScheduleFamilyCapability` identities;
-- typed entry contracts, local assertion obligations, and a directional
-  Neon-contract-implies-RVV-contract check;
+- typed entry contracts, local assertion obligations, common-domain identity, and
+  separately reported contract-implication results;
 - canonical `ProgramManifest`, `ProofTask`, and terminal `Result` schemas;
 - explicit parent hashes and stable failure-state enum.
 
@@ -94,8 +94,8 @@ Exit gates:
   generation;
 - call signature, pointer step, loop/count update, assertion, or `vl` mutations
   change the manifest or fail closed;
-- a stronger RVV entry assertion that is not implied by the Neon contract is
-  rejected instead of being added to the theorem precondition;
+- a stronger RVV entry assertion narrows only the labeled common-domain theorem;
+  the result must report that full Neon-to-RVV replacement coverage failed;
 - tail-local assertions are proved from the path condition and current remainder,
   not copied into the function-entry contract;
 - generated family instances bind the exact parsed control/effect inventory;

@@ -160,3 +160,14 @@ Otherwise a stronger target assertion can silently remove source-valid inputs fr
 the theorem. Assertions nested under control flow are local proof obligations at
 their program point, not function-entry assumptions. Unsupported assertion syntax
 fails closed; the proof agent cannot turn it into a new assumption.
+
+## EC-018: Phase One Proves Common-Domain Pair Equivalence
+
+**Status:** Accepted, 2026-08-29. Supersedes EC-017 only as the phase-one default
+claim; retains EC-017 as the stronger replacement claim.
+
+For the supplied Neon/RVV program pair, phase one proves equal observations under
+the conjunction of their entry contracts. It separately reports the two contract
+implications, so a common-domain proof cannot be presented as full RVV replacement
+coverage. Assertions nested under control flow remain local proof obligations and
+are never added to the entry-contract conjunction.
