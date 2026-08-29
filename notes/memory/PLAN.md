@@ -4,135 +4,168 @@ Last updated: 2026-08-29 (Asia/Seoul)
 
 ## Active Milestone
 
-Turn the checked S8 vmax target structure into a zero-source-change vertical slice.
-The compiler must accept the existing C pair using already registered intrinsics,
-generate the complete protected artifact stack, launch/check a proof attempt, and
-make the dashboard derive its state without adding `s8-vmax` to a Python case list.
+Define the minimum capability, assumption, artifact, and result schemas needed by
+one real vertical slice. Do not extend the old case-scoped path or design the full
+dashboard against hypothetical files.
 
-## Canonical Artifacts
+The first production gate remains: take two fixed-no-tail C pairs whose typed
+intrinsics already exist and generate/check the entire stack with zero Python/Lean
+framework source changes.
 
-For one program pair, generation produces:
+## Canonical Artifact Chain
 
 ```text
-ProgramManifest.json  parsed types, assertions, operations, dependencies, family
-Models.lean           independent Neon/RVV implementations and lane functions
-Spec.lean             frozen proof-free propositions
-ProofTask.json        hashes, imports, theorem names, writable proof path
-Proof.lean             only agent-owned source
-Result.json           generation/proof/Lean status and precise failure reason
+IntrinsicCapability ─────┐
+LayoutViewCapability ────┼─> ProgramManifest.json
+ScheduleFamilyCapability ┘          │ manifest_sha256
+                                    v
+                                Models.lean
+                                    │ models_sha256
+                                    v
+                                 Spec.lean
+                                    │ spec_sha256
+                                    v
+                              ProofTask.json
+                                    │ proof_task_sha256
+                                    v
+                                 Proof.lean
+                                    │ proof_sha256
+                                    v
+                                Result.json
 ```
 
-Names or paths may change only through an explicit decision. Ownership may not.
+`ExternalContract.json` is optional, separately evidenced, and content-addressed.
+It may create a contextual claim only by establishing the direct claim's full
+Neon/RVV/family/intrinsic assumption domain.
 
 ## Milestone Roadmap
 
-### M0 — Branch-Local Memory and Architecture
+### M0 — Branch-Local Memory and Independent Review
 
 **Status:** Completed.
 
 Exit gates:
 
-- branch contains concise current state, decisions, active plan, architecture, and
-  append-only discussion log;
-- documents state the zero-source-change acceptance test and dashboard motivation;
-- stale five-case continuation is not presented as the active plan.
+- concise branch-local state, decisions, plan, architecture, and discussion log;
+- reviewer verdict and required revisions recorded;
+- product scope, artifact ownership, assumption domains, and held-out gate fixed.
 
-### M1 — Capability and Result Schema
+### M1a — Minimal Core Schemas
 
 **Status:** In progress.
 
-Deliver:
+Deliver only the schemas and canonical hashing needed by the vertical slice:
 
-- typed global intrinsic capability records without `supported_cases` authority;
-- execution-family capability records for fixed-no-tail, fixed-tail,
-  multi-phase, and RVV strip-mine;
-- `ProgramManifest` and `Result` schemas with stable failure states;
-- dashboard projection derived only from these records.
+- global exact `IntrinsicCapability` without `supported_cases` authority;
+- scalar-lane `LayoutViewCapability`;
+- fixed-no-tail and RVV-strip-mine `ScheduleFamilyCapability` identities;
+- separate Neon/RVV extracted assumption trees plus family/intrinsic legality;
+- canonical `ProgramManifest`, `ProofTask`, and terminal `Result` schemas;
+- explicit parent hashes and stable failure-state enum.
 
 Exit gates:
 
-- one intrinsic capability can satisfy multiple compatible program dependencies;
-- program rows need no manually named proof target;
-- old five-case rows can be projected through a compatibility adapter during
-  migration, but the adapter cannot satisfy the held-out S8 gate.
+- canonical serialize/parse/round-trip and digest tests pass;
+- changing any parent, assumption, capability, theorem identity, policy, or
+  toolchain input changes the appropriate descendant identity;
+- one exact intrinsic capability can satisfy multiple program manifests;
+- no schema field names a supported program/case;
+- existing five-case records can be read through a compatibility adapter, but that
+  adapter cannot satisfy the held-out gate.
 
-### M2 — Generic Typed Frontend
+### M1b — Thin Generic Fixed-No-Tail Slice
+
+**Status:** Pending.
+
+Deliver the narrowest real compiler path before broad dashboard work:
+
+- generic explicit-entry frontend with no path-based/default-profile fallback;
+- typed source assertion extraction into separate side assumption trees;
+- exact global intrinsic binding;
+- scalar-lane layout and fixed-no-tail/RVV schedule recognition;
+- whole-function consumed-statement/effect accounting;
+- generated independent block/chunk expressions, `fNeon`, and `fRvv`;
+- generated complete logical Models and proof-free Spec.
+
+Exit gates:
+
+- removing S8-VMax-specific profile/catalog/model declarations does not prevent
+  generation;
+- call signature, pointer step, loop/count update, assertion, or `vl` mutations
+  change the manifest or fail closed;
+- generated family instances bind the exact parsed control/effect inventory;
+- no code branch depends on kernel id, input path, basename, function name, or
+  generated namespace;
+- the manually staged V2 Models/Spec are no longer used by the acceptance path.
+
+### M1c — Proof Task, Result, and Integrity Gate
 
 **Status:** Pending.
 
 Deliver:
 
-- discover function identity, signature, parameters, and assertions from Clang;
-- parse supported assertion Boolean expressions into a typed predicate tree;
-- infer buffer roles and scalar/parameter fields from use/dataflow;
-- bind calls through the global exact typed intrinsic registry;
-- record all control, load/store, pointer, and count effects in the manifest;
-- reject every unconsumed or ambiguous construct.
+- content-addressed `ProofTask.json` and exact generated proposition identity;
+- agent invocation with `Proof.lean` as the designated permitted mutable artifact;
+- before/after protected-closure digests;
+- Lean theorem-type, forbidden-token, transitive-axiom, freshness, and mutation
+  checks;
+- `Result.json` with terminal states:
+  `parse-unsupported`, `intrinsic-missing`, `intrinsic-ambiguous`,
+  `layout-unrecognized`, `family-unrecognized`, `generation-failed`,
+  `proof-search-failed`, `counterexample`, `lean-failed`, and `verified(value)`.
 
 Exit gates:
 
-- removing all S8-vmax-specific profile/catalog declarations does not prevent its
-  manifest from being generated;
-- changing a call signature, pointer step, loop update, assertion, or `vl` operand
-  changes the manifest or fails closed;
-- the manifest is deterministic and source/facade/compiler provenance-bound.
+- deleting and regenerating the proof changes no protected parent artifact;
+- modifying Models/Spec/task/policy invalidates the result;
+- max-to-min makes the original claim fail or yields a checked counterexample;
+- documentation says integrity/reviewer gate, not filesystem sandbox.
 
-### M3 — Fixed-No-Tail Generation
+### M2 — Honest Held-Out Gate
+
+**Status:** Pending.
+
+Run in a clean temporary checkout and output root:
+
+- positive fixture A: existing S8 VMax semantics through the generic CLI;
+- positive fixture B: same family/intrinsics but randomized directories,
+  basenames, function identifiers, and generated module namespace;
+- negative fixture: one supported side changed from max to min;
+- structural negatives: pointer step, loop update, assertion, and active-`vl`
+  mutations.
+
+Exit gates:
+
+- both positive fixtures generate deterministic artifacts after output deletion;
+- `git diff --exit-code` passes for all tracked framework files;
+- `git status --porcelain` shows only allowed generated/proof artifacts under the
+  temporary output root, preferably zero tracked changes anywhere;
+- fixture B never uses the old example directory/name/namespace;
+- the generic acceptance path imports none of `supported_cases`, `PROOF_CASES`,
+  `POLICY_CASES`, case-id emitter branches, or path-based frontend defaults.
+
+### M3 — Dashboard Reads the Real Artifact Graph
 
 **Status:** Pending.
 
 Deliver:
 
-- recognize fixed width plus source-derived divisibility;
-- generate independent block/chunk expressions, `fNeon`, and `fRvv`;
-- generate complete Neon/RVV logical loop models;
-- generate proof-free `Spec.lean` using the reusable family theorem;
-- remove manually staged V2 Models/Spec from the acceptance path.
+- intrinsic, layout, schedule-family, program, artifact, proof, and claim-scope
+  nodes derived from capabilities/manifests/results;
+- explicit missing-piece and terminal-failure display;
+- automatic transition to `proof-ready` and `verified(value)`;
+- stale propagation through the parent-hash graph;
+- value/C/ISA layers shown separately.
 
 Exit gates:
 
-- one command regenerates the current S8 VMax V2 proposition byte-for-byte or a
-  reviewed equivalent proposition;
-- the command contains no branch on `s8-vmax`, function name, namespace, or source
-  path;
-- a second synthetic same-family input requires no source changes to generate.
+- both held-out fixtures appear without dashboard code/config entries;
+- adding one intrinsic/layout/family capability updates every dependent program;
+- file presence alone cannot satisfy spec/proof/verification state;
+- `supported_cases`, hardcoded proof targets, and policy cases are no longer
+  authorities on the new path.
 
-### M4 — Proof Task and Lean Result
-
-**Status:** Pending.
-
-Deliver:
-
-- freeze generated artifacts and emit `ProofTask.json`;
-- restrict the agent-writable path to `Proof.lean` in the review policy;
-- verify exact theorem type, forbidden tokens, transitive axioms, and freshness;
-- report proof failure separately from a checked semantic counterexample.
-
-Exit gates:
-
-- the S8 proof can be deleted and regenerated without changing protected files;
-- an agent modification to Models/Spec/policy invalidates the result;
-- `vmax` to `vmin` produces a failed original claim or checked counterexample.
-
-### M5 — Dashboard Puzzle Migration
-
-**Status:** Pending.
-
-Deliver:
-
-- intrinsic, family, program, generation, proof, and claim-scope nodes;
-- explicit missing-piece list per program;
-- automatic transition to `proof-ready` when dependency closure completes;
-- value/C/ISA layers displayed separately;
-- remove `supported_cases` and hardcoded `PROOF_CASES` as authorities.
-
-Exit gates:
-
-- adding one intrinsic capability updates every dependent program automatically;
-- S8 VMax appears without a dashboard code/config entry;
-- no UI success is inferred only from file presence.
-
-### M6 — Fixed Tail and Binary Reuse
+### M4 — Fixed Tail and Binary Reuse
 
 **Status:** Pending.
 
@@ -145,71 +178,71 @@ Deliver:
 
 Exit gates:
 
-- at least two existing integer programs with different intrinsic pipelines use
-  the same family implementation without program-specific source;
-- a tail-store, slide, load-base, or pointer mutation fails recognition or proof;
-- logical value scope remains distinct from physical overread legality.
+- two integer programs with different intrinsic pipelines use the same family
+  implementation without program-specific source;
+- tail-store, slide, load-base, or pointer mutations fail recognition/proof;
+- logical value scope stays distinct from physical overread legality.
 
-### M7 — Compositional Multi-Phase Family
+### M5 — Compositional Multi-Phase Family
 
 **Status:** Pending.
 
-Deliver:
-
-- ordered phase list with fixed widths and optional nested/final tail;
-- generic phase-composition theorem;
-- structural recognition for the 16/8/4/2/1 and 64/8/4/2/1 shapes.
+Deliver ordered phase lists, a generic phase-composition theorem, and structural
+recognition for 16/8/4/2/1 and 64/8/4/2/1 streams.
 
 Exit gates:
 
-- `qs8-vadd-minmax` and `s8-vclamp` select the same parameterized multi-phase
-  mechanism without named emitter branches;
-- later `f32-f16-vcvt` needs FP/intrinsic work, not a new control-flow compiler.
+- `qs8-vadd-minmax` and `s8-vclamp` select the same parameterized mechanism without
+  named emitter branches;
+- `f32-f16-vcvt` is blocked only by FP/intrinsic support, not control flow.
 
-### M8 — Coverage Expansion
+### M6 — Coverage Expansion
 
 **Status:** Pending.
 
-Fill missing exact integer intrinsic variants, then establish the reviewed FP
-semantic layer before onboarding FP elementwise pairs. Dashboard progress must be
-monotone through shared dependencies rather than manually advanced program rows.
+Fill missing integer intrinsic variants. Then establish reviewed FP semantics and
+new layout/view capabilities, including planar complex grouping, before claiming
+coverage of all 20 audited elementwise pairs.
 
 ## Immediate Work Queue
 
-Only the first incomplete item is active at a time:
+Only the first incomplete item is active:
 
-1. define branch-local `ProgramManifest`/`Result` and capability schemas;
-2. change dashboard state computation to accept global intrinsic/family nodes;
-3. emit an S8 VMax manifest through the generic frontend;
-4. generate fixed-no-tail Models/Spec from that manifest;
-5. generate/check the proof task and publish Result;
-6. run the zero-source-change held-out mutation matrix;
-7. migrate fixed-tail unary and binary fixtures;
+1. implement canonical capability/assumption/manifest/result schema types and
+   digest closure;
+2. implement the explicit-entry generic frontend and fixed-no-tail manifest;
+3. generate Models/Spec from that manifest;
+4. generate/check ProofTask/Result;
+5. run the two-positive/one-negative held-out matrix;
+6. make the dashboard read those real artifacts;
+7. migrate fixed-tail unary/binary fixtures;
 8. add multi-phase composition;
-9. expand integer intrinsic coverage;
-10. start the explicit FP semantics milestone.
+9. expand integer intrinsics;
+10. add FP and grouped logical-element layouts.
 
 ## Global Acceptance Gates
 
-1. **Zero source edits:** onboarding a held-out same-family program changes no
-   Python/Lean framework source.
-2. **Independent models:** Neon and RVV dataflows and lane functions are generated
-   separately.
-3. **Whole-program consumption:** unsupported calls/control/effects fail closed.
-4. **Generated frozen goal:** proof search cannot change Models/Spec/observation.
-5. **Proof safety:** no `sorry`, `admit`, custom axiom, unsafe proof escape, or
-   unapproved native decision dependency.
-6. **Mutation sensitivity:** supported semantic changes alter the model and fail
-   the old claim or yield a checked counterexample.
-7. **Dashboard derivation:** program readiness is computed from capability closure.
-8. **Scope honesty:** value results are not labeled C/ISA results.
-9. **Reproducibility:** manifests and generated artifacts bind source, facade,
-   registry, compiler producer, and exact toolchain inputs.
+1. **Zero framework edits:** held-out same-family onboarding changes no framework
+   source.
+2. **Independent models:** Neon and RVV dataflows/lane functions are generated
+   separately from their exact descriptors.
+3. **Whole-function consumption:** unsupported calls/control/effects fail closed.
+4. **Control binding:** selected family instances hash-bind the parsed control and
+   effect inventory they abstract.
+5. **Generated frozen goal:** proof search cannot alter accepted parents.
+6. **Proof safety:** no forbidden placeholder/custom axiom/unsafe proof escape.
+7. **Mutation sensitivity:** semantic changes alter the model and invalidate the
+   original equivalence or yield a checked counterexample.
+8. **Artifact closure:** every result verifies its canonical parent-hash chain.
+9. **Dashboard derivation:** readiness comes from capability/artifact closure.
+10. **Scope honesty:** value results are not labeled C/ISA results.
 
 ## Deferred but Visible
 
+- grouped/planar logical layouts such as `f32-vcmul`;
 - full byte-memory, alias/restrict, frame, and legal overread refinement;
 - real-header/compiler dependency closure;
+- actual filesystem/process isolation for proof search;
 - ISA-legal RVV `vsetvl`, masks, tail policy, `vxrm`, and `vxsat` correspondence;
 - complete Arm machine state and compiled-binary correctness;
 - reduction, permutation, window/gather, convolution, and GEMM families.

@@ -12,17 +12,18 @@ Last updated: 2026-08-29 (Asia/Seoul)
 ## Product Definition
 
 **Confirmed:** build a restricted, reusable compiler for Neon/RVV elementwise C
-pairs. Once an exact typed intrinsic and an execution family are supported, a new
-program using them must require zero new Python or Lean source code.
+pairs. Once its exact typed intrinsics, logical layout/view, and execution family
+are supported, a new program must require zero new Python or Lean source code.
 
 One command must:
 
 1. parse both C functions and reject unconsumed or unsupported constructs;
 2. bind every call to the global exact typed intrinsic library;
-3. recognize the execution family and source assertions;
+3. recognize the logical layout/view, execution family, and source assertions;
 4. generate independent Neon/RVV implementation models;
 5. generate and freeze the specification and proof task;
-6. run an agent that may write only the proof file;
+6. run an agent and accept the run only when the designated proof is the sole
+   changed artifact inside the protected closure;
 7. check the result with Lean and publish a machine-readable status;
 8. update the dashboard through dependency closure, without a program-specific
    dashboard entry.
@@ -33,7 +34,7 @@ One command must:
 graph:
 
 ```text
-exact intrinsic variants + execution-family capabilities
+exact intrinsic variants + logical layout/view + execution-family capabilities
         -> automatically discovered program dependencies
         -> fresh Models/Spec
         -> proof ready
@@ -44,6 +45,12 @@ exact intrinsic variants + execution-family capabilities
 Completing one reusable intrinsic or family capability must automatically unlock
 every compatible program. A manually maintained `supported_cases` list is not an
 acceptable production authority.
+
+**Reviewer correction:** the reusable graph also needs a logical element
+layout/view capability. Schedule says when coordinates are processed; layout says
+how physical scalar streams form one logical element and observation. Scalar-lane
+layouts cover phase one. Planar complex `f32-vcmul` is not covered until a reusable
+grouped layout exists.
 
 ## Supported Claim Layers
 
@@ -123,7 +130,8 @@ therefore Neon logical output = RVV logical output
 
 `fNeon` and `fRvv` are defined independently through their respective intrinsic
 expressions. `Spec.lean` contains proof-free frozen propositions; `Proof.lean` is
-the only agent-owned artifact; `Audit.lean` checks the exported claim and axioms.
+the designated agent-owned artifact; `Audit.lean` checks the exported claim and
+axioms. The current repository-local process is not a write sandbox.
 
 **Confirmed limitation:** the current Python backend generated only the imported
 local block/chunk model. The new loop assembly and `Spec.lean` were manually staged
@@ -141,6 +149,12 @@ The proof agent may not add axioms, weaken a frozen goal, or invent a preconditi
 A false or unsupported direct claim returns failure or a counterexample. An
 optional contextual claim is regenerated only from separately supplied evidence.
 
+Direct paired claims retain the complete separate Neon and RVV assumption sets and
+add family/intrinsic legality. They do not reduce the domain to assertion text
+shared by both sides. Generated artifacts form a canonical content-addressed chain
+from manifest through result; proof acceptance uses before/after protected-closure
+digests and is an integrity gate, not process isolation.
+
 ## Current Gap
 
 **Confirmed:** the architecture and proof shape are settled; the generic compiler
@@ -150,15 +164,26 @@ uses the old case-scoped data model and does not show execution-family nodes.
 
 ## Immediate Objective
 
-Make the existing synthetic `s8-vmax` pair a true held-out acceptance test:
+Make fixed-no-tail generation pass the two-positive/one-negative held-out gate:
 
 ```text
-registered intrinsics + input C pair
+registered intrinsics/layout/families + two positive C pairs + one mutation
   -> no Python/Lean source edits
   -> generated manifest, Models.lean, Spec.lean, ProofTask.json
   -> proof attempt and Lean result
   -> dashboard program state derived automatically
 ```
 
-Do not onboard a sixth named case by adding another profile while this gate is
-open.
+One positive may use the existing synthetic `s8-vmax`; the second must randomize
+path, filename, function, and module identities. The negative changes one side from
+max to min. Do not onboard a sixth named case by adding another profile while this
+gate is open.
+
+## Independent Plan Review
+
+**Confirmed, 2026-08-29:** a separate reviewer agent first returned
+`GO WITH REQUIRED REVISIONS`. After layout/view capability, exact assumption
+domains, content-addressed parent hashes, honest proof-process wording, milestone
+reordering, and a stronger anti-special-casing gate were incorporated, its
+convergence review returned `GO`: no remaining design-document defect blocks M1a.
+The review is preserved in `notes/reviews/elementwise-compiler-plan-review-2026-08-29.md`.

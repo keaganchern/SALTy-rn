@@ -99,3 +99,51 @@ The result schema distinguishes at least: parse unsupported, intrinsic missing o
 ambiguous, family unrecognized, generation stale/failed, proof search failed,
 semantic counterexample found, Lean check failed, and verified at a named claim
 scope. “Proof file exists” is never a success state.
+
+## EC-012: Logical Element Layout Is Independent of Schedule
+
+**Status:** Accepted, 2026-08-29.
+
+Add a reusable layout/view capability between scalar memory streams and logical
+elements. Phase one supports scalar-lane layouts. Planar/grouped/multi-output cases
+such as `f32-vcmul` are not covered merely by classifying their operator as binary
+and their loop as fixed-tail; they remain layout-unrecognized until a reusable
+logical complex view and observation are implemented.
+
+## EC-013: Direct Claims Use Complete Per-Side Assumption Domains
+
+**Status:** Accepted, 2026-08-29.
+
+Generate separate Neon and RVV assumption sets plus family and intrinsic legality.
+The direct paired theorem requires their conjunction, not only assertions common to
+both files. Treat source `assert` text as an audited source assumption under the
+pinned preprocessing policy, not as a model of every runtime assert/NDEBUG mode.
+External contextual contracts are separate hash-bound evidence and must establish
+the direct domain rather than silently replace it.
+
+## EC-014: Generated Artifacts Form a Content-Addressed Parent Chain
+
+**Status:** Accepted, 2026-08-29.
+
+Use canonical serialization and explicit parent digests from manifest through
+models, spec, proof task, proof, and result. Every consumer verifies the full chain.
+Paths, module names, timestamps, and file presence are not sufficient bindings.
+
+## EC-015: Proof-Agent Isolation Claim Is Integrity-Scoped
+
+**Status:** Accepted, 2026-08-29.
+
+For phase one, say that acceptance permits only the designated proof artifact to
+differ inside a before/after hash-checked protected closure. Do not claim that the
+repository-local proof process is technically unable to write other files. Actual
+filesystem/process isolation is a later hardening milestone.
+
+## EC-016: Held-Out Tests Must Defeat Name and Path Special Cases
+
+**Status:** Accepted, 2026-08-29.
+
+The first gate uses two positive fixed-no-tail fixtures and one semantic negative,
+runs in a clean temporary checkout/output root, randomizes the second fixture's
+paths and function/module identities, deletes and regenerates outputs, and leaves
+tracked framework files unchanged. The generic path forbids path-based defaults,
+case ids, and manually listed proof targets.
