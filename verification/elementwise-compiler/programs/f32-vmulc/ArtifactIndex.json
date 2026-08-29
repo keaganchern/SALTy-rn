@@ -79,7 +79,7 @@
   ],
   "cross_phase_audit": {
     "path": "CrossPhaseAudit.json",
-    "sha256": "3fed1ad485d49457cb610cade77ad12718c4bddd27d6c709c765da5a1f99002d",
+    "sha256": "d4c77668d71959b9c7cdd6c2419cb3375a9343c4176dfb2041479b8e97a8103d",
     "status": "not-applicable"
   },
   "external_condition": {
@@ -89,22 +89,32 @@
   },
   "manifest": {
     "path": "ProgramManifest.json",
-    "sha256": "480a59c382b2c14edc467a425669a18b6ea949a642e2941b5a87ecd041582720"
+    "sha256": "fd84ac244fa3743f317724890e4756de513562faccc3ac7ee8261f13761af6ac"
   },
   "models": {
     "kind": "models",
-    "parent_sha256": "480a59c382b2c14edc467a425669a18b6ea949a642e2941b5a87ecd041582720",
+    "parent_sha256": "fd84ac244fa3743f317724890e4756de513562faccc3ac7ee8261f13761af6ac",
     "path": "Models.lean",
-    "sha256": "ac31c112d534919a5a2494792038047e90247ff9ea76b89e5cec2b4e23920e84"
+    "sha256": "33ed8e6ebb63cb4fb6c6529061ae447aacb1084dd1da1a93ebfafe587ee13145"
   },
   "namespace": "SALT.Corpus.f32vmulc",
+  "proof_task": {
+    "path": "ProofTask.json",
+    "proof_path": "Proof.lean",
+    "sha256": "98df31baf5c2270fd6c2e850740cb27d5f01fb622da3265794e8b5427413450d"
+  },
+  "result": {
+    "path": "Result.json",
+    "sha256": "377db97738cb8e8a2257b055252264baff7b1d3f259f113495ee0335dc18b57e",
+    "status": "verified(value)"
+  },
   "schema_version": 2,
   "spec": {
     "kind": "spec",
-    "parent_sha256": "ac31c112d534919a5a2494792038047e90247ff9ea76b89e5cec2b4e23920e84",
+    "parent_sha256": "33ed8e6ebb63cb4fb6c6529061ae447aacb1084dd1da1a93ebfafe587ee13145",
     "path": "Spec.lean",
-    "sha256": "4b2ddbbcc99ab39090c09124f7a9b96d89d6313c45bc4dcf975d612151955d82"
+    "sha256": "a617d3f80985bf9297a3b3361b0c4365d14d21d25f90746ce3fbefc777f54439"
   },
-  "stack_sha256": "d5f3834fbca202670a6fa44ea85dcab2470d64aa5dbf545d0824a54b039734a8",
+  "stack_sha256": "c92c8491781761ddb66246c1b98172528852597a6f2f2078194881287a3befde",
   "target_claim": "completeValueEquivalenceClaim"
 }

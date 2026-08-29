@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import ast
 import hashlib
 import json
 import os
@@ -112,20 +113,95 @@ def _relative(path: Path, root: Path, field: str) -> str:
         raise CompilerError(f"{field} must be inside repository root: {path}") from error
 
 
+def _module_path(source_root: Path, module: str) -> Path | None:
+    """Resolve a repository Python module without importing mutable code."""
+
+    relative = Path(*module.split("."))
+    module_path = (source_root / relative).with_suffix(".py")
+    if module_path.is_file():
+        return module_path
+    package_path = source_root / relative / "__init__.py"
+    return package_path if package_path.is_file() else None
+
+
+def _module_name(source_root: Path, path: Path) -> str:
+    relative = path.relative_to(source_root)
+    parts = list(relative.with_suffix("").parts)
+    if parts[-1] == "__init__":
+        parts.pop()
+    return ".".join(parts)
+
+
+def _local_imports(source_root: Path, path: Path) -> set[Path]:
+    """Return statically imported verification modules for one source file."""
+
+    try:
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    except (OSError, UnicodeError, SyntaxError) as error:
+        raise CompilerError(f"cannot inspect compiler dependency: {path}") from error
+    current = _module_name(source_root, path)
+    package = current if path.name == "__init__.py" else current.rpartition(".")[0]
+    discovered: set[Path] = set()
+
+    def add(module: str) -> None:
+        if not module.startswith("workflow.verification"):
+            return
+        resolved = _module_path(source_root, module)
+        if resolved is not None:
+            discovered.add(resolved)
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                add(alias.name)
+        elif isinstance(node, ast.ImportFrom):
+            if node.level:
+                package_parts = package.split(".") if package else []
+                keep = len(package_parts) - (node.level - 1)
+                if keep < 0:
+                    raise CompilerError(f"invalid relative import in {path}")
+                prefix = ".".join(package_parts[:keep])
+                base = ".".join(filter(None, (prefix, node.module or "")))
+            else:
+                base = node.module or ""
+            add(base)
+            for alias in node.names:
+                add(".".join(filter(None, (base, alias.name))))
+    return discovered
+
+
+def _compiler_dependencies(root: Path) -> tuple[Path, ...]:
+    """Compute the exact static Python closure that can generate the stack.
+
+    Proof search, counterexample search, reviews, corpus orchestration, and the
+    dashboard are deliberately outside this closure.  Editing those consumers
+    must not invalidate a generated ProgramManifest.
+    """
+
+    source_root = root / "src"
+    entry = source_root / "workflow/verification/elementwise_compiler/compiler.py"
+    if not entry.is_file():
+        raise CompilerError(f"compiler dependency is absent: {entry}")
+    pending = [entry]
+    # Importing a submodule executes each existing package initializer first.
+    relative = entry.relative_to(source_root)
+    for depth in range(1, len(relative.parts) - 1):
+        initializer = source_root.joinpath(*relative.parts[:depth], "__init__.py")
+        if initializer.is_file():
+            pending.append(initializer)
+    dependencies: set[Path] = set()
+    while pending:
+        path = pending.pop()
+        if path in dependencies:
+            continue
+        dependencies.add(path)
+        pending.extend(_local_imports(source_root, path) - dependencies)
+    return tuple(sorted(dependencies, key=lambda path: path.relative_to(root).as_posix()))
+
+
 def _compiler_digest(root: Path) -> str:
-    package = root / "src/workflow/verification/elementwise_compiler"
-    dependencies = [
-        root / "src/workflow/verification/lean_backend/frontend.py",
-        root / "src/workflow/verification/lean_backend/case_emit.py",
-        root / "src/workflow/verification/lean_backend/emit_lean.py",
-        root / "src/workflow/verification/lean_backend/model_profiles.py",
-        root / "src/workflow/verification/lean_backend/intrinsic_index.py",
-        root / "src/workflow/verification/lean_backend/descriptor.py",
-        root / "src/workflow/verification/lean_backend/schema.py",
-    ]
-    dependencies.extend(sorted(package.glob("*.py")))
     records = []
-    for path in dependencies:
+    for path in _compiler_dependencies(root):
         if not path.is_file():
             raise CompilerError(f"compiler dependency is absent: {path}")
         records.append({"path": _relative(path, root, "compiler dependency"), "sha256": _sha256(path)})

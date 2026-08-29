@@ -6,7 +6,7 @@ import SALT.Kernel.ElementwiseFamily
 
 namespace SALT.Corpus.s8vclamp
 
-def programManifestSha256 : String := "04e6e93a8da52863b8a0f336ffdff4d6d466c93c077dc37d997652f4162595f8"
+def programManifestSha256 : String := "d0912012356304946539cc551e13f5de633b0b90c1c50bc5aa4d598226d2c04e"
 def consumedEffectsSha256 : String := "f07b94c87c7e15e283b898e9a0482fb2e409e22d12aa197b5043c127fe562dce"
 
 def neonSourceSha256 : String :=

@@ -12,8 +12,6 @@ import hashlib
 import json
 import os
 import re
-import shutil
-import subprocess
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
@@ -40,23 +38,20 @@ from .schema import (
     canonical_sha256,
 )
 from .external_conditions import source_pair_sha256, verify_external_condition
+from .lean_check import (
+    ALLOWED_AXIOMS,
+    LeanCheckError,
+    Toolchain as _Toolchain,
+    _checked_axioms,
+    _command,
+    _compile,
+    _resolve_toolchain,
+    _stage,
+)
 
 
-ALLOWED_AXIOMS = frozenset({"Classical.choice", "Quot.sound", "propext"})
 _IDENTIFIER_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_']*")
-_AXIOM_LINE_RE = re.compile(r"depends on axioms:\s*\[(?P<axioms>[^]]*)\]")
-
-
-class ProofGateError(RuntimeError):
-    """A frozen proof task or its checked artifact closure is invalid."""
-
-
-@dataclass(frozen=True, slots=True)
-class _Toolchain:
-    lean: Path
-    lake: Path
-    sysroot: Path
-    sha256: str
+ProofGateError = LeanCheckError
 
 
 @dataclass(frozen=True, slots=True)
@@ -100,58 +95,6 @@ def _json(path: Path) -> Mapping[str, Any]:
     if not isinstance(value, Mapping) or any(not isinstance(key, str) for key in value):
         raise ProofGateError(f"canonical JSON root must be an object: {path}")
     return value
-
-
-def _command(
-    arguments: Sequence[str],
-    *,
-    cwd: Path,
-    environment: Mapping[str, str] | None = None,
-    timeout: int = 120,
-) -> subprocess.CompletedProcess[str]:
-    try:
-        return subprocess.run(
-            list(arguments),
-            cwd=cwd,
-            env=None if environment is None else dict(environment),
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            check=False,
-            timeout=timeout,
-        )
-    except (OSError, subprocess.SubprocessError) as error:
-        raise ProofGateError(f"could not run {arguments[0]!r}: {error}") from error
-
-
-def _resolve_toolchain(repository_root: Path) -> _Toolchain:
-    lean_project = repository_root / "src/verification_bw/lean"
-    selector_path = lean_project / "lean-toolchain"
-    selector = selector_path.read_text(encoding="utf-8").strip()
-    launcher = shutil.which("lean")
-    lake_launcher = shutil.which("lake")
-    if not selector or launcher is None or lake_launcher is None:
-        raise ProofGateError("Lean selector and Lean/Lake launchers are required")
-    prefix = _command((launcher, "--print-prefix"), cwd=lean_project)
-    if prefix.returncode != 0 or prefix.stderr or len(prefix.stdout.splitlines()) != 1:
-        raise ProofGateError("Lean did not report one trusted sysroot")
-    sysroot = Path(prefix.stdout.strip()).resolve()
-    lean = (sysroot / "bin/lean").resolve()
-    lake = (sysroot / "bin/lake").resolve()
-    if not lean.is_file() or not lake.is_file():
-        raise ProofGateError("resolved Lean sysroot is incomplete")
-    lean_version = _command((str(lean), "--version"), cwd=lean_project)
-    lake_version = _command((str(lake), "--version"), cwd=lean_project)
-    if lean_version.returncode != 0 or lake_version.returncode != 0:
-        raise ProofGateError("Lean/Lake version query failed")
-    identity = {
-        "selector": selector,
-        "lean_sha256": _sha256(lean),
-        "lake_sha256": _sha256(lake),
-        "lean_version": lean_version.stdout.strip(),
-        "lake_version": lake_version.stdout.strip(),
-    }
-    return _Toolchain(lean, lake, sysroot, canonical_sha256(identity))
 
 
 def _checker_sha256() -> str:
@@ -296,93 +239,23 @@ def _verify_stack(
             or result_index.get("status") != result.status.value
         ):
             raise ProofGateError("counterexample Result identity is invalid")
-        if phase.status is not CrossPhaseAuditStatus.COUNTEREXAMPLE:
-            raise ProofGateError("counterexample exists without matching cross-phase audit")
+        phase_claim = f"{namespace}.neonPhaseFunctionsEqualClaim"
+        complete_claim = f"{namespace}.{target_claim}"
+        if witness.claim == phase_claim:
+            if phase.status is not CrossPhaseAuditStatus.COUNTEREXAMPLE:
+                raise ProofGateError(
+                    "phase counterexample exists without matching cross-phase audit"
+                )
+        elif witness.claim == complete_claim:
+            if phase.status is CrossPhaseAuditStatus.COUNTEREXAMPLE:
+                raise ProofGateError(
+                    "whole-program counterexample conflicts with phase witness"
+                )
+        else:
+            raise ProofGateError("counterexample does not refute a generated claim")
     elif phase.status is CrossPhaseAuditStatus.COUNTEREXAMPLE:
         raise ProofGateError("cross-phase audit names a missing counterexample")
     return manifest, models, spec, namespace, target_claim, external, phase
-
-
-_LEAN_DEPENDENCIES = (
-    "SALT/Basic.lean",
-    "SALT/Intrinsics/FP32.lean",
-    "SALT/Intrinsics/Neon.lean",
-    "SALT/Intrinsics/RVV.lean",
-    "SALT/Kernel/Schedule.lean",
-    "SALT/Kernel/ElementwiseTwoPhase.lean",
-    "SALT/Kernel/ElementwiseFamily.lean",
-)
-
-
-def _build_staged_dependencies(
-    repository_root: Path,
-    toolchain: _Toolchain,
-    stage: Path,
-    environment: Mapping[str, str],
-) -> None:
-    """Build the small trusted dependency closure outside the repository.
-
-    The upstream repository currently tracks parts of ``.lake``.  Compiling this
-    explicit source closure in the temporary module root keeps proof checking from
-    modifying those tracked build products.
-    """
-
-    lean_root = repository_root / "src/verification_bw/lean"
-    for relative_text in _LEAN_DEPENDENCIES:
-        relative = Path(relative_text)
-        source = lean_root / relative
-        destination = stage / relative
-        if not source.is_file():
-            raise ProofGateError(f"Lean dependency source is absent: {relative_text}")
-        destination.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(source, destination)
-        completed = _compile(
-            toolchain, stage, environment, destination, emit_olean=True
-        )
-        if completed.returncode != 0:
-            raise ProofGateError(
-                f"Lean dependency {relative_text} failed:\n"
-                f"{completed.stdout}{completed.stderr}"
-            )
-
-
-def _stage(
-    repository_root: Path,
-    output: Path,
-    namespace: str,
-    toolchain: _Toolchain,
-    *,
-    include_proof: bool,
-) -> tuple[tempfile.TemporaryDirectory[str], Path, dict[str, str]]:
-    temporary = tempfile.TemporaryDirectory(prefix="saltyrn-elementwise-lean-")
-    root = Path(temporary.name).resolve()
-    environment = {
-        **os.environ,
-        "LEAN_PATH": os.pathsep.join((str(root), str(toolchain.sysroot / "lib/lean"))),
-    }
-    _build_staged_dependencies(repository_root, toolchain, root, environment)
-    module_directory = root.joinpath(*namespace.split("."))
-    module_directory.mkdir(parents=True, exist_ok=True)
-    for name in ("Models.lean", "Spec.lean"):
-        shutil.copyfile(output / name, module_directory / name)
-    if include_proof:
-        shutil.copyfile(output / "Proof.lean", module_directory / "Proof.lean")
-    return temporary, root, environment
-
-
-def _compile(
-    toolchain: _Toolchain,
-    stage: Path,
-    environment: Mapping[str, str],
-    path: Path,
-    *,
-    emit_olean: bool,
-) -> subprocess.CompletedProcess[str]:
-    arguments = [str(toolchain.lean), "-R", str(stage)]
-    if emit_olean:
-        arguments.extend(("-o", str(path.with_suffix(".olean"))))
-    arguments.append(str(path))
-    return _command(arguments, cwd=stage, environment=environment)
 
 
 def _checked_claim_encoding(
@@ -488,9 +361,9 @@ def prepare_proof_task(
     manifest, models, spec, namespace, target_claim, external, phase = _verify_stack(
         repository, output, index
     )
-    if phase.status is CrossPhaseAuditStatus.COUNTEREXAMPLE:
+    if index.get("counterexample") is not None:
         raise ProofGateError(
-            "counterexample: a Lean-checked phase disagreement forbids proof delegation"
+            "counterexample: a Lean-checked disagreement forbids proof delegation"
         )
     if (
         external is not None
@@ -533,16 +406,6 @@ def _proof_tokens_are_safe(path: Path) -> bool:
     except (OSError, UnicodeError, ValueError):
         return False
     return not (set(_IDENTIFIER_RE.findall(stripped)) & FORBIDDEN_LEAN_IDENTIFIERS)
-
-
-def _checked_axioms(output: str) -> frozenset[str]:
-    match = _AXIOM_LINE_RE.search(output)
-    if match is None:
-        if "does not depend on any axioms" in output:
-            return frozenset()
-        raise ProofGateError("Lean did not report the theorem's transitive axioms")
-    body = match.group("axioms").strip()
-    return frozenset(item.strip() for item in body.split(",") if item.strip())
 
 
 def _write_result(output: Path, index: dict[str, Any], result: Result) -> Path:

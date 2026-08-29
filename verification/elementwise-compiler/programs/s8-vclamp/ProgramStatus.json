@@ -12,7 +12,7 @@
     },
     "path": "programs/s8-vclamp/Counterexample.json",
     "right_output": 5,
-    "sha256": "3d571fa5aa57988c6614f28217a301abd26be27b05316bf32e362398ddd33ca3"
+    "sha256": "1c5ee3a0cdf3cec7539845503e1dc21783e38d81b26ec6f2281b5f24ada215d9"
   },
   "cross_phase_status": "lean-checked-counterexample",
   "detail": "Lean checked a concrete disagreement between generated Neon phases",
@@ -24,7 +24,7 @@
     "input"
   ],
   "layout_preflight": "scalar-lane",
-  "manifest_sha256": "04e6e93a8da52863b8a0f336ffdff4d6d466c93c077dc37d997652f4162595f8",
+  "manifest_sha256": "d0912012356304946539cc551e13f5de633b0b90c1c50bc5aa4d598226d2c04e",
   "missing_intrinsics": [],
   "neon_function": "test_neon",
   "neon_intrinsics": [

@@ -97,6 +97,7 @@
       summaryCard("checked counterexample", statusCounts.counterexample || 0),
       summaryCard("proof ready", statusCounts["proof-ready"] || 0),
       summaryCard("value verified", statusCounts["verified(value)"] || 0),
+      summaryCard("program outcomes independently reviewed", `${data.independently_reviewed_programs || 0}/${data.scalar_layout_scope || 0}`),
     );
     for (const program of programs) {
       const row = document.createElement("tr");
@@ -115,6 +116,16 @@
       const phase = program.cross_phase || {};
       statusCell.append(text("small", `input: ${condition.status || "unknown"} (${condition.scope || "unknown scope"})`));
       statusCell.append(text("small", `phase: ${phase.status || "unknown"} (${phase.trial_count || 0} trials)`));
+      statusCell.append(text(
+        "small",
+        program.independently_reviewed
+          ? `independent review: approved ${program.reviewed_outcome || "outcome"}`
+          : "independent review: pending",
+        program.independently_reviewed ? "piece-done" : "piece-missing",
+      ));
+      if (program.program_review_sha256) {
+        statusCell.append(text("code", String(program.program_review_sha256).slice(0, 12)));
+      }
       const witness = counterexampleEvidence(program.counterexample);
       if (witness) statusCell.append(witness);
       row.append(statusCell);

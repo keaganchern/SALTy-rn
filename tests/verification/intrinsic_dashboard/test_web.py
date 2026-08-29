@@ -246,6 +246,10 @@ def test_elementwise_frontend_uses_exact_schema_v3_artifact_graph_fields() -> No
     assert "condition.scope" in script
     assert "phase.trial_count" in script
     assert "program.counterexample" in script
+    assert "program.independently_reviewed" in script
+    assert "program.reviewed_outcome" in script
+    assert "program.program_review_sha256" in script
+    assert "independently_reviewed_programs" in script
     assert "payload.capabilities" in script
     assert "capability.defined" in script
     assert "capability.lean_checked" in script

@@ -72,9 +72,16 @@
       "sha256": "ae5b0d08037bb0ad205937ca70eaea28ae6071bde05bcc42413a052d680b6aa7"
     }
   ],
+  "counterexample": {
+    "claim": "SALT.Corpus.f32vmin.completeValueEquivalenceClaim",
+    "lean_path": "Counterexample.lean",
+    "lean_sha256": "cd7d772fe362b561f2f389cd233703955d0b51914ac627e9303b78d92f4df2ab",
+    "path": "Counterexample.json",
+    "sha256": "33e3b0fa1898d32fcf5aeed3b9d4c957c42b10f74ccb75cf6f60dc580670c71d"
+  },
   "cross_phase_audit": {
     "path": "CrossPhaseAudit.json",
-    "sha256": "438faade51a83da8ebbc8ab9d28e27164fbaf253910b19d5763cf46a301c2d50",
+    "sha256": "3a7f33b2feec6a0a8d58f64e7884bb8c406cfacb7cb3c9b8258f04929fad651b",
     "status": "not-applicable"
   },
   "external_condition": {
@@ -84,22 +91,27 @@
   },
   "manifest": {
     "path": "ProgramManifest.json",
-    "sha256": "55b784f96198e4bd0318d83442956fe5fdf708eb684aaa61fd25aa665d5e200f"
+    "sha256": "426438134ca5cddf25175089e50527575606e8c21995d63fd94e694de00c56fb"
   },
   "models": {
     "kind": "models",
-    "parent_sha256": "55b784f96198e4bd0318d83442956fe5fdf708eb684aaa61fd25aa665d5e200f",
+    "parent_sha256": "426438134ca5cddf25175089e50527575606e8c21995d63fd94e694de00c56fb",
     "path": "Models.lean",
-    "sha256": "844346f2b2daf6c677ac30f53a32b6c68f9199ff0d316797de6de2702c60864d"
+    "sha256": "9e73efaa68e519421a8da8a7541114806841d06210b5d4d349ba2b73f61685b0"
   },
   "namespace": "SALT.Corpus.f32vmin",
+  "result": {
+    "path": "Result.json",
+    "sha256": "3f89b234fc74b3e13e7c044c5d48e327c50a2fc30bd62499c3b08603aec73c91",
+    "status": "counterexample"
+  },
   "schema_version": 2,
   "spec": {
     "kind": "spec",
-    "parent_sha256": "844346f2b2daf6c677ac30f53a32b6c68f9199ff0d316797de6de2702c60864d",
+    "parent_sha256": "9e73efaa68e519421a8da8a7541114806841d06210b5d4d349ba2b73f61685b0",
     "path": "Spec.lean",
-    "sha256": "cf2e6769d104e7fa7463cf568f9cb0ea7e4e1f1194c9a9781508203f37be4861"
+    "sha256": "c04b708939e638363c42919813159fd54361fc963eaac0aa81cf1dc244f9755c"
   },
-  "stack_sha256": "b0d096d14a378106c8faaf8050cb25348cc0092ba5b5d2f0d3facc6954bd72d4",
+  "stack_sha256": "a53607cc6736d26c7a675c81ce96200c43dc9a970c19b51cab0f2a6946b1a9cc",
   "target_claim": "completeValueEquivalenceClaim"
 }

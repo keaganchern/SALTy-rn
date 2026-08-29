@@ -1,17 +1,17 @@
 {
   "artifact_kind": "elementwise-counterexample",
-  "checker_sha256": "617ebac5d766af0ffc80e910413e256412258398b04e666fa6e98744c9128211",
+  "checker_sha256": "bac2cca40d26df5f764accba1202d17ea3fe063c0800029aa65ae769438f9ff1",
   "claim": "SALT.Corpus.s8vclamp.neonPhaseFunctionsEqualClaim",
-  "counterexample_sha256": "3d571fa5aa57988c6614f28217a301abd26be27b05316bf32e362398ddd33ca3",
+  "counterexample_sha256": "1c5ee3a0cdf3cec7539845503e1dc21783e38d81b26ec6f2281b5f24ada215d9",
   "input_values": [
     0
   ],
   "lean_path": "Counterexample.lean",
-  "lean_sha256": "51847652463247fd49191e5a27404952efb232d7cf323f04c080ec092f10ac7d",
+  "lean_sha256": "da103d8f21deff0f4cb61ddc555dc01b6cbb60ebf124c164c1443a3917f9d4af",
   "left_function": "SALT.Corpus.s8vclamp.fNeon",
   "left_output": 0,
-  "manifest_sha256": "04e6e93a8da52863b8a0f336ffdff4d6d466c93c077dc37d997652f4162595f8",
-  "models_sha256": "0089ef8332cf40e76f53f91ffe87549f9109ab7f9a6c2db4ec504159e5c80c37",
+  "manifest_sha256": "d0912012356304946539cc551e13f5de633b0b90c1c50bc5aa4d598226d2c04e",
+  "models_sha256": "9fca27bd5ff4189431766301bcd2ef7b37c5547d6fdbd5ef55d5d6165ee9965d",
   "parameter_values": {
     "max": 0,
     "min": 5
@@ -19,6 +19,6 @@
   "right_function": "SALT.Corpus.s8vclamp.fNeonSecondary",
   "right_output": 5,
   "schema_version": 1,
-  "spec_sha256": "8743ebe462d734704cd63acf1be125e23fecbd5633fb5134800bde4758a3895c",
+  "spec_sha256": "300698247ddcd3041a6189e27aab192220e8aad497aa5ee550fbd462fa892ff8",
   "toolchain_sha256": "1ce7d3879378e751ecae7bb5fd76c57bde9e4957e69b20b4693d759eb34a8c6d"
 }

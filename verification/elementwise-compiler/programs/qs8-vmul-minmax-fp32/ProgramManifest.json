@@ -1,6 +1,6 @@
 {
   "artifact_kind": "elementwise-program-manifest",
-  "compiler_sha256": "9ef5961167777abb589d2d71c1dce81896160c9605be3014fdc33fa555cce948",
+  "compiler_sha256": "2264847e0b829eda5f632f9fd421aec176000c2da88aa445f548ff83e31e9a42",
   "consumed_effects_sha256": "521299ca9cbaf4be0d415ed0564761a14236409fb6fe74b2c4894ecb3ef2ac3c",
   "contracts": {
     "neon": {
@@ -631,7 +631,7 @@
     ]
   },
   "local_assertions": [],
-  "manifest_sha256": "9795d1f1f3da784b86514eccd7aadf924744d3d5fd6f06161bb2547f01e6dbaa",
+  "manifest_sha256": "fd6027af689c2ead27fe584c1a95bf084ad7bcb6c404f6c76d2e77960e3c3b08",
   "schedules": [
     {
       "architecture": "neon",

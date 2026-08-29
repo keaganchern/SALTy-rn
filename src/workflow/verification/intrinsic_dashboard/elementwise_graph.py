@@ -18,6 +18,10 @@ from workflow.verification.elementwise_compiler.capabilities import (
     ScheduleFamilyCapability,
 )
 from workflow.verification.elementwise_compiler.reviews import IntrinsicReview
+from workflow.verification.elementwise_compiler.program_reviews import (
+    ProgramReviewError,
+    load_program_reviews,
+)
 from workflow.verification.elementwise_compiler.schema import (
     ArtifactKind,
     CounterexampleWitness,
@@ -415,10 +419,21 @@ def _verify_stack(corpus_root: Path, relative_index: object) -> dict[str, Any]:
             or counterexample.manifest_sha256 != manifest.sha256
             or counterexample.models_sha256 != models.sha256
             or counterexample.spec_sha256 != spec.sha256
-            or phase.status is not CrossPhaseAuditStatus.COUNTEREXAMPLE
-            or phase.counterexample_sha256 != counterexample.sha256
         ):
             raise ElementwiseGraphError("counterexample binding digest mismatch")
+        phase_claim = f"{index.get('namespace')}.neonPhaseFunctionsEqualClaim"
+        complete_claim = f"{index.get('namespace')}.{index.get('target_claim')}"
+        if counterexample.claim == phase_claim:
+            if (
+                phase.status is not CrossPhaseAuditStatus.COUNTEREXAMPLE
+                or phase.counterexample_sha256 != counterexample.sha256
+            ):
+                raise ElementwiseGraphError("phase counterexample audit mismatch")
+        elif counterexample.claim == complete_claim:
+            if phase.status is CrossPhaseAuditStatus.COUNTEREXAMPLE:
+                raise ElementwiseGraphError("program counterexample conflicts with phase audit")
+        else:
+            raise ElementwiseGraphError("counterexample does not refute a generated claim")
     elif phase.status is CrossPhaseAuditStatus.COUNTEREXAMPLE:
         raise ElementwiseGraphError("cross-phase audit has no counterexample")
 
@@ -639,6 +654,7 @@ def build_elementwise_graph(
     corpus_root: str | Path = DEFAULT_CORPUS_ROOT,
     *,
     include_intrinsic_audit: bool = True,
+    include_program_reviews: bool = True,
 ) -> dict[str, Any]:
     """Build a fail-closed UI projection from the generated artifact graph."""
 
@@ -679,6 +695,16 @@ def build_elementwise_graph(
                     "program capability is absent from the bound intrinsic registry"
                 )
             used_by_program.setdefault(identity, set()).add(str(node["program_id"]))
+
+    try:
+        program_reviews = load_program_reviews(root) if include_program_reviews else {}
+    except ProgramReviewError as error:
+        raise ElementwiseGraphError(str(error)) from error
+    for node in program_nodes:
+        review = program_reviews.get(str(node["program_id"]))
+        node["independently_reviewed"] = review is not None
+        node["program_review_sha256"] = None if review is None else review.sha256
+        node["reviewed_outcome"] = None if review is None else review.outcome_status
 
     intrinsic_audit = (
         _verify_intrinsic_audit(
@@ -848,6 +874,9 @@ def build_elementwise_graph(
                     {str(node["cross_phase"]["status"]) for node in program_nodes}
                 )
             },
+            "independently_reviewed_programs": sum(
+                bool(node["independently_reviewed"]) for node in program_nodes
+            ),
         },
         "programs": sorted(program_nodes, key=lambda item: item["program_id"]),
         "intrinsic_spellings": sorted(spelling_nodes, key=lambda item: item["id"]),

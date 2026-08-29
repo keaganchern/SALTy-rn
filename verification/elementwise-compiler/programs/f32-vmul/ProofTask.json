@@ -1,0 +1,26 @@
+{
+  "artifact_kind": "elementwise-proof-task",
+  "checker_policy_sha256": "469ac021841b5ec89202a377dc4e558ac2175a1bad6f2a0e58c9fa797fc9683c",
+  "claim": "SALT.Corpus.f32vmul.completeValueEquivalenceClaim",
+  "claim_scope": "value",
+  "elaborated_type_sha256": "99153916ef7e9cf1298d1a1a8fd2b6127fbecaedd228114c98e0c5f581f1f9c6",
+  "manifest_sha256": "1ac577b5760d14ce1291ff4d08dbd40c8d3e8113d07bd3d92bb28900379c9135",
+  "models": {
+    "kind": "models",
+    "parent_sha256": "1ac577b5760d14ce1291ff4d08dbd40c8d3e8113d07bd3d92bb28900379c9135",
+    "path": "Models.lean",
+    "sha256": "5f99a69c6a6b981e94d28805035ce93fabfc35b2f7a80aacd35f08b87127c951"
+  },
+  "module": "SALT.Corpus.f32vmul.Proof",
+  "proof_path": "Proof.lean",
+  "proof_task_sha256": "2d86f7d74a6945b3b1797d5899c6455c3be47d053732aa97dd23c34318db93b2",
+  "schema_version": 2,
+  "spec": {
+    "kind": "spec",
+    "parent_sha256": "5f99a69c6a6b981e94d28805035ce93fabfc35b2f7a80aacd35f08b87127c951",
+    "path": "Spec.lean",
+    "sha256": "5210db21381d2143c90be28dde41c86af3d9fd6657361f98d21441a09256c2db"
+  },
+  "theorem": "SALT.Corpus.f32vmul.completeValueEquivalence",
+  "toolchain_sha256": "1ce7d3879378e751ecae7bb5fd76c57bde9e4957e69b20b4693d759eb34a8c6d"
+}

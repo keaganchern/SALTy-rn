@@ -12,7 +12,13 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Iterable, Mapping, Sequence
 
 from .capabilities import ScheduleKind
-from .proof import _compile, _resolve_toolchain, _stage
+from .lean_check import (
+    ALLOWED_AXIOMS,
+    _checked_axioms,
+    _compile,
+    _resolve_toolchain,
+    _stage,
+)
 from .schema import (
     CounterexampleWitness,
     CrossPhaseAudit,
@@ -188,8 +194,11 @@ def counterexampleParams : {compilation.stack.parameter_type} := {{ {structure} 
 
 example : (fNeon counterexampleParams {arguments}).toNat = {left} := by native_decide
 example : (fNeonSecondary counterexampleParams {arguments}).toNat = {right} := by native_decide
-example : fNeon counterexampleParams {arguments} ≠
-    fNeonSecondary counterexampleParams {arguments} := by native_decide
+theorem neonPhaseFunctionsCounterexample : Not neonPhaseFunctionsEqualClaim := by
+  intro claim
+  exact (by native_decide : fNeon counterexampleParams {arguments} ≠
+    fNeonSecondary counterexampleParams {arguments})
+    (claim counterexampleParams {arguments})
 
 end {namespace}
 """
@@ -414,11 +423,43 @@ def audit_cross_phase(
         staged_witness = stage / "Counterexample.lean"
         staged_witness.write_text(witness_text, encoding="utf-8")
         completed = _compile(
-            toolchain, stage, environment, staged_witness, emit_olean=False
+            toolchain, stage, environment, staged_witness, emit_olean=True
         )
         if completed.returncode != 0:
             raise CounterexampleError(
                 f"Lean rejected the concrete witness:\n{completed.stdout}{completed.stderr}"
+            )
+        audit_file = stage / "CrossPhaseCounterexampleAudit.lean"
+        theorem = f"{namespace}.neonPhaseFunctionsCounterexample"
+        claim_type = f"{namespace}.neonPhaseFunctionsEqualClaim"
+        audit_file.write_text(
+            "import Counterexample\n"
+            f"example : Not {claim_type} := {theorem}\n"
+            f"#print axioms {theorem}\n",
+            encoding="utf-8",
+        )
+        completed = _compile(
+            toolchain, stage, environment, audit_file, emit_olean=False
+        )
+        if completed.returncode != 0:
+            raise CounterexampleError(
+                f"Lean phase-counterexample audit failed:\n"
+                f"{completed.stdout}{completed.stderr}"
+            )
+        axioms = _checked_axioms(completed.stdout + completed.stderr)
+        generated_native = {
+            axiom
+            for axiom in axioms
+            if re.fullmatch(
+                re.escape(theorem)
+                + r"\._native\.native_decide\.ax_[0-9_]+",
+                axiom,
+            )
+        }
+        unexpected = sorted(axioms - ALLOWED_AXIOMS - generated_native)
+        if unexpected:
+            raise CounterexampleError(
+                f"phase counterexample depends on forbidden axioms {unexpected!r}"
             )
     finally:
         temporary.cleanup()

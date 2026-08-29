@@ -10,6 +10,8 @@ import pytest
 
 from workflow.verification.elementwise_compiler.compiler import (
     CompilerRequest,
+    _compiler_dependencies,
+    _compiler_digest,
     compile_pair,
 )
 from workflow.verification.elementwise_compiler.schema import ProgramManifest
@@ -85,6 +87,35 @@ def _tree_digest(root: Path) -> str:
         digest.update(path.relative_to(root).as_posix().encode("ascii"))
         digest.update(path.read_bytes())
     return digest.hexdigest()
+
+
+def test_compiler_digest_tracks_only_reachable_generation_code(tmp_path: Path) -> None:
+    fixture = tmp_path / "repository"
+    shutil.copytree(ROOT / "src/workflow", fixture / "src/workflow")
+    dependencies = {
+        path.relative_to(fixture).as_posix()
+        for path in _compiler_dependencies(fixture)
+    }
+    assert "src/workflow/verification/elementwise_compiler/compiler.py" in dependencies
+    assert "src/workflow/verification/elementwise_compiler/emit.py" in dependencies
+    assert "src/workflow/verification/lean_backend/intrinsic_library.py" in dependencies
+    assert "src/workflow/verification/elementwise_compiler/proof.py" not in dependencies
+    assert (
+        "src/workflow/verification/elementwise_compiler/program_reviews.py"
+        not in dependencies
+    )
+
+    original = _compiler_digest(fixture)
+    proof = fixture / "src/workflow/verification/elementwise_compiler/proof.py"
+    proof.write_text(proof.read_text(encoding="utf-8") + "\n# unrelated\n", encoding="utf-8")
+    assert _compiler_digest(fixture) == original
+
+    emitter = fixture / "src/workflow/verification/elementwise_compiler/emit.py"
+    emitter.write_text(
+        emitter.read_text(encoding="utf-8") + "\n# generation change\n",
+        encoding="utf-8",
+    )
+    assert _compiler_digest(fixture) != original
 
 
 def test_real_fixed_tail_pair_generates_complete_deterministic_stack(

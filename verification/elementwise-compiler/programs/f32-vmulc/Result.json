@@ -1,0 +1,14 @@
+{
+  "artifact_kind": "elementwise-result",
+  "checker_sha256": "469ac021841b5ec89202a377dc4e558ac2175a1bad6f2a0e58c9fa797fc9683c",
+  "counterexample_sha256": null,
+  "detail": "Lean accepted the frozen value claim and proof policy",
+  "end_closure_sha256": "24f0ec456ea58fc173a7ad7009fd29983cdc8f010662005c03e06088c382584c",
+  "proof_sha256": "56a98ab053661c818c09fad2dec8fe3e78d9c4af36b7257d20a13c52c3ea9342",
+  "proof_task_sha256": "98df31baf5c2270fd6c2e850740cb27d5f01fb622da3265794e8b5427413450d",
+  "result_sha256": "377db97738cb8e8a2257b055252264baff7b1d3f259f113495ee0335dc18b57e",
+  "schema_version": 2,
+  "start_closure_sha256": "24f0ec456ea58fc173a7ad7009fd29983cdc8f010662005c03e06088c382584c",
+  "status": "verified(value)",
+  "toolchain_sha256": "1ce7d3879378e751ecae7bb5fd76c57bde9e4957e69b20b4693d759eb34a8c6d"
+}

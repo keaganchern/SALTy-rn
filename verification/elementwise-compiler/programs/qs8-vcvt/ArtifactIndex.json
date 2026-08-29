@@ -144,7 +144,7 @@
   ],
   "cross_phase_audit": {
     "path": "CrossPhaseAudit.json",
-    "sha256": "e2ad125b0f366440bbf39ba99f0681671e6b81b7ea241c28aeef25a03ce38616",
+    "sha256": "4ba56fd38c15af6f87428548e365fe1c47f8b4dfe79c5ca295e2e579b71bf887",
     "status": "not-applicable"
   },
   "external_condition": {
@@ -154,22 +154,22 @@
   },
   "manifest": {
     "path": "ProgramManifest.json",
-    "sha256": "da619f2020e07de9e8a1f53fe04c759a281ec904e1fcbde80b6f3cfe9835f168"
+    "sha256": "324c3e333f902700513a6d926affa582facdf629b006a6d9eb61d7de3e314ac2"
   },
   "models": {
     "kind": "models",
-    "parent_sha256": "da619f2020e07de9e8a1f53fe04c759a281ec904e1fcbde80b6f3cfe9835f168",
+    "parent_sha256": "324c3e333f902700513a6d926affa582facdf629b006a6d9eb61d7de3e314ac2",
     "path": "Models.lean",
-    "sha256": "7c1e57d7b335987b3fa23b41eb85bb89b31d4d76ba320e66a86f64894645949e"
+    "sha256": "3cfac492dd1d5e597c6fd7bc452fb6047eb11180687ed4908f4620c76eb2f5a4"
   },
   "namespace": "SALT.Corpus.qs8vcvt",
   "schema_version": 2,
   "spec": {
     "kind": "spec",
-    "parent_sha256": "7c1e57d7b335987b3fa23b41eb85bb89b31d4d76ba320e66a86f64894645949e",
+    "parent_sha256": "3cfac492dd1d5e597c6fd7bc452fb6047eb11180687ed4908f4620c76eb2f5a4",
     "path": "Spec.lean",
-    "sha256": "1035aed32c3ff2e51baa3a11914f40f466d3d8a849a0991eed08e5e58d1b8f64"
+    "sha256": "ae3f70ee0aa6bf66ebff87d0e5a2be7cba3213fdca185417171e61f942ddf1d4"
   },
-  "stack_sha256": "45ed9dd98acde390f8d838ca0520d999464f9dec3ecbd8def22d5ac3515ad7a7",
+  "stack_sha256": "d99b4e3634d3d40dce1618bcf6f581f1fad3aee967c387f8a262017a53d90984",
   "target_claim": "completeValueEquivalenceClaim"
 }
