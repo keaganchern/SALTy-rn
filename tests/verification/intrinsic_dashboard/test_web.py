@@ -253,7 +253,11 @@ def test_elementwise_frontend_uses_exact_schema_v3_artifact_graph_fields() -> No
     assert "capability.review_sha256" in script
     assert "capability.id" in script
     assert "capability.function_type" in script
+    assert "capability.review_family" in script
+    assert "capability.architecture_conditions" in script
     assert "capability.used" in script
+    assert "primary_source_audited_intrinsic_variants" in script
+    assert "conditioned_intrinsic_variants" in script
     assert "reviewed_registry_intrinsic_variants" in script
     assert "reviewed_used_intrinsic_variants" in script
     assert "Reusable intrinsic pieces" in html

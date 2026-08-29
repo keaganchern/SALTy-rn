@@ -98,3 +98,27 @@ def test_structural_implementation_digest_binds_context_specific_lowering(
     case_emitter.write_text("lane selected\n", encoding="utf-8")
 
     assert _implementation_digest(tmp_path, spec) != before
+
+
+def test_semantic_implementation_digest_binds_transitive_lean_import(
+    tmp_path: Path,
+) -> None:
+    backend = tmp_path / "src/workflow/verification/lean_backend"
+    backend.mkdir(parents=True)
+    (backend / "emit_lean.py").write_text("generic\n", encoding="utf-8")
+    (backend / "case_emit.py").write_text("calls\n", encoding="utf-8")
+    lean = tmp_path / "src/verification_bw/lean/SALT/Intrinsics"
+    lean.mkdir(parents=True)
+    (lean / "Neon.lean").write_text(
+        "import SALT.Intrinsics.FP32\ndef vaddq_f32 := 0\n", encoding="utf-8"
+    )
+    shared = lean / "FP32.lean"
+    shared.write_text("def add := 0\n", encoding="utf-8")
+    spec = next(
+        item for item in ELEMENTWISE_SHARED_SPECS if item.spelling == "vaddq_f32"
+    )
+
+    before = _implementation_digest(tmp_path, spec)
+    shared.write_text("def add := 1\n", encoding="utf-8")
+
+    assert _implementation_digest(tmp_path, spec) != before

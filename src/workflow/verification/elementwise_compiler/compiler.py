@@ -7,6 +7,7 @@ import hashlib
 import json
 import os
 import re
+import shutil
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
@@ -177,20 +178,33 @@ def _write_capabilities(
         recognition.layout_capability.to_record(),
         *(capability.to_record() for capability in recognition.schedule_capabilities),
     ]
+    output.mkdir(parents=True, exist_ok=True)
+    destination = output / "Capabilities"
+    staged = Path(tempfile.mkdtemp(prefix=".Capabilities.", dir=output))
     records: list[dict[str, str]] = []
-    for document in sorted(documents, key=lambda item: str(item["capability_id"])):
-        digest = str(document["capability_sha256"])
-        relative = Path("Capabilities") / _capability_filename(
-            str(document["capability_id"]), digest
-        )
-        _atomic_write(output / relative, canonical_json(document, pretty=True))
-        records.append(
-            {
-                "capability_id": str(document["capability_id"]),
-                "path": relative.as_posix(),
-                "sha256": digest,
-            }
-        )
+    try:
+        for document in sorted(
+            documents, key=lambda item: str(item["capability_id"])
+        ):
+            digest = str(document["capability_sha256"])
+            filename = _capability_filename(str(document["capability_id"]), digest)
+            relative = Path("Capabilities") / filename
+            _atomic_write(staged / filename, canonical_json(document, pretty=True))
+            records.append(
+                {
+                    "capability_id": str(document["capability_id"]),
+                    "path": relative.as_posix(),
+                    "sha256": digest,
+                }
+            )
+        if destination.exists():
+            if not destination.is_dir():
+                raise CompilerError("Capabilities output is not a directory")
+            shutil.rmtree(destination)
+        staged.replace(destination)
+    finally:
+        if staged.exists():
+            shutil.rmtree(staged)
     return tuple(records)
 
 

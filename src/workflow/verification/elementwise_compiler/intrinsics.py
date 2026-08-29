@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import re
 from collections import defaultdict
 from dataclasses import dataclass, replace
 from pathlib import Path
@@ -150,18 +151,47 @@ def _implementation_digest(
     repository_root: Path,
     spec: IntrinsicSpec,
 ) -> str:
-    relatives = [
-        "src/workflow/verification/lean_backend/emit_lean.py",
-        "src/workflow/verification/lean_backend/case_emit.py",
-    ]
+    backend_root = repository_root / "src/workflow/verification/lean_backend"
+    relatives = {
+        path.relative_to(repository_root).as_posix()
+        for path in backend_root.rglob("*.py")
+    }
+    if not relatives:
+        raise IntrinsicResolutionError(
+            "intrinsic-missing", "Lean backend implementation package is absent"
+        )
+
+    def add_lean_import_closure(relative: str) -> None:
+        lean_root = repository_root / "src/verification_bw/lean"
+        pending = [relative]
+        while pending:
+            current = pending.pop()
+            if current in relatives:
+                continue
+            path = repository_root / current
+            if not path.is_file():
+                raise IntrinsicResolutionError(
+                    "intrinsic-missing",
+                    f"capability implementation file is absent: {current}",
+                )
+            relatives.add(current)
+            for line in path.read_text(encoding="utf-8").splitlines():
+                matched = re.fullmatch(r"\s*import\s+(.+?)\s*", line)
+                if matched is None:
+                    continue
+                for module in matched.group(1).split():
+                    imported = lean_root / (module.replace(".", "/") + ".lean")
+                    if imported.is_file():
+                        pending.append(imported.relative_to(repository_root).as_posix())
+
     if isinstance(spec, SemanticIntrinsic):
-        relatives.append(
+        add_lean_import_closure(
             "src/verification_bw/lean/SALT/Intrinsics/Neon.lean"
             if spec.architecture is BackendArchitecture.NEON
             else "src/verification_bw/lean/SALT/Intrinsics/RVV.lean"
         )
     elif isinstance(spec, ScheduleIntrinsic):
-        relatives.append("src/verification_bw/lean/SALT/Kernel/Schedule.lean")
+        add_lean_import_closure("src/verification_bw/lean/SALT/Kernel/Schedule.lean")
     records = []
     for relative in sorted(relatives):
         path = repository_root / relative
@@ -201,6 +231,8 @@ def _capability(
             capability.implementation_sha256,
         )
     )
+    if review is not None and review.schema_version != 2:
+        review = None
     return (
         capability
         if review is None

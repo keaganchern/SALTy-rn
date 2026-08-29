@@ -3,128 +3,128 @@
   "capabilities": [
     {
       "capability_id": "intrinsic:neon:vdupq_n_s16:357a3474c075780c",
-      "path": "Capabilities/intrinsic_neon_vdupq_n_s16_357a3474c075780c-a19541058f700290.json",
-      "sha256": "a19541058f7002901dcfd4fba011dd68384f2f9a5c712ae60d86e9f2b710ced9"
+      "path": "Capabilities/intrinsic_neon_vdupq_n_s16_357a3474c075780c-c3cd3ec4704facd6.json",
+      "sha256": "c3cd3ec4704facd6e05f1ecc1ea932b753e85f830adfa16efda55b572af0c624"
     },
     {
       "capability_id": "intrinsic:neon:vext_s8:eb751dd988e480fd",
-      "path": "Capabilities/intrinsic_neon_vext_s8_eb751dd988e480fd-007c749f8d302247.json",
-      "sha256": "007c749f8d302247d43f89e28a842a4ed91a8c44553de30785ae079bcb77b9ea"
+      "path": "Capabilities/intrinsic_neon_vext_s8_eb751dd988e480fd-cb678dcd3f8d0603.json",
+      "sha256": "cb678dcd3f8d0603fea996acd9482e398c801115786f553557255278ffe6aed8"
     },
     {
       "capability_id": "intrinsic:neon:vld1_s8:c4ad6a6e3d1e0929",
-      "path": "Capabilities/intrinsic_neon_vld1_s8_c4ad6a6e3d1e0929-e2d210436afddc5f.json",
-      "sha256": "e2d210436afddc5fac3a8e6d66a1c71e73da97de828f9413ded030b97197dcbd"
+      "path": "Capabilities/intrinsic_neon_vld1_s8_c4ad6a6e3d1e0929-722bddf1d5e612f2.json",
+      "sha256": "722bddf1d5e612f231f55630e561da340641630d6376c5f0df728bc70f3f2ab0"
     },
     {
       "capability_id": "intrinsic:neon:vqaddq_s16:56f68ddf5abd35a7",
-      "path": "Capabilities/intrinsic_neon_vqaddq_s16_56f68ddf5abd35a7-f6cf0bc575b71fb9.json",
-      "sha256": "f6cf0bc575b71fb93604996afbe64bbb3cd2e8ac48f5fffbc8b5ca383117ff7a"
+      "path": "Capabilities/intrinsic_neon_vqaddq_s16_56f68ddf5abd35a7-6502e074543c1300.json",
+      "sha256": "6502e074543c13004db2f576147f734c6a6d533564e938f5cdc3976b94b3c5ee"
     },
     {
       "capability_id": "intrinsic:neon:vqmovn_s16:d425ebc0aea3e290",
-      "path": "Capabilities/intrinsic_neon_vqmovn_s16_d425ebc0aea3e290-ed0b51474fad3a7a.json",
-      "sha256": "ed0b51474fad3a7adc1c452d3e8fb8fc2483981cbc3085de20aa3d273e8623b9"
+      "path": "Capabilities/intrinsic_neon_vqmovn_s16_d425ebc0aea3e290-7d6f218f263efcbd.json",
+      "sha256": "7d6f218f263efcbd1c240d17343022c1a2ae809e9c2380bed44635e382417036"
     },
     {
       "capability_id": "intrinsic:neon:vqrdmulhq_s16:c1d2736207f1cec3",
-      "path": "Capabilities/intrinsic_neon_vqrdmulhq_s16_c1d2736207f1cec3-1d2e7ecc6f044cbb.json",
-      "sha256": "1d2e7ecc6f044cbb1d94071c402ae6f04e60a726ed283ef8647d49f7c09fc3d9"
+      "path": "Capabilities/intrinsic_neon_vqrdmulhq_s16_c1d2736207f1cec3-f88cac2fa78e5728.json",
+      "sha256": "f88cac2fa78e572823eb2cb87acaa3c144564dba3f46c10f0696043028e2de30"
     },
     {
       "capability_id": "intrinsic:neon:vreinterpret_u16_s8:013785366921195d",
-      "path": "Capabilities/intrinsic_neon_vreinterpret_u16_s8_013785366921195d-c0e9e857fdb5b358.json",
-      "sha256": "c0e9e857fdb5b3589f3f5203fe19334d757731e7d4d24ad18e5ea84b3b59f98b"
+      "path": "Capabilities/intrinsic_neon_vreinterpret_u16_s8_013785366921195d-b9731dbbcf5f7409.json",
+      "sha256": "b9731dbbcf5f7409f4aa759b786775284491e39a7a802d238221f6afafe7cc82"
     },
     {
       "capability_id": "intrinsic:neon:vreinterpret_u32_s8:214e620a67560b2e",
-      "path": "Capabilities/intrinsic_neon_vreinterpret_u32_s8_214e620a67560b2e-606accb2119e8f08.json",
-      "sha256": "606accb2119e8f084d70590fea3e855eb40ffb6a3201ef811007830aa5c242b2"
+      "path": "Capabilities/intrinsic_neon_vreinterpret_u32_s8_214e620a67560b2e-cbf57b581e396bfa.json",
+      "sha256": "cbf57b581e396bfa9b5fa87e10083e860b9c12b605d891463e43e0fb407eb9f1"
     },
     {
       "capability_id": "intrinsic:neon:vshlq_n_s16:64ec4d7d25af9130",
-      "path": "Capabilities/intrinsic_neon_vshlq_n_s16_64ec4d7d25af9130-ceebcb18d0734dfd.json",
-      "sha256": "ceebcb18d0734dfd8c9457feeba59ae1f3a44ade8edc59be1147812a17197ff4"
+      "path": "Capabilities/intrinsic_neon_vshlq_n_s16_64ec4d7d25af9130-622f306680ffc7b0.json",
+      "sha256": "622f306680ffc7b0fcbfe67cd3fae0796538afedb204e1e44937ed74f210ab99"
     },
     {
       "capability_id": "intrinsic:neon:vst1_lane_s8:47ce1b8af1f141f5",
-      "path": "Capabilities/intrinsic_neon_vst1_lane_s8_47ce1b8af1f141f5-14d367304a5cbfad.json",
-      "sha256": "14d367304a5cbfaddac0d4e7d9d9a13daafdddace06c2229f962044930a7121c"
+      "path": "Capabilities/intrinsic_neon_vst1_lane_s8_47ce1b8af1f141f5-ad5c5f0a3173cdb1.json",
+      "sha256": "ad5c5f0a3173cdb1b3a5bbe3a093a4b38ad39cb7251ed62fb1128da28286bd2b"
     },
     {
       "capability_id": "intrinsic:neon:vst1_lane_u16:744182d13adcf78c",
-      "path": "Capabilities/intrinsic_neon_vst1_lane_u16_744182d13adcf78c-fd5297bf826fcdf0.json",
-      "sha256": "fd5297bf826fcdf01bd6ad6bd1c4933294faeca1a64c2efbe6dfadafb07175b3"
+      "path": "Capabilities/intrinsic_neon_vst1_lane_u16_744182d13adcf78c-c675e26dbe7082f9.json",
+      "sha256": "c675e26dbe7082f9868bd15f504fed5f5d298e84c7a8d0e5ab1ed15a41107c9c"
     },
     {
       "capability_id": "intrinsic:neon:vst1_lane_u32:19ade562f256fb36",
-      "path": "Capabilities/intrinsic_neon_vst1_lane_u32_19ade562f256fb36-d79df70d5be1239e.json",
-      "sha256": "d79df70d5be1239e257a2686900ab9669d81beb35e06603d0560791c3081f6f3"
+      "path": "Capabilities/intrinsic_neon_vst1_lane_u32_19ade562f256fb36-1d1420d0ca60acef.json",
+      "sha256": "1d1420d0ca60acefaa84df484caad17dfe8ebbc7901cef9b7da91624b3e7b0ea"
     },
     {
       "capability_id": "intrinsic:neon:vst1_s8:5c2ff856d9c3b799",
-      "path": "Capabilities/intrinsic_neon_vst1_s8_5c2ff856d9c3b799-affebd0dabd4468d.json",
-      "sha256": "affebd0dabd4468d7ceb8ae760be627fcd6f4537150e0c3585562fb19fcba807"
+      "path": "Capabilities/intrinsic_neon_vst1_s8_5c2ff856d9c3b799-5993891eb45b1147.json",
+      "sha256": "5993891eb45b114710900bcbea223b3fd0fc6cfbc848e5840a3fc5364eb79bba"
     },
     {
       "capability_id": "intrinsic:neon:vsubw_s8:8347dcbc87465daf",
-      "path": "Capabilities/intrinsic_neon_vsubw_s8_8347dcbc87465daf-d3b2ca0d453a8fb3.json",
-      "sha256": "d3b2ca0d453a8fb3d3e4fd8fe2ef8154579725574f3e4a32ebf405c48fb81186"
+      "path": "Capabilities/intrinsic_neon_vsubw_s8_8347dcbc87465daf-59c98df5b6fce43f.json",
+      "sha256": "59c98df5b6fce43faebda1175ce99b98e553c72c590c7f270ceed243d993cb61"
     },
     {
       "capability_id": "intrinsic:rvv:__riscv_vle8_v_i8m2:b743717140cd585f",
-      "path": "Capabilities/intrinsic_rvv___riscv_vle8_v_i8m2_b743717140cd585f-5871c5b4901ee082.json",
-      "sha256": "5871c5b4901ee08271d312a69b470695048638e70eac41a5bbb6c00ec30fbabc"
+      "path": "Capabilities/intrinsic_rvv___riscv_vle8_v_i8m2_b743717140cd585f-b2172613b5044056.json",
+      "sha256": "b2172613b504405680095ef3389b94c16c6608c7cb33455373cd7e4647d188ba"
     },
     {
       "capability_id": "intrinsic:rvv:__riscv_vnclip_wx_i16m4:2171a217d19c2fd5",
-      "path": "Capabilities/intrinsic_rvv___riscv_vnclip_wx_i16m4_2171a217d19c2fd5-a487af79fbe09c0f.json",
-      "sha256": "a487af79fbe09c0fcf46e5aa1166cbf4525636edcbab3adb28bae2c08fad4a86"
+      "path": "Capabilities/intrinsic_rvv___riscv_vnclip_wx_i16m4_2171a217d19c2fd5-c965950a534b0b73.json",
+      "sha256": "c965950a534b0b73135a95ad62228c59244dfdfc79aed0e4e57d56d3e6366ef6"
     },
     {
       "capability_id": "intrinsic:rvv:__riscv_vnclip_wx_i8m2:9fcd91c7cbc42b15",
-      "path": "Capabilities/intrinsic_rvv___riscv_vnclip_wx_i8m2_9fcd91c7cbc42b15-ac0b1066f692360c.json",
-      "sha256": "ac0b1066f692360cedd49c7d809ae1bfc3b1db69533ba267a623c8daa1b92da2"
+      "path": "Capabilities/intrinsic_rvv___riscv_vnclip_wx_i8m2_9fcd91c7cbc42b15-362bd7a66bf7985c.json",
+      "sha256": "362bd7a66bf7985cf0a79120f445391a20e3aec39f8904767690db019141ceec"
     },
     {
       "capability_id": "intrinsic:rvv:__riscv_vrsub_vx_i16m4:29d480502f69a7e7",
-      "path": "Capabilities/intrinsic_rvv___riscv_vrsub_vx_i16m4_29d480502f69a7e7-758f0e92279f0ec8.json",
-      "sha256": "758f0e92279f0ec8dba40e910bb80b1ec2cc7501ce9fba40d03e06cb61546407"
+      "path": "Capabilities/intrinsic_rvv___riscv_vrsub_vx_i16m4_29d480502f69a7e7-01978da5c2d4b2ab.json",
+      "sha256": "01978da5c2d4b2ab43f5a87f4d69e62ba3c75222c229dd1c40575668f21b47c5"
     },
     {
       "capability_id": "intrinsic:rvv:__riscv_vsadd_vx_i16m4:70bd65da4b49dc7b",
-      "path": "Capabilities/intrinsic_rvv___riscv_vsadd_vx_i16m4_70bd65da4b49dc7b-7eac2b62830c6a2d.json",
-      "sha256": "7eac2b62830c6a2d98971caf05bfee1b19cc6370cebe111e9b2aa9149c651e2d"
+      "path": "Capabilities/intrinsic_rvv___riscv_vsadd_vx_i16m4_70bd65da4b49dc7b-63803c81e124b18f.json",
+      "sha256": "63803c81e124b18f4013198ca2a9cbcba89a82445285794bee7a87192c280ae5"
     },
     {
       "capability_id": "intrinsic:rvv:__riscv_vse8_v_i8m2:1003ddba74c9c720",
-      "path": "Capabilities/intrinsic_rvv___riscv_vse8_v_i8m2_1003ddba74c9c720-c92503284b86bc59.json",
-      "sha256": "c92503284b86bc591b6f03e312fb3b44d01d8a118ce1be2d8c6f76481cfb0593"
+      "path": "Capabilities/intrinsic_rvv___riscv_vse8_v_i8m2_1003ddba74c9c720-9799e9f034fe6947.json",
+      "sha256": "9799e9f034fe69475514e63c508bee2f3ae5e2751d16329af288f1a455e3d05c"
     },
     {
       "capability_id": "intrinsic:rvv:__riscv_vsetvl_e8m2:07727cd6c1bd58f2",
-      "path": "Capabilities/intrinsic_rvv___riscv_vsetvl_e8m2_07727cd6c1bd58f2-23770b6750caa2ae.json",
-      "sha256": "23770b6750caa2aebb53d14acc271b52a0db7474489dbb249ce2c996cfe7f581"
+      "path": "Capabilities/intrinsic_rvv___riscv_vsetvl_e8m2_07727cd6c1bd58f2-70000a4ac980e8ce.json",
+      "sha256": "70000a4ac980e8ce9081531ea21f31e1761976ab70c226f61d0477af04d02042"
     },
     {
       "capability_id": "intrinsic:rvv:__riscv_vsext_vf2_i16m4:b2617b3c9bec4bed",
-      "path": "Capabilities/intrinsic_rvv___riscv_vsext_vf2_i16m4_b2617b3c9bec4bed-2e4703bb101430b2.json",
-      "sha256": "2e4703bb101430b25715cc976f4d313d521b8551a85b2c25dd9e874e8d284f9a"
+      "path": "Capabilities/intrinsic_rvv___riscv_vsext_vf2_i16m4_b2617b3c9bec4bed-02da9c74bcb2eb55.json",
+      "sha256": "02da9c74bcb2eb55df5bbcde16e0b853cb9d687eea387501e4e58ab9657e538c"
     },
     {
       "capability_id": "intrinsic:rvv:__riscv_vsll_vx_i16m4:eeca46d75ed06b30",
-      "path": "Capabilities/intrinsic_rvv___riscv_vsll_vx_i16m4_eeca46d75ed06b30-9cabd5bbaa83f4f8.json",
-      "sha256": "9cabd5bbaa83f4f8fa5f5e42880ca97e5a17dc174b365b2613d72ac7c60f4cab"
+      "path": "Capabilities/intrinsic_rvv___riscv_vsll_vx_i16m4_eeca46d75ed06b30-c69a2f97e66d4b85.json",
+      "sha256": "c69a2f97e66d4b859411e977d1054f4830af6a1b882116de402f473758f31e1d"
     },
     {
       "capability_id": "intrinsic:rvv:__riscv_vsll_vx_i32m8:94e54bc054ee6132",
-      "path": "Capabilities/intrinsic_rvv___riscv_vsll_vx_i32m8_94e54bc054ee6132-a1520e98a71308b4.json",
-      "sha256": "a1520e98a71308b4b364f2341993a86921a489060e4c3e4d8825b717c59ed198"
+      "path": "Capabilities/intrinsic_rvv___riscv_vsll_vx_i32m8_94e54bc054ee6132-a8423eddfc52c098.json",
+      "sha256": "a8423eddfc52c09884c66f41585826fd6c4e6217abc962fcc08980201c6eaedb"
     },
     {
       "capability_id": "intrinsic:rvv:__riscv_vwmul_vx_i32m8:5b060cb9b428d699",
-      "path": "Capabilities/intrinsic_rvv___riscv_vwmul_vx_i32m8_5b060cb9b428d699-4e3ab7edfc8a404f.json",
-      "sha256": "4e3ab7edfc8a404f11a3df796b8c7884ed5ab9ba4e9085b5ec750bce944c9971"
+      "path": "Capabilities/intrinsic_rvv___riscv_vwmul_vx_i32m8_5b060cb9b428d699-4fbb6e45c83da2ac.json",
+      "sha256": "4fbb6e45c83da2ac08b459bb61f2a1d03935ff87f39e95d10ed19b8da498d262"
     },
     {
       "capability_id": "layout:scalar-lane",
@@ -144,7 +144,7 @@
   ],
   "cross_phase_audit": {
     "path": "CrossPhaseAudit.json",
-    "sha256": "4e017afbbe325823ec771444920612cd20e8203412f58f752901764dd095471b",
+    "sha256": "e2ad125b0f366440bbf39ba99f0681671e6b81b7ea241c28aeef25a03ce38616",
     "status": "not-applicable"
   },
   "external_condition": {
@@ -154,22 +154,22 @@
   },
   "manifest": {
     "path": "ProgramManifest.json",
-    "sha256": "0e087e9285d5654a263330d2c12c5890c90850c23283648d2a2e590a68c2cb15"
+    "sha256": "da619f2020e07de9e8a1f53fe04c759a281ec904e1fcbde80b6f3cfe9835f168"
   },
   "models": {
     "kind": "models",
-    "parent_sha256": "0e087e9285d5654a263330d2c12c5890c90850c23283648d2a2e590a68c2cb15",
+    "parent_sha256": "da619f2020e07de9e8a1f53fe04c759a281ec904e1fcbde80b6f3cfe9835f168",
     "path": "Models.lean",
-    "sha256": "6f7c09edbce6e63ad6dc5309d79dd61b97bbd8262b038d94108060843464a64a"
+    "sha256": "7c1e57d7b335987b3fa23b41eb85bb89b31d4d76ba320e66a86f64894645949e"
   },
   "namespace": "SALT.Corpus.qs8vcvt",
   "schema_version": 2,
   "spec": {
     "kind": "spec",
-    "parent_sha256": "6f7c09edbce6e63ad6dc5309d79dd61b97bbd8262b038d94108060843464a64a",
+    "parent_sha256": "7c1e57d7b335987b3fa23b41eb85bb89b31d4d76ba320e66a86f64894645949e",
     "path": "Spec.lean",
-    "sha256": "0dd84fa885ffe4daf92a7f0b06289b1811bc99586f5be2010dbec8b338e884df"
+    "sha256": "1035aed32c3ff2e51baa3a11914f40f466d3d8a849a0991eed08e5e58d1b8f64"
   },
-  "stack_sha256": "5175a1d4b077804a27378bd1bf4c8c7814a76141e158c5397d170ba1275b4aa6",
+  "stack_sha256": "45ed9dd98acde390f8d838ca0520d999464f9dec3ecbd8def22d5ac3515ad7a7",
   "target_claim": "completeValueEquivalenceClaim"
 }

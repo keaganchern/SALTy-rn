@@ -475,3 +475,33 @@ separate quantities. For the current corpus these are 178 configured spellings o
 186 dependencies, 189 exact configured variants, and 180 exact variants used by
 the nineteen scalar programs. Review and Lean-check progress is counted per exact
 variant; a spelling-level aggregate cannot satisfy an exact review gate.
+
+## EC-039: Exact Review Subjects Bind Official Prototypes and Explicit Scope
+
+**Status:** Accepted and implemented, 2026-08-29.
+
+An exact intrinsic review subject is stable across corpus usage and review
+publication, but changes when its descriptor, transitive implementation closure,
+official prototype, immediate constraints, value-claim scope, or architecture
+conditions change. Usage/program lists are reporting metadata and do not enter the
+stable audit-subject digest; this avoids a circular review/capability identity.
+
+Neon exact signatures bind the pinned Arm ACLE database. RVV exact signatures
+bind the pinned generated `intrinsic_funcs.adoc` prototype by complete return and
+parameter types; official API-test calls and ISA selectors remain additional
+evidence. Call arity alone is insufficient for an `exact_source_signature` pass.
+
+## EC-040: Scoped Reviews Require Their Audit Parents
+
+**Status:** Accepted and implemented, 2026-08-29.
+
+Schema-v2 intrinsic reviews bind `audit_variant_sha256`, claim scope, and sorted
+architecture conditions. The production graph must reject these reviews when
+`IntrinsicAudit.json` or `IntrinsicReviewPlan.json` is missing, changed, or does
+not cover every used exact subject. The internal audit-bootstrap projection may
+omit these parents only while hiding all review state.
+
+Review execution output is content-addressed. Refresh it through a staged file:
+run checks while the previous evidence remains valid, atomically install the new
+passing output, then immediately republish reviews. Tests must never pass by
+temporarily ignoring stale review bindings.

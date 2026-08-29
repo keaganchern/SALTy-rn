@@ -86,7 +86,7 @@ def vmaxu_vx_u32 (value : List (BitVec 32))
   value.map (fun lane => if lane.toNat >= scalar.toNat then lane else scalar)
 
 def vnsrl_wx_u16 (value : List (BitVec 32)) (shift : Nat) : List (BitVec 16) :=
-  value.map (fun lane => (lane.ushiftRight shift).truncate 16)
+  value.map (fun lane => (lane.ushiftRight (shift % 32)).truncate 16)
 
 def vand_vx_u16 (value : List (BitVec 16))
     (scalar : BitVec 16) : List (BitVec 16) :=
@@ -266,15 +266,15 @@ def vnclipUnsigned {sourceWidth : Nat} (destinationWidth : Nat)
 
 /-- Signed 32-to-16 narrowing with explicit shift and numeric `vxrm` operands. -/
 def vnclip_wx_i16_mode (a : List (BitVec 32)) (shift mode : Nat) : List (BitVec 16) :=
-  a.map (vnclipSigned 16 (VXRoundingMode.decode mode) shift)
+  a.map (vnclipSigned 16 (VXRoundingMode.decode mode) (shift % 32))
 
 /-- Signed 16-to-8 narrowing with explicit shift and numeric `vxrm` operands. -/
 def vnclip_wx_i8_mode (a : List (BitVec 16)) (shift mode : Nat) : List (BitVec 8) :=
-  a.map (vnclipSigned 8 (VXRoundingMode.decode mode) shift)
+  a.map (vnclipSigned 8 (VXRoundingMode.decode mode) (shift % 16))
 
 /-- Unsigned 16-to-8 narrowing with explicit shift and numeric `vxrm` operands. -/
 def vnclipu_wx_u8_mode (a : List (BitVec 16)) (shift mode : Nat) : List (BitVec 8) :=
-  a.map (vnclipUnsigned 8 (VXRoundingMode.decode mode) shift)
+  a.map (vnclipUnsigned 8 (VXRoundingMode.decode mode) (shift % 16))
 
 def vnclip_wx_i16_rnu (a : List (BitVec 32)) (shift : Nat) : List (BitVec 16) :=
   vnclip_wx_i16_mode a shift 0
@@ -312,14 +312,16 @@ def vrsub_vx_i16 (a : List (BitVec 16)) (scalar : BitVec 16) : List (BitVec 16) 
 
 /-- Non-saturating vector-scalar left shifts. -/
 def vsll_vx_i16 (a : List (BitVec 16)) (shift : Nat) : List (BitVec 16) :=
-  a.map (fun x => x.shiftLeft shift)
+  a.map (fun x => x.shiftLeft (shift % 16))
 
 def vsll_vx_i32 (a : List (BitVec 32)) (shift : Nat) : List (BitVec 32) :=
-  a.map (fun x => x.shiftLeft shift)
+  a.map (fun x => x.shiftLeft (shift % 32))
 
 /-- Signed arithmetic right shift with explicit numeric `vxrm` mode. -/
 def vssra_vx_i32_mode (a : List (BitVec 32)) (shift mode : Nat) : List (BitVec 32) :=
-  a.map (fun x => BitVec.ofInt 32 (roundShiftSigned (VXRoundingMode.decode mode) x shift))
+  a.map (fun x =>
+    BitVec.ofInt 32
+      (roundShiftSigned (VXRoundingMode.decode mode) x (shift % 32)))
 
 /-- Signed widening 16-by-16 multiplication into exact 32-bit products. -/
 def vwmul_vx_i32 (a : List (BitVec 16)) (scalar : BitVec 16) : List (BitVec 32) :=
@@ -361,8 +363,8 @@ def vminu_vx_u8 (a : List (BitVec 8)) (scalar : BitVec 8) : List (BitVec 8) :=
   a.map (fun x => if x.toNat <= scalar.toNat then x else scalar)
 
 /-- Current QU8 kernels encode a positive value as a right shift and a
-    non-positive value as a left shift by its negation. Shift counts are
-    expected to be in the instruction's effective range. -/
+    non-positive value as a left shift by its negation. The instruction wrappers
+    above apply the architectural SEW-dependent shift mask. -/
 def vshift_signed_i32_rnu (a : List (BitVec 32))
     (signedShift : BitVec 32) : List (BitVec 32) :=
   if signedShift.toInt > 0 then vssra_vx_i32_mode a signedShift.toNat 0

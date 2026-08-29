@@ -6,7 +6,7 @@ import SALT.Kernel.ElementwiseFamily
 
 namespace SALT.Corpus.f32vmul
 
-def programManifestSha256 : String := "7dd1088c01782333dc85e2c93d0a7834c45ab595cdb5920d3204c7908db47327"
+def programManifestSha256 : String := "71a4c76bede09ff750a8f5a101a109f3e8f5395d8bd2b784d9cab25160d1c036"
 def consumedEffectsSha256 : String := "778a3c95a69a32064325e308b2762010f0d4132971b0b5dd7315a7e94220e284"
 
 def neonSourceSha256 : String :=
@@ -20,7 +20,7 @@ def rvvPreprocessedSha256 : String :=
 def parseFacadeSha256 : String :=
   "829b8b0358b2a31d50a784422681ac9e821a4369619812194f800dc63287c4bc"
 def registrySha256 : String :=
-  "c02810c995532002967a7b67fcb880c4f1b10f62c268bc3c369901aa5246bc51"
+  "a228a86ebf041b531db00d52bac519f99b03905f6db18d0e3cef0c281fa05935"
 
 structure f32vmulParams where
   deriving Repr, DecidableEq

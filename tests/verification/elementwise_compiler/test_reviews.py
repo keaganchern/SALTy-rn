@@ -56,6 +56,8 @@ def _review(policy_sha256: str = E) -> IntrinsicReview:
             ),
         ),
         detail="Exact split-vector signature and low-half lane order approved.",
+        audit_variant_sha256=E,
+        claim_scope="pure-value-model",
     )
 
 
@@ -86,18 +88,9 @@ def test_review_loader_rechecks_policy_hash_and_rejects_duplicates(tmp_path: Pat
     check_output = tmp_path / "notes/reviews/evidence/descriptor-tests.txt"
     check_output.parent.mkdir(parents=True)
     check_output.write_bytes(b"")
-    review = IntrinsicReview(
-        review.architecture,
-        review.spelling,
-        review.function_type,
-        review.argument_count,
-        review.descriptor_sha256,
-        review.implementation_sha256,
-        review.policy_path,
-        review.policy_sha256,
-        review.reviewer,
-        review.evidence,
-        (
+    review = replace(
+        review,
+        checks=(
             ReviewCheck(
                 "descriptor-tests",
                 "pytest -q tests",
@@ -105,7 +98,6 @@ def test_review_loader_rechecks_policy_hash_and_rejects_duplicates(tmp_path: Pat
                 hashlib.sha256(b"").hexdigest(),
             ),
         ),
-        review.detail,
     )
     (review_root / "first.json").write_text(
         canonical_json(review.to_record(), pretty=True), encoding="utf-8"
@@ -134,3 +126,34 @@ def test_review_record_rejects_non_passed_check() -> None:
 
     with pytest.raises(ElementwiseSchemaError, match="only passed"):
         IntrinsicReview.from_record(record)
+
+
+def test_review_scope_is_content_addressed_and_condition_consistent() -> None:
+    review = replace(
+        _review(),
+        claim_scope="pure-value-model-with-explicit-architecture-conditions",
+        architecture_conditions=("arm.fpcr.RMode=RN",),
+    )
+    assert IntrinsicReview.from_record(review.to_record()) == review
+
+    changed = review.to_record()
+    changed["architecture_conditions"] = []
+    changed["review_sha256"] = "0" * 64
+    with pytest.raises(ElementwiseSchemaError, match="claim scope disagrees"):
+        IntrinsicReview.from_record(changed)
+
+
+def test_legacy_review_parses_but_cannot_carry_audit_scope() -> None:
+    record = _review().to_record()
+    record["schema_version"] = 1
+    record.pop("audit_variant_sha256")
+    record.pop("claim_scope")
+    record.pop("architecture_conditions")
+    unsigned = dict(record)
+    unsigned.pop("review_sha256")
+    from workflow.verification.elementwise_compiler.schema import canonical_sha256
+
+    record["review_sha256"] = canonical_sha256(unsigned)
+    parsed = IntrinsicReview.from_record(record)
+    assert parsed.schema_version == 1
+    assert parsed.audit_variant_sha256 is None

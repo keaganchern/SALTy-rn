@@ -26,7 +26,7 @@ def sqrt (value : BitVec 32) : BitVec 32 :=
   toBits (Float32.sqrt (ofBits value))
 
 def abs (value : BitVec 32) : BitVec 32 :=
-  toBits (Float32.abs (ofBits value))
+  value &&& 0x7FFFFFFF
 
 def ofInt32 (value : BitVec 32) : BitVec 32 :=
   toBits (Float32.ofInt value.toInt)

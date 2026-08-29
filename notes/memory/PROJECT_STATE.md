@@ -238,20 +238,29 @@ the nineteen-program artifact closure. Exact capability and review identities bi
 the descriptor hash, so different typed descriptors with one spelling cannot
 share approval. Each of the 189 variants has a distinct dashboard row.
 
-**Confirmed current review state:** current implementation changes invalidate the
-older nine F32 review bindings as intended. Their records remain as historical
-evidence, but the generated registry honestly reports 0/189 reviewed and 0/180
-reviewed among variants used by the nineteen programs. A first independent M5
-audit returned `NO-GO` after finding the old spelling-level identity collision;
-after exact identities and schema-v3 counts were added, the same reviewer reran
-the corpus/graph/web checks and returned `GO`.
+**Confirmed current review state:** all 180 exact variants used by the nineteen
+scalar programs now carry distinct schema-v2 independent review records. The
+records bind official exact C prototypes, descriptor and transitive implementation
+hashes, pure-value claim scope, 23 explicit architecture-conditioned subjects,
+machine checks, policy, and reviewer report. The complete 189-variant registry
+therefore reports 180 reviewed and nine unused/unreviewed variants. The older nine
+schema-v1 F32 records moved to a historical directory and cannot satisfy the live
+loader.
 
-**Confirmed current validation:** fresh temporary-root Lean compilation audited
-all five retained legacy theorem types and found only `Classical.choice`,
-`Quot.sound`, and `propext`. The complete repository suite passes 418 tests. The
-default checked-in artifact root was cleanly regenerated: schema v3 reports 19
-scalar manifests, 189 unique exact variants, 180 used variants, and zero stale
-program nodes.
+The first M6 review returned `NO-GO` because RVV evidence proved only call arity
+and the graph could display scoped reviews without its audit parents. RVV now
+matches every exact official prototype in pinned `intrinsic_funcs.adoc`, and the
+default graph requires both the audit and review plan whenever schema-v2 records
+exist. The convergence review returned `GO (180/180)`.
+
+**Confirmed current validation:** the M6 review pack partitions 180 used exact
+subjects into twelve semantic families and machine-checks every subject. Focused
+validation passes 170 Python tests plus a fresh 46-job Lean build and seven edge
+targets. The default checked-in artifact root was regenerated with 19 scalar
+manifests, 189 unique exact variants, 180 used/reviewed/Lean-checked variants, 23
+conditioned variants, and zero stale program nodes. The complete repository suite
+passes 432 tests in this published-review state; it is rerun at each subsequent
+program-proof milestone.
 
 **Confirmed concrete false obligation:** `s8-vclamp`'s 64-byte Neon phase applies
 signed max-with-min and then min-with-max, while its 8-byte and tail phases apply
@@ -280,8 +289,8 @@ proof delegation. See `../elementwise-compiler/EXTERNAL_INPUT_AUDIT.md`.
 
 ## Immediate Objective
 
-Close the external-condition, cross-phase, and dashboard-authority gaps, then
-expand reviewed intrinsic capabilities through the artifact chain:
+With the external-condition, cross-phase, dashboard-authority, and exact intrinsic
+review gaps closed, advance each program through proof attempt and result review:
 
 ```text
 registered intrinsics/layout/families + discovered C pair

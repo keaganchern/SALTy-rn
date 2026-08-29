@@ -615,3 +615,32 @@ repository tests; independent reviewer verdict in the active thread.
 F32 approvals, so exact review progress is 0/189 globally and 0/180 for the current
 nineteen-program closure. Seven external domains and program proof/review batches
 remain.
+
+## 2026-08-29 — Complete exact intrinsic audit and publication
+
+**Question:** Can the website now be filled as a reusable puzzle graph, with every
+intrinsic used by the nineteen scalar programs independently and exactly reviewed?
+
+**Conclusion:** yes for the pure value-model layer. The audit covers 189 exact
+configured variants and the twelve-family review plan covers all 180 variants used
+by the nineteen-program closure exactly once. Separate schema-v2 records bind
+official exact prototypes, descriptor and transitive implementation hashes,
+explicit architecture conditions, machine checks, policy, and reviewer identity.
+The graph now reports 180/180 reviewed and Lean-checked used variants without any
+program-specific entry.
+
+The first independent review returned `NO-GO`: RVV evidence checked only official
+call arity, and scoped review display could survive missing audit parents. The RVV
+audit now parses the full pinned official prototype, while the default graph
+requires both audit and review-plan parents. The convergence reviewer reran the
+focused suite, dry-ran 180 strict publications, and returned `GO (180/180)`.
+
+**Evidence:** `IntrinsicAudit.json`, `IntrinsicReviewPlan.json`,
+`IntrinsicReviewChecks.json`, 180 live records under `intrinsic-reviews/`, review
+report `notes/reviews/elementwise-m6-intrinsic-review-2026-08-29.md`, 170 focused
+Python tests, and fresh 46-job plus seven-target Lean builds.
+
+**Unresolved:** review proves only the declared Lean value-model subjects under
+their listed state conditions. Seven program claims still lack external caller
+conditions, S8 clamp has a checked counterexample, eleven direct claims still need
+proof attempts, and none of these reviews establishes full C or ISA refinement.

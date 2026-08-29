@@ -6,7 +6,7 @@ import SALT.Kernel.ElementwiseFamily
 
 namespace SALT.Corpus.f32vadd
 
-def programManifestSha256 : String := "b3a7bd6bf5bfcae5bb8771867c824d441b5e3736efc2e7145f8b1e0e59982189"
+def programManifestSha256 : String := "5fa99c082f77b0769fa1539c27ecc13aa577ea17236b5ab3b9cd42813ee1d106"
 def consumedEffectsSha256 : String := "a5dffbb45ed3707d9ef42c4a7669791c5ae7ce28ce6b3cb7b2c13a960f8b60e4"
 
 def neonSourceSha256 : String :=
@@ -20,7 +20,7 @@ def rvvPreprocessedSha256 : String :=
 def parseFacadeSha256 : String :=
   "829b8b0358b2a31d50a784422681ac9e821a4369619812194f800dc63287c4bc"
 def registrySha256 : String :=
-  "6b184af948938db252fc80ab94de11330c38ae27aca1ffe10fd5693a8adb92a0"
+  "35369074a4223b5386a77d928b04ed304886acb805bf3d8ac8aab4ecf094983c"
 
 structure f32vaddParams where
   deriving Repr, DecidableEq

@@ -1,0 +1,67 @@
+{
+  "architecture": "rvv",
+  "architecture_conditions": [
+    "rvv.fflags-outside-value-claim"
+  ],
+  "argument_count": 3,
+  "artifact_kind": "intrinsic-review",
+  "audit_variant_sha256": "47bb1e84c114787d73dd482b5e2761cb95aca4af63ca5ab557f89f2c1be304fe",
+  "checks": [
+    {
+      "command": "PYTHONPATH=.:src python -m workflow.verification.elementwise_compiler.intrinsic_review_checks",
+      "name": "family-audit",
+      "output_path": "verification/elementwise-compiler/IntrinsicReviewChecks.json",
+      "output_sha256": "49e9e808ee5b5561ae5e108c165f2214455ad2a096c61cf8224be1fbbdc4cdb5",
+      "status": "passed"
+    },
+    {
+      "command": "lake build && lake build SALT.Test.FP32 SALT.Test.IntegerIntrinsics",
+      "name": "lean-elaboration",
+      "output_path": "notes/reviews/evidence/elementwise-m6-lean-build.txt",
+      "output_sha256": "76fc4baa1115db5d75b31c51c82210239d5efa34cdf9a4e0e63ca05211ef8558",
+      "status": "passed"
+    },
+    {
+      "command": "PYTHONPATH=.:src pytest -q tests/verification/elementwise_compiler/test_intrinsic_audit.py tests/verification/elementwise_compiler/test_intrinsic_review_plan.py tests/verification/elementwise_compiler/test_intrinsic_review_checks.py tests/verification/elementwise_compiler/test_intrinsic_review_publish.py tests/verification/elementwise_compiler/test_intrinsics.py tests/verification/elementwise_compiler/test_reviews.py tests/verification/elementwise_compiler/test_wide_generation.py tests/verification/lean_backend/test_binding.py tests/verification/lean_backend/test_emit_lean.py tests/verification/lean_backend/test_case_emit.py tests/verification/lean_backend/test_registry.py tests/verification/lean_backend/test_intrinsic_index.py tests/verification/lean_backend/test_intrinsic_index_inventory.py tests/verification/intrinsic_dashboard/test_web.py",
+      "name": "python-regression",
+      "output_path": "notes/reviews/evidence/elementwise-m6-python-tests.txt",
+      "output_sha256": "282154a189c6f79dafbfaa214d43ce88d223c8860a1b2466d63b880521a4aa6b",
+      "status": "passed"
+    }
+  ],
+  "claim_scope": "pure-value-model-with-explicit-architecture-conditions",
+  "descriptor_sha256": "98a6f89c7e3f09b9f83c948327ceb1ff5e0685d2bcddb7c28ad8cb8834b4f4ad",
+  "detail": "FP1-float-predicate-select-sign: independently accepted exact Lean value-model subject; reviewer report c78410c223ee5f8c442fc3f7a4f9ba1bb7f0523987e08178850df9ebcde74ef0.",
+  "evidence": [
+    {
+      "authority": "RISC-V Instruction Set Manual",
+      "file_sha256": "5745d73dbd1d154d622fd2c8f677dc6b236fcbdd40ad91fff1ef9da9c9add0d2",
+      "path": "src/unpriv/vector-common.adoc",
+      "revision": "846efd1c46315ed8ae3da3d15209bc49114246f5",
+      "selectors": [
+        "vmfne.vv"
+      ],
+      "source_url": "https://github.com/riscv/riscv-isa-manual/blob/846efd1c46315ed8ae3da3d15209bc49114246f5/src/unpriv/vector-common.adoc"
+    },
+    {
+      "authority": "RISC-V Vector C Intrinsics",
+      "file_sha256": "846e5f50fe38c6e5a1209c8da14da98e08d5a5fefbf7f5aa5ac1eddfcde4db10",
+      "path": "auto-generated/intrinsic_funcs.adoc",
+      "revision": "b611045daf6c1f2449a5dad6f1a1a6b244b52798",
+      "selectors": [
+        "__riscv_vmfne_vv_f32m8_b4"
+      ],
+      "source_url": "https://github.com/riscv-non-isa/rvv-intrinsic-doc/blob/b611045daf6c1f2449a5dad6f1a1a6b244b52798/auto-generated/intrinsic_funcs.adoc"
+    }
+  ],
+  "function_type": "vbool4_t (vfloat32m8_t, vfloat32m8_t, size_t)",
+  "implementation_sha256": "5a7133e73c0cfb9dd22e5e0d9972b3585dec7eb54877889425e373e5ac567dc8",
+  "policy_path": "notes/policies/elementwise-intrinsic-review-v2.md",
+  "policy_sha256": "54da4eb399c278d7ac5a91bf681741b6c6a6e2307679acdd0c49d860b3d8f624",
+  "review_id": "intrinsic-review:rvv:__riscv_vmfne_vv_f32m8_b4:23d0cfd59a99f0ce",
+  "review_sha256": "b6380339139f8bd23750cd9e7a8834173caa748622459d8c3b1a596d4abf5a4d",
+  "reviewer": "agent:elementwise-plan-review",
+  "schema_version": 2,
+  "spelling": "__riscv_vmfne_vv_f32m8_b4",
+  "verdict": "approved"
+}

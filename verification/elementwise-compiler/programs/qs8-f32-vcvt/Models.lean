@@ -6,7 +6,7 @@ import SALT.Kernel.ElementwiseFamily
 
 namespace SALT.Corpus.qs8f32vcvt
 
-def programManifestSha256 : String := "476abecb6e3a0e2c71fda7604ae1454642647f40dba6a8d759893f775047eace"
+def programManifestSha256 : String := "d16bae448447d02be239c530a0faef7e653372cfa036f211850c88bf4aa9043c"
 def consumedEffectsSha256 : String := "98b1e6067a0c4391f6c25e6ba4376c5503b51bc3e8bc623dc9dbbf41529390ba"
 
 def neonSourceSha256 : String :=
@@ -20,7 +20,7 @@ def rvvPreprocessedSha256 : String :=
 def parseFacadeSha256 : String :=
   "829b8b0358b2a31d50a784422681ac9e821a4369619812194f800dc63287c4bc"
 def registrySha256 : String :=
-  "05f104aade5778cd64ea210b87bd5377f607f1596381eba27fe546d037becb54"
+  "b0bd45831a269f727fc050d9bad873602cbdcbe12717f6026f79bfc6872cd970"
 
 structure qs8f32vcvtParams where
   scale : BitVec 32

@@ -6,7 +6,7 @@ import SALT.Kernel.ElementwiseFamily
 
 namespace SALT.Corpus.f32vmulc
 
-def programManifestSha256 : String := "76d33c621c9322fc0c94595d937193ab5c07932cb2d9376077ff6a8358994627"
+def programManifestSha256 : String := "480a59c382b2c14edc467a425669a18b6ea949a642e2941b5a87ecd041582720"
 def consumedEffectsSha256 : String := "192e065b57288e6dc09132d66b8f210e041e59f71d9f2f8b507affefbcbf2400"
 
 def neonSourceSha256 : String :=
@@ -20,7 +20,7 @@ def rvvPreprocessedSha256 : String :=
 def parseFacadeSha256 : String :=
   "829b8b0358b2a31d50a784422681ac9e821a4369619812194f800dc63287c4bc"
 def registrySha256 : String :=
-  "f3c574b2a95c9c9551fbb3d5d3f416009de6737ac72eb022b7bdb2298739b9b5"
+  "5fcafd1140072b794e07d4a7950a686e12205b881a42d46164be50064895e01a"
 
 structure f32vmulcParams where
   broadcast_input_b : BitVec 32

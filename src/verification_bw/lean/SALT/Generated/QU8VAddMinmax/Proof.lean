@@ -117,6 +117,9 @@ theorem generated_block_equal_of_shift_le
       rvvChunkFromIntrinsics p inputA inputB := by
   have hShiftInt := small_shift_toInt p.shift hShift
   have hNonnegative : p.shift.toInt >= 0 := by omega
+  have hShiftMod : p.shift.toNat % 32 = p.shift.toNat := by
+    apply Nat.mod_eq_of_lt
+    omega
   rcases exists_eight_of_length_eq inputA hA with
     ⟨a0, a1, a2, a3, a4, a5, a6, a7, rfl⟩
   rcases exists_eight_of_length_eq inputB hB with
@@ -141,7 +144,7 @@ theorem generated_block_equal_of_shift_le
       RVV.vnclip_wx_i16_mode, RVV.vsadd_vx, RVV.vmax_vx_i16,
       RVV.vnclipu_wx_u8_mode, RVV.vmaxu_vx_u8, RVV.vminu_vx_u8,
       rvvLane, accumulator, RVV.VXRoundingMode.decode, SALT.sext,
-      hNonnegative]
+      hNonnegative, hShiftMod]
   rw [hNeon, hRvv]
   change [neonLane p a0 b0, neonLane p a1 b1, neonLane p a2 b2,
       neonLane p a3 b3, neonLane p a4 b4, neonLane p a5 b5,

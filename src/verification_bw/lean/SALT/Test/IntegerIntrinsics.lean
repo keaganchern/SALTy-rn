@@ -74,4 +74,20 @@ example : SALT.Intrinsics.RVV.vshift_signed_i32_rnu [i32 3] (i32 1) = [i32 2] :=
 example : SALT.Intrinsics.RVV.vshift_signed_i32_rnu [i32 3] (i32 (-1)) = [i32 6] := by
   rfl
 
+example : SALT.Intrinsics.RVV.vnsrl_wx_u16 [BitVec.ofNat 32 0x12345678] 32 =
+    [BitVec.ofNat 16 0x5678] := by
+  decide
+
+example : SALT.Intrinsics.RVV.vsll_vx_i16 [i16 3] 16 = [i16 3] := by
+  decide
+
+example : SALT.Intrinsics.RVV.vsll_vx_i32 [i32 3] 33 = [i32 6] := by
+  decide
+
+example : SALT.Intrinsics.RVV.vssra_vx_i32_mode [i32 (-3)] 33 0 = [i32 (-1)] := by
+  decide
+
+example : SALT.Intrinsics.RVV.vnclip_wx_i16_mode [i32 65536] 48 0 = [i16 1] := by
+  decide
+
 end SALT.Test.IntegerIntrinsics

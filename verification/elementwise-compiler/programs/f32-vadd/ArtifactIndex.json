@@ -3,58 +3,58 @@
   "capabilities": [
     {
       "capability_id": "intrinsic:neon:vaddq_f32:eb0f2841c6e04bda",
-      "path": "Capabilities/intrinsic_neon_vaddq_f32_eb0f2841c6e04bda-fad55ebb7dac5ee3.json",
-      "sha256": "fad55ebb7dac5ee3ffb582bec3265460ba116944fa0473fa148453a30e8c4932"
+      "path": "Capabilities/intrinsic_neon_vaddq_f32_eb0f2841c6e04bda-814b94435cc80136.json",
+      "sha256": "814b94435cc801364eb32eab9715657ad349c3183b8afce5cf01aecdf0dfcf7c"
     },
     {
       "capability_id": "intrinsic:neon:vget_high_f32:ce38d747fe1b6927",
-      "path": "Capabilities/intrinsic_neon_vget_high_f32_ce38d747fe1b6927-8b73072ac48419d1.json",
-      "sha256": "8b73072ac48419d1e28caef78b000268f673bcbc96aafda0f476a0da3c8e8be1"
+      "path": "Capabilities/intrinsic_neon_vget_high_f32_ce38d747fe1b6927-ed55492c95df8edc.json",
+      "sha256": "ed55492c95df8edc6dacbec18f3efb74cb212161cd429e0231f36f27b1e3a4fd"
     },
     {
       "capability_id": "intrinsic:neon:vget_low_f32:8a95cadbc4dbff95",
-      "path": "Capabilities/intrinsic_neon_vget_low_f32_8a95cadbc4dbff95-92064f1a70fe439a.json",
-      "sha256": "92064f1a70fe439ae79b5e0cecda242bca051c892a2baf6f6b3e338b94dddd7d"
+      "path": "Capabilities/intrinsic_neon_vget_low_f32_8a95cadbc4dbff95-43467d64fb735199.json",
+      "sha256": "43467d64fb7351991d9f5a491ec9533eadc1291c58f9218f914b3764b15f3c7f"
     },
     {
       "capability_id": "intrinsic:neon:vld1q_f32:2cd0ee0c55f9163a",
-      "path": "Capabilities/intrinsic_neon_vld1q_f32_2cd0ee0c55f9163a-0d5d7b8dbab18b04.json",
-      "sha256": "0d5d7b8dbab18b04c5c892dc96d76ea3be6fc342e9609f10f0ea2ca93b20bed6"
+      "path": "Capabilities/intrinsic_neon_vld1q_f32_2cd0ee0c55f9163a-7846b6edda9a3da6.json",
+      "sha256": "7846b6edda9a3da608573225cb104b257164060957e432b80f1765df1d3e4916"
     },
     {
       "capability_id": "intrinsic:neon:vst1_f32:ad0241ade4926fdb",
-      "path": "Capabilities/intrinsic_neon_vst1_f32_ad0241ade4926fdb-9655cc35f240ab3f.json",
-      "sha256": "9655cc35f240ab3f9c87cae71ee869b08160edb3617be6b57a4409f4b849b1c9"
+      "path": "Capabilities/intrinsic_neon_vst1_f32_ad0241ade4926fdb-266d5f51a04d40b0.json",
+      "sha256": "266d5f51a04d40b0aaa04d682c917a434810a2409342c82b3867ac62dad0c4f7"
     },
     {
       "capability_id": "intrinsic:neon:vst1_lane_f32:0d7385dd67f03980",
-      "path": "Capabilities/intrinsic_neon_vst1_lane_f32_0d7385dd67f03980-793e1b1cb1043117.json",
-      "sha256": "793e1b1cb104311712697b589ad2256c62a4099cac4720b04216eb55a712cc95"
+      "path": "Capabilities/intrinsic_neon_vst1_lane_f32_0d7385dd67f03980-11bef00e352e5440.json",
+      "sha256": "11bef00e352e54400f2f597a1069d7696c7de11735f068591968f3c38cb084d7"
     },
     {
       "capability_id": "intrinsic:neon:vst1q_f32:22522d502967a1ae",
-      "path": "Capabilities/intrinsic_neon_vst1q_f32_22522d502967a1ae-50877675aab5e93c.json",
-      "sha256": "50877675aab5e93c3d8f869181c39e3a40f7e3b8f611c5a74e1357118d9a150a"
+      "path": "Capabilities/intrinsic_neon_vst1q_f32_22522d502967a1ae-1ff238a238a66bd0.json",
+      "sha256": "1ff238a238a66bd06182e9cfabfa81dfd869d4080a1dfa878f45ceb0c9894ae6"
     },
     {
       "capability_id": "intrinsic:rvv:__riscv_vfadd_vv_f32m8:fbb8ad033686b702",
-      "path": "Capabilities/intrinsic_rvv___riscv_vfadd_vv_f32m8_fbb8ad033686b702-ab2cdcf9e437e44b.json",
-      "sha256": "ab2cdcf9e437e44b6f7944f5f5b80dbb2931cde4d9aab94da7277a5b1a857b75"
+      "path": "Capabilities/intrinsic_rvv___riscv_vfadd_vv_f32m8_fbb8ad033686b702-893b75d7ad1afaec.json",
+      "sha256": "893b75d7ad1afaec80957f9a495ff36836a0ea51c8acef0b005e5ec74b75879c"
     },
     {
       "capability_id": "intrinsic:rvv:__riscv_vle32_v_f32m8:18bc0ec588792246",
-      "path": "Capabilities/intrinsic_rvv___riscv_vle32_v_f32m8_18bc0ec588792246-b05ecd68c279d8b6.json",
-      "sha256": "b05ecd68c279d8b6ca84b0590847637d7bd4fb4db8cd365b0fde9acb7aadbc04"
+      "path": "Capabilities/intrinsic_rvv___riscv_vle32_v_f32m8_18bc0ec588792246-bf9de1e15909d2e9.json",
+      "sha256": "bf9de1e15909d2e9c7af3dff0e68c39834e914e51ed39eab010f9429f0296c27"
     },
     {
       "capability_id": "intrinsic:rvv:__riscv_vse32_v_f32m8:53d23aae8d2de69e",
-      "path": "Capabilities/intrinsic_rvv___riscv_vse32_v_f32m8_53d23aae8d2de69e-03c69c16e2685753.json",
-      "sha256": "03c69c16e26857530ab8233311d46c5fe66c336590b807dd0cf238b476f72495"
+      "path": "Capabilities/intrinsic_rvv___riscv_vse32_v_f32m8_53d23aae8d2de69e-56a17a6f7700aa9d.json",
+      "sha256": "56a17a6f7700aa9d6111ab702b2a6981da5359a7c4e68838029c9bfff2ede09b"
     },
     {
       "capability_id": "intrinsic:rvv:__riscv_vsetvl_e32m8:8646d4d736c771fa",
-      "path": "Capabilities/intrinsic_rvv___riscv_vsetvl_e32m8_8646d4d736c771fa-4c1f5fbc177f274d.json",
-      "sha256": "4c1f5fbc177f274d863514ae5246ef7030de6dd7b3414ace75e6d796d8d5960a"
+      "path": "Capabilities/intrinsic_rvv___riscv_vsetvl_e32m8_8646d4d736c771fa-308a48ad53942577.json",
+      "sha256": "308a48ad5394257759d24ef132e779a7b1239be12bb307061b5460553bae39da"
     },
     {
       "capability_id": "layout:scalar-lane",
@@ -74,7 +74,7 @@
   ],
   "cross_phase_audit": {
     "path": "CrossPhaseAudit.json",
-    "sha256": "65006801b6705ae0a545a63d64f4910764df468e0ba66240176948b09e899c18",
+    "sha256": "99063b31f34a302155fd97d52ffdad37638c1177cf9575c5d6911eab6672fa9e",
     "status": "not-applicable"
   },
   "external_condition": {
@@ -84,22 +84,22 @@
   },
   "manifest": {
     "path": "ProgramManifest.json",
-    "sha256": "b3a7bd6bf5bfcae5bb8771867c824d441b5e3736efc2e7145f8b1e0e59982189"
+    "sha256": "5fa99c082f77b0769fa1539c27ecc13aa577ea17236b5ab3b9cd42813ee1d106"
   },
   "models": {
     "kind": "models",
-    "parent_sha256": "b3a7bd6bf5bfcae5bb8771867c824d441b5e3736efc2e7145f8b1e0e59982189",
+    "parent_sha256": "5fa99c082f77b0769fa1539c27ecc13aa577ea17236b5ab3b9cd42813ee1d106",
     "path": "Models.lean",
-    "sha256": "dc987e79d2939de94127969b8a63ecda7fe430e8e60a5904e42a5ef51a8c3b93"
+    "sha256": "f5fcd1bcfaa2ef21fdb6c6427a4e094573625870fede61a39d9a6565377735a0"
   },
   "namespace": "SALT.Corpus.f32vadd",
   "schema_version": 2,
   "spec": {
     "kind": "spec",
-    "parent_sha256": "dc987e79d2939de94127969b8a63ecda7fe430e8e60a5904e42a5ef51a8c3b93",
+    "parent_sha256": "f5fcd1bcfaa2ef21fdb6c6427a4e094573625870fede61a39d9a6565377735a0",
     "path": "Spec.lean",
-    "sha256": "bb21d47b195d2594ef5e4045ba38c28ad1ef24a38aac62575dc4d3aca06286bd"
+    "sha256": "deba989cc4906e7a20272e3f5fa2d073803fee5a7c4d2eff7cff6cc4d5f643c7"
   },
-  "stack_sha256": "26b59667fd9055dbd85fd0b96e671d5ff52392ca10c56b76f78139cc482e22f0",
+  "stack_sha256": "21ad282f3cdf8e3ffdb74a6eead98267a5bd8560b6ddc471f4f37f0b2db8b279",
   "target_claim": "completeValueEquivalenceClaim"
 }

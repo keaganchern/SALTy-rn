@@ -93,6 +93,7 @@ def _semantic(
     shape: OperationShape,
     lean_name: str,
     *argument_indices: int | LeanArgument,
+    immediate_constraints: tuple[ImmediateConstraint, ...] = (),
 ) -> SemanticIntrinsic:
     return SemanticIntrinsic(
         spelling,
@@ -104,6 +105,7 @@ def _semantic(
             index if isinstance(index, LeanArgument) else LeanArgument(index)
             for index in argument_indices
         ),
+        immediate_constraints,
     )
 
 
@@ -687,6 +689,13 @@ ELEMENTWISE_SHARED_SPECS: tuple[IntrinsicSpec, ...] = (
         "SALT.Intrinsics.Neon.vshrn_n_u32",
         0,
         LeanArgument(1, OperandTransform.TO_NAT),
+        immediate_constraints=(
+            ImmediateConstraint(
+                1,
+                frozenset({13, 16}),
+                erased_from_semantics=False,
+            ),
+        ),
     ),
     _semantic(
         "vandq_u16",

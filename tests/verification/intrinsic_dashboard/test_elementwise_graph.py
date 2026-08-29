@@ -15,6 +15,8 @@ from workflow.verification.elementwise_compiler.proof import (
 from workflow.verification.elementwise_compiler.schema import canonical_json, canonical_sha256
 from workflow.verification.intrinsic_dashboard.elementwise_graph import (
     ElementwiseGraphError,
+    _verify_intrinsic_audit,
+    _verify_intrinsic_review_plan,
     build_elementwise_graph,
 )
 
@@ -68,7 +70,9 @@ def test_graph_is_derived_from_the_twenty_discovered_programs(tmp_path: Path) ->
     output = tmp_path / "corpus"
     compile_corpus(ROOT, output)
 
-    graph = build_elementwise_graph(output)
+    # This temporary corpus intentionally does not publish the official audit
+    # parents. The bootstrap projection must therefore hide all review state.
+    graph = build_elementwise_graph(output, include_intrinsic_audit=False)
 
     assert graph["schema_version"] == 3
     assert graph["available"] is True
@@ -89,6 +93,8 @@ def test_graph_is_derived_from_the_twenty_discovered_programs(tmp_path: Path) ->
     assert graph["summary"]["configured_intrinsic_spellings"] == 178
     assert graph["summary"]["intrinsic_spelling_dependencies"] == 186
     assert graph["summary"]["registry_intrinsic_variants"] == 189
+    assert graph["summary"]["primary_source_audited_intrinsic_variants"] == 0
+    assert graph["summary"]["conditioned_intrinsic_variants"] == 0
     assert graph["summary"]["used_intrinsic_variants"] == 180
     assert graph["summary"]["lean_checked_used_intrinsic_variants"] == 0
     assert graph["summary"]["reviewed_registry_intrinsic_variants"] == 0
@@ -152,7 +158,7 @@ def test_changed_child_artifact_propagates_to_stale_program(tmp_path: Path) -> N
         spec_path.read_text(encoding="utf-8") + "\n-- changed\n", encoding="utf-8"
     )
 
-    graph = build_elementwise_graph(output)
+    graph = build_elementwise_graph(output, include_intrinsic_audit=False)
     node = next(
         item
         for item in graph["programs"]
@@ -186,6 +192,23 @@ def test_missing_report_is_explicitly_unavailable(tmp_path: Path) -> None:
     assert graph["programs"] == []
 
 
+def test_scoped_reviews_require_audit_and_review_plan(tmp_path: Path) -> None:
+    with pytest.raises(ElementwiseGraphError, match="require IntrinsicAudit"):
+        _verify_intrinsic_audit(
+            tmp_path,
+            registry_variants=(),
+            used_by_program={},
+            required=True,
+        )
+    (tmp_path / "IntrinsicAudit.json").write_text("{}\n", encoding="utf-8")
+    with pytest.raises(ElementwiseGraphError, match="require IntrinsicReviewPlan"):
+        _verify_intrinsic_review_plan(
+            tmp_path,
+            intrinsic_audit={"variant": {}},
+            required=True,
+        )
+
+
 @pytest.mark.skipif(shutil.which("lean") is None, reason="Lean required")
 def test_frozen_task_and_checked_result_change_program_state(tmp_path: Path) -> None:
     output = tmp_path / "corpus"
@@ -194,7 +217,7 @@ def test_frozen_task_and_checked_result_change_program_state(tmp_path: Path) -> 
     program_root = (output / generated["artifact_index"]).parent
 
     prepare_proof_task(ROOT, program_root)
-    ready = build_elementwise_graph(output)
+    ready = build_elementwise_graph(output, include_intrinsic_audit=False)
     node = next(
         item
         for item in ready["programs"]
@@ -210,7 +233,7 @@ def test_frozen_task_and_checked_result_change_program_state(tmp_path: Path) -> 
     assert node["claim"]["value"] == "ready"
 
     check_proof(ROOT, program_root)
-    checked = build_elementwise_graph(output)
+    checked = build_elementwise_graph(output, include_intrinsic_audit=False)
     node = next(
         item
         for item in checked["programs"]

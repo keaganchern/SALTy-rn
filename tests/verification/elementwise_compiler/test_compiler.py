@@ -111,6 +111,23 @@ def test_real_fixed_tail_pair_generates_complete_deterministic_stack(
     assert index["spec"]["parent_sha256"] == first.models.sha256
 
 
+def test_regeneration_replaces_stale_capability_files(tmp_path: Path) -> None:
+    output = tmp_path / "out"
+    compile_pair(_request("qs8-vcvt", output))
+    stale = output / "Capabilities/stale-capability.json"
+    stale.write_text("{}\n", encoding="utf-8")
+
+    compile_pair(_request("qs8-vcvt", output))
+    index = json.loads((output / "ArtifactIndex.json").read_text(encoding="utf-8"))
+    expected = {item["path"] for item in index["capabilities"]}
+    actual = {
+        path.relative_to(output).as_posix()
+        for path in (output / "Capabilities").glob("*.json")
+    }
+    assert stale.is_file() is False
+    assert actual == expected
+
+
 def test_normalized_fixed_no_tail_pair_uses_same_generic_compiler(
     tmp_path: Path,
 ) -> None:

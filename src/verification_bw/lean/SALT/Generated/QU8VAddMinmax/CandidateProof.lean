@@ -16,10 +16,10 @@ private def laneValue (p : QU8AddMinmaxParams)
   let acc := aProduct + bProduct
   let shifted :=
     if p.shift.toInt >= 0 then
-      BitVec.ofInt 32 (RVV.roundShiftSigned .rnu acc p.shift.toNat)
+      BitVec.ofInt 32 (RVV.roundShiftSigned .rnu acc (p.shift.toNat % 32))
     else
-      aProduct.shiftLeft (-p.shift.toInt).toNat +
-        bProduct.shiftLeft (-p.shift.toInt).toNat
+      aProduct.shiftLeft ((-p.shift.toInt).toNat % 32) +
+        bProduct.shiftLeft ((-p.shift.toInt).toNat % 32)
   let narrowed := RVV.vnclipSigned 16 .rdn 0 shifted
   let withZeroPoint := SALT.signedSatAdd narrowed p.output_zero_point
   let nonnegative := SALT.bvSignedMax withZeroPoint (BitVec.ofNat 16 0)

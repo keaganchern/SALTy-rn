@@ -1,0 +1,56 @@
+{
+  "architecture": "neon",
+  "architecture_conditions": [],
+  "argument_count": 1,
+  "artifact_kind": "intrinsic-review",
+  "audit_variant_sha256": "5090bf920711518b29bddca463583992289f2b9bddacbe03797fdfe7bc21a8f8",
+  "checks": [
+    {
+      "command": "PYTHONPATH=.:src python -m workflow.verification.elementwise_compiler.intrinsic_review_checks",
+      "name": "family-audit",
+      "output_path": "verification/elementwise-compiler/IntrinsicReviewChecks.json",
+      "output_sha256": "49e9e808ee5b5561ae5e108c165f2214455ad2a096c61cf8224be1fbbdc4cdb5",
+      "status": "passed"
+    },
+    {
+      "command": "lake build && lake build SALT.Test.FP32 SALT.Test.IntegerIntrinsics",
+      "name": "lean-elaboration",
+      "output_path": "notes/reviews/evidence/elementwise-m6-lean-build.txt",
+      "output_sha256": "76fc4baa1115db5d75b31c51c82210239d5efa34cdf9a4e0e63ca05211ef8558",
+      "status": "passed"
+    },
+    {
+      "command": "PYTHONPATH=.:src pytest -q tests/verification/elementwise_compiler/test_intrinsic_audit.py tests/verification/elementwise_compiler/test_intrinsic_review_plan.py tests/verification/elementwise_compiler/test_intrinsic_review_checks.py tests/verification/elementwise_compiler/test_intrinsic_review_publish.py tests/verification/elementwise_compiler/test_intrinsics.py tests/verification/elementwise_compiler/test_reviews.py tests/verification/elementwise_compiler/test_wide_generation.py tests/verification/lean_backend/test_binding.py tests/verification/lean_backend/test_emit_lean.py tests/verification/lean_backend/test_case_emit.py tests/verification/lean_backend/test_registry.py tests/verification/lean_backend/test_intrinsic_index.py tests/verification/lean_backend/test_intrinsic_index_inventory.py tests/verification/intrinsic_dashboard/test_web.py",
+      "name": "python-regression",
+      "output_path": "notes/reviews/evidence/elementwise-m6-python-tests.txt",
+      "output_sha256": "282154a189c6f79dafbfaa214d43ce88d223c8860a1b2466d63b880521a4aa6b",
+      "status": "passed"
+    }
+  ],
+  "claim_scope": "pure-value-model",
+  "descriptor_sha256": "d0a40a4dabc638b7583d022d648870e5925a9a7dcb76c397f814242bada4aabd",
+  "detail": "S1-structural-plain: independently accepted exact Lean value-model subject; reviewer report c78410c223ee5f8c442fc3f7a4f9ba1bb7f0523987e08178850df9ebcde74ef0.",
+  "evidence": [
+    {
+      "authority": "Arm ACLE",
+      "file_sha256": "256d3e337a243cabf13d9afa2b16bdfbaba67fa7c8a23db136f4a41cb2497928",
+      "path": "tools/intrinsic_db/advsimd.csv",
+      "revision": "c218a6b499897e70d88ceab7c6148d692541929f",
+      "selectors": [
+        "DUP Vd.8H,rn",
+        "vmovq_n_s16"
+      ],
+      "source_url": "https://github.com/ARM-software/acle/blob/c218a6b499897e70d88ceab7c6148d692541929f/tools/intrinsic_db/advsimd.csv"
+    }
+  ],
+  "function_type": "int16x8_t (int16_t)",
+  "implementation_sha256": "5b8113f8c2a7df18ae6d81f1b6a6b7e4ede2cdd0232c3e59fa0090629e35246a",
+  "policy_path": "notes/policies/elementwise-intrinsic-review-v2.md",
+  "policy_sha256": "54da4eb399c278d7ac5a91bf681741b6c6a6e2307679acdd0c49d860b3d8f624",
+  "review_id": "intrinsic-review:neon:vmovq_n_s16:5fd5ecac3c8184d7",
+  "review_sha256": "0baf3b8860484f86d894f49a399d6298805d91e06ef833659935b49fae00a421",
+  "reviewer": "agent:elementwise-plan-review",
+  "schema_version": 2,
+  "spelling": "vmovq_n_s16",
+  "verdict": "approved"
+}

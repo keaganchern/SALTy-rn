@@ -1,0 +1,16 @@
+{
+  "architecture": "neon",
+  "argument_count": 1,
+  "artifact_kind": "intrinsic-capability",
+  "capability_id": "intrinsic:neon:vsqrtq_f32:e84688350b6bf566",
+  "capability_sha256": "2a01ab41578d4fcc30cf1c1b080351304de323d0cf23207bf067dcaac6396435",
+  "descriptor_sha256": "56a9d2b45b5bd386c3b5450b14cb603698932f4b857e786e75ae51a35a5eef10",
+  "function_type": "float32x4_t (float32x4_t)",
+  "implementation_sha256": "603ec178dd3066efddc4da364ee3711744b66695806980341267817b07a73c75",
+  "review_evidence_sha256": "03a0cad7c529bcbfc1dbd3220592d4b06a9eafddeacfe1a0038580c1e143789d",
+  "role": "semantic",
+  "schema_version": 1,
+  "semantic_symbol": "SALT.Intrinsics.Neon.vsqrtq_f32",
+  "spelling": "vsqrtq_f32",
+  "version": 1
+}

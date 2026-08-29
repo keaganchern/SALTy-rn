@@ -7,9 +7,10 @@ Last updated: 2026-08-29 (Asia/Seoul)
 The shared compiler now generates Manifest/Models/proof-free Spec for all nineteen
 scalar-layout programs. Widths, tails, multi-phase schedules, external audits,
 counterexamples, and the schema-v3 artifact dashboard are independently reviewed.
-The active milestone is independent review of the 180 exact intrinsic variants
-used by those programs, followed by proof/result and program-review batches. The
-older nine approvals are stale after implementation changes and count as zero.
+Independent review of all 180 exact intrinsic variants used by those programs is
+complete. The active milestone is proof-task/result generation followed by
+independent review of all nineteen program outcomes. The older nine schema-v1
+approvals remain historical and cannot satisfy the live loader.
 
 ## Canonical Artifact Chain
 
@@ -236,13 +237,17 @@ layout for `f32-vcmul` stays deferred outside the nineteen-program target.
    generate Manifest/Models/Spec through the shared compiler; exact review identity
    and schema-v3 dashboard accounting distinguish 178/186 spellings, 189 registry
    variants, and 180 variants used by the current nineteen-program closure;
-4. **Active:** independently review the 180 used exact variants, starting from
-   shared semantic families and retaining 189 as the complete registry backlog;
-5. add parse facades as mechanical typed declarations where missing;
-6. rerun `workflow.verification.elementwise_compiler.corpus` and require the
-   checked-in report/dashboard to change only through the artifact graph;
-7. generate proof tasks for newly unblocked programs and delegate only
-   `Proof.lean`;
+4. **Completed and independently reviewed:** 180 used exact variants are partitioned
+   into twelve semantic families, bound to official exact prototypes and explicit
+   architecture conditions, machine-checked, and published as separate schema-v2
+   records. Reviewer verdict: `GO (180/180)`;
+5. **Active:** generate proof tasks for the eleven condition-free programs,
+   delegate only `Proof.lean`, and publish an honest verified/failure/
+   counterexample outcome for every scalar program;
+6. independently review all nineteen program outcomes, including the seven
+   external-condition blockers and the existing S8 clamp counterexample;
+7. rerun the corpus and require the checked-in report/dashboard to change only
+   through the artifact graph;
 8. keep grouped `f32-vcmul` deferred until a reviewed complex layout/view exists;
 9. use the new `counterexample` terminal state to explain false
    cross-phase/equivalence obligations;
@@ -305,10 +310,12 @@ separate grouped-layout milestone.
    rows distinguish all 189 registry variants and the 180 used by the current
    nineteen-program closure. Reviewer verdict changed from `NO-GO` to `GO` after
    the identity/dashboard correction.
-6. **Program batch 1:** generate, prove or explicitly fail, and independently
-   review the first scalar-layout program batch.
-7. **Program batch 2:** apply the same pipeline to the remaining scalar-layout
-   programs without framework edits.
+6. **Exact intrinsic audit and publication — completed and independently reviewed:**
+   official exact Arm/RVV prototypes, transitive implementation hashes, explicit
+   FP state scope, twelve review families, 180 machine-check packs, schema-v2
+   records, and fail-closed dashboard parents. Reviewer verdict: `GO (180/180)`.
+7. **Program proof and outcome review:** generate, prove or explicitly fail all
+   nineteen scalar-layout outcomes without program-specific framework edits.
 8. **Final audit:** randomized held-out cases, deterministic regeneration, stale
    mutation tests, full regression, corpus review, dashboard snapshot, and memory.
 

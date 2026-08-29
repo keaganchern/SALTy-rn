@@ -3,8 +3,8 @@ import SALT.Corpus.f32vmul.Models
 
 namespace SALT.Corpus.f32vmul
 
-def manifestSha256InSpec : String := "7dd1088c01782333dc85e2c93d0a7834c45ab595cdb5920d3204c7908db47327"
-def modelsSha256InSpec : String := "7730baa5fc71c8847cce86b7f68b205db08980813c18f6c5d134cd8908cc77a5"
+def manifestSha256InSpec : String := "71a4c76bede09ff750a8f5a101a109f3e8f5395d8bd2b784d9cab25160d1c036"
+def modelsSha256InSpec : String := "60f6511a4267bd585270dcda053dac52169221242c81fcf44245c871de783a99"
 def sharedEntryContractSha256 : String := "0ab3df2574043ef4fe473603e05786fd7c7a4fbf40737a4daf45d2eaae32c08e"
 
 def neonBlockEqualsMapClaim : Prop :=

@@ -140,6 +140,175 @@ def _verify_intrinsic_registry(
     return tuple(variants)
 
 
+def _verify_intrinsic_audit(
+    root: Path,
+    *,
+    registry_variants: tuple[tuple[IntrinsicCapability, IntrinsicReview | None], ...],
+    used_by_program: Mapping[tuple[str, str], set[str]],
+    required: bool = False,
+) -> Mapping[str, Mapping[str, Any]]:
+    """Read the primary-source audit and bind every exact registry row."""
+
+    path = root / "IntrinsicAudit.json"
+    if not path.is_file():
+        if required:
+            raise ElementwiseGraphError(
+                "schema-v2 intrinsic reviews require IntrinsicAudit.json"
+            )
+        return {}
+    audit = _json(path)
+    unsigned = dict(audit)
+    digest = unsigned.pop("audit_sha256", None)
+    if (
+        audit.get("artifact_kind") != "elementwise-intrinsic-audit-candidates"
+        or audit.get("schema_version") != 2
+        or digest != canonical_sha256(unsigned)
+    ):
+        raise ElementwiseGraphError("intrinsic audit digest disagrees")
+    raw_variants = audit.get("variants")
+    if not isinstance(raw_variants, list):
+        raise ElementwiseGraphError("intrinsic audit variants are malformed")
+    registry = {capability.capability_id: (capability, review)
+                for capability, review in registry_variants}
+    if len(registry) != len(registry_variants):
+        raise ElementwiseGraphError("duplicate intrinsic capability id")
+    result: dict[str, Mapping[str, Any]] = {}
+    required = {
+        "capability_id", "audit_variant_sha256", "used", "programs",
+        "architecture", "spelling", "function_type", "argument_count", "role",
+        "descriptor_sha256", "implementation_sha256", "semantic_symbol",
+        "immediate_constraints", "architecture_conditions", "claim_scope",
+        "primary_evidence", "static_checks",
+    }
+    for raw in raw_variants:
+        if not isinstance(raw, Mapping) or set(raw) != required:
+            raise ElementwiseGraphError("intrinsic audit variant is malformed")
+        identity = str(raw["capability_id"])
+        bound = registry.get(identity)
+        if bound is None or identity in result:
+            raise ElementwiseGraphError("intrinsic audit exact identity is invalid")
+        capability, review = bound
+        audited_subject = {
+            key: value
+            for key, value in raw.items()
+            if key not in {"used", "programs", "audit_variant_sha256"}
+        }
+        programs = sorted(used_by_program.get(
+            (capability.capability_id, capability.sha256), set()
+        ))
+        if (
+            raw["audit_variant_sha256"] != canonical_sha256(audited_subject)
+            or raw["used"] != bool(programs)
+            or raw["programs"] != programs
+            or raw["architecture"] != capability.architecture.value
+            or raw["spelling"] != capability.spelling
+            or raw["function_type"] != capability.function_type
+            or raw["argument_count"] != capability.argument_count
+            or raw["role"] != capability.role.value
+            or raw["descriptor_sha256"] != capability.descriptor_sha256
+            or raw["implementation_sha256"] != capability.implementation_sha256
+            or raw["semantic_symbol"] != capability.semantic_symbol
+            or raw["static_checks"]
+            != {
+                "canonical_descriptor": "passed",
+                "exact_source_signature": "passed",
+                "implementation_bound": "passed",
+            }
+            or not isinstance(raw["architecture_conditions"], list)
+            or any(
+                not isinstance(item, str) or not item
+                for item in raw["architecture_conditions"]
+            )
+            or not isinstance(raw["primary_evidence"], Mapping)
+        ):
+            raise ElementwiseGraphError("intrinsic audit does not bind its capability")
+        if review is not None and (
+            review.audit_variant_sha256 != raw["audit_variant_sha256"]
+            or review.claim_scope != raw["claim_scope"]
+            or list(review.architecture_conditions) != raw["architecture_conditions"]
+        ):
+            raise ElementwiseGraphError("intrinsic review does not bind its audit scope")
+        result[identity] = raw
+    if set(result) != set(registry):
+        raise ElementwiseGraphError("intrinsic audit does not cover the exact registry")
+    return result
+
+
+def _verify_intrinsic_review_plan(
+    root: Path,
+    *,
+    intrinsic_audit: Mapping[str, Mapping[str, Any]],
+    required: bool = False,
+) -> Mapping[str, str]:
+    """Bind each used audit subject to one explicit semantic review family."""
+
+    path = root / "IntrinsicReviewPlan.json"
+    if not path.is_file():
+        if required:
+            raise ElementwiseGraphError(
+                "schema-v2 intrinsic reviews require IntrinsicReviewPlan.json"
+            )
+        return {}
+    if not intrinsic_audit:
+        if required:
+            raise ElementwiseGraphError(
+                "schema-v2 intrinsic reviews require a verified intrinsic audit"
+            )
+        return {}
+    plan = _json(path)
+    unsigned = dict(plan)
+    digest = unsigned.pop("plan_sha256", None)
+    audit_record = _json(root / "IntrinsicAudit.json")
+    if (
+        plan.get("artifact_kind") != "elementwise-intrinsic-review-plan"
+        or plan.get("schema_version") != 1
+        or digest != canonical_sha256(unsigned)
+        or plan.get("audit_sha256") != audit_record.get("audit_sha256")
+    ):
+        raise ElementwiseGraphError("intrinsic review plan digest/parent disagrees")
+    raw_families = plan.get("families")
+    if not isinstance(raw_families, list):
+        raise ElementwiseGraphError("intrinsic review families are malformed")
+    result: dict[str, str] = {}
+    for raw_family in raw_families:
+        if not isinstance(raw_family, Mapping) or set(raw_family) != {
+            "family", "count", "subjects"
+        }:
+            raise ElementwiseGraphError("intrinsic review family is malformed")
+        family = raw_family["family"]
+        subjects = raw_family["subjects"]
+        if not isinstance(family, str) or not family or not isinstance(subjects, list):
+            raise ElementwiseGraphError("intrinsic review family fields are malformed")
+        if raw_family["count"] != len(subjects):
+            raise ElementwiseGraphError("intrinsic review family count disagrees")
+        for subject in subjects:
+            if not isinstance(subject, Mapping):
+                raise ElementwiseGraphError("intrinsic review subject is malformed")
+            identity = str(subject.get("capability_id", ""))
+            audit = intrinsic_audit.get(identity)
+            subject_fields = (
+                "capability_id", "audit_variant_sha256", "architecture", "spelling",
+                "function_type", "argument_count", "role", "descriptor_sha256",
+                "implementation_sha256", "semantic_symbol", "immediate_constraints",
+                "claim_scope", "architecture_conditions", "programs", "primary_evidence",
+            )
+            expected_subject = (
+                {} if audit is None else {field: audit[field] for field in subject_fields}
+            )
+            if (
+                audit is None
+                or not audit["used"]
+                or identity in result
+                or dict(subject) != expected_subject
+            ):
+                raise ElementwiseGraphError("intrinsic review subject is not exact")
+            result[identity] = family
+    used = {identity for identity, row in intrinsic_audit.items() if row["used"]}
+    if set(result) != used:
+        raise ElementwiseGraphError("intrinsic review plan does not cover used variants")
+    return result
+
+
 def _parse_capability(record: Mapping[str, Any]) -> object:
     kind = record.get("artifact_kind")
     if kind == "intrinsic-capability":
@@ -468,6 +637,8 @@ def _program_node(
 
 def build_elementwise_graph(
     corpus_root: str | Path = DEFAULT_CORPUS_ROOT,
+    *,
+    include_intrinsic_audit: bool = True,
 ) -> dict[str, Any]:
     """Build a fail-closed UI projection from the generated artifact graph."""
 
@@ -485,6 +656,10 @@ def build_elementwise_graph(
     report = _verify_report(root)
     registry_variants = _verify_intrinsic_registry(
         root, report.get("intrinsic_registry")
+    )
+    scoped_reviews_present = any(
+        review is not None and review.schema_version == 2
+        for _, review in registry_variants
     )
     registry_by_identity = {
         (capability.capability_id, capability.sha256): capability
@@ -505,6 +680,26 @@ def build_elementwise_graph(
                 )
             used_by_program.setdefault(identity, set()).add(str(node["program_id"]))
 
+    intrinsic_audit = (
+        _verify_intrinsic_audit(
+            root,
+            registry_variants=registry_variants,
+            used_by_program=used_by_program,
+            required=scoped_reviews_present,
+        )
+        if include_intrinsic_audit
+        else {}
+    )
+    intrinsic_review_families = (
+        _verify_intrinsic_review_plan(
+            root,
+            intrinsic_audit=intrinsic_audit,
+            required=scoped_reviews_present,
+        )
+        if include_intrinsic_audit
+        else {}
+    )
+
     spelling_nodes: list[dict[str, Any]] = []
     for raw in report["intrinsic_dependencies"]:
         if not isinstance(raw, Mapping):
@@ -514,7 +709,7 @@ def build_elementwise_graph(
         if separator != ":" or architecture not in {"neon", "rvv"} or not spelling:
             raise ElementwiseGraphError("intrinsic dependency id is malformed")
         matching = [
-            (capability, review)
+            (capability, review if include_intrinsic_audit else None)
             for capability, review in registry_variants
             if capability.architecture.value == architecture
             and capability.spelling == spelling
@@ -553,8 +748,11 @@ def build_elementwise_graph(
 
     variant_nodes: list[dict[str, Any]] = []
     for capability, review in registry_variants:
+        if not include_intrinsic_audit:
+            review = None
         identity = (capability.capability_id, capability.sha256)
         programs = sorted(used_by_program.get(identity, set()))
+        audit = intrinsic_audit.get(capability.capability_id)
         lean_checked = review is not None and any(
             check.name == "lean-elaboration" for check in review.checks
         )
@@ -576,6 +774,14 @@ def build_elementwise_graph(
                 "reviewed": review is not None,
                 "independently_reviewed": review is not None,
                 "review_sha256": None if review is None else review.sha256,
+                "primary_source_audited": audit is not None,
+                "claim_scope": None if audit is None else audit["claim_scope"],
+                "architecture_conditions": (
+                    [] if audit is None else list(audit["architecture_conditions"])
+                ),
+                "review_family": intrinsic_review_families.get(
+                    capability.capability_id
+                ),
                 "programs": programs,
             }
         )
@@ -608,6 +814,12 @@ def build_elementwise_graph(
             ),
             "intrinsic_spelling_dependencies": len(spelling_nodes),
             "registry_intrinsic_variants": len(variant_nodes),
+            "primary_source_audited_intrinsic_variants": sum(
+                item["primary_source_audited"] for item in variant_nodes
+            ),
+            "conditioned_intrinsic_variants": sum(
+                bool(item["architecture_conditions"]) for item in variant_nodes
+            ),
             "used_intrinsic_variants": sum(item["used"] for item in variant_nodes),
             "reviewed_registry_intrinsic_variants": sum(
                 item["reviewed"] for item in variant_nodes

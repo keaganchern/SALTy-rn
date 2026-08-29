@@ -1,0 +1,65 @@
+{
+  "architecture": "rvv",
+  "architecture_conditions": [],
+  "argument_count": 4,
+  "artifact_kind": "intrinsic-review",
+  "audit_variant_sha256": "b15039046f04eb578363a98721df4d1599c3fbf650769720ed262844b04732db",
+  "checks": [
+    {
+      "command": "PYTHONPATH=.:src python -m workflow.verification.elementwise_compiler.intrinsic_review_checks",
+      "name": "family-audit",
+      "output_path": "verification/elementwise-compiler/IntrinsicReviewChecks.json",
+      "output_sha256": "49e9e808ee5b5561ae5e108c165f2214455ad2a096c61cf8224be1fbbdc4cdb5",
+      "status": "passed"
+    },
+    {
+      "command": "lake build && lake build SALT.Test.FP32 SALT.Test.IntegerIntrinsics",
+      "name": "lean-elaboration",
+      "output_path": "notes/reviews/evidence/elementwise-m6-lean-build.txt",
+      "output_sha256": "76fc4baa1115db5d75b31c51c82210239d5efa34cdf9a4e0e63ca05211ef8558",
+      "status": "passed"
+    },
+    {
+      "command": "PYTHONPATH=.:src pytest -q tests/verification/elementwise_compiler/test_intrinsic_audit.py tests/verification/elementwise_compiler/test_intrinsic_review_plan.py tests/verification/elementwise_compiler/test_intrinsic_review_checks.py tests/verification/elementwise_compiler/test_intrinsic_review_publish.py tests/verification/elementwise_compiler/test_intrinsics.py tests/verification/elementwise_compiler/test_reviews.py tests/verification/elementwise_compiler/test_wide_generation.py tests/verification/lean_backend/test_binding.py tests/verification/lean_backend/test_emit_lean.py tests/verification/lean_backend/test_case_emit.py tests/verification/lean_backend/test_registry.py tests/verification/lean_backend/test_intrinsic_index.py tests/verification/lean_backend/test_intrinsic_index_inventory.py tests/verification/intrinsic_dashboard/test_web.py",
+      "name": "python-regression",
+      "output_path": "notes/reviews/evidence/elementwise-m6-python-tests.txt",
+      "output_sha256": "282154a189c6f79dafbfaa214d43ce88d223c8860a1b2466d63b880521a4aa6b",
+      "status": "passed"
+    }
+  ],
+  "claim_scope": "pure-value-model",
+  "descriptor_sha256": "8ac677bfab56bafc410b2e682eed28a705f7a2165340ab2a3cb66c701ba0f971",
+  "detail": "I3-integer-mode-sensitive-rounding: independently accepted exact Lean value-model subject; reviewer report c78410c223ee5f8c442fc3f7a4f9ba1bb7f0523987e08178850df9ebcde74ef0.",
+  "evidence": [
+    {
+      "authority": "RISC-V Instruction Set Manual",
+      "file_sha256": "5745d73dbd1d154d622fd2c8f677dc6b236fcbdd40ad91fff1ef9da9c9add0d2",
+      "path": "src/unpriv/vector-common.adoc",
+      "revision": "846efd1c46315ed8ae3da3d15209bc49114246f5",
+      "selectors": [
+        "vnclip.wx"
+      ],
+      "source_url": "https://github.com/riscv/riscv-isa-manual/blob/846efd1c46315ed8ae3da3d15209bc49114246f5/src/unpriv/vector-common.adoc"
+    },
+    {
+      "authority": "RISC-V Vector C Intrinsics",
+      "file_sha256": "846e5f50fe38c6e5a1209c8da14da98e08d5a5fefbf7f5aa5ac1eddfcde4db10",
+      "path": "auto-generated/intrinsic_funcs.adoc",
+      "revision": "b611045daf6c1f2449a5dad6f1a1a6b244b52798",
+      "selectors": [
+        "__riscv_vnclip_wx_i16m4"
+      ],
+      "source_url": "https://github.com/riscv-non-isa/rvv-intrinsic-doc/blob/b611045daf6c1f2449a5dad6f1a1a6b244b52798/auto-generated/intrinsic_funcs.adoc"
+    }
+  ],
+  "function_type": "vint16m4_t (vint32m8_t, size_t, unsigned int, size_t)",
+  "implementation_sha256": "5a7133e73c0cfb9dd22e5e0d9972b3585dec7eb54877889425e373e5ac567dc8",
+  "policy_path": "notes/policies/elementwise-intrinsic-review-v2.md",
+  "policy_sha256": "54da4eb399c278d7ac5a91bf681741b6c6a6e2307679acdd0c49d860b3d8f624",
+  "review_id": "intrinsic-review:rvv:__riscv_vnclip_wx_i16m4:1c7020c4a858e888",
+  "review_sha256": "289fd1f0676704e7c5e4ff1ef6c34fe4b346f9ad02d9c90e37ed326114bb6a8d",
+  "reviewer": "agent:elementwise-plan-review",
+  "schema_version": 2,
+  "spelling": "__riscv_vnclip_wx_i16m4",
+  "verdict": "approved"
+}

@@ -163,7 +163,10 @@ class IntrinsicReview:
     evidence: tuple[ReviewEvidence, ...]
     checks: tuple[ReviewCheck, ...]
     detail: str
-    schema_version: int = 1
+    audit_variant_sha256: str | None = None
+    claim_scope: str | None = None
+    architecture_conditions: tuple[str, ...] = ()
+    schema_version: int = 2
 
     def __post_init__(self) -> None:
         _text(self.spelling, "review spelling")
@@ -186,8 +189,38 @@ class IntrinsicReview:
             raise ElementwiseSchemaError("approved intrinsic review needs executable checks")
         if tuple(sorted(self.checks, key=lambda item: item.name)) != self.checks:
             raise ElementwiseSchemaError("review checks must be sorted by name")
-        if self.schema_version != 1:
+        if self.schema_version not in {1, 2}:
             raise ElementwiseSchemaError("unsupported intrinsic review schema version")
+        if self.schema_version == 1:
+            if (
+                self.audit_variant_sha256 is not None
+                or self.claim_scope is not None
+                or self.architecture_conditions
+            ):
+                raise ElementwiseSchemaError("legacy review cannot carry audit scope")
+        else:
+            _digest(self.audit_variant_sha256, "review audit variant digest")
+            if self.claim_scope not in {
+                "pure-value-model",
+                "pure-value-model-with-explicit-architecture-conditions",
+            }:
+                raise ElementwiseSchemaError("invalid intrinsic review claim scope")
+            if (
+                tuple(sorted(set(self.architecture_conditions)))
+                != self.architecture_conditions
+            ):
+                raise ElementwiseSchemaError(
+                    "architecture conditions must be sorted and unique"
+                )
+            for condition in self.architecture_conditions:
+                _text(condition, "architecture condition")
+            conditioned = bool(self.architecture_conditions)
+            if conditioned != self.claim_scope.endswith(
+                "with-explicit-architecture-conditions"
+            ):
+                raise ElementwiseSchemaError(
+                    "claim scope disagrees with architecture conditions"
+                )
 
     @property
     def review_id(self) -> str:
@@ -218,7 +251,7 @@ class IntrinsicReview:
         )
 
     def unsigned_record(self) -> dict[str, object]:
-        return {
+        record: dict[str, object] = {
             "artifact_kind": "intrinsic-review",
             "schema_version": self.schema_version,
             "review_id": self.review_id,
@@ -236,6 +269,15 @@ class IntrinsicReview:
             "checks": [item.to_record() for item in self.checks],
             "detail": self.detail,
         }
+        if self.schema_version == 2:
+            record.update(
+                {
+                    "audit_variant_sha256": self.audit_variant_sha256,
+                    "claim_scope": self.claim_scope,
+                    "architecture_conditions": list(self.architecture_conditions),
+                }
+            )
+        return record
 
     @property
     def sha256(self) -> str:
@@ -246,6 +288,7 @@ class IntrinsicReview:
 
     @classmethod
     def from_record(cls, data: Mapping[str, Any]) -> "IntrinsicReview":
+        schema_version = data.get("schema_version")
         expected = {
             "artifact_kind", "schema_version", "review_id", "review_sha256",
             "verdict", "architecture", "spelling", "function_type",
@@ -253,6 +296,12 @@ class IntrinsicReview:
             "policy_path", "policy_sha256", "reviewer", "evidence", "checks",
             "detail",
         }
+        if schema_version == 2:
+            expected |= {
+                "audit_variant_sha256",
+                "claim_scope",
+                "architecture_conditions",
+            }
         _exact(data, expected, "intrinsic review")
         if data["artifact_kind"] != "intrinsic-review" or data["verdict"] != "approved":
             raise ElementwiseSchemaError("intrinsic review is not an approved review artifact")
@@ -261,7 +310,6 @@ class IntrinsicReview:
         except (TypeError, ValueError) as error:
             raise ElementwiseSchemaError("invalid review architecture") from error
         argument_count = data["argument_count"]
-        schema_version = data["schema_version"]
         if type(argument_count) is not int or type(schema_version) is not int:
             raise ElementwiseSchemaError("review integer fields are malformed")
         review = cls(
@@ -283,6 +331,26 @@ class IntrinsicReview:
                 for item in _sequence(data["checks"], "review checks")
             ),
             _text(data["detail"], "review detail"),
+            (
+                _digest(data["audit_variant_sha256"], "review audit variant digest")
+                if schema_version == 2
+                else None
+            ),
+            (
+                _text(data["claim_scope"], "review claim scope")
+                if schema_version == 2
+                else None
+            ),
+            (
+                tuple(
+                    _text(item, "architecture condition")
+                    for item in _sequence(
+                        data["architecture_conditions"], "architecture conditions"
+                    )
+                )
+                if schema_version == 2
+                else ()
+            ),
             schema_version,
         )
         if data["review_id"] != review.review_id:

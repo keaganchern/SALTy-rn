@@ -88,6 +88,8 @@
       summaryCard("ordinary scalar layout", data.scalar_layout_scope || 0),
       summaryCard("deferred grouped layout", data.grouped_layout_deferred || 0),
       summaryCard("intrinsic spellings configured", `${data.configured_intrinsic_spellings || 0}/${data.intrinsic_spelling_dependencies || 0}`),
+      summaryCard("exact variants source audited", `${data.primary_source_audited_intrinsic_variants || 0}/${data.registry_intrinsic_variants || 0}`),
+      summaryCard("exact variants with ISA conditions", `${data.conditioned_intrinsic_variants || 0}/${data.registry_intrinsic_variants || 0}`),
       summaryCard("exact variants reviewed", `${data.reviewed_registry_intrinsic_variants || 0}/${data.registry_intrinsic_variants || 0}`),
       summaryCard("used exact variants reviewed", `${data.reviewed_used_intrinsic_variants || 0}/${data.used_intrinsic_variants || 0}`),
       summaryCard("used exact variants Lean checked", `${data.lean_checked_used_intrinsic_variants || 0}/${data.used_intrinsic_variants || 0}`),
@@ -138,9 +140,15 @@
       intrinsicCell.append(text("strong", capability.spelling || "unknown"));
       intrinsicCell.append(text("small", capability.architecture || "unknown"));
       intrinsicCell.append(text("code", capability.id || "missing exact identity"));
+      if (capability.review_family) {
+        intrinsicCell.append(text("small", `review family: ${capability.review_family}`));
+      }
       const signature = text("small", capability.function_type || "unknown signature");
       signature.title = capability.semantic_symbol || capability.role || "";
       intrinsicCell.append(signature);
+      if (Array.isArray(capability.architecture_conditions) && capability.architecture_conditions.length) {
+        intrinsicCell.append(text("small", `model conditions: ${capability.architecture_conditions.join(", ")}`));
+      }
       row.append(intrinsicCell);
       row.append(text("td", capability.defined ? "yes" : "missing", capability.defined ? "piece-done" : "piece-missing"));
       row.append(text("td", capability.lean_checked ? "passed" : "pending", capability.lean_checked ? "piece-done" : "piece-missing"));

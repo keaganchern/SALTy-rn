@@ -6,7 +6,7 @@ import SALT.Kernel.ElementwiseFamily
 
 namespace SALT.Corpus.f32vlrelu
 
-def programManifestSha256 : String := "7ebec620516835c5b5db35a335b1f6d6fdffd0e38120b7a96c65f075c85634e0"
+def programManifestSha256 : String := "1ced8271effc195ae277e93a15a4c00ef1e2843c0ab05b41e384aa3e862c18f7"
 def consumedEffectsSha256 : String := "5f9b0ffa4d7ddc26972dc0c9140860a6cff87e2f0aba85a8fe951b6080beb327"
 
 def neonSourceSha256 : String :=
@@ -20,7 +20,7 @@ def rvvPreprocessedSha256 : String :=
 def parseFacadeSha256 : String :=
   "829b8b0358b2a31d50a784422681ac9e821a4369619812194f800dc63287c4bc"
 def registrySha256 : String :=
-  "4614be47e76ea8df4f30903757cb1fe85627ebe2631c73550fe02cc0f68e749a"
+  "614c3edd0c6b2581eb6c2b3a86a03e45c6c17741635f9e3dfde2e7446333ce1e"
 
 structure f32vlreluParams where
   slope : BitVec 32

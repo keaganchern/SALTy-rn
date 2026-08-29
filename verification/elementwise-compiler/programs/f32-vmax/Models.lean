@@ -6,7 +6,7 @@ import SALT.Kernel.ElementwiseFamily
 
 namespace SALT.Corpus.f32vmax
 
-def programManifestSha256 : String := "bc1240fa61d109a4a2e92b17b2905e012335874ca07abe5e6bd9b57d8a1ad994"
+def programManifestSha256 : String := "884442106fd267f3036b46f91ce437d180bfe633ddf4deadf2cd294e17a6ed0e"
 def consumedEffectsSha256 : String := "9adc3f28c7f4e91df2e091678e3cd8384556c28daec147cfcbd33d63dfe31734"
 
 def neonSourceSha256 : String :=
@@ -20,7 +20,7 @@ def rvvPreprocessedSha256 : String :=
 def parseFacadeSha256 : String :=
   "829b8b0358b2a31d50a784422681ac9e821a4369619812194f800dc63287c4bc"
 def registrySha256 : String :=
-  "21ef061ad9b8425cf7344df586cacf24d99ff86a6e29555c3c5a622e08e64d96"
+  "072fc12120c57dfd695a3899a6d14093dfa3c86b6381d573756258f4cb7c0f12"
 
 structure f32vmaxParams where
   deriving Repr, DecidableEq
