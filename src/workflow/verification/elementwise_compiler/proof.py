@@ -71,7 +71,9 @@ def _sha256(path: Path) -> str:
 
 def _atomic_write(path: Path, text: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    descriptor, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
+    descriptor, temporary_name = tempfile.mkstemp(
+        prefix=f".{path.name}.", dir=path.parent
+    )
     temporary = Path(temporary_name)
     try:
         with os.fdopen(descriptor, "w", encoding="utf-8", newline="\n") as stream:
@@ -151,8 +153,7 @@ def _checker_sha256() -> str:
     return canonical_sha256(
         {
             "files": [
-                {"name": path.name, "sha256": _sha256(path.resolve())}
-                for path in files
+                {"name": path.name, "sha256": _sha256(path.resolve())} for path in files
             ],
             "allowed_axioms": sorted(ALLOWED_AXIOMS),
             "forbidden_identifiers": sorted(FORBIDDEN_LEAN_IDENTIFIERS),
@@ -185,18 +186,27 @@ def _artifact(index: Mapping[str, Any], key: str) -> GeneratedArtifact:
     return GeneratedArtifact.from_record(value)
 
 
-def _verify_stack(output: Path, index: Mapping[str, Any]) -> tuple[
-    ProgramManifest, GeneratedArtifact, GeneratedArtifact, str
-]:
+def _verify_stack(
+    output: Path, index: Mapping[str, Any]
+) -> tuple[ProgramManifest, GeneratedArtifact, GeneratedArtifact, str]:
     manifest = ProgramManifest.from_record(_json(output / "ProgramManifest.json"))
     manifest_index = index.get("manifest")
-    if not isinstance(manifest_index, Mapping) or manifest_index.get("sha256") != manifest.sha256:
+    if (
+        not isinstance(manifest_index, Mapping)
+        or manifest_index.get("sha256") != manifest.sha256
+    ):
         raise ProofGateError("manifest identity differs from ArtifactIndex")
     models = _artifact(index, "models")
     spec = _artifact(index, "spec")
-    if models.parent_sha256 != manifest.sha256 or _sha256(output / models.path) != models.sha256:
+    if (
+        models.parent_sha256 != manifest.sha256
+        or _sha256(output / models.path) != models.sha256
+    ):
         raise ProofGateError("Models artifact hash chain is invalid")
-    if spec.parent_sha256 != models.sha256 or _sha256(output / spec.path) != spec.sha256:
+    if (
+        spec.parent_sha256 != models.sha256
+        or _sha256(output / spec.path) != spec.sha256
+    ):
         raise ProofGateError("Spec artifact hash chain is invalid")
     namespace = index.get("namespace")
     if not isinstance(namespace, str) or not namespace:
@@ -209,6 +219,7 @@ _LEAN_DEPENDENCIES = (
     "SALT/Intrinsics/Neon.lean",
     "SALT/Intrinsics/RVV.lean",
     "SALT/Kernel/Schedule.lean",
+    "SALT/Kernel/ElementwiseTwoPhase.lean",
     "SALT/Kernel/ElementwiseFamily.lean",
 )
 
@@ -310,7 +321,11 @@ def _checked_claim_encoding(
             encoding="utf-8",
         )
         completed = _compile(toolchain, stage, environment, inspect, emit_olean=False)
-        if completed.returncode != 0 or completed.stderr or not completed.stdout.strip():
+        if (
+            completed.returncode != 0
+            or completed.stderr
+            or not completed.stdout.strip()
+        ):
             raise ProofGateError("Lean could not print the checked generated claim")
         return canonical_sha256(
             {
@@ -336,7 +351,9 @@ def _closure_files(output: Path, index: Mapping[str, Any]) -> tuple[Path, ...]:
     if not isinstance(capabilities, list):
         raise ProofGateError("ArtifactIndex capabilities must be an array")
     for capability in capabilities:
-        if not isinstance(capability, Mapping) or not isinstance(capability.get("path"), str):
+        if not isinstance(capability, Mapping) or not isinstance(
+            capability.get("path"), str
+        ):
             raise ProofGateError("ArtifactIndex capability binding is malformed")
         files.add(output / str(capability["path"]))
     if any(not path.is_file() for path in files):
@@ -377,7 +394,9 @@ def prepare_proof_task(
         checker_policy_sha256=_checker_sha256(),
         toolchain_sha256=toolchain.sha256,
     )
-    _atomic_write(output / "ProofTask.json", canonical_json(task.to_record(), pretty=True))
+    _atomic_write(
+        output / "ProofTask.json", canonical_json(task.to_record(), pretty=True)
+    )
     index["proof_task"] = {
         "path": "ProofTask.json",
         "sha256": task.sha256,
@@ -409,7 +428,11 @@ def _checked_axioms(output: str) -> frozenset[str]:
 def _write_result(output: Path, index: dict[str, Any], result: Result) -> Path:
     path = output / "Result.json"
     _atomic_write(path, canonical_json(result.to_record(), pretty=True))
-    index["result"] = {"path": "Result.json", "sha256": result.sha256, "status": result.status.value}
+    index["result"] = {
+        "path": "Result.json",
+        "sha256": result.sha256,
+        "status": result.status.value,
+    }
     _write_index(output, index)
     return path
 
@@ -431,18 +454,34 @@ def check_proof(
         manifest, models, spec, namespace = _verify_stack(output, index)
         task = ProofTask.from_record(_json(task_path))
         task_index = index.get("proof_task")
-        if not isinstance(task_index, Mapping) or task_index.get("sha256") != task.sha256:
+        if (
+            not isinstance(task_index, Mapping)
+            or task_index.get("sha256") != task.sha256
+        ):
             raise ProofGateError("ProofTask identity differs from ArtifactIndex")
-        if task.manifest_sha256 != manifest.sha256 or task.models != models or task.spec != spec:
+        if (
+            task.manifest_sha256 != manifest.sha256
+            or task.models != models
+            or task.spec != spec
+        ):
             raise ProofGateError("ProofTask parent chain differs from generated stack")
-        if task.checker_policy_sha256 != checker_sha or task.toolchain_sha256 != toolchain.sha256:
+        if (
+            task.checker_policy_sha256 != checker_sha
+            or task.toolchain_sha256 != toolchain.sha256
+        ):
             raise ProofGateError("ProofTask checker/toolchain identity is stale")
-        checked_claim = _checked_claim_encoding(repository, output, namespace, toolchain)
+        checked_claim = _checked_claim_encoding(
+            repository, output, namespace, toolchain
+        )
         if checked_claim != task.elaborated_type_sha256:
-            raise ProofGateError("checked generated claim differs from frozen ProofTask")
+            raise ProofGateError(
+                "checked generated claim differs from frozen ProofTask"
+            )
         start = _closure_sha256(output, index)
     except (OSError, ValueError, ProofGateError) as error:
-        placeholder = ProofTask.from_record(_json(task_path)) if task_path.is_file() else None
+        placeholder = (
+            ProofTask.from_record(_json(task_path)) if task_path.is_file() else None
+        )
         result = Result(
             ResultStatus.GENERATION_FAILED,
             None if placeholder is None else placeholder.sha256,
@@ -485,10 +524,16 @@ def check_proof(
             failure: str | None = None
             for name in ("Models.lean", "Spec.lean", "Proof.lean"):
                 completed = _compile(
-                    toolchain, stage, environment, module_directory / name, emit_olean=True
+                    toolchain,
+                    stage,
+                    environment,
+                    module_directory / name,
+                    emit_olean=True,
                 )
                 if completed.returncode != 0:
-                    failure = f"Lean rejected {name}:\n{completed.stdout}{completed.stderr}"
+                    failure = (
+                        f"Lean rejected {name}:\n{completed.stdout}{completed.stderr}"
+                    )
                     break
             if failure is None:
                 audit = stage / "ElementwiseProofAudit.lean"
@@ -499,7 +544,9 @@ def check_proof(
                     f"#print axioms {task.theorem}\n",
                     encoding="utf-8",
                 )
-                completed = _compile(toolchain, stage, environment, audit, emit_olean=False)
+                completed = _compile(
+                    toolchain, stage, environment, audit, emit_olean=False
+                )
                 if completed.returncode != 0:
                     failure = f"Lean theorem audit failed:\n{completed.stdout}{completed.stderr}"
                 else:
@@ -571,7 +618,12 @@ def run_proof_agent(
             closure,
             "proof agent failed or modified a protected artifact",
         )
-        return ProofRun(task, result, output / "ProofTask.json", _write_result(output, index, result))
+        return ProofRun(
+            task,
+            result,
+            output / "ProofTask.json",
+            _write_result(output, index, result),
+        )
     return check_proof(repository_root, output)
 
 

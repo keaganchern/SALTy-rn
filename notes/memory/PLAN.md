@@ -4,12 +4,10 @@ Last updated: 2026-08-29 (Asia/Seoul)
 
 ## Active Milestone
 
-Batch-classify the nineteen scalar-layout pairs and make the dashboard consume the
-now-complete generated proof/result chain.
-
-The first production gate remains: take two fixed-no-tail C pairs whose typed
-intrinsics already exist and generate/check the entire stack with zero Python/Lean
-framework source changes.
+The elementwise compiler infrastructure milestone is complete. The active work is
+now capability expansion: add reviewed exact intrinsic variants, then rerun the
+corpus compiler so every newly completed puzzle piece unlocks all dependent
+programs automatically.
 
 ## Canonical Artifact Chain
 
@@ -154,7 +152,7 @@ Exit gates:
 
 ### M3 — Dashboard Reads the Real Artifact Graph
 
-**Status:** Pending.
+**Status:** Completed in implementation stage 5.
 
 Deliver:
 
@@ -175,8 +173,8 @@ Exit gates:
 
 ### M4 — Fixed Tail and Binary Reuse
 
-**Status:** Core generation completed early in implementation stage 2; mutation
-and held-out gates remain part of M2.
+**Status:** Completed. Core generation landed in implementation stage 2 and the
+mutation/held-out gates pass through the shared compiler path.
 
 Deliver:
 
@@ -194,7 +192,8 @@ Exit gates:
 
 ### M5 — Compositional Multi-Phase Family
 
-**Status:** Pending.
+**Status:** Completed for the audited 64/8 and nested 16/8 control encodings in
+implementation stages 4, 6, and the final structural-adapter cleanup.
 
 Deliver ordered phase lists, a generic phase-composition theorem, and structural
 recognition for 16/8/4/2/1 and 64/8/4/2/1 streams.
@@ -203,11 +202,13 @@ Exit gates:
 
 - `qs8-vadd-minmax` and `s8-vclamp` select the same parameterized mechanism without
   named emitter branches;
+- the separate-loop adapter contains no program id or fixed call-number table;
 - `f32-f16-vcvt` is blocked only by FP/intrinsic support, not control flow.
 
 ### M6 — Coverage Expansion
 
-**Status:** Pending.
+**Status:** Active capability work, outside the completed compiler-infrastructure
+milestone.
 
 Fill missing integer intrinsic variants. Then establish reviewed FP semantics and
 new layout/view capabilities, including planar complex grouping, before claiming
@@ -215,13 +216,15 @@ coverage of all 20 audited elementwise pairs.
 
 ## Immediate Work Queue
 
-Only the first incomplete item is active:
-
-1. batch-classify the nineteen scalar-layout pairs from explicit inputs;
-2. add multi-phase composition for the three identified programs;
-3. make the dashboard read the real capability/manifest/task/result graph;
-4. expand integer intrinsics;
-5. add reviewed FP semantics; keep grouped `f32-vcmul` deferred.
+1. add independently reviewed integer/FP intrinsic capabilities, starting from
+   the dependencies shared by the largest number of the fourteen blocked scalar
+   programs;
+2. add parse facades as mechanical typed declarations where missing;
+3. rerun `workflow.verification.elementwise_compiler.corpus` and require the
+   checked-in report/dashboard to change only through the artifact graph;
+4. generate proof tasks for newly unblocked programs and delegate only
+   `Proof.lean`;
+5. keep grouped `f32-vcmul` deferred until a reviewed complex layout/view exists.
 
 ## Global Acceptance Gates
 

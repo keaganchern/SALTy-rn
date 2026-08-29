@@ -103,42 +103,42 @@
     },
     {
       "capability_id": "intrinsic:rvv:__riscv_vsetvl_e8m8:ff8292e21b51482a",
-      "path": "Capabilities/intrinsic_rvv___riscv_vsetvl_e8m8_ff8292e21b51482a-18b0ed342ea9eb29.json",
-      "sha256": "18b0ed342ea9eb29b32f848dd73f531751a81bfad5327786f375dea55c2cbc8b"
+      "path": "Capabilities/intrinsic_rvv___riscv_vsetvl_e8m8_ff8292e21b51482a-a57c82fd2869ab1f.json",
+      "sha256": "a57c82fd2869ab1fc250d45a5421cd43cdd6a27d3caf6c5de4603aecb450a60b"
     },
     {
       "capability_id": "layout:scalar-lane",
-      "path": "Capabilities/layout_scalar-lane-177dd0229fd55831.json",
-      "sha256": "177dd0229fd558315e86308869d20dfad882e69554fba92f09d1c2a07fcd4f84"
+      "path": "Capabilities/layout_scalar-lane-c5483d00d73b06a6.json",
+      "sha256": "c5483d00d73b06a66e846c4c63bdd75da437a0ca79bbbed3101d013e5b57648f"
     },
     {
       "capability_id": "schedule:neon:multi-phase",
-      "path": "Capabilities/schedule_neon_multi-phase-60d0e669c4007626.json",
-      "sha256": "60d0e669c4007626b10a6ca68c792eeaae0bcb8e804b52170c55412af54ebd44"
+      "path": "Capabilities/schedule_neon_multi-phase-6a7538ea3fde926c.json",
+      "sha256": "6a7538ea3fde926c2da14b98837ff26cb7acaa4387de4b705ae3e8ee7fdae628"
     },
     {
       "capability_id": "schedule:rvv:rvv-strip-mine",
-      "path": "Capabilities/schedule_rvv_rvv-strip-mine-732bf74136b28cdd.json",
-      "sha256": "732bf74136b28cdd955801bdc2ac7e18f1b5417b950b044c299a7773f2b370ef"
+      "path": "Capabilities/schedule_rvv_rvv-strip-mine-0fda41c4f3e66e7b.json",
+      "sha256": "0fda41c4f3e66e7bd649bb6abcdf98e97dedbb37e85d0a9ff22689ceabb4e9b0"
     }
   ],
   "manifest": {
     "path": "ProgramManifest.json",
-    "sha256": "8cbbcfdd8ad2f7a805af3fe6f9c32dc2593c54bf20b1201b77d49107f3dd9e87"
+    "sha256": "f76fd1f9b2838348f46c922a84e011306a3f0465843d1a305bfad5cc77571e9d"
   },
   "models": {
     "kind": "models",
-    "parent_sha256": "8cbbcfdd8ad2f7a805af3fe6f9c32dc2593c54bf20b1201b77d49107f3dd9e87",
+    "parent_sha256": "f76fd1f9b2838348f46c922a84e011306a3f0465843d1a305bfad5cc77571e9d",
     "path": "Models.lean",
-    "sha256": "cfb08192c8bd9296ec25d7afd1786d155ef2deb21e691928f13eca8d060e2a7f"
+    "sha256": "0a58329b012687edc365fb94c2339c825e6dd21bab9ba789032a8688ed41decb"
   },
   "namespace": "SALT.Corpus.s8vclamp",
   "schema_version": 1,
   "spec": {
     "kind": "spec",
-    "parent_sha256": "cfb08192c8bd9296ec25d7afd1786d155ef2deb21e691928f13eca8d060e2a7f",
+    "parent_sha256": "0a58329b012687edc365fb94c2339c825e6dd21bab9ba789032a8688ed41decb",
     "path": "Spec.lean",
-    "sha256": "cd333ad5bfa51b29a95259398c57d837ea61cb86a61823989ab85d679d7b310e"
+    "sha256": "2eeb5907398b62528992a9429c34206239196f2dc61f86ee2d66235522fecee6"
   },
-  "stack_sha256": "99f6237f8bf992e221a55c0a47beff86979b27985403d22cf5aefad37cb7656d"
+  "stack_sha256": "1ac17f746e36350e455155213c79bd607e75252095c07829d849538a15538297"
 }

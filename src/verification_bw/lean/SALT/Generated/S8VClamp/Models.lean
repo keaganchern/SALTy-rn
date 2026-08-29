@@ -1,7 +1,7 @@
 -- This file is generated. Do not edit the models by hand.
 import SALT.Intrinsics.Neon
 import SALT.Intrinsics.RVV
-import SALT.Kernel.Schedule
+import SALT.Kernel.ElementwiseTwoPhase
 
 namespace SALT.Generated.S8VClamp
 
@@ -41,26 +41,27 @@ def neonBlock64FromIntrinsics (p : S8ClampParams)
   let vacc3_2 := SALT.Intrinsics.Neon.vminq_s8 (vacc3_1) (voutput_max_0)
   (vacc0_2) ++ (vacc1_2) ++ (vacc2_2) ++ (vacc3_2)
 
-/-- Generated value model of the source's reversed-order 8-lane block. -/
+/-- Generated 8-lane secondary block from the extracted call graph. -/
 def neonBlock8FromIntrinsics (p : S8ClampParams)
-    (input : List (BitVec 8)) : List (BitVec 8) :=
-  let vacc_0 := (input).take 8
-  let call_0019 := (List.replicate 16 ((p.max).truncate 8)).take 8
+    (loaded : List (BitVec 8)) : List (BitVec 8) :=
+  let voutput_max_0 := List.replicate 16 ((p.max).truncate 8)
+  let voutput_min_0 := List.replicate 16 ((p.min).truncate 8)
+  let vacc_0 := (loaded).take 8
+  let call_0019 := (voutput_max_0).take 8
   let vacc_1 := SALT.Intrinsics.Neon.vmin_s8_vec (vacc_0) (call_0019)
-  let call_0021 := (List.replicate 16 ((p.min).truncate 8)).take 8
+  let call_0021 := (voutput_min_0).take 8
   let vacc_2 := SALT.Intrinsics.Neon.vmax_s8_vec (vacc_1) (call_0021)
   vacc_2
 
-/-- Generated little-endian live-prefix value abstraction for the 4/2/1 stores.
-
-This definition does not establish C memory, alignment, aliasing, or endian adequacy.
--/
+/-- Generated little-endian live-prefix abstraction of the 4/2/1 stores. -/
 def neonPartialTailLivePrefixFromIntrinsics (p : S8ClampParams)
     (loaded : List (BitVec 8)) (live : Nat) : List (BitVec 8) :=
+  let voutput_max_0 := List.replicate 16 ((p.max).truncate 8)
+  let voutput_min_0 := List.replicate 16 ((p.min).truncate 8)
   let vacc_3 := (loaded).take 8
-  let call_0025 := (List.replicate 16 ((p.max).truncate 8)).take 8
+  let call_0025 := (voutput_max_0).take 8
   let vacc_4 := SALT.Intrinsics.Neon.vmin_s8_vec (vacc_3) (call_0025)
-  let call_0027 := (List.replicate 16 ((p.min).truncate 8)).take 8
+  let call_0027 := (voutput_min_0).take 8
   let vacc_5 := SALT.Intrinsics.Neon.vmax_s8_vec (vacc_4) (call_0027)
   let call_0029 := vacc_5
   let stored4 := if live.testBit 2 then (call_0029).take 4 else []
@@ -75,21 +76,19 @@ def neonPartialTailLivePrefixFromIntrinsics (p : S8ClampParams)
 
 /-- Generated value-only lifting of the validated 64/8/4/2/1 control shape.
 
-`overread` supplies the bytes physically loaded beyond a nonempty short tail.
-This definition does not establish that those bytes are legally readable.
+The overread lists model physically loaded bytes beyond a nonempty short tail.
+This definition does not establish C memory, alignment, aliasing, or endian adequacy.
 -/
 def neonValueLoopWithOverreadFromIntrinsics (p : S8ClampParams)
     (input overread : List (BitVec 8)) : List (BitVec 8) :=
-  SALT.Kernel.Schedule.runFixedChunkTail 64 (by decide)
-    (neonBlock64FromIntrinsics p)
-    (SALT.Kernel.Schedule.runFixedChunkTail 8 (by decide)
-      (neonBlock8FromIntrinsics p)
-      (fun tail =>
-        let loaded := (tail ++ overread).take 8
-        neonPartialTailLivePrefixFromIntrinsics p loaded tail.length))
+  SALT.Kernel.Schedule.runTwoPhaseTail 64 8 (by decide) (by decide)
+    (neonBlock64FromIntrinsics p) (neonBlock8FromIntrinsics p)
+    (fun tail =>
+      let loaded := (tail ++ overread).take 8
+      neonPartialTailLivePrefixFromIntrinsics p loaded tail.length)
     input
 
-/-- Zero-filled compatibility specialization of the arbitrary-overread model. -/
+/-- Zero-filled compatibility specialization of the explicit-overread model. -/
 def neonValueLoopFromIntrinsics (p : S8ClampParams)
     (input : List (BitVec 8)) : List (BitVec 8) :=
   neonValueLoopWithOverreadFromIntrinsics p input

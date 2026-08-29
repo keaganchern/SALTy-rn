@@ -146,9 +146,10 @@ expressions. `Spec.lean` contains proof-free frozen propositions; `Proof.lean` i
 the designated agent-owned artifact; `Audit.lean` checks the exported claim and
 axioms. The current repository-local process is not a write sandbox.
 
-**Confirmed limitation:** the current Python backend generated only the imported
-local block/chunk model. The new loop assembly and `Spec.lean` were manually staged
-to validate the desired output. This is not yet zero-source-change onboarding.
+**Historical prototype limitation, superseded:** at commit `986acd4`, the Python
+backend generated only the local block/chunk model, so loop assembly and Spec were
+manually staged. The current explicit compiler and randomized held-out gate now
+generate the complete stack without framework edits.
 
 ## Assertion and Contract Rule
 
@@ -181,21 +182,31 @@ function names, architectures, target triples, and parse facades. Reachable call
 types are discovered from the facade declarations; assertions are emitted with
 their control context and translated by a fail-closed typed expression parser.
 
-The generic path has been exercised on all five existing integer pairs without
-reading their named frontend profiles. Their normalized entry contracts match;
+The generic path is exercised on all five existing integer pairs without reading
+their named frontend profiles. Their normalized entry contracts match;
 `qs8-vcvt`'s two local tail assertions remain local facts. Exact intrinsic
 ambiguities are resolved by one program-independent, information-preserving rule;
 true ties fail closed. The compiler recognizes scalar streams, fixed-no-tail,
-fixed-tail with 4/2/1 prefix stores, and RVV strip-mining, and hash-binds the
+fixed-tail with 4/2/1 prefix stores, two-phase 64/8 and nested 16/8 schedules, and
+RVV strip-mining, and hash-binds the
 complete parsed call/control/assert/effect inventory. It emits canonical
 `ProgramManifest.json`, capability records, independent `fNeon`/`fRvv`
 definitions, proof-free `Models.lean`/`Spec.lean`, and an artifact index.
 
-Generated unary tail (`qs8-vcvt`), binary tail (`qu8-vadd-minmax`), and synthetic
-fixed-no-tail (`s8-vmax`) outputs elaborate in Lean. Output deletion and
-regeneration is byte deterministic. The old named profiles remain regression
-adapters; the production compiler accepts no case id and its generation path no
-longer dispatches on one.
+Generated unary tail (`qs8-vcvt`), binary tail (`qu8-vadd-minmax`), nested binary
+two-phase (`qs8-vadd-minmax`), separate-loop two-phase (`s8-vclamp`), and
+synthetic fixed-no-tail (`s8-vmax`) outputs elaborate in Lean. Output deletion and
+regeneration is byte deterministic. Scalar-lane layout records carry a C type per
+stream, so same-coordinate conversions such as `float[i] -> uint16[i]` are not
+misclassified merely because input and output element types differ. The old named
+profiles remain regression adapters; the production compiler accepts no case id.
+
+The two-phase emitters are structural on both supported C encodings. In
+particular, the separate-loop path derives the second block, live-prefix tail,
+data dependencies, pointer versions, and store widths from the extraction. The
+former `s8-vclamp` call-number/template table has been removed. A supported
+semantic operation change regenerates a different model; it is not rejected for
+departing from a memorized program body.
 
 The proof gate now elaborates the frozen generated claim, emits
 `ProofTask.json`, permits an external agent to modify only `Proof.lean` inside the
@@ -204,6 +215,10 @@ and transitive axioms with Lean, and publishes content-addressed `Result.json`.
 It compiles its small Lean dependency closure in a temporary root, so checking does
 not modify the repository's tracked `.lake` products.
 
+The older dashboard proof-policy audit likewise copies the complete Lean source
+tree without `.lake`, performs a fresh build, and audits the elaborated theorem in
+that temporary root. Checked-in cache state is neither trusted nor modified.
+
 **Confirmed held-out gate:** two S8 VMax C pairs pass generation and proof after
 full output deletion. The second pair uses randomized directories, basenames,
 function identifiers, and Lean namespace. A Neon max-to-min change invalidates the
@@ -211,27 +226,41 @@ agent proof, and pointer-step, loop-update, entry-assertion, and active-`vl`
 mutations all fail closed. The complete run leaves every tracked repository file
 byte-identical.
 
-**Remaining gap:** artifact-driven dashboard integration, batch coverage reporting
-for all nineteen, multi-phase recognition, and broader integer/FP intrinsic
-semantics are not yet complete.
+**Confirmed batch/dashboard state:** structural discovery finds twenty elementwise
+pairs: nineteen scalar-lane and one deferred grouped complex layout. The checked-in
+corpus report currently has five `spec-generated`, fourteen `intrinsic-missing`,
+and one `layout-unrecognized`. There are no parser, contract, family, or generation
+failures in the nineteen-program scalar scope. The dashboard reads the report and
+verifies every Manifest/Models/Spec/ProofTask/Proof/Result parent hash before
+displaying progress; a modified child becomes `stale-artifact`. It shows value,
+C, and ISA claim layers separately.
+
+**Remaining capability work:** the fourteen blocked scalar programs need exact
+typed parse facades and reviewed integer/FP intrinsic definitions. `f32-vcmul`
+needs a grouped complex layout/view. These are visible puzzle pieces, not hidden
+program profiles or control-flow generator work. No current corpus program is
+claimed `verified(value)` merely because its Spec was generated.
+
+**Confirmed final validation:** the complete repository suite passes with 379
+tests. The refreshed twenty-program graph has zero stale nodes, and the checked-in
+legacy generated models pass deterministic regeneration checks.
 
 ## Immediate Objective
 
-Make the dashboard and nineteen-program batch report consume the real artifact
-chain:
+Expand reviewed intrinsic capabilities through the now-complete artifact chain:
 
 ```text
-registered intrinsics/layout/families + two positive C pairs + one mutation
+registered intrinsics/layout/families + discovered C pair
   -> no Python/Lean source edits
   -> generated manifest, Models.lean, Spec.lean, ProofTask.json
   -> proof attempt and Lean result
   -> dashboard program state derived automatically
 ```
 
-One positive may use the synthetic `s8-vmax` only after its Neon/RVV entry
-assertions are normalized to match; the second must randomize path, filename,
-function, and module identities. The negative changes one side from max to min. Do
-not onboard a sixth named case by adding another profile while this gate is open.
+The two randomized S8 VMax positives and semantic/structural negatives already
+satisfy the zero-framework-edit gate. New program support must now arrive by
+adding reusable intrinsic or layout capability records, never by adding a program
+id to the compiler or dashboard.
 
 ## Independent Plan Review
 

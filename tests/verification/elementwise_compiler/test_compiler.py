@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import shutil
+import tempfile
 from pathlib import Path
 
 import pytest
@@ -16,10 +17,18 @@ from workflow.verification.elementwise_compiler.schema import ProgramManifest
 
 ROOT = Path(__file__).resolve().parents[3]
 FACADE_ROOT = ROOT / "src/workflow/verification/lean_backend/facade"
-pytestmark = pytest.mark.skipif(shutil.which("clang") is None, reason="system clang required")
+pytestmark = pytest.mark.skipif(
+    shutil.which("clang") is None, reason="system clang required"
+)
 
 
-def _request(case: str, output: Path, *, neon_source: Path | None = None, namespace: str | None = None):
+def _request(
+    case: str,
+    output: Path,
+    *,
+    neon_source: Path | None = None,
+    namespace: str | None = None,
+):
     facade = FACADE_ROOT / f"{case.replace('-', '_')}.h"
     return CompilerRequest(
         repository_root=ROOT,
@@ -61,7 +70,9 @@ def _tree_digest(root: Path) -> str:
     return digest.hexdigest()
 
 
-def test_real_fixed_tail_pair_generates_complete_deterministic_stack(tmp_path: Path) -> None:
+def test_real_fixed_tail_pair_generates_complete_deterministic_stack(
+    tmp_path: Path,
+) -> None:
     output = tmp_path / "first"
     first = compile_pair(_request("qs8-vcvt", output))
     first_digest = _tree_digest(output)
@@ -83,7 +94,9 @@ def test_real_fixed_tail_pair_generates_complete_deterministic_stack(tmp_path: P
     assert index["spec"]["parent_sha256"] == first.models.sha256
 
 
-def test_normalized_fixed_no_tail_pair_uses_same_generic_compiler(tmp_path: Path) -> None:
+def test_normalized_fixed_no_tail_pair_uses_same_generic_compiler(
+    tmp_path: Path,
+) -> None:
     result = compile_pair(_vmax_request(tmp_path / "vmax"))
     assert result.recognition.neon.kind.value == "fixed-no-tail"
     assert result.manifest.contracts.neon == result.manifest.contracts.rvv
@@ -104,7 +117,9 @@ def test_generated_models_and_spec_are_separate_and_proof_free(tmp_path: Path) -
         assert forbidden not in spec
 
 
-def test_binary_pair_uses_same_compiler_and_schedule_capabilities(tmp_path: Path) -> None:
+def test_binary_pair_uses_same_compiler_and_schedule_capabilities(
+    tmp_path: Path,
+) -> None:
     unary = compile_pair(_request("qs8-vcvt", tmp_path / "unary"))
     binary = compile_pair(
         _request(
@@ -115,7 +130,10 @@ def test_binary_pair_uses_same_compiler_and_schedule_capabilities(tmp_path: Path
     )
     assert len(unary.recognition.inputs) == 1
     assert len(binary.recognition.inputs) == 2
-    assert unary.recognition.schedule_capabilities == binary.recognition.schedule_capabilities
+    assert (
+        unary.recognition.schedule_capabilities
+        == binary.recognition.schedule_capabilities
+    )
     assert "List.zipWith (fNeon p)" in binary.stack.spec_text
     assert "SALT.Randomized.Deep.BinaryFixture" in binary.stack.models_text
 
@@ -138,7 +156,69 @@ def test_nested_binary_two_phase_pair_generates_the_parameterized_schedule(
     assert "theorem " not in result.stack.spec_text
 
 
-def test_pointer_step_mutation_fails_before_artifacts_are_written(tmp_path: Path) -> None:
+def test_separate_loop_two_phase_pair_uses_the_same_parameterized_schedule(
+    tmp_path: Path,
+) -> None:
+    result = compile_pair(
+        _request(
+            "s8-vclamp",
+            tmp_path / "two-phase",
+            namespace="SALT.Randomized.SeparateTwoPhase",
+        )
+    )
+
+    assert result.recognition.neon.phase_widths == (64, 8)
+    assert "runTwoPhaseTail 64 8" in result.stack.models_text
+    assert "def neonBlock8FromIntrinsics" in result.stack.models_text
+    assert "s8-vclamp" not in result.stack.models_text
+    assert "call_0018" not in result.stack.models_text
+
+
+def test_separate_two_phase_adapter_survives_shifted_call_ids_and_random_identity(
+    tmp_path: Path,
+) -> None:
+    fixture = Path(tempfile.mkdtemp(prefix=".elementwise-two-phase-", dir=ROOT))
+    try:
+        neon = (ROOT / "kernels/source/s8-vclamp.c").read_text(encoding="utf-8")
+        marker = "    vacc0 = vmaxq_s8(vacc0, voutput_min);\n"
+        assert neon.count(marker) == 1
+        neon = neon.replace(marker, marker + marker, 1).replace(
+            "test_neon", "randomized_neon_phase", 1
+        )
+        rvv = (ROOT / "kernels/target/s8-vclamp.c").read_text(encoding="utf-8")
+        rvv = rvv.replace("test_rvv", "randomized_rvv_phase", 1)
+        neon_path = fixture / "unseen_left.c"
+        rvv_path = fixture / "unseen_right.c"
+        neon_path.write_text(neon, encoding="utf-8")
+        rvv_path.write_text(rvv, encoding="utf-8")
+        facade = FACADE_ROOT / "s8_vclamp.h"
+
+        result = compile_pair(
+            CompilerRequest(
+                repository_root=ROOT,
+                neon_source=neon_path,
+                rvv_source=rvv_path,
+                neon_function="randomized_neon_phase",
+                rvv_function="randomized_rvv_phase",
+                neon_facade=facade,
+                rvv_facade=facade,
+                neon_target="aarch64-none-elf",
+                rvv_target="riscv64-none-elf",
+                namespace="SALT.Randomized.ShiftedTwoPhase",
+                output_directory=tmp_path / "shifted",
+            )
+        )
+
+        assert result.recognition.neon.phase_widths == (64, 8)
+        assert "runTwoPhaseTail 64 8" in result.stack.models_text
+        assert "SALT.Intrinsics.Neon.vmaxq_s8" in result.stack.models_text
+    finally:
+        shutil.rmtree(fixture)
+
+
+def test_pointer_step_mutation_fails_before_artifacts_are_written(
+    tmp_path: Path,
+) -> None:
     source = ROOT / "kernels/source/qs8-vcvt.c"
     mutated = ROOT / "kernels/source/compiler-heldout-pointer-step.c"
     mutated.write_text(
@@ -154,7 +234,9 @@ def test_pointer_step_mutation_fails_before_artifacts_are_written(tmp_path: Path
         mutated.unlink(missing_ok=True)
 
 
-def test_intrinsic_capabilities_are_reused_across_program_manifests(tmp_path: Path) -> None:
+def test_intrinsic_capabilities_are_reused_across_program_manifests(
+    tmp_path: Path,
+) -> None:
     first = compile_pair(_request("qs8-vcvt", tmp_path / "first"))
     second = compile_pair(_request("qs8-vlrelu", tmp_path / "second"))
     first_refs = set(first.manifest.intrinsic_capabilities)

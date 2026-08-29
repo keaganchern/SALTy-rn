@@ -30,10 +30,28 @@ environment and applies the tracked theorem/contract policy. A passing result is
 displayed only while both the complete Lean source/configuration digest and
 proof-policy/checker digest remain unchanged.
 
+The page's **Element-wise compiler puzzle** is a separate projection from
+`verification/elementwise-compiler/CorpusReport.json`. Refresh its checked-in
+inputs with:
+
+```sh
+PYTHONPATH=src python3 -m workflow.verification.elementwise_compiler.corpus \
+  --repository-root . \
+  --output-directory verification/elementwise-compiler
+```
+
+That projection verifies the complete content-addressed chain before showing
+Manifest, Models, Spec, ProofTask, or Result progress. It does not read the legacy
+`supported_cases` lists. Missing intrinsic spellings are puzzle dependencies;
+changing one generated child marks the corresponding row stale.
+
 The tracked policy also pins the exact local Lean and Lake binaries, their
 reported versions, the shared Lean runtime, and every importable `.olean` under
 the selected Lean sysroot. The checker resolves absolute executables and removes
 Lean/Lake/compiler and dynamic-loader overrides from the subprocess environment.
+Before auditing tracked theorems, it copies the Lean sources without `.lake` and
+performs a fresh build in a temporary root; repository build products are neither
+trusted nor updated.
 This initial identity is platform-specific (`arm64-apple-darwin`); another host
 must add and independently review its own toolchain identity before it can report
 a passing proof check.

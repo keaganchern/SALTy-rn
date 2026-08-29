@@ -430,18 +430,18 @@ def test_generic_lane_store_still_requires_an_endian_contract():
         (
             "vext_s8(vacc, vacc, 4)",
             "vext_s8(vacc, vacc, 2)",
-            "Neon 8-lane/tail call or operand shape changed",
+            "conditional slide changed",
         ),
         (
             "vext_s8(vacc, vacc, 2)",
             "vext_s8(vacc, vacc, 1)",
-            "Neon 8-lane/tail call or operand shape changed",
+            "conditional slide changed",
         ),
         ("output += 4;", "output += 3;", "pointer or count updates changed"),
         (
             "vst1_lane_s8(output, vacc, 0)",
             "vst1_lane_s8(output, vacc, 1)",
-            "Neon 8-lane/tail call or operand shape changed",
+            "lane-store shape changed",
         ),
     ),
 )
@@ -470,9 +470,10 @@ def test_s8_tail_shape_mutations_fail_closed(
         ),
     ),
 )
-def test_s8_tail_semantic_operation_mutations_fail_closed(
+def test_s8_tail_semantic_operation_mutations_regenerate_the_model(
     tmp_path: Path, old: str, new: str
 ):
+    original = emit("s8-vclamp").emitted.module_text
     source = (ROOT / "kernels/source/s8-vclamp.c").read_text(encoding="utf-8")
     offset = source.rfind(old)
     assert offset >= 0
@@ -482,11 +483,8 @@ def test_s8_tail_semantic_operation_mutations_fail_closed(
         encoding="utf-8",
     )
 
-    with pytest.raises(
-        CaseEmissionError,
-        match="Neon 8-lane/tail call or operand shape changed",
-    ):
-        emit("s8-vclamp", neon_source=mutated)
+    changed = emit("s8-vclamp", neon_source=mutated).emitted.module_text
+    assert changed != original
 
 
 def test_supported_neon_semantic_mutation_changes_the_s8_model(tmp_path: Path):

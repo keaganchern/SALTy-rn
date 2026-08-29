@@ -103,8 +103,8 @@
     },
     {
       "capability_id": "intrinsic:rvv:__riscv_vsetvl_e8m2:d793f686aba364cc",
-      "path": "Capabilities/intrinsic_rvv___riscv_vsetvl_e8m2_d793f686aba364cc-a4abd4d2d285d116.json",
-      "sha256": "a4abd4d2d285d1167f929ce4299105a07f6c2164623761650df0559aebaa740b"
+      "path": "Capabilities/intrinsic_rvv___riscv_vsetvl_e8m2_d793f686aba364cc-d213bcd3272b583a.json",
+      "sha256": "d213bcd3272b583a81af7c44fdff680bd08627249b21d7906a8860275bd9c951"
     },
     {
       "capability_id": "intrinsic:rvv:__riscv_vsext_vf2_i16m4:32e4afab8ffdf4f5",
@@ -128,37 +128,37 @@
     },
     {
       "capability_id": "layout:scalar-lane",
-      "path": "Capabilities/layout_scalar-lane-177dd0229fd55831.json",
-      "sha256": "177dd0229fd558315e86308869d20dfad882e69554fba92f09d1c2a07fcd4f84"
+      "path": "Capabilities/layout_scalar-lane-c5483d00d73b06a6.json",
+      "sha256": "c5483d00d73b06a66e846c4c63bdd75da437a0ca79bbbed3101d013e5b57648f"
     },
     {
       "capability_id": "schedule:neon:fixed-tail",
-      "path": "Capabilities/schedule_neon_fixed-tail-6099a5048837c6ab.json",
-      "sha256": "6099a5048837c6abdc24782de1e900d9a894d62e5597f1495a3a170829eabd21"
+      "path": "Capabilities/schedule_neon_fixed-tail-2611a95304dee588.json",
+      "sha256": "2611a95304dee588b72eb6258c3746c066e74e85b55808b8ce3a203c4013675d"
     },
     {
       "capability_id": "schedule:rvv:rvv-strip-mine",
-      "path": "Capabilities/schedule_rvv_rvv-strip-mine-732bf74136b28cdd.json",
-      "sha256": "732bf74136b28cdd955801bdc2ac7e18f1b5417b950b044c299a7773f2b370ef"
+      "path": "Capabilities/schedule_rvv_rvv-strip-mine-0fda41c4f3e66e7b.json",
+      "sha256": "0fda41c4f3e66e7bd649bb6abcdf98e97dedbb37e85d0a9ff22689ceabb4e9b0"
     }
   ],
   "manifest": {
     "path": "ProgramManifest.json",
-    "sha256": "19efce08dfa1f2ab5689cf9b6a4530a5164d9d00bbb07c319f472be78441f3d4"
+    "sha256": "74a58e09a0e52822c9d24a61c59fbd3c784d48836d0ebd8c76e2a829b8aed944"
   },
   "models": {
     "kind": "models",
-    "parent_sha256": "19efce08dfa1f2ab5689cf9b6a4530a5164d9d00bbb07c319f472be78441f3d4",
+    "parent_sha256": "74a58e09a0e52822c9d24a61c59fbd3c784d48836d0ebd8c76e2a829b8aed944",
     "path": "Models.lean",
-    "sha256": "5dcd4c2cc390e6701c91261e3a1c3dd1d25d4fac555d34ef10932c1700b95479"
+    "sha256": "2767d04ce84e7e8f520a242a1630d1c00f8b9bad8ad1b06301b11ef4d1497325"
   },
   "namespace": "SALT.Corpus.qs8vcvt",
   "schema_version": 1,
   "spec": {
     "kind": "spec",
-    "parent_sha256": "5dcd4c2cc390e6701c91261e3a1c3dd1d25d4fac555d34ef10932c1700b95479",
+    "parent_sha256": "2767d04ce84e7e8f520a242a1630d1c00f8b9bad8ad1b06301b11ef4d1497325",
     "path": "Spec.lean",
-    "sha256": "d58106f2c34ba43601f59399c661061eb4b9bd8e05a43ee940fd0df72142c4e7"
+    "sha256": "e51df29cb3c4719457ee6a70455c341dbd77585f85398a1eecbb7f1fa8c2504b"
   },
-  "stack_sha256": "bda1b084ec931828e31d58407b134527371019d3b523d3f827da0a196e852b4c"
+  "stack_sha256": "de99c22af944baa1eff3db0164aa64652fb6c1f3584e6fc209d49142c14eac32"
 }

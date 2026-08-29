@@ -142,7 +142,9 @@ class ModelProfile:
             if self.prefix_tail is None:
                 raise ValueError("a unary prefix-tail obligation needs a tail profile")
             if len(self.inputs) != 1:
-                raise ValueError("a unary prefix-tail obligation needs exactly one input")
+                raise ValueError(
+                    "a unary prefix-tail obligation needs exactly one input"
+                )
         if self.binary_prefix_tail_obligation is not None:
             if self.prefix_tail is None:
                 raise ValueError("a binary prefix-tail obligation needs a tail profile")
@@ -174,6 +176,11 @@ S8_VCLAMP_MODEL = ModelProfile(
     neon_block_lanes=64,
     neon_loop_condition="batch >= 64",
     neon_loop_update="batch -= 64",
+    prefix_tail=PrefixTailProfile(
+        element_c_type="int8_t",
+        load_lanes=8,
+        store_widths=(4, 2, 1),
+    ),
     multiphase_widths=(64, 8),
 )
 

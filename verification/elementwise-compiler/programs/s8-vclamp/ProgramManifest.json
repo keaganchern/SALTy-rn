@@ -1,6 +1,6 @@
 {
   "artifact_kind": "elementwise-program-manifest",
-  "compiler_sha256": "4964c900fd2f59ebb7429c6cfa3622ee57850a057134a1c96260598466452a72",
+  "compiler_sha256": "a4f48f79d2fa0cdd975f6f7afe45adb794065e0eff38fd2d282379c4272c5869",
   "consumed_effects_sha256": "f07b94c87c7e15e283b898e9a0482fb2e409e22d12aa197b5043c127fe562dce",
   "contracts": {
     "neon": {
@@ -434,14 +434,14 @@
     },
     {
       "capability_id": "intrinsic:rvv:__riscv_vsetvl_e8m8:ff8292e21b51482a",
-      "sha256": "18b0ed342ea9eb29b32f848dd73f531751a81bfad5327786f375dea55c2cbc8b",
+      "sha256": "a57c82fd2869ab1fc250d45a5421cd43cdd6a27d3caf6c5de4603aecb450a60b",
       "version": 1
     }
   ],
   "layout": {
     "capability": {
       "capability_id": "layout:scalar-lane",
-      "sha256": "177dd0229fd558315e86308869d20dfad882e69554fba92f09d1c2a07fcd4f84",
+      "sha256": "c5483d00d73b06a66e846c4c63bdd75da437a0ca79bbbed3101d013e5b57648f",
       "version": 1
     },
     "input_streams": [
@@ -462,13 +462,13 @@
     ]
   },
   "local_assertions": [],
-  "manifest_sha256": "8cbbcfdd8ad2f7a805af3fe6f9c32dc2593c54bf20b1201b77d49107f3dd9e87",
+  "manifest_sha256": "f76fd1f9b2838348f46c922a84e011306a3f0465843d1a305bfad5cc77571e9d",
   "schedules": [
     {
       "architecture": "neon",
       "capability": {
         "capability_id": "schedule:neon:multi-phase",
-        "sha256": "60d0e669c4007626b10a6ca68c792eeaae0bcb8e804b52170c55412af54ebd44",
+        "sha256": "6a7538ea3fde926c2da14b98837ff26cb7acaa4387de4b705ae3e8ee7fdae628",
         "version": 1
       },
       "control_sha256": "66b73a7b5edf7f5e92b43ef0d7efa991afce2c44f50c700e70829e1371127922",
@@ -484,7 +484,7 @@
       "architecture": "rvv",
       "capability": {
         "capability_id": "schedule:rvv:rvv-strip-mine",
-        "sha256": "732bf74136b28cdd955801bdc2ac7e18f1b5417b950b044c299a7773f2b370ef",
+        "sha256": "0fda41c4f3e66e7bd649bb6abcdf98e97dedbb37e85d0a9ff22689ceabb4e9b0",
         "version": 1
       },
       "control_sha256": "55b43b116cd5f3844b353a34691f3ad10589e6742cd9531b83e5fc4c55bb9c4f",

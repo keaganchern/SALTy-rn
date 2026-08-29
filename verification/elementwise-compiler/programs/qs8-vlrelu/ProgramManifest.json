@@ -1,6 +1,6 @@
 {
   "artifact_kind": "elementwise-program-manifest",
-  "compiler_sha256": "4964c900fd2f59ebb7429c6cfa3622ee57850a057134a1c96260598466452a72",
+  "compiler_sha256": "a4f48f79d2fa0cdd975f6f7afe45adb794065e0eff38fd2d282379c4272c5869",
   "consumed_effects_sha256": "d30399e898565c2d5a52ec29fc644b6a03bda52f527d97c7551bab5ad0e8afa5",
   "contracts": {
     "neon": {
@@ -464,7 +464,7 @@
     },
     {
       "capability_id": "intrinsic:rvv:__riscv_vsetvl_e8m2:d793f686aba364cc",
-      "sha256": "a4abd4d2d285d1167f929ce4299105a07f6c2164623761650df0559aebaa740b",
+      "sha256": "d213bcd3272b583a81af7c44fdff680bd08627249b21d7906a8860275bd9c951",
       "version": 1
     },
     {
@@ -486,7 +486,7 @@
   "layout": {
     "capability": {
       "capability_id": "layout:scalar-lane",
-      "sha256": "177dd0229fd558315e86308869d20dfad882e69554fba92f09d1c2a07fcd4f84",
+      "sha256": "c5483d00d73b06a66e846c4c63bdd75da437a0ca79bbbed3101d013e5b57648f",
       "version": 1
     },
     "input_streams": [
@@ -634,13 +634,13 @@
       "source_sha256": "0b30f3e7f5d70edf955913a21e93f2b9dc819967eff62190943b1b0b36311443"
     }
   ],
-  "manifest_sha256": "c5c82d2e6510aac80e06b60f1248863f6c16012eb00c697acc1169accb9b6b7b",
+  "manifest_sha256": "a6769200d8a0e13357112dd986ab0ccc7775ba68041523958b1b4ccfbd9fc907",
   "schedules": [
     {
       "architecture": "neon",
       "capability": {
         "capability_id": "schedule:neon:fixed-tail",
-        "sha256": "6099a5048837c6abdc24782de1e900d9a894d62e5597f1495a3a170829eabd21",
+        "sha256": "2611a95304dee588b72eb6258c3746c066e74e85b55808b8ce3a203c4013675d",
         "version": 1
       },
       "control_sha256": "02b1cf1d3fbef0f3c880508e0d85b94cc1d52da3bdea7f6f4f72f15cf1eb0c2f",
@@ -656,7 +656,7 @@
       "architecture": "rvv",
       "capability": {
         "capability_id": "schedule:rvv:rvv-strip-mine",
-        "sha256": "732bf74136b28cdd955801bdc2ac7e18f1b5417b950b044c299a7773f2b370ef",
+        "sha256": "0fda41c4f3e66e7bd649bb6abcdf98e97dedbb37e85d0a9ff22689ceabb4e9b0",
         "version": 1
       },
       "control_sha256": "d840c2261e5b86c4033be55e05b66561ac7dc2bd786774c8646494971d61b00f",

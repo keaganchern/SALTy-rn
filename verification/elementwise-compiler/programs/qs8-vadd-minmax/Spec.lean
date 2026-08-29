@@ -3,8 +3,8 @@ import SALT.Corpus.qs8vaddminmax.Models
 
 namespace SALT.Corpus.qs8vaddminmax
 
-def manifestSha256InSpec : String := "fb412a59d31e61f85cdefb9a846f63890fda528cd1a704aeb387eab1634dcf14"
-def modelsSha256InSpec : String := "776ea66e075479074422d6f4b972383613debee4203f58bf7476388a7278ecff"
+def manifestSha256InSpec : String := "e58d86be72c77ed6f7aa9a0d7c6fc932b09917947cd9eefd0fe7c182375a9f31"
+def modelsSha256InSpec : String := "92c755deb8ab2306bd09a2e31327907922ec38a264beafc3cc4d85288cb351ad"
 def sharedEntryContractSha256 : String := "f4c1fb073c05d935abf44acc38855469baf021962e556ee32751bae19a50d1f0"
 
 def neonBlockEqualsMapClaim : Prop :=

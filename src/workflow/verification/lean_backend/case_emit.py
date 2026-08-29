@@ -2,8 +2,8 @@
 
 The generic path consumes one selected Neon fixed-width loop body and one RVV
 strip-mined body. Reviewed schedule adapters may extend that boundary only after
-validating the complete source shape. The initial adapters cover the complete
-S8 64/8/4/2/1 schedule and a unary fixed-block plus prefix-tail grammar.
+validating the complete source shape. The adapters cover fixed tails and both
+separate-loop and nested two-phase tails without selecting on program identity.
 """
 
 from __future__ import annotations
@@ -156,7 +156,9 @@ def _facade_scalar_field_type(extraction: KernelExtraction, field: str) -> str:
         source,
     )
     if len(matches) != 1:
-        raise CaseEmissionError(f"cannot resolve one facade scalar type for field {field!r}")
+        raise CaseEmissionError(
+            f"cannot resolve one facade scalar type for field {field!r}"
+        )
     return " ".join(matches[0].split())
 
 
@@ -190,7 +192,9 @@ def _reviewed_scalar_definition(
         if cast == "size_t" and destination == "unsigned long":
             source_width = _integer_width(source_c_type)
             source = f"p.{field}"
-            signed = not source_c_type.startswith("u") and not source_c_type.startswith("unsigned")
+            signed = not source_c_type.startswith("u") and not source_c_type.startswith(
+                "unsigned"
+            )
             extension = "signExtend" if signed else "zeroExtend"
             return f"({source}).{extension} 64" if source_width < 64 else source
         if cast not in reviewed:
@@ -380,28 +384,50 @@ def _validate_neon_control_shape(
             if config is not None
             else tuple(
                 width
-                for width in (1 << bit for bit in reversed(range((small - 1).bit_length())))
+                for width in (
+                    1 << bit for bit in reversed(range((small - 1).bit_length()))
+                )
                 if width < small
             )
         )
         controls = extraction.controls
         top_loops = [
-            control for control in controls
+            control
+            for control in controls
             if control.kind == "ForStmt" and control.parent_control is None
         ]
         nested_do = [control for control in controls if control.kind == "DoStmt"]
         if len(top_loops) == 2 and not nested_do:
             roots = [
-                control for control in controls
+                control
+                for control in controls
                 if control.kind == "IfStmt" and control.parent_control is None
             ]
             if len(roots) != 1:
-                raise CaseEmissionError("separate-loop two-phase control needs one tail guard")
+                raise CaseEmissionError(
+                    "separate-loop two-phase control needs one tail guard"
+                )
             root = roots[0]
-            children = [control for control in controls if control.parent_control == root.node_id]
+            children = [
+                control
+                for control in controls
+                if control.parent_control == root.node_id
+            ]
             expected = (
-                ("ForStmt", None, f"batch >= {large}", ("batch@0", f"constant:{large}:int"), f"batch -= {large}"),
-                ("ForStmt", None, f"batch >= {small}", ("batch@1", f"constant:{small}:int"), f"batch -= {small}"),
+                (
+                    "ForStmt",
+                    None,
+                    f"batch >= {large}",
+                    ("batch@0", f"constant:{large}:int"),
+                    f"batch -= {large}",
+                ),
+                (
+                    "ForStmt",
+                    None,
+                    f"batch >= {small}",
+                    ("batch@1", f"constant:{small}:int"),
+                    f"batch -= {small}",
+                ),
                 ("IfStmt", None, "batch != 0", ("batch@2", "constant:0:int"), ""),
                 *tuple(
                     (
@@ -420,18 +446,28 @@ def _validate_neon_control_shape(
             if config is None:
                 raise CaseEmissionError("nested two-phase control needs a tail profile")
             outer = [
-                control for control in controls
+                control
+                for control in controls
                 if control.kind == "IfStmt" and control.parent_control is None
             ]
             do = nested_do[0]
             full = [
-                control for control in controls
+                control
+                for control in controls
                 if control.kind == "IfStmt" and control.parent_control == do.node_id
             ]
-            if len(outer) != 1 or do.parent_control != outer[0].node_id or len(full) != 1:
-                raise CaseEmissionError("nested two-phase guard/do/full-block shape changed")
+            if (
+                len(outer) != 1
+                or do.parent_control != outer[0].node_id
+                or len(full) != 1
+            ):
+                raise CaseEmissionError(
+                    "nested two-phase guard/do/full-block shape changed"
+                )
             tail_children = [
-                control for control in controls if control.parent_control == full[0].node_id
+                control
+                for control in controls
+                if control.parent_control == full[0].node_id
             ]
             compact = _compact_source
             if (
@@ -445,7 +481,9 @@ def _validate_neon_control_shape(
                     for width in config.store_widths
                 ]
             ):
-                raise CaseEmissionError("nested two-phase widths or tail store order changed")
+                raise CaseEmissionError(
+                    "nested two-phase widths or tail store order changed"
+                )
             expected = _normalized_control_shape(controls)
         else:
             raise CaseEmissionError("unsupported two-phase control encoding")
@@ -640,397 +678,6 @@ def _compact_source(text: str) -> str:
     return re.sub(r"\s+", "", text)
 
 
-def _s8_tail_call_shape(call: IntrinsicCall) -> tuple[object, ...]:
-    return (
-        call.node_id,
-        call.spelling,
-        call.assigned_to,
-        call.parent_control,
-        call.control_path,
-        tuple(
-            (
-                _compact_source(argument.source_text),
-                argument.dependencies,
-                argument.semantic_operations,
-                argument.constant_value,
-            )
-            for argument in call.arguments
-        ),
-    )
-
-
-_S8_TAIL_CONTROL_SHAPES = (
-    (
-        "control_0000",
-        "ForStmt",
-        None,
-        "batch>=64",
-        ("batch@0", "constant:64:int"),
-        "batch-=64",
-    ),
-    (
-        "control_0001",
-        "ForStmt",
-        None,
-        "batch>=8",
-        ("batch@1", "constant:8:int"),
-        "batch-=8",
-    ),
-    (
-        "control_0002",
-        "IfStmt",
-        None,
-        "batch!=0",
-        ("batch@2", "constant:0:int"),
-        "",
-    ),
-    (
-        "control_0003",
-        "IfStmt",
-        "control_0002",
-        "batch&4",
-        ("batch@2", "constant:4:int"),
-        "",
-    ),
-    (
-        "control_0004",
-        "IfStmt",
-        "control_0002",
-        "batch&2",
-        ("batch@2", "constant:2:int"),
-        "",
-    ),
-    (
-        "control_0005",
-        "IfStmt",
-        "control_0002",
-        "batch&1",
-        ("batch@2", "constant:1:int"),
-        "",
-    ),
-)
-
-
-_S8_TAIL_CALL_SHAPES = (
-    (
-        "call_0018",
-        "vld1_s8",
-        "vacc@0",
-        "control_0001",
-        (),
-        (("input", ("input@4",), (), None),),
-    ),
-    (
-        "call_0019",
-        "vget_low_s8",
-        None,
-        "control_0001",
-        (),
-        (("voutput_max", ("voutput_max@0",), (), None),),
-    ),
-    (
-        "call_0020",
-        "vmin_s8",
-        "vacc@1",
-        "control_0001",
-        (),
-        (
-            ("vacc", ("vacc@0",), (), None),
-            ("vget_low_s8(voutput_max)", ("call:call_0019",), (), None),
-        ),
-    ),
-    (
-        "call_0021",
-        "vget_low_s8",
-        None,
-        "control_0001",
-        (),
-        (("voutput_min", ("voutput_min@0",), (), None),),
-    ),
-    (
-        "call_0022",
-        "vmax_s8",
-        "vacc@2",
-        "control_0001",
-        (),
-        (
-            ("vacc", ("vacc@1",), (), None),
-            ("vget_low_s8(voutput_min)", ("call:call_0021",), (), None),
-        ),
-    ),
-    (
-        "call_0023",
-        "vst1_s8",
-        None,
-        "control_0001",
-        (),
-        (
-            ("output", ("output@4",), (), None),
-            ("vacc", ("vacc@2",), (), None),
-        ),
-    ),
-    (
-        "call_0024",
-        "vld1_s8",
-        "vacc@3",
-        "control_0002",
-        ("control_0002:then",),
-        (("input", ("input@5",), (), None),),
-    ),
-    (
-        "call_0025",
-        "vget_low_s8",
-        None,
-        "control_0002",
-        ("control_0002:then",),
-        (("voutput_max", ("voutput_max@0",), (), None),),
-    ),
-    (
-        "call_0026",
-        "vmin_s8",
-        "vacc@4",
-        "control_0002",
-        ("control_0002:then",),
-        (
-            ("vacc", ("vacc@3",), (), None),
-            ("vget_low_s8(voutput_max)", ("call:call_0025",), (), None),
-        ),
-    ),
-    (
-        "call_0027",
-        "vget_low_s8",
-        None,
-        "control_0002",
-        ("control_0002:then",),
-        (("voutput_min", ("voutput_min@0",), (), None),),
-    ),
-    (
-        "call_0028",
-        "vmax_s8",
-        "vacc@5",
-        "control_0002",
-        ("control_0002:then",),
-        (
-            ("vacc", ("vacc@4",), (), None),
-            ("vget_low_s8(voutput_min)", ("call:call_0027",), (), None),
-        ),
-    ),
-    (
-        "call_0029",
-        "vreinterpret_u32_s8",
-        None,
-        "control_0003",
-        ("control_0002:then", "control_0003:then"),
-        (("vacc", ("vacc@5",), (), None),),
-    ),
-    (
-        "call_0030",
-        "vst1_lane_u32",
-        None,
-        "control_0003",
-        ("control_0002:then", "control_0003:then"),
-        (
-            (
-                "(void*)output",
-                ("output@5",),
-                (
-                    "explicit-cast:BitCast:void *",
-                    "implicit-cast:BitCast:uint32_t *",
-                ),
-                None,
-            ),
-            ("vreinterpret_u32_s8(vacc)", ("call:call_0029",), (), None),
-            ("0", ("constant:0:int",), (), 0),
-        ),
-    ),
-    (
-        "call_0031",
-        "vext_s8",
-        "vacc@6",
-        "control_0003",
-        ("control_0002:then", "control_0003:then"),
-        (
-            ("vacc", ("vacc@5",), (), None),
-            ("vacc", ("vacc@5",), (), None),
-            ("4", ("constant:4:int",), (), 4),
-        ),
-    ),
-    (
-        "call_0032",
-        "vreinterpret_u16_s8",
-        None,
-        "control_0004",
-        ("control_0002:then", "control_0004:then"),
-        (("vacc", ("vacc@6",), (), None),),
-    ),
-    (
-        "call_0033",
-        "vst1_lane_u16",
-        None,
-        "control_0004",
-        ("control_0002:then", "control_0004:then"),
-        (
-            (
-                "(void*)output",
-                ("output@6",),
-                (
-                    "explicit-cast:BitCast:void *",
-                    "implicit-cast:BitCast:uint16_t *",
-                ),
-                None,
-            ),
-            ("vreinterpret_u16_s8(vacc)", ("call:call_0032",), (), None),
-            ("0", ("constant:0:int",), (), 0),
-        ),
-    ),
-    (
-        "call_0034",
-        "vext_s8",
-        "vacc@7",
-        "control_0004",
-        ("control_0002:then", "control_0004:then"),
-        (
-            ("vacc", ("vacc@6",), (), None),
-            ("vacc", ("vacc@6",), (), None),
-            ("2", ("constant:2:int",), (), 2),
-        ),
-    ),
-    (
-        "call_0035",
-        "vst1_lane_s8",
-        None,
-        "control_0005",
-        ("control_0002:then", "control_0005:then"),
-        (
-            ("output", ("output@7",), (), None),
-            ("vacc", ("vacc@7",), (), None),
-            ("0", ("constant:0:int",), (), 0),
-        ),
-    ),
-)
-
-
-_S8_TAIL_UPDATE_SHAPES = (
-    (
-        "input@5",
-        "control_0001",
-        (),
-        "input+=8",
-        ("input@4", "constant:8:int"),
-    ),
-    (
-        "output@5",
-        "control_0001",
-        (),
-        "output+=8",
-        ("output@4", "constant:8:int"),
-    ),
-    (
-        "batch@2",
-        "control_0001",
-        (),
-        "batch-=8",
-        ("batch@1", "constant:8:int"),
-    ),
-    (
-        "input@6",
-        "control_0002",
-        ("control_0002:then",),
-        "input+=8",
-        ("input@5", "constant:8:int"),
-    ),
-    (
-        "output@6",
-        "control_0003",
-        ("control_0002:then", "control_0003:then"),
-        "output+=4",
-        ("output@5", "constant:4:int"),
-    ),
-    (
-        "output@7",
-        "control_0004",
-        ("control_0002:then", "control_0004:then"),
-        "output+=2",
-        ("output@6", "constant:2:int"),
-    ),
-)
-
-
-def _validate_s8_tail_source_shape(
-    extraction: KernelExtraction,
-) -> tuple[IntrinsicCall, ...]:
-    actual_controls = tuple(
-        (
-            control.node_id,
-            control.kind,
-            control.parent_control,
-            _compact_source(control.condition_text),
-            control.condition_dependencies,
-            _compact_source(control.update_text),
-        )
-        for control in extraction.controls
-    )
-    if actual_controls != _S8_TAIL_CONTROL_SHAPES:
-        raise CaseEmissionError(
-            "s8-vclamp: complete Neon control shape changed: "
-            f"expected={_S8_TAIL_CONTROL_SHAPES!r}, actual={actual_controls!r}"
-        )
-
-    tail_calls = tuple(extraction.calls[18:])
-    actual_calls = tuple(_s8_tail_call_shape(call) for call in tail_calls)
-    if actual_calls != _S8_TAIL_CALL_SHAPES:
-        raise CaseEmissionError(
-            "s8-vclamp: Neon 8-lane/tail call or operand shape changed: "
-            f"expected={_S8_TAIL_CALL_SHAPES!r}, actual={actual_calls!r}"
-        )
-
-    tail_control_ids = {"control_0001", "control_0002", "control_0003", "control_0004"}
-    tail_control_ids.add("control_0005")
-    actual_updates = tuple(
-        (
-            definition.value,
-            definition.parent_control,
-            definition.control_path,
-            _compact_source(definition.expression_text),
-            definition.dependencies,
-        )
-        for definition in extraction.definitions
-        if definition.parent_control in tail_control_ids
-        and definition.definition_kind.startswith("compound-")
-    )
-    if actual_updates != _S8_TAIL_UPDATE_SHAPES:
-        raise CaseEmissionError(
-            "s8-vclamp: Neon 8-lane/tail pointer or count updates changed: "
-            f"expected={_S8_TAIL_UPDATE_SHAPES!r}, actual={actual_updates!r}"
-        )
-
-    untranslated = [
-        definition.value
-        for definition in extraction.definitions
-        if definition.parent_control in tail_control_ids
-        and definition.value_call is None
-        and not definition.definition_kind.startswith("compound-")
-    ]
-    if untranslated:
-        raise CaseEmissionError(
-            "s8-vclamp: untranslated Neon 8-lane/tail definitions " f"{untranslated!r}"
-        )
-    return tail_calls
-
-
-def _new_s8_tail_emitter(
-    extraction: KernelExtraction, registry: Mapping[str, IntrinsicSpec]
-) -> _CaseBlockEmitter:
-    emitter = _CaseBlockEmitter(extraction, Architecture.NEON, registry)
-    emitter.environment.update(
-        {
-            "voutput_max@0": "List.replicate 16 ((p.max).truncate 8)",
-            "voutput_min@0": "List.replicate 16 ((p.min).truncate 8)",
-        }
-    )
-    return emitter
-
-
 def _consume_little_endian_lane_store(
     emitter: _CaseBlockEmitter,
     call: IntrinsicCall,
@@ -1054,107 +701,449 @@ def _consume_little_endian_lane_store(
     return name
 
 
-def _emit_multiphase_64_8_tail_value_models(
+def _emit_separate_two_phase_tail_value_models(
     extraction: KernelExtraction,
+    profile: ModelProfile,
     registry: Mapping[str, IntrinsicSpec],
-    parameter_type: str,
+    already_consumed: tuple[str, ...],
 ) -> tuple[list[str], tuple[str, ...]]:
-    """Emit the exact S8 8-lane and live-prefix value adapters.
+    """Emit two top-level fixed loops followed by a live-prefix tail.
 
-    Lane stores are interpreted as little-endian byte prefixes only inside this
-    adapter. This is not a generic C-memory or endian correspondence rule.
+    This adapter is selected from the extracted control tree and derives all
+    calls, pointer versions, and widths from that tree. It deliberately has no
+    program id, function name, source path, or call-number table.
     """
 
-    calls = _validate_s8_tail_source_shape(extraction)
-    by_id = {call.node_id: call for call in calls}
-
-    block = _new_s8_tail_emitter(extraction, registry)
-    block._bind_call(by_id["call_0018"], "(input).take 8")
-    for call_id in ("call_0019", "call_0020", "call_0021", "call_0022"):
-        block.emit_registered_call(by_id[call_id])
-    block_output = block.emit_registered_call(by_id["call_0023"])
-    if block_output is None:
-        raise CaseEmissionError("s8-vclamp: 8-lane store produced no value")
-
-    partial = _new_s8_tail_emitter(extraction, registry)
-    partial._bind_call(by_id["call_0024"], "(loaded).take 8")
-    for call_id in ("call_0025", "call_0026", "call_0027", "call_0028", "call_0029"):
-        partial.emit_registered_call(by_id[call_id])
-
-    stored4 = _consume_little_endian_lane_store(
-        partial, by_id["call_0030"], width=4, bit=2, name="stored4"
-    )
-    shifted4 = partial.emit_registered_call(by_id["call_0031"])
-    if shifted4 is None:
-        raise CaseEmissionError("s8-vclamp: 4-lane slide produced no value")
-    partial.lines.append(
-        f"  let after4 := if live.testBit 2 then {shifted4} else vacc_5"
-    )
-    partial.environment["vacc@6"] = "after4"
-
-    partial.emit_registered_call(by_id["call_0032"])
-    stored2 = _consume_little_endian_lane_store(
-        partial, by_id["call_0033"], width=2, bit=1, name="stored2"
-    )
-    shifted2 = partial.emit_registered_call(by_id["call_0034"])
-    if shifted2 is None:
-        raise CaseEmissionError("s8-vclamp: 2-lane slide produced no value")
-    partial.lines.append(
-        f"  let after2 := if live.testBit 1 then {shifted2} else after4"
-    )
-    partial.environment["vacc@7"] = "after2"
-    stored1 = _consume_little_endian_lane_store(
-        partial, by_id["call_0035"], width=1, bit=0, name="stored1"
-    )
-
-    expected = {call.node_id for call in calls}
-    consumed = block.consumed | partial.consumed
-    if consumed != expected:
+    config = profile.prefix_tail
+    if config is None or len(profile.multiphase_widths) != 2:
         raise CaseEmissionError(
-            "s8-vclamp: Neon 8-lane/tail call coverage mismatch: "
-            f"missing={sorted(expected - consumed)!r}, extra={sorted(consumed - expected)!r}"
+            "separate two-phase value model needs two widths and a tail"
         )
+    if len(profile.inputs) not in {1, 2}:
+        raise CaseEmissionError(
+            "separate two-phase value model supports one or two inputs"
+        )
+    large, small = profile.multiphase_widths
+    if config.load_lanes != small:
+        raise CaseEmissionError("small phase width must match its physical load width")
+
+    loops = [
+        control
+        for control in extraction.controls
+        if control.kind == "ForStmt" and control.parent_control is None
+    ]
+    small_loops = [
+        control
+        for control in loops
+        if _compact_source(control.condition_text) == f"batch>={small}"
+        and _compact_source(control.update_text) == f"batch-={small}"
+    ]
+    roots = [
+        control
+        for control in extraction.controls
+        if control.kind == "IfStmt" and control.parent_control is None
+    ]
+    if len(loops) != 2 or len(small_loops) != 1 or len(roots) != 1:
+        raise CaseEmissionError(
+            "separate two-phase control has no unique small loop/tail"
+        )
+    small_loop, root = small_loops[0], roots[0]
+    children = [
+        control
+        for control in extraction.controls
+        if control.parent_control == root.node_id
+    ]
+    if [_compact_source(control.condition_text) for control in children] != [
+        f"batch&{width}" for width in config.store_widths
+    ]:
+        raise CaseEmissionError("separate two-phase live-prefix branch order changed")
+
+    consumed_before = set(already_consumed)
+    tail_calls = [
+        call for call in extraction.calls if call.node_id not in consumed_before
+    ]
+    tail_controls = {
+        small_loop.node_id,
+        root.node_id,
+        *(item.node_id for item in children),
+    }
+    if not tail_calls or any(
+        call.parent_control not in tail_controls for call in tail_calls
+    ):
+        raise CaseEmissionError("calls remain outside the separate two-phase regions")
+
+    prologue_calls = [call for call in extraction.calls if call.parent_control is None]
+
+    def new_emitter() -> _CaseBlockEmitter:
+        emitter = _CaseBlockEmitter(extraction, Architecture.NEON, registry)
+        for call in prologue_calls:
+            spec = emitter._lookup_intrinsic(call.spelling)
+            if not (
+                isinstance(spec, StructuralIntrinsic)
+                and spec.operation is StructuralOp.BROADCAST
+            ):
+                raise CaseEmissionError(
+                    "separate two-phase prologue must contain broadcasts only"
+                )
+            emitter.emit_registered_call(call)
+        return emitter
+
+    compound = [
+        definition
+        for definition in extraction.definitions
+        if definition.parent_control in tail_controls
+        and definition.definition_kind.startswith("compound-")
+    ]
+    expected_update_expressions = sorted(
+        [
+            *(f"{name}+={small}" for name in profile.inputs),
+            f"output+={small}",
+            f"batch-={small}",
+            *(f"{name}+={small}" for name in profile.inputs),
+            *(f"output+={width}" for width in config.store_widths[:-1]),
+        ]
+    )
+    if (
+        sorted(_compact_source(item.expression_text) for item in compound)
+        != expected_update_expressions
+    ):
+        raise CaseEmissionError("separate two-phase pointer or count updates changed")
+
+    def unique_update(parent: str, expression: str) -> DefinitionFact:
+        matches = [
+            item
+            for item in compound
+            if item.parent_control == parent
+            and _compact_source(item.expression_text) == expression
+        ]
+        if len(matches) != 1:
+            raise CaseEmissionError(
+                "separate two-phase pointer or count updates changed"
+            )
+        return matches[0]
+
+    input_loop_updates = {
+        name: unique_update(small_loop.node_id, f"{name}+={small}")
+        for name in profile.inputs
+    }
+    output_loop_update = unique_update(small_loop.node_id, f"output+={small}")
+    unique_update(small_loop.node_id, f"batch-={small}")
+    input_tail_updates = {
+        name: unique_update(root.node_id, f"{name}+={small}") for name in profile.inputs
+    }
+
+    loaded_names = _loaded_argument_names(profile.inputs)
+    block_calls = [
+        call for call in tail_calls if call.parent_control == small_loop.node_id
+    ]
+    if len(block_calls) <= len(profile.inputs) + 1 or any(
+        call.control_path for call in block_calls
+    ):
+        raise CaseEmissionError("separate two-phase small block call shape changed")
+    block = new_emitter()
+    block_loads = block_calls[: len(profile.inputs)]
+    for load, input_name, loaded_name in zip(block_loads, profile.inputs, loaded_names):
+        spec = block._lookup_intrinsic(load.spelling)
+        update = input_loop_updates[input_name]
+        if not (
+            isinstance(spec, StructuralIntrinsic)
+            and spec.operation is StructuralOp.LOAD
+            and isinstance(spec.signature.result, VectorType)
+            and spec.signature.result.fixed_lanes == small
+            and load.arguments[0].dependencies == (update.dependencies[0],)
+            and load.arguments[0].source_text.strip() == input_name
+            and not load.arguments[0].semantic_operations
+        ):
+            raise CaseEmissionError(
+                f"separate small-phase load changed for {input_name}"
+            )
+        block._bind_call(load, f"({loaded_name}).take {small}")
+
+    block_store = block_calls[-1]
+    block_store_spec = block._lookup_intrinsic(block_store.spelling)
+    block_value_type = (
+        block_store_spec.signature.parameters[1].type
+        if isinstance(block_store_spec, StructuralIntrinsic)
+        and block_store_spec.operation is StructuralOp.STORE
+        else None
+    )
+    if not (
+        isinstance(block_value_type, VectorType)
+        and block_value_type.fixed_lanes == small
+        and block_store.arguments[0].dependencies
+        == (output_loop_update.dependencies[0],)
+    ):
+        raise CaseEmissionError("separate small-phase store shape changed")
+    block_pipeline = block_calls[len(profile.inputs) : -1]
+    if not block_pipeline:
+        raise CaseEmissionError("separate small phase has no value pipeline")
+    for index, call in enumerate(block_pipeline):
+        spec = block._lookup_intrinsic(call.spelling)
+        if isinstance(spec, StructuralIntrinsic) and spec.operation in {
+            StructuralOp.LOAD,
+            StructuralOp.STORE,
+            StructuralOp.LANE_STORE,
+        }:
+            raise CaseEmissionError(
+                "load/store appeared inside the small-phase value pipeline"
+            )
+        value = block.emit_registered_call(call)
+        if value is None:
+            raise CaseEmissionError("small-phase value call produced no value")
+        dependency = call.assigned_to or f"call:{call.node_id}"
+        later = [*block_pipeline[index + 1 :], block_store]
+        if not any(dependency in later_call.dependencies for later_call in later):
+            raise CaseEmissionError("small-phase value call is not consumed")
+    block_output = block.emit_registered_call(block_store)
+    if block_output is None:
+        raise CaseEmissionError("separate small-phase store produced no value")
+
+    root_calls = [call for call in tail_calls if call.parent_control == root.node_id]
+    if len(root_calls) <= len(profile.inputs):
+        raise CaseEmissionError("separate live-prefix tail has no value pipeline")
+    partial = new_emitter()
+    root_loads = root_calls[: len(profile.inputs)]
+    for load, input_name, loaded_name in zip(root_loads, profile.inputs, loaded_names):
+        spec = partial._lookup_intrinsic(load.spelling)
+        loop_update = input_loop_updates[input_name]
+        tail_update = input_tail_updates[input_name]
+        if not (
+            isinstance(spec, StructuralIntrinsic)
+            and spec.operation is StructuralOp.LOAD
+            and isinstance(spec.signature.result, VectorType)
+            and spec.signature.result.fixed_lanes == small
+            and load.arguments[0].dependencies == (loop_update.value,)
+            and tail_update.dependencies == (loop_update.value, f"constant:{small}:int")
+            and load.arguments[0].source_text.strip() == input_name
+            and not load.arguments[0].semantic_operations
+        ):
+            raise CaseEmissionError(
+                f"separate live-prefix load changed for {input_name}"
+            )
+        partial._bind_call(load, f"({loaded_name}).take {small}")
+
+    child_ids = {item.node_id for item in children}
+    child_calls = [call for call in tail_calls if call.parent_control in child_ids]
+    partial_pipeline = root_calls[len(profile.inputs) :]
+    tail_value: str | None = None
+    tail_dependency: str | None = None
+    for index, call in enumerate(partial_pipeline):
+        spec = partial._lookup_intrinsic(call.spelling)
+        if isinstance(spec, StructuralIntrinsic) and spec.operation in {
+            StructuralOp.LOAD,
+            StructuralOp.STORE,
+            StructuralOp.LANE_STORE,
+        }:
+            raise CaseEmissionError(
+                "load/store appeared inside the live-prefix value pipeline"
+            )
+        value = partial.emit_registered_call(call)
+        if value is None:
+            raise CaseEmissionError("live-prefix value call produced no value")
+        dependency = call.assigned_to or f"call:{call.node_id}"
+        later = [*partial_pipeline[index + 1 :], *child_calls]
+        if not any(dependency in later_call.dependencies for later_call in later):
+            raise CaseEmissionError("live-prefix value call is not consumed")
+        if call.assigned_to is not None:
+            tail_value = value
+            tail_dependency = call.assigned_to
+    if tail_value is None or tail_dependency is None:
+        raise CaseEmissionError("separate live-prefix tail has no final value")
+    partial_pipeline_lines = list(partial.lines)
+
+    stored_values: list[str] = []
+    current_dependency = tail_dependency
+    current_output_dependency = output_loop_update.value
+    for index, (child, width) in enumerate(zip(children, config.store_widths)):
+        calls = [call for call in tail_calls if call.parent_control == child.node_id]
+        expected_path = _tail_control_path(root, child)
+        if any(call.control_path != expected_path for call in calls):
+            raise CaseEmissionError(f"width-{width} separate tail path changed")
+        expected_count = 1 if index == len(children) - 1 else 3
+        if len(calls) != expected_count:
+            raise CaseEmissionError(
+                f"width-{width} separate tail branch has {len(calls)} calls; expected {expected_count}"
+            )
+        stored_dependency = current_dependency
+        lane_index = 0
+        if expected_count == 3:
+            bitcast = calls[0]
+            bitcast_spec = partial._lookup_intrinsic(bitcast.spelling)
+            if not (
+                isinstance(bitcast_spec, StructuralIntrinsic)
+                and bitcast_spec.operation is StructuralOp.BITCAST
+                and bitcast.arguments[0].dependencies == (current_dependency,)
+            ):
+                raise CaseEmissionError(f"width-{width} separate tail bitcast changed")
+            partial.emit_registered_call(bitcast)
+            stored_dependency = f"call:{bitcast.node_id}"
+            lane_index = 1
+        lane = calls[lane_index]
+        lane_spec = partial._lookup_intrinsic(lane.spelling)
+        pointer_type = (
+            lane_spec.signature.parameters[0].type
+            if isinstance(lane_spec, StructuralIntrinsic)
+            and lane_spec.operation is StructuralOp.LANE_STORE
+            else None
+        )
+        if not (
+            isinstance(pointer_type, PointerType)
+            and pointer_type.pointee.bit_width == width * 8
+            and lane.arguments[0].dependencies == (current_output_dependency,)
+            and lane.arguments[1].dependencies == (stored_dependency,)
+            and lane.arguments[-1].constant_value == 0
+        ):
+            raise CaseEmissionError(f"width-{width} separate lane-store shape changed")
+        stored_values.append(
+            _consume_little_endian_lane_store(
+                partial,
+                lane,
+                width=width,
+                bit=width.bit_length() - 1,
+                name=f"stored{width}",
+            )
+        )
+        if expected_count == 1:
+            continue
+        slide = calls[-1]
+        slide_spec = partial._lookup_intrinsic(slide.spelling)
+        if not (
+            isinstance(slide_spec, StructuralIntrinsic)
+            and slide_spec.operation is StructuralOp.EXTRACT_FROM_CONCAT
+            and slide.assigned_to is not None
+            and slide.arguments[0].dependencies == (current_dependency,)
+            and slide.arguments[1].dependencies == (current_dependency,)
+            and slide.arguments[2].constant_value == width
+        ):
+            raise CaseEmissionError(f"width-{width} separate conditional slide changed")
+        shifted = partial.emit_registered_call(slide)
+        if shifted is None:
+            raise CaseEmissionError(f"width-{width} separate slide produced no value")
+        joined = f"after{width}"
+        partial.lines.append(
+            f"  let {joined} := if live.testBit {width.bit_length() - 1} "
+            f"then {shifted} else {tail_value}"
+        )
+        partial.environment[slide.assigned_to] = joined
+        current_dependency = slide.assigned_to
+        tail_value = joined
+        output_update = unique_update(child.node_id, f"output+={width}")
+        if output_update.dependencies != (
+            current_output_dependency,
+            f"constant:{width}:int",
+        ):
+            raise CaseEmissionError(
+                "separate two-phase pointer or count updates changed"
+            )
+        current_output_dependency = output_update.value
+
+    expected_tail = {call.node_id for call in tail_calls}
+    consumed_tail = (block.consumed | partial.consumed) - {
+        call.node_id for call in prologue_calls
+    }
+    if consumed_tail != expected_tail:
+        raise CaseEmissionError(
+            "separate two-phase call coverage mismatch: "
+            f"missing={sorted(expected_tail - consumed_tail)!r}, "
+            f"extra={sorted(consumed_tail - expected_tail)!r}"
+        )
+    untranslated = [
+        definition
+        for definition in extraction.definitions
+        if definition.parent_control in tail_controls
+        and definition.value_call is None
+        and not definition.definition_kind.startswith("compound-")
+    ]
+    if untranslated:
+        raise CaseEmissionError("separate two-phase non-call definitions changed")
+
+    overread_names = _overread_argument_names(profile.inputs)
+    loaded_parameters = " ".join(loaded_names)
+    if len(profile.inputs) == 1:
+        input_name = profile.inputs[0]
+        overread = overread_names[0]
+        value_parameters = [
+            f"    ({input_name} {overread} : List (BitVec 8)) : List (BitVec 8) :=",
+        ]
+        tail_body = [
+            f"      let {loaded_names[0]} := (tail ++ {overread}).take {small}",
+            f"      neonPartialTailLivePrefixFromIntrinsics p {loaded_names[0]} tail.length)",
+            f"    {input_name}",
+        ]
+        compatibility_parameters = [
+            f"    ({input_name} : List (BitVec 8)) : List (BitVec 8) :=",
+        ]
+        compatibility_arguments = [
+            f"  neonValueLoopWithOverreadFromIntrinsics p {input_name}",
+            f"    (List.replicate {small - 1} (0 : BitVec 8))",
+        ]
+        schedule = [
+            f"  SALT.Kernel.Schedule.runTwoPhaseTail {large} {small} (by decide) (by decide)",
+            f"    ({profile.neon_function} p) (neonBlock{small}FromIntrinsics p)",
+            "    (fun tail =>",
+            *tail_body,
+        ]
+    else:
+        input_a, input_b = profile.inputs
+        loaded_a, loaded_b = loaded_names
+        overread_a, overread_b = overread_names
+        value_parameters = [
+            f"    ({input_a} {input_b} {overread_a} {overread_b} : List (BitVec 8))",
+            f"    (sameLength : {input_a}.length = {input_b}.length) : List (BitVec 8) :=",
+        ]
+        tail_body = [
+            f"      let {loaded_a} := (tailA ++ {overread_a}).take {small}",
+            f"      let {loaded_b} := (tailB ++ {overread_b}).take {small}",
+            f"      neonPartialTailLivePrefixFromIntrinsics p {loaded_a} {loaded_b} tailA.length)",
+            f"    {input_a} {input_b} sameLength",
+        ]
+        compatibility_parameters = [
+            f"    ({input_a} {input_b} : List (BitVec 8))",
+            f"    (sameLength : {input_a}.length = {input_b}.length) : List (BitVec 8) :=",
+        ]
+        compatibility_arguments = [
+            f"  neonValueLoopWithOverreadFromIntrinsics p {input_a} {input_b}",
+            f"    (List.replicate {small - 1} (0 : BitVec 8))",
+            f"    (List.replicate {small - 1} (0 : BitVec 8)) sameLength",
+        ]
+        schedule = [
+            f"  SALT.Kernel.Schedule.runTwoPhaseTail2 {large} {small} (by decide) (by decide)",
+            f"    ({profile.neon_function} p) (neonBlock{small}FromIntrinsics p)",
+            "    (fun tailA tailB =>",
+            *tail_body,
+        ]
 
     lines = [
         "",
-        "/-- Generated value model of the source's reversed-order 8-lane block. -/",
-        f"def neonBlock8FromIntrinsics (p : {parameter_type})",
-        "    (input : List (BitVec 8)) : List (BitVec 8) :=",
+        f"/-- Generated {small}-lane secondary block from the extracted call graph. -/",
+        f"def neonBlock{small}FromIntrinsics (p : {profile.parameter_type})",
+        f"    ({loaded_parameters} : List (BitVec 8)) : List (BitVec 8) :=",
         *block.lines,
         f"  {block_output}",
         "",
-        "/-- Generated little-endian live-prefix value abstraction for the 4/2/1 stores.",
+        f"/-- Generated little-endian live-prefix abstraction of the {'/'.join(map(str, config.store_widths))} stores. -/",
+        f"def neonPartialTailLivePrefixFromIntrinsics (p : {profile.parameter_type})",
+        f"    ({loaded_parameters} : List (BitVec 8)) (live : Nat) : List (BitVec 8) :=",
+        *partial_pipeline_lines,
+        *partial.lines[len(partial_pipeline_lines) :],
+        "  " + " ++ ".join(f"({value})" for value in stored_values),
         "",
+        f"/-- Generated value-only lifting of the validated {large}/{small}/"
+        f"{'/'.join(map(str, config.store_widths))} control shape.",
+        "",
+        "The overread lists model physically loaded bytes beyond a nonempty short tail.",
         "This definition does not establish C memory, alignment, aliasing, or endian adequacy.",
         "-/",
-        f"def neonPartialTailLivePrefixFromIntrinsics (p : {parameter_type})",
-        "    (loaded : List (BitVec 8)) (live : Nat) : List (BitVec 8) :=",
-        *partial.lines,
-        f"  ({stored4}) ++ ({stored2}) ++ ({stored1})",
+        f"def neonValueLoopWithOverreadFromIntrinsics (p : {profile.parameter_type})",
+        *value_parameters,
+        *schedule,
         "",
-        "/-- Generated value-only lifting of the validated 64/8/4/2/1 control shape.",
-        "",
-        "`overread` supplies the bytes physically loaded beyond a nonempty short tail.",
-        "This definition does not establish that those bytes are legally readable.",
-        "-/",
-        f"def neonValueLoopWithOverreadFromIntrinsics (p : {parameter_type})",
-        "    (input overread : List (BitVec 8)) : List (BitVec 8) :=",
-        "  SALT.Kernel.Schedule.runFixedChunkTail 64 (by decide)",
-        "    (neonBlock64FromIntrinsics p)",
-        "    (SALT.Kernel.Schedule.runFixedChunkTail 8 (by decide)",
-        "      (neonBlock8FromIntrinsics p)",
-        "      (fun tail =>",
-        "        let loaded := (tail ++ overread).take 8",
-        "        neonPartialTailLivePrefixFromIntrinsics p loaded tail.length))",
-        "    input",
-        "",
-        "/-- Zero-filled compatibility specialization of the arbitrary-overread model. -/",
-        f"def neonValueLoopFromIntrinsics (p : {parameter_type})",
-        "    (input : List (BitVec 8)) : List (BitVec 8) :=",
-        "  neonValueLoopWithOverreadFromIntrinsics p input",
-        "    (List.replicate 7 (0 : BitVec 8))",
+        "/-- Zero-filled compatibility specialization of the explicit-overread model. -/",
+        f"def neonValueLoopFromIntrinsics (p : {profile.parameter_type})",
+        *compatibility_parameters,
+        *compatibility_arguments,
     ]
-    return lines, tuple(sorted(expected))
+    return lines, tuple(sorted(expected_tail))
 
 
 def _tail_control_path(
@@ -1615,43 +1604,65 @@ def _emit_nested_two_phase_tail_value_models(
 
     config = profile.prefix_tail
     if config is None or len(profile.multiphase_widths) != 2:
-        raise CaseEmissionError("nested two-phase value model needs two widths and a tail")
+        raise CaseEmissionError(
+            "nested two-phase value model needs two widths and a tail"
+        )
     if len(profile.inputs) not in {1, 2}:
-        raise CaseEmissionError("nested two-phase value model supports one or two inputs")
+        raise CaseEmissionError(
+            "nested two-phase value model supports one or two inputs"
+        )
     large, small = profile.multiphase_widths
     if config.load_lanes != small:
         raise CaseEmissionError("small phase width must match its physical load width")
 
     outer = [
-        control for control in extraction.controls
+        control
+        for control in extraction.controls
         if control.kind == "IfStmt" and control.parent_control is None
     ]
-    do_controls = [control for control in extraction.controls if control.kind == "DoStmt"]
-    if len(outer) != 1 or len(do_controls) != 1 or do_controls[0].parent_control != outer[0].node_id:
+    do_controls = [
+        control for control in extraction.controls if control.kind == "DoStmt"
+    ]
+    if (
+        len(outer) != 1
+        or len(do_controls) != 1
+        or do_controls[0].parent_control != outer[0].node_id
+    ):
         raise CaseEmissionError("nested two-phase control has no unique outer/do pair")
     root, do = outer[0], do_controls[0]
     full_controls = [
-        control for control in extraction.controls
+        control
+        for control in extraction.controls
         if control.kind == "IfStmt" and control.parent_control == do.node_id
     ]
     if len(full_controls) != 1:
-        raise CaseEmissionError("nested two-phase control has no unique full-block branch")
+        raise CaseEmissionError(
+            "nested two-phase control has no unique full-block branch"
+        )
     full = full_controls[0]
     children = [
-        control for control in extraction.controls if control.parent_control == full.node_id
+        control
+        for control in extraction.controls
+        if control.parent_control == full.node_id
     ]
-    if [
-        _compact_source(control.condition_text) for control in children
-    ] != [
+    if [_compact_source(control.condition_text) for control in children] != [
         f"batch&({width}*sizeof({config.element_c_type}))"
         for width in config.store_widths
     ]:
         raise CaseEmissionError("nested two-phase live-prefix branch order changed")
 
     consumed_before = set(already_consumed)
-    tail_calls = [call for call in extraction.calls if call.node_id not in consumed_before]
-    allowed_controls = {do.node_id, full.node_id, *(control.node_id for control in children)}
-    if not tail_calls or any(call.parent_control not in allowed_controls for call in tail_calls):
+    tail_calls = [
+        call for call in extraction.calls if call.node_id not in consumed_before
+    ]
+    allowed_controls = {
+        do.node_id,
+        full.node_id,
+        *(control.node_id for control in children),
+    }
+    if not tail_calls or any(
+        call.parent_control not in allowed_controls for call in tail_calls
+    ):
         raise CaseEmissionError("calls remain outside the nested two-phase regions")
 
     emitter = _CaseBlockEmitter(extraction, Architecture.NEON, registry)
@@ -1662,7 +1673,9 @@ def _emit_nested_two_phase_tail_value_models(
             isinstance(spec, StructuralIntrinsic)
             and spec.operation is StructuralOp.BROADCAST
         ):
-            raise CaseEmissionError("nested two-phase prologue must contain broadcasts only")
+            raise CaseEmissionError(
+                "nested two-phase prologue must contain broadcasts only"
+            )
         emitter.emit_registered_call(call)
 
     do_calls = [call for call in tail_calls if call.parent_control == do.node_id]
@@ -1695,7 +1708,9 @@ def _emit_nested_two_phase_tail_value_models(
             StructuralOp.STORE,
             StructuralOp.LANE_STORE,
         }:
-            raise CaseEmissionError("load/store appeared inside the small-phase value pipeline")
+            raise CaseEmissionError(
+                "load/store appeared inside the small-phase value pipeline"
+            )
         value = emitter.emit_registered_call(call)
         if value is None:
             raise CaseEmissionError("small-phase value call produced no value")
@@ -1713,7 +1728,9 @@ def _emit_nested_two_phase_tail_value_models(
 
     full_calls = [call for call in tail_calls if call.parent_control == full.node_id]
     if len(full_calls) != 1:
-        raise CaseEmissionError("full small-phase branch must contain exactly one store")
+        raise CaseEmissionError(
+            "full small-phase branch must contain exactly one store"
+        )
     full_store = full_calls[0]
     full_spec = emitter._lookup_intrinsic(full_store.spelling)
     full_value_type = (
@@ -1828,7 +1845,8 @@ def _emit_nested_two_phase_tail_value_models(
     ):
         raise CaseEmissionError("nested two-phase non-call definitions changed")
     compound = [
-        definition for definition in extraction.definitions
+        definition
+        for definition in extraction.definitions
         if definition.parent_control in tail_controls
         and definition.definition_kind.startswith("compound-")
     ]
@@ -1838,7 +1856,9 @@ def _emit_nested_two_phase_tail_value_models(
         f"batch-={small}*sizeof({config.element_c_type})",
         *(f"output+={width}" for width in config.store_widths[:-1]),
     }
-    if {_compact_source(item.expression_text) for item in compound} != expected_advances:
+    if {
+        _compact_source(item.expression_text) for item in compound
+    } != expected_advances:
         raise CaseEmissionError("nested two-phase pointer/count updates changed")
 
     loaded_parameters = " ".join(loaded_names)
@@ -1855,7 +1875,9 @@ def _emit_nested_two_phase_tail_value_models(
             f"      neonPartialTailLivePrefixFromIntrinsics p {loaded_names[0]} tail.length)",
             f"    {input_name}",
         ]
-        compatibility_parameters = [f"    ({input_name} : List (BitVec 8)) : List (BitVec 8) :="]
+        compatibility_parameters = [
+            f"    ({input_name} : List (BitVec 8)) : List (BitVec 8) :="
+        ]
         compatibility_arguments = [
             f"  neonValueLoopWithOverreadFromIntrinsics p {input_name}",
             f"    (List.replicate {small - 1} (0 : BitVec 8))",
@@ -2369,8 +2391,10 @@ def emit_case_pair(
                 neon, profile, neon_registry, neon_consumed
             )
         else:
-            neon_extra_lines, tail_consumed = _emit_multiphase_64_8_tail_value_models(
-                neon, neon_registry, profile.parameter_type
+            neon_extra_lines, tail_consumed = (
+                _emit_separate_two_phase_tail_value_models(
+                    neon, profile, neon_registry, neon_consumed
+                )
             )
         overlap = set(neon_consumed) & set(tail_consumed)
         if overlap:
@@ -2446,9 +2470,9 @@ def emit_case_pair(
                 ]
             )
     schedule_import = (
-        ["import SALT.Kernel.Schedule"]
-        if profile.multiphase_widths or profile.prefix_tail is not None
-        else []
+        ["import SALT.Kernel.ElementwiseTwoPhase"]
+        if profile.multiphase_widths
+        else ["import SALT.Kernel.Schedule"] if profile.prefix_tail is not None else []
     )
     lines = [
         "-- This file is generated. Do not edit the models by hand.",

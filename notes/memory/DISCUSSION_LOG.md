@@ -256,3 +256,65 @@ and Lean checking; the gate snapshots every tracked file before and after.
 
 **Unresolved:** batch visibility for all nineteen programs, structural two-phase
 recognition, artifact-graph dashboard integration, and missing reviewed semantics.
+
+## 2026-08-29 — Elementwise infrastructure completion
+
+**Question:** Can the branch implement the full reusable elementwise workflow,
+including the nineteen-program batch, both audited tail encodings, proof integrity,
+held-out onboarding, and the puzzle dashboard, without adding per-program compiler
+or UI entries?
+
+**Conclusion:** yes for the compiler infrastructure and current value-semantics
+capabilities. Structural discovery reports twenty elementwise pairs, nineteen with
+scalar-lane layout. Five integer pairs pass the typed compiler and generate
+Manifest, Models, and proof-free Spec. Fourteen scalar pairs stop explicitly at
+`intrinsic-missing`; grouped `f32-vcmul` stops at `layout-unrecognized`. No scalar
+pair stops at parser, contract, schedule-family, or generator failure.
+
+The schedule library now has unary and binary two-phase theorems. The recognizer
+and generator cover separate 64/8/4/2/1 loops and nested 16/8/4/2/1 do-while code.
+The `qs8-vadd-minmax` generated Models/Spec were elaborated by Lean and a frozen
+ProofTask was produced. Scalar layout records now preserve per-stream types.
+
+The dashboard reads the content-addressed corpus graph and separates value, C, and
+ISA states. It derives `spec-generated`, `proof-ready`, terminal proof failure,
+and `verified(value)` only from validated parents; mutation tests confirm stale
+propagation. The randomized held-out S8 VMax path still demonstrates zero
+framework edits and an actual agent-written, Lean-checked proof.
+
+**Evidence:** commits `891f559`, `156e1b6`, and `bddaadf`; checked-in
+`verification/elementwise-compiler/CorpusReport.json`; 99 elementwise/dashboard
+tests; 55 legacy case-emitter/model-profile regressions; successful Lean
+elaboration of the generated nested two-phase ProofTask.
+
+**Unresolved:** independent semantic review is still zero. Fourteen scalar
+programs need exact typed integer/FP intrinsic capability work, and `f32-vcmul`
+needs a grouped complex layout. Value results do not establish C, ISA, or binary
+correctness.
+
+## 2026-08-29 — Final structural cleanup and cache-independent proof audit
+
+**Question:** Does the completed infrastructure still hide a per-program adapter,
+and can its proof checks be reproduced without trusting the repository's Lean
+cache?
+
+**Conclusion:** the separate 64/8 loop path was rewritten to derive calls, value
+dependencies, pointer versions, block widths, and 4/2/1 stores from the extracted
+control/dataflow graph. The fixed `s8-vclamp` call ids, exact body table, and named
+emitter were removed. Registered semantic changes now regenerate the model, while
+invalid slides, lane immediates, pointer/count updates, and control changes still
+fail closed. Both supported two-phase C encodings instantiate the same
+parameterized Lean schedule.
+
+The legacy proof-policy checker now copies the Lean source tree without `.lake`,
+builds it in a temporary directory, and audits there. The generated separate-loop
+Models/Spec also produced a frozen ProofTask in a temporary Lean root.
+
+**Evidence:** 171 focused compiler/dashboard/legacy-emitter tests and 379 passing
+tests in the complete repository suite; a clean corpus
+refresh with five `spec-generated`, fourteen `intrinsic-missing`, one
+`layout-unrecognized`, and zero stale artifact nodes; fresh-build proof-policy
+audit; generated `SALT.Generated.GenericSeparateTwoPhase` ProofTask.
+
+**Unresolved:** capability expansion and independent semantic review remain the
+next milestone; this entry closes the compiler-infrastructure milestone only.

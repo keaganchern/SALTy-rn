@@ -92,7 +92,9 @@ def _parse_capability(record: Mapping[str, Any]) -> object:
     raise ElementwiseGraphError(f"unsupported capability artifact {kind!r}")
 
 
-def _verify_generated(program_root: Path, record: Mapping[str, Any]) -> GeneratedArtifact:
+def _verify_generated(
+    program_root: Path, record: Mapping[str, Any]
+) -> GeneratedArtifact:
     artifact = GeneratedArtifact.from_record(record)
     path = _bound_path(program_root, artifact.path, f"{artifact.kind.value} path")
     if not path.is_file() or _sha256(path) != artifact.sha256:
@@ -112,7 +114,9 @@ def _verify_stack(corpus_root: Path, relative_index: object) -> dict[str, Any]:
     manifest_binding = index.get("manifest")
     if not isinstance(manifest_binding, Mapping):
         raise ElementwiseGraphError("manifest binding is malformed")
-    manifest_path = _bound_path(program_root, manifest_binding.get("path"), "manifest path")
+    manifest_path = _bound_path(
+        program_root, manifest_binding.get("path"), "manifest path"
+    )
     manifest = ProgramManifest.from_record(_json(manifest_path))
     if manifest_binding.get("sha256") != manifest.sha256:
         raise ElementwiseGraphError("manifest binding digest mismatch")
@@ -123,7 +127,10 @@ def _verify_stack(corpus_root: Path, relative_index: object) -> dict[str, Any]:
         raise ElementwiseGraphError("Models/Spec bindings are malformed")
     models = _verify_generated(program_root, models_record)
     spec = _verify_generated(program_root, spec_record)
-    if models.kind is not ArtifactKind.MODELS or models.parent_sha256 != manifest.sha256:
+    if (
+        models.kind is not ArtifactKind.MODELS
+        or models.parent_sha256 != manifest.sha256
+    ):
         raise ElementwiseGraphError("Models is not bound to the manifest")
     if spec.kind is not ArtifactKind.SPEC or spec.parent_sha256 != models.sha256:
         raise ElementwiseGraphError("Spec is not bound to Models")
@@ -140,7 +147,10 @@ def _verify_stack(corpus_root: Path, relative_index: object) -> dict[str, Any]:
         parsed = _parse_capability(_json(path))
         capability_id = getattr(parsed, "capability_id")
         capability_sha = getattr(parsed, "sha256")
-        if binding.get("capability_id") != capability_id or binding.get("sha256") != capability_sha:
+        if (
+            binding.get("capability_id") != capability_id
+            or binding.get("sha256") != capability_sha
+        ):
             raise ElementwiseGraphError("capability binding digest mismatch")
         capability_ids.append(capability_id)
         if isinstance(parsed, IntrinsicCapability):
@@ -151,24 +161,51 @@ def _verify_stack(corpus_root: Path, relative_index: object) -> dict[str, Any]:
     if task_binding is not None:
         if not isinstance(task_binding, Mapping):
             raise ElementwiseGraphError("proof-task binding is malformed")
-        task_path = _bound_path(program_root, task_binding.get("path"), "proof-task path")
+        task_path = _bound_path(
+            program_root, task_binding.get("path"), "proof-task path"
+        )
         task = ProofTask.from_record(_json(task_path))
         if task_binding.get("sha256") != task.sha256:
             raise ElementwiseGraphError("proof-task binding digest mismatch")
-        if task.manifest_sha256 != manifest.sha256 or task.models != models or task.spec != spec:
-            raise ElementwiseGraphError("proof task is not bound to the generated stack")
+        if (
+            task.manifest_sha256 != manifest.sha256
+            or task.models != models
+            or task.spec != spec
+        ):
+            raise ElementwiseGraphError(
+                "proof task is not bound to the generated stack"
+            )
 
     result: Result | None = None
     result_binding = index.get("result")
     if result_binding is not None:
         if task is None or not isinstance(result_binding, Mapping):
             raise ElementwiseGraphError("result has no valid proof task")
-        result_path = _bound_path(program_root, result_binding.get("path"), "result path")
+        result_path = _bound_path(
+            program_root, result_binding.get("path"), "result path"
+        )
         result = Result.from_record(_json(result_path))
-        if result_binding.get("sha256") != result.sha256 or result_binding.get("status") != result.status.value:
+        if (
+            result_binding.get("sha256") != result.sha256
+            or result_binding.get("status") != result.status.value
+        ):
             raise ElementwiseGraphError("result binding digest mismatch")
-        if result.proof_task_sha256 is not None and result.proof_task_sha256 != task.sha256:
+        if (
+            result.proof_task_sha256 is not None
+            and result.proof_task_sha256 != task.sha256
+        ):
             raise ElementwiseGraphError("result is bound to another proof task")
+        if (
+            result.checker_sha256 != task.checker_policy_sha256
+            or result.toolchain_sha256 != task.toolchain_sha256
+        ):
+            raise ElementwiseGraphError(
+                "result checker/toolchain differs from its proof task"
+            )
+        if result.proof_sha256 is not None:
+            proof_path = _bound_path(program_root, task.proof_path, "proof path")
+            if not proof_path.is_file() or _sha256(proof_path) != result.proof_sha256:
+                raise ElementwiseGraphError("proof file digest mismatch")
 
     return {
         "manifest": manifest,
@@ -181,7 +218,9 @@ def _verify_stack(corpus_root: Path, relative_index: object) -> dict[str, Any]:
     }
 
 
-def _program_node(corpus_root: Path, record: Mapping[str, Any]) -> tuple[dict[str, Any], tuple[IntrinsicCapability, ...]]:
+def _program_node(
+    corpus_root: Path, record: Mapping[str, Any]
+) -> tuple[dict[str, Any], tuple[IntrinsicCapability, ...]]:
     program_id = record.get("program_id")
     if not isinstance(program_id, str) or not program_id:
         raise ElementwiseGraphError("program id is malformed")
@@ -206,12 +245,22 @@ def _program_node(corpus_root: Path, record: Mapping[str, Any]) -> tuple[dict[st
                 raise ElementwiseGraphError("CorpusReport manifest binding mismatch")
             task = stack["task"]
             result = stack["result"]
-            artifacts.update(manifest=True, models=True, spec=True, proof_task=task is not None, result=result is not None)
+            artifacts.update(
+                manifest=True,
+                models=True,
+                spec=True,
+                proof_task=task is not None,
+                result=result is not None,
+            )
             intrinsic_capabilities = stack["intrinsic_capabilities"]
             if result is not None:
                 status = result.status.value
                 layer = "checked-result"
-                claim["value"] = "verified" if result.status is ResultStatus.VERIFIED_VALUE else "failed"
+                claim["value"] = (
+                    "verified"
+                    if result.status is ResultStatus.VERIFIED_VALUE
+                    else "failed"
+                )
                 detail = result.detail
             elif task is not None:
                 status = "proof-ready"
@@ -245,7 +294,9 @@ def _program_node(corpus_root: Path, record: Mapping[str, Any]) -> tuple[dict[st
     )
 
 
-def build_elementwise_graph(corpus_root: str | Path = DEFAULT_CORPUS_ROOT) -> dict[str, Any]:
+def build_elementwise_graph(
+    corpus_root: str | Path = DEFAULT_CORPUS_ROOT,
+) -> dict[str, Any]:
     """Build a fail-closed UI projection from the generated artifact graph."""
 
     root = Path(corpus_root).resolve()
@@ -279,7 +330,8 @@ def build_elementwise_graph(corpus_root: str | Path = DEFAULT_CORPUS_ROOT) -> di
         if separator != ":" or architecture not in {"neon", "rvv"} or not spelling:
             raise ElementwiseGraphError("intrinsic dependency id is malformed")
         matching = [
-            item for item in typed_capabilities.values()
+            item
+            for item in typed_capabilities.values()
             if item.architecture.value == architecture and item.spelling == spelling
         ]
         dependency_nodes.append(
@@ -288,7 +340,8 @@ def build_elementwise_graph(corpus_root: str | Path = DEFAULT_CORPUS_ROOT) -> di
                 "architecture": architecture,
                 "spelling": spelling,
                 "configured": bool(raw.get("configured")) and bool(matching),
-                "reviewed": bool(matching) and all(item.review_evidence_sha256 is not None for item in matching),
+                "reviewed": bool(matching)
+                and all(item.review_evidence_sha256 is not None for item in matching),
                 "typed_variants": len(matching),
                 "programs": list(raw.get("programs", [])),
             }
@@ -306,7 +359,9 @@ def build_elementwise_graph(corpus_root: str | Path = DEFAULT_CORPUS_ROOT) -> di
             "scalar_layout_scope": report["scalar_layout_scope"],
             "grouped_layout_deferred": report["grouped_layout_deferred"],
             "status_counts": status_counts,
-            "configured_intrinsics": sum(item["configured"] for item in dependency_nodes),
+            "configured_intrinsics": sum(
+                item["configured"] for item in dependency_nodes
+            ),
             "reviewed_intrinsics": sum(item["reviewed"] for item in dependency_nodes),
             "intrinsic_dependencies": len(dependency_nodes),
         },

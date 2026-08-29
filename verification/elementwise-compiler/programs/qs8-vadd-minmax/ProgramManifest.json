@@ -1,6 +1,6 @@
 {
   "artifact_kind": "elementwise-program-manifest",
-  "compiler_sha256": "4964c900fd2f59ebb7429c6cfa3622ee57850a057134a1c96260598466452a72",
+  "compiler_sha256": "a4f48f79d2fa0cdd975f6f7afe45adb794065e0eff38fd2d282379c4272c5869",
   "consumed_effects_sha256": "246f0407d26a191a07bb34fc95b5bb5a437caf56a824a2de598ac71bbfc7c52b",
   "contracts": {
     "neon": {
@@ -597,7 +597,7 @@
     },
     {
       "capability_id": "intrinsic:rvv:__riscv_vsetvl_e8m2:d793f686aba364cc",
-      "sha256": "a4abd4d2d285d1167f929ce4299105a07f6c2164623761650df0559aebaa740b",
+      "sha256": "d213bcd3272b583a81af7c44fdff680bd08627249b21d7906a8860275bd9c951",
       "version": 1
     },
     {
@@ -619,7 +619,7 @@
   "layout": {
     "capability": {
       "capability_id": "layout:scalar-lane",
-      "sha256": "177dd0229fd558315e86308869d20dfad882e69554fba92f09d1c2a07fcd4f84",
+      "sha256": "c5483d00d73b06a66e846c4c63bdd75da437a0ca79bbbed3101d013e5b57648f",
       "version": 1
     },
     "input_streams": [
@@ -645,13 +645,13 @@
     ]
   },
   "local_assertions": [],
-  "manifest_sha256": "fb412a59d31e61f85cdefb9a846f63890fda528cd1a704aeb387eab1634dcf14",
+  "manifest_sha256": "e58d86be72c77ed6f7aa9a0d7c6fc932b09917947cd9eefd0fe7c182375a9f31",
   "schedules": [
     {
       "architecture": "neon",
       "capability": {
         "capability_id": "schedule:neon:multi-phase",
-        "sha256": "60d0e669c4007626b10a6ca68c792eeaae0bcb8e804b52170c55412af54ebd44",
+        "sha256": "6a7538ea3fde926c2da14b98837ff26cb7acaa4387de4b705ae3e8ee7fdae628",
         "version": 1
       },
       "control_sha256": "67cf9ea4824fd0b81bd653281f2680c9f15fa615b564b9a19929531cfc9290ac",
@@ -667,7 +667,7 @@
       "architecture": "rvv",
       "capability": {
         "capability_id": "schedule:rvv:rvv-strip-mine",
-        "sha256": "732bf74136b28cdd955801bdc2ac7e18f1b5417b950b044c299a7773f2b370ef",
+        "sha256": "0fda41c4f3e66e7bd649bb6abcdf98e97dedbb37e85d0a9ff22689ceabb4e9b0",
         "version": 1
       },
       "control_sha256": "196859545080dd37988ed9a0d23f43e83b0389bc5a153ecc2270f99d56e65988",

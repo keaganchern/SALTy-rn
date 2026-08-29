@@ -9,6 +9,8 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
+from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 from typing import Callable, Mapping, Sequence
@@ -509,9 +511,7 @@ def load_proof_policy(repository_root: Path) -> ProofPolicy:
                         f"{case_id}.obligation must remain protected"
                     )
                 if contract is not None and contract.path == candidate_proof_path:
-                    raise ProofPolicyError(
-                        f"{case_id}.contract must remain protected"
-                    )
+                    raise ProofPolicyError(f"{case_id}.contract must remain protected")
         parsed[case_id] = ProofPolicyCase(
             module=module,
             theorem=theorem,
@@ -552,9 +552,7 @@ def current_protected_lean_project_digest(repository_root: Path) -> str:
     """Hash current reviewed inputs under the policy's explicit exclusions."""
 
     policy = load_proof_policy(repository_root)
-    return protected_lean_project_digest(
-        repository_root, policy.candidate_proof_paths
-    )
+    return protected_lean_project_digest(repository_root, policy.candidate_proof_paths)
 
 
 def _strip_lean_comments_and_strings(source: str) -> str:
@@ -734,6 +732,57 @@ def _run_elaborated_audit(
     )
 
 
+@contextmanager
+def _fresh_audit_root(
+    repository_root: Path,
+    toolchain: object,
+    *,
+    runner: Callable[..., subprocess.CompletedProcess[str]],
+):
+    """Build the Lean policy project outside the repository before auditing.
+
+    Tests that replace the toolchain/auditor with pure fakes keep using their
+    synthetic root. Production checks never trust or update checked-in `.lake`
+    products.
+    """
+
+    if not isinstance(toolchain, ResolvedLeanToolchain):
+        yield repository_root
+        return
+    with tempfile.TemporaryDirectory(prefix="saltyrn-proof-policy-") as temporary:
+        audit_root = Path(temporary)
+        source_lean = repository_root / LEAN_PROJECT_RELATIVE_PATH
+        target_lean = audit_root / LEAN_PROJECT_RELATIVE_PATH
+        target_lean.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copytree(
+            source_lean,
+            target_lean,
+            ignore=shutil.ignore_patterns(".lake"),
+        )
+        source_auditor = repository_root / AUDITOR_RELATIVE_PATH
+        target_auditor = audit_root / AUDITOR_RELATIVE_PATH
+        target_auditor.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source_auditor, target_auditor)
+        completed = runner(
+            [
+                str(toolchain.lake_path),
+                "--rehash",
+                "--no-cache",
+                "build",
+            ],
+            cwd=target_lean,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=False,
+            timeout=120,
+            env=toolchain.subprocess_environment(),
+        )
+        if completed.returncode != 0:
+            raise ProofPolicyError("fresh Lean policy build failed")
+        yield audit_root
+
+
 def proof_policy_digest(repository_root: Path) -> str:
     """Bind policy data, checker dependencies, audit helper, and producers."""
 
@@ -824,46 +873,59 @@ def run_proof_policy_checks(
     ):
         return result
 
-    for case_id in selected:
-        entry = policy.cases[case_id]
-        try:
-            proof_path = root / entry.proof_path
-            expected_proof_path = Path("src/verification_bw/lean") / (
-                entry.module.replace(".", "/") + ".lean"
-            )
-            module_path_current = (
-                entry.proof_path == expected_proof_path.as_posix()
-                and proof_path.is_file()
-            )
-            contract_current = entry.contract is None or (
-                (root / entry.contract.path).is_file()
-                and _file_sha256(root / entry.contract.path) == entry.contract.sha256
-            )
-            obligation_current = entry.obligation is None or (
-                (root / entry.obligation.path).is_file()
-                and _file_sha256(root / entry.obligation.path)
-                == entry.obligation.sha256
-            )
-            audit = _run_elaborated_audit(
-                root, entry, runner=runner, toolchain=toolchain
-            )
-            type_current = elaborated_type_sha256(audit) == entry.elaborated_type_sha256
-            axiom_safe = set(audit.axioms) <= policy.allowed_axioms
-            result[case_id] = bool(
-                tokens_safe
-                and mutations.get(case_id, False)
-                and module_path_current
-                and type_current
-                and contract_current
-                and obligation_current
-                and axiom_safe
-            )
-        except (
-            OSError,
-            UnicodeError,
-            RuntimeError,
-            ValueError,
-            subprocess.SubprocessError,
-        ):
-            result[case_id] = False
+    try:
+        with _fresh_audit_root(root, toolchain, runner=runner) as audit_root:
+            for case_id in selected:
+                entry = policy.cases[case_id]
+                try:
+                    proof_path = root / entry.proof_path
+                    expected_proof_path = Path("src/verification_bw/lean") / (
+                        entry.module.replace(".", "/") + ".lean"
+                    )
+                    module_path_current = (
+                        entry.proof_path == expected_proof_path.as_posix()
+                        and proof_path.is_file()
+                    )
+                    contract_current = entry.contract is None or (
+                        (root / entry.contract.path).is_file()
+                        and _file_sha256(root / entry.contract.path)
+                        == entry.contract.sha256
+                    )
+                    obligation_current = entry.obligation is None or (
+                        (root / entry.obligation.path).is_file()
+                        and _file_sha256(root / entry.obligation.path)
+                        == entry.obligation.sha256
+                    )
+                    audit = _run_elaborated_audit(
+                        audit_root, entry, runner=runner, toolchain=toolchain
+                    )
+                    type_current = (
+                        elaborated_type_sha256(audit) == entry.elaborated_type_sha256
+                    )
+                    axiom_safe = set(audit.axioms) <= policy.allowed_axioms
+                    result[case_id] = bool(
+                        tokens_safe
+                        and mutations.get(case_id, False)
+                        and module_path_current
+                        and type_current
+                        and contract_current
+                        and obligation_current
+                        and axiom_safe
+                    )
+                except (
+                    OSError,
+                    UnicodeError,
+                    RuntimeError,
+                    ValueError,
+                    subprocess.SubprocessError,
+                ):
+                    result[case_id] = False
+    except (
+        OSError,
+        UnicodeError,
+        RuntimeError,
+        ValueError,
+        subprocess.SubprocessError,
+    ):
+        return result
     return result

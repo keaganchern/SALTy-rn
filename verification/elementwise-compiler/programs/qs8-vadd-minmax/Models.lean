@@ -1,12 +1,12 @@
 -- This file is generated. Do not edit the models by hand.
 import SALT.Intrinsics.Neon
 import SALT.Intrinsics.RVV
-import SALT.Kernel.Schedule
+import SALT.Kernel.ElementwiseTwoPhase
 import SALT.Kernel.ElementwiseFamily
 
 namespace SALT.Corpus.qs8vaddminmax
 
-def programManifestSha256 : String := "fb412a59d31e61f85cdefb9a846f63890fda528cd1a704aeb387eab1634dcf14"
+def programManifestSha256 : String := "e58d86be72c77ed6f7aa9a0d7c6fc932b09917947cd9eefd0fe7c182375a9f31"
 def consumedEffectsSha256 : String := "246f0407d26a191a07bb34fc95b5bb5a437caf56a824a2de598ac71bbfc7c52b"
 
 def neonSourceSha256 : String :=
@@ -20,7 +20,7 @@ def rvvPreprocessedSha256 : String :=
 def parseFacadeSha256 : String :=
   "bf718e923d59d83073524c04af8881ded5413be50005bba97889f08cb154e8df"
 def registrySha256 : String :=
-  "4b3993c44588cc88066260d7e1a681008ebaef3e148e407e961c16285052b0cc"
+  "b591d62ff40764775f089456d5a9e0717014f638f9efff2818179a8c70192940"
 
 structure qs8vaddminmaxParams where
   a_multiplier : BitVec 32

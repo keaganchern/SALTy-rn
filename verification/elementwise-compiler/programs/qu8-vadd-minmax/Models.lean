@@ -6,7 +6,7 @@ import SALT.Kernel.ElementwiseFamily
 
 namespace SALT.Corpus.qu8vaddminmax
 
-def programManifestSha256 : String := "4b54dfc569d6f1e77f463c57bc4bf2b12c8d5fa201853a2834aef5cf6d3c1a6a"
+def programManifestSha256 : String := "a6abb312b46241c399c8a13ba98d850a4f2aa2cf2add9a94f4010464df6c20ef"
 def consumedEffectsSha256 : String := "76280bda1a4a1930a02761132ea4327cae7e05c9f5521044eb111d3af4032921"
 
 def neonSourceSha256 : String :=
@@ -20,7 +20,7 @@ def rvvPreprocessedSha256 : String :=
 def parseFacadeSha256 : String :=
   "4b25fb1efa8257055b91ad1967db49dda327e9b883428797d8aa52ca79e38502"
 def registrySha256 : String :=
-  "3ec508d425031d2b618b13fa62534d1f3e115a7a8b36ec4ecfbb9ccc46f228a5"
+  "3050120dfa6719a05bdeafef85264bde76a858433230100d118feb56bb5e4bf5"
 
 structure qu8vaddminmaxParams where
   a_multiplier : BitVec 32

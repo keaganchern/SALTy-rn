@@ -2379,7 +2379,7 @@
         "input_b"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": "fb412a59d31e61f85cdefb9a846f63890fda528cd1a704aeb387eab1634dcf14",
+      "manifest_sha256": "e58d86be72c77ed6f7aa9a0d7c6fc932b09917947cd9eefd0fe7c182375a9f31",
       "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
@@ -2449,7 +2449,7 @@
         "input"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": "19efce08dfa1f2ab5689cf9b6a4530a5164d9d00bbb07c319f472be78441f3d4",
+      "manifest_sha256": "74a58e09a0e52822c9d24a61c59fbd3c784d48836d0ebd8c76e2a829b8aed944",
       "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
@@ -2501,7 +2501,7 @@
         "input"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": "c5c82d2e6510aac80e06b60f1248863f6c16012eb00c697acc1169accb9b6b7b",
+      "manifest_sha256": "a6769200d8a0e13357112dd986ab0ccc7775ba68041523958b1b4ccfbd9fc907",
       "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
@@ -2709,7 +2709,7 @@
         "input_b"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": "4b54dfc569d6f1e77f463c57bc4bf2b12c8d5fa201853a2834aef5cf6d3c1a6a",
+      "manifest_sha256": "a6abb312b46241c399c8a13ba98d850a4f2aa2cf2add9a94f4010464df6c20ef",
       "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
@@ -2778,7 +2778,7 @@
         "input"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": "8cbbcfdd8ad2f7a805af3fe6f9c32dc2593c54bf20b1201b77d49107f3dd9e87",
+      "manifest_sha256": "f76fd1f9b2838348f46c922a84e011306a3f0465843d1a305bfad5cc77571e9d",
       "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
@@ -2819,7 +2819,7 @@
       "status_layer": "typed-generated"
     }
   ],
-  "report_sha256": "41c70d1a481e787919b4c18b4d165ddb6e3e9e2bbe2840ea7083f04cddbcf394",
+  "report_sha256": "85b2d4d992737acd89f9a95b388bf22fc92b5b12b36b1ce328fed741201b37a8",
   "scalar_layout_scope": 19,
   "schema_version": 1,
   "status_counts": {

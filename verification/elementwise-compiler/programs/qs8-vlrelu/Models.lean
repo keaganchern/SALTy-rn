@@ -6,7 +6,7 @@ import SALT.Kernel.ElementwiseFamily
 
 namespace SALT.Corpus.qs8vlrelu
 
-def programManifestSha256 : String := "c5c82d2e6510aac80e06b60f1248863f6c16012eb00c697acc1169accb9b6b7b"
+def programManifestSha256 : String := "a6769200d8a0e13357112dd986ab0ccc7775ba68041523958b1b4ccfbd9fc907"
 def consumedEffectsSha256 : String := "d30399e898565c2d5a52ec29fc644b6a03bda52f527d97c7551bab5ad0e8afa5"
 
 def neonSourceSha256 : String :=
@@ -20,7 +20,7 @@ def rvvPreprocessedSha256 : String :=
 def parseFacadeSha256 : String :=
   "142f6d01509954ce78c98dc713664c26c9e1017ca79aa6eb2a25ee717f8b808b"
 def registrySha256 : String :=
-  "83638250ff25d398eead4c05ef26ba37b5ec7e067477fdc3ff6f0c526483efa6"
+  "c468c42b30636cc15dd15490e51e2f180b0fd6acc4d8e3a9245156aeb49f886f"
 
 structure qs8vlreluParams where
   input_zero_point : BitVec 16

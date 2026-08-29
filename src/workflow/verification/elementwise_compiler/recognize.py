@@ -130,7 +130,9 @@ def _compact(text: str) -> str:
 
 
 def _normalized_type(type_spelling: str) -> str:
-    value = re.sub(r"\b(const|volatile|restrict|__restrict|__restrict__)\b", "", type_spelling)
+    value = re.sub(
+        r"\b(const|volatile|restrict|__restrict|__restrict__)\b", "", type_spelling
+    )
     return " ".join(value.replace("*", " * ").split())
 
 
@@ -160,9 +162,13 @@ def _layout_streams(
             "layout-unrecognized",
             f"scalar-lane layout needs input streams and one output; got inputs={inputs!r}, outputs={outputs!r}",
         )
-    unknown = sorted({c_type for c_type in stream_types.values() if c_type not in _WIDTHS})
+    unknown = sorted(
+        {c_type for c_type in stream_types.values() if c_type not in _WIDTHS}
+    )
     if unknown:
-        raise RecognitionError("layout-unrecognized", f"unsupported scalar element types {unknown!r}")
+        raise RecognitionError(
+            "layout-unrecognized", f"unsupported scalar element types {unknown!r}"
+        )
     input_types = {stream_types[name] for name in inputs}
     if len(input_types) != 1:
         raise RecognitionError(
@@ -187,12 +193,28 @@ def _capabilities(repository_root: Path) -> tuple[
     dict[tuple[Architecture, ScheduleKind], ScheduleFamilyCapability],
 ]:
     recognizer = _sha256(Path(__file__).resolve())
-    schedule_path = repository_root / "src/verification_bw/lean/SALT/Kernel/Schedule.lean"
-    family_path = repository_root / "src/verification_bw/lean/SALT/Kernel/ElementwiseFamily.lean"
-    layout_path = repository_root / "src/verification_bw/lean/SALT/Kernel/ElementwiseLayout.lean"
-    if any(not path.is_file() for path in (schedule_path, family_path, layout_path)):
-        raise RecognitionError("family-unrecognized", "SALT elementwise theorem module is absent")
+    schedule_path = (
+        repository_root / "src/verification_bw/lean/SALT/Kernel/Schedule.lean"
+    )
+    two_phase_path = (
+        repository_root
+        / "src/verification_bw/lean/SALT/Kernel/ElementwiseTwoPhase.lean"
+    )
+    family_path = (
+        repository_root / "src/verification_bw/lean/SALT/Kernel/ElementwiseFamily.lean"
+    )
+    layout_path = (
+        repository_root / "src/verification_bw/lean/SALT/Kernel/ElementwiseLayout.lean"
+    )
+    if any(
+        not path.is_file()
+        for path in (schedule_path, two_phase_path, family_path, layout_path)
+    ):
+        raise RecognitionError(
+            "family-unrecognized", "SALT elementwise theorem module is absent"
+        )
     schedule_sha = _sha256(schedule_path)
+    two_phase_sha = _sha256(two_phase_path)
     family_sha = _sha256(family_path)
     layout_sha = _sha256(layout_path)
     layout = LayoutViewCapability(
@@ -203,13 +225,22 @@ def _capabilities(repository_root: Path) -> tuple[
     )
     result: dict[tuple[Architecture, ScheduleKind], ScheduleFamilyCapability] = {}
     symbols = {
-        ScheduleKind.FIXED_NO_TAIL: ("SALT.Kernel.ElementwiseFamily.runFixedNoTail_eq_map",),
+        ScheduleKind.FIXED_NO_TAIL: (
+            "SALT.Kernel.ElementwiseFamily.runFixedNoTail_eq_map",
+        ),
         ScheduleKind.FIXED_TAIL: ("SALT.Kernel.Schedule.runFixedChunkTail_eq_map",),
         ScheduleKind.MULTI_PHASE: ("SALT.Kernel.Schedule.runTwoPhaseTail_eq_map",),
         ScheduleKind.RVV_STRIP_MINE: ("SALT.Kernel.Schedule.processBlocks_eq_map",),
     }
     for architecture, kinds in (
-        (Architecture.NEON, (ScheduleKind.FIXED_NO_TAIL, ScheduleKind.FIXED_TAIL, ScheduleKind.MULTI_PHASE)),
+        (
+            Architecture.NEON,
+            (
+                ScheduleKind.FIXED_NO_TAIL,
+                ScheduleKind.FIXED_TAIL,
+                ScheduleKind.MULTI_PHASE,
+            ),
+        ),
         (Architecture.RVV, (ScheduleKind.RVV_STRIP_MINE,)),
     ):
         for kind in kinds:
@@ -218,13 +249,23 @@ def _capabilities(repository_root: Path) -> tuple[
                 kind,
                 recognizer,
                 tuple(sorted(symbols[kind])),
-                family_sha if kind is ScheduleKind.FIXED_NO_TAIL else schedule_sha,
+                (
+                    family_sha
+                    if kind is ScheduleKind.FIXED_NO_TAIL
+                    else (
+                        two_phase_sha
+                        if kind is ScheduleKind.MULTI_PHASE
+                        else schedule_sha
+                    )
+                ),
             )
     return layout, result
 
 
 def _top_controls(extraction: KernelExtraction) -> tuple[object, ...]:
-    return tuple(control for control in extraction.controls if control.parent_control is None)
+    return tuple(
+        control for control in extraction.controls if control.parent_control is None
+    )
 
 
 def _fixed_loop(control: object) -> tuple[str, int, str]:
@@ -243,7 +284,9 @@ def _fixed_loop(control: object) -> tuple[str, int, str]:
         or condition.group("lanes") != update.group("lanes")
         or condition_element != update_element
     ):
-        raise RecognitionError("family-unrecognized", "fixed loop guard and update disagree")
+        raise RecognitionError(
+            "family-unrecognized", "fixed loop guard and update disagree"
+        )
     return condition.group("count"), int(condition.group("lanes")), condition_element
 
 
@@ -275,7 +318,13 @@ def _tail_widths(
                     f"unsupported tail store condition {child.condition_text!r}",
                 )
             widths.append(int(match.group("width")))
-        elif bare is not None and element in {"signed char", "char", "int8_t", "unsigned char", "uint8_t"}:
+        elif bare is not None and element in {
+            "signed char",
+            "char",
+            "int8_t",
+            "unsigned char",
+            "uint8_t",
+        }:
             if bare.group("count") != count:
                 raise RecognitionError(
                     "family-unrecognized",
@@ -284,12 +333,14 @@ def _tail_widths(
             widths.append(int(bare.group("width")))
         else:
             raise RecognitionError(
-                "family-unrecognized", f"unsupported tail store condition {child.condition_text!r}"
+                "family-unrecognized",
+                f"unsupported tail store condition {child.condition_text!r}",
             )
     expected = _expected_tail_widths(lanes)
     if tuple(widths) != expected or sum(widths) != lanes - 1:
         raise RecognitionError(
-            "family-unrecognized", f"tail widths {tuple(widths)!r} do not encode 1..{lanes - 1}"
+            "family-unrecognized",
+            f"tail widths {tuple(widths)!r} do not encode 1..{lanes - 1}",
         )
     return tuple(widths)
 
@@ -298,18 +349,26 @@ def _recognize_fixed(extraction: KernelExtraction) -> FixedSchedule:
     top = _top_controls(extraction)
     loops = tuple(control for control in top if control.kind == "ForStmt")
     if not loops or len(loops) > 2:
-        raise RecognitionError("family-unrecognized", "Neon needs one or two fixed phases")
+        raise RecognitionError(
+            "family-unrecognized", "Neon needs one or two fixed phases"
+        )
     parsed = tuple(_fixed_loop(loop) for loop in loops)
     count, lanes, element = parsed[0]
     if any(item[0] != count or item[2] != element for item in parsed[1:]):
-        raise RecognitionError("family-unrecognized", "Neon fixed phases disagree on count/type")
+        raise RecognitionError(
+            "family-unrecognized", "Neon fixed phases disagree on count/type"
+        )
     phase_widths = tuple(item[1] for item in parsed)
     if tuple(sorted(set(phase_widths), reverse=True)) != phase_widths:
-        raise RecognitionError("family-unrecognized", "Neon phase widths are not unique descending")
+        raise RecognitionError(
+            "family-unrecognized", "Neon phase widths are not unique descending"
+        )
     nonloops = tuple(control for control in top if control not in loops)
     if not nonloops:
         if len(loops) != 1:
-            raise RecognitionError("family-unrecognized", "multi-phase Neon loop has no final tail")
+            raise RecognitionError(
+                "family-unrecognized", "multi-phase Neon loop has no final tail"
+            )
         return FixedSchedule(
             ScheduleKind.FIXED_NO_TAIL,
             count,
@@ -322,10 +381,14 @@ def _recognize_fixed(extraction: KernelExtraction) -> FixedSchedule:
             tuple(loop.node_id for loop in loops),
         )
     if len(nonloops) != 1 or nonloops[0].kind != "IfStmt":
-        raise RecognitionError("family-unrecognized", "fixed loop has unsupported trailing control")
+        raise RecognitionError(
+            "family-unrecognized", "fixed loop has unsupported trailing control"
+        )
     tail = nonloops[0]
     if _compact(tail.condition_text) != f"{count}!=0":
-        raise RecognitionError("family-unrecognized", "tail branch is not the nonzero remainder")
+        raise RecognitionError(
+            "family-unrecognized", "tail branch is not the nonzero remainder"
+        )
     tail_parent = tail.node_id
     phase_controls = [loop.node_id for loop in loops]
     if len(loops) == 1:
@@ -335,31 +398,45 @@ def _recognize_fixed(extraction: KernelExtraction) -> FixedSchedule:
             if control.parent_control == tail.node_id and control.kind == "DoStmt"
         )
         if do_loops:
-            if len(do_loops) != 1 or _compact(do_loops[0].condition_text) != f"{count}!=0":
-                raise RecognitionError("family-unrecognized", "unsupported secondary do-while phase")
+            if (
+                len(do_loops) != 1
+                or _compact(do_loops[0].condition_text) != f"{count}!=0"
+            ):
+                raise RecognitionError(
+                    "family-unrecognized", "unsupported secondary do-while phase"
+                )
             full = tuple(
                 control
                 for control in extraction.controls
-                if control.parent_control == do_loops[0].node_id and control.kind == "IfStmt"
+                if control.parent_control == do_loops[0].node_id
+                and control.kind == "IfStmt"
             )
             if len(full) != 1:
-                raise RecognitionError("family-unrecognized", "secondary phase needs one full-width guard")
+                raise RecognitionError(
+                    "family-unrecognized", "secondary phase needs one full-width guard"
+                )
             compact = _compact(full[0].condition_text)
             match = re.fullmatch(
                 rf"{re.escape(count)}>=\(?(?P<width>[0-9]+)\*sizeof\({re.escape(element)}\)\)?",
                 compact,
             )
             if match is None:
-                raise RecognitionError("family-unrecognized", "secondary phase guard is unsupported")
+                raise RecognitionError(
+                    "family-unrecognized", "secondary phase guard is unsupported"
+                )
             small = int(match.group("width"))
             if not 0 < small < lanes:
-                raise RecognitionError("family-unrecognized", "secondary phase width is not smaller")
+                raise RecognitionError(
+                    "family-unrecognized", "secondary phase width is not smaller"
+                )
             phase_widths = (lanes, small)
             phase_controls.append(do_loops[0].node_id)
             tail_parent = full[0].node_id
     smallest = phase_widths[-1]
     widths = _tail_widths(extraction, tail_parent, count, element, smallest)
-    kind = ScheduleKind.MULTI_PHASE if len(phase_widths) == 2 else ScheduleKind.FIXED_TAIL
+    kind = (
+        ScheduleKind.MULTI_PHASE if len(phase_widths) == 2 else ScheduleKind.FIXED_TAIL
+    )
     return FixedSchedule(
         kind,
         count,
@@ -377,13 +454,15 @@ def _recognize_rvv(extraction: KernelExtraction) -> RvvSchedule:
     top = _top_controls(extraction)
     loops = tuple(control for control in top if control.kind == "WhileStmt")
     if len(loops) != 1 or len(top) != 1:
-        raise RecognitionError("family-unrecognized", "RVV needs one top-level strip-mined while loop")
+        raise RecognitionError(
+            "family-unrecognized", "RVV needs one top-level strip-mined while loop"
+        )
     loop = loops[0]
-    match = re.fullmatch(
-        r"\s*([A-Za-z_][A-Za-z0-9_]*)\s*>\s*0\s*", loop.condition_text
-    )
+    match = re.fullmatch(r"\s*([A-Za-z_][A-Za-z0-9_]*)\s*>\s*0\s*", loop.condition_text)
     if match is None:
-        raise RecognitionError("family-unrecognized", "RVV loop guard is not positive remaining length")
+        raise RecognitionError(
+            "family-unrecognized", "RVV loop guard is not positive remaining length"
+        )
     nested = tuple(
         control.node_id
         for control in extraction.controls
@@ -394,7 +473,9 @@ def _recognize_rvv(extraction: KernelExtraction) -> RvvSchedule:
         for control in extraction.controls
         if control.parent_control == loop.node_id
     ):
-        raise RecognitionError("family-unrecognized", "RVV has unsupported nested control")
+        raise RecognitionError(
+            "family-unrecognized", "RVV has unsupported nested control"
+        )
     return RvvSchedule(match.group(1), loop.node_id, nested)
 
 
@@ -408,8 +489,13 @@ def _derive_local_assertions(
 ) -> tuple[LocalAssertionFact, ...]:
     if not local:
         return ()
-    if schedule.kind not in {ScheduleKind.FIXED_TAIL, ScheduleKind.MULTI_PHASE} or schedule.tail_control is None:
-        raise RecognitionError("family-unrecognized", "local assertion has no recognized tail path")
+    if (
+        schedule.kind not in {ScheduleKind.FIXED_TAIL, ScheduleKind.MULTI_PHASE}
+        or schedule.tail_control is None
+    ):
+        raise RecognitionError(
+            "family-unrecognized", "local assertion has no recognized tail path"
+        )
     count = schedule.count_variable
     element = schedule.element_c_type
     allowed = {
@@ -459,7 +545,9 @@ def _effect_record(extraction: KernelExtraction) -> dict[str, Any]:
                         "source_text": argument.source_text,
                         "constant": argument.constant_value,
                         "semantic_operations": list(argument.semantic_operations),
-                        "source": _stable_source_range(dataclasses.asdict(argument.source)),
+                        "source": _stable_source_range(
+                            dataclasses.asdict(argument.source)
+                        ),
                     }
                     for argument in call.arguments
                 ],
@@ -525,13 +613,19 @@ def recognize_pair(
         or neon_output != rvv_output
         or neon_stream_types != rvv_stream_types
     ):
-        raise RecognitionError("layout-unrecognized", "Neon/RVV scalar stream layouts differ")
+        raise RecognitionError(
+            "layout-unrecognized", "Neon/RVV scalar stream layouts differ"
+        )
     neon_entry, neon_local = translate_assertions(
         neon.assertions, parameters=neon.parameters
     )
-    rvv_entry, rvv_local = translate_assertions(rvv.assertions, parameters=rvv.parameters)
+    rvv_entry, rvv_local = translate_assertions(
+        rvv.assertions, parameters=rvv.parameters
+    )
     if rvv_local:
-        raise RecognitionError("family-unrecognized", "RVV local assertions are unsupported")
+        raise RecognitionError(
+            "family-unrecognized", "RVV local assertions are unsupported"
+        )
     try:
         contracts = ContractBinding(neon_entry, rvv_entry)
     except ElementwiseSchemaError as error:
@@ -566,8 +660,13 @@ def recognize_pair(
                         "count_variable": fixed.count_variable,
                         "element_c_type": fixed.element_c_type,
                         "lanes": fixed.lanes,
-                        "phase_widths": ",".join(str(width) for width in fixed.phase_widths),
-                        "store_widths": ",".join(str(width) for width in fixed.store_widths) or "none",
+                        "phase_widths": ",".join(
+                            str(width) for width in fixed.phase_widths
+                        ),
+                        "store_widths": ",".join(
+                            str(width) for width in fixed.store_widths
+                        )
+                        or "none",
                     }.items()
                 )
             ),

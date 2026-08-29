@@ -246,3 +246,46 @@ file except `Proof.lean` to remain byte-identical. The checker then rejects esca
 identifiers, verifies the theorem has exactly the frozen claim type, audits
 transitive axioms, compares protected-closure digests, and emits `Result.json`.
 This is still an integrity gate rather than OS process isolation.
+
+## EC-024: Corpus and Dashboard Status Come From One Artifact Graph
+
+**Status:** Accepted and implemented, 2026-08-29.
+
+Discover elementwise pairs structurally from paired C sources. Publish one
+content-addressed `CorpusReport.json` and one status record per discovered pair.
+The dashboard has no program allowlist: it reads that report and verifies each
+referenced capability, manifest, generated source, proof task, proof, and result.
+A changed or unbound child propagates to `stale-artifact`; file presence cannot
+produce `proof-ready` or `verified(value)`.
+
+## EC-025: Scalar-Lane Layout Allows Per-Stream C Types
+
+**Status:** Accepted and implemented, 2026-08-29.
+
+Element-wise means that logical coordinate `i` is independent, not that every
+physical stream has the same C element type. Record the C type of each input and
+output stream in the layout instance. Conversions such as `float[i] -> uint16[i]`
+remain scalar-lane programs. Physical grouping such as planar complex values is a
+different layout capability.
+
+## EC-026: Multi-Phase Is One Parameterized Schedule With Structural Encodings
+
+**Status:** Accepted and implemented, 2026-08-29.
+
+Represent large width, small width, and final prefix stores as schedule parameters.
+Both separate fixed loops (64/8/4/2/1) and a nested do-while small phase
+(16/8/4/2/1) instantiate the same unary/binary `runTwoPhaseTail` family. The
+frontend may have separate structural grammar alternatives for the two C control
+encodings, but selection cannot use a program id, path, function name, or Lean
+namespace.
+
+## EC-027: Supported Semantic Changes Regenerate Models
+
+**Status:** Accepted and implemented, 2026-08-29.
+
+Reject control, pointer, lane-store, immediate, or dependency changes that violate
+the recognized family. When a changed intrinsic is still registered and remains
+well typed in the same dataflow, generate the changed model instead of comparing
+the body with a remembered program template. The resulting equivalence proof must
+then succeed, fail, or produce a checked counterexample against the regenerated
+claim. This rule enabled removal of the fixed `s8-vclamp` call-number table.

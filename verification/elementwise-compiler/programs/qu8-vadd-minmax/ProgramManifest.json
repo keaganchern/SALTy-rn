@@ -1,6 +1,6 @@
 {
   "artifact_kind": "elementwise-program-manifest",
-  "compiler_sha256": "4964c900fd2f59ebb7429c6cfa3622ee57850a057134a1c96260598466452a72",
+  "compiler_sha256": "a4f48f79d2fa0cdd975f6f7afe45adb794065e0eff38fd2d282379c4272c5869",
   "consumed_effects_sha256": "76280bda1a4a1930a02761132ea4327cae7e05c9f5521044eb111d3af4032921",
   "contracts": {
     "neon": {
@@ -587,7 +587,7 @@
     },
     {
       "capability_id": "intrinsic:rvv:__riscv_vsetvl_e8m2:d793f686aba364cc",
-      "sha256": "a4abd4d2d285d1167f929ce4299105a07f6c2164623761650df0559aebaa740b",
+      "sha256": "d213bcd3272b583a81af7c44fdff680bd08627249b21d7906a8860275bd9c951",
       "version": 1
     },
     {
@@ -614,7 +614,7 @@
   "layout": {
     "capability": {
       "capability_id": "layout:scalar-lane",
-      "sha256": "177dd0229fd558315e86308869d20dfad882e69554fba92f09d1c2a07fcd4f84",
+      "sha256": "c5483d00d73b06a66e846c4c63bdd75da437a0ca79bbbed3101d013e5b57648f",
       "version": 1
     },
     "input_streams": [
@@ -640,13 +640,13 @@
     ]
   },
   "local_assertions": [],
-  "manifest_sha256": "4b54dfc569d6f1e77f463c57bc4bf2b12c8d5fa201853a2834aef5cf6d3c1a6a",
+  "manifest_sha256": "a6abb312b46241c399c8a13ba98d850a4f2aa2cf2add9a94f4010464df6c20ef",
   "schedules": [
     {
       "architecture": "neon",
       "capability": {
         "capability_id": "schedule:neon:fixed-tail",
-        "sha256": "6099a5048837c6abdc24782de1e900d9a894d62e5597f1495a3a170829eabd21",
+        "sha256": "2611a95304dee588b72eb6258c3746c066e74e85b55808b8ce3a203c4013675d",
         "version": 1
       },
       "control_sha256": "b54bed64222e8ca464eb2ba6638207058b659542d4c61dc272acec1d0f02bf31",
@@ -662,7 +662,7 @@
       "architecture": "rvv",
       "capability": {
         "capability_id": "schedule:rvv:rvv-strip-mine",
-        "sha256": "732bf74136b28cdd955801bdc2ac7e18f1b5417b950b044c299a7773f2b370ef",
+        "sha256": "0fda41c4f3e66e7bd649bb6abcdf98e97dedbb37e85d0a9ff22689ceabb4e9b0",
         "version": 1
       },
       "control_sha256": "7fa99efad2ffd5ba7457458f795a7da73417705afd582aa2acfc0f4acf1a00eb",
