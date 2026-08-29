@@ -46,10 +46,9 @@ def test_corpus_report_is_deterministic_and_tracks_real_blockers(tmp_path: Path)
     assert first["discovered_elementwise"] == 20
     assert first["scalar_layout_scope"] == 19
     assert first["status_counts"] == {
-        "generation-failed": 1,
         "intrinsic-missing": 14,
         "layout-unrecognized": 1,
-        "spec-generated": 4,
+        "spec-generated": 5,
     }
     assert all(
         program["entry_contract_preflight"] == "equal"
@@ -58,7 +57,7 @@ def test_corpus_report_is_deterministic_and_tracks_real_blockers(tmp_path: Path)
     generated = [
         program for program in first["programs"] if program["status"] == "spec-generated"
     ]
-    assert len(generated) == 4
+    assert len(generated) == 5
     assert all(program["artifact_index"] for program in generated)
     assert all(program["manifest_sha256"] for program in generated)
     assert json.loads((output / "CorpusReport.json").read_text())["report_sha256"]

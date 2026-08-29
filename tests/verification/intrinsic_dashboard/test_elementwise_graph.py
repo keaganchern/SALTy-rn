@@ -27,13 +27,12 @@ def test_graph_is_derived_from_the_twenty_discovered_programs(tmp_path: Path) ->
     assert graph["summary"]["scalar_layout_scope"] == 19
     assert graph["summary"]["grouped_layout_deferred"] == 1
     assert graph["summary"]["status_counts"] == {
-        "generation-failed": 1,
         "intrinsic-missing": 14,
         "layout-unrecognized": 1,
-        "spec-generated": 4,
+        "spec-generated": 5,
     }
     generated = [item for item in graph["programs"] if item["status"] == "spec-generated"]
-    assert len(generated) == 4
+    assert len(generated) == 5
     assert all(item["artifacts"]["manifest"] for item in generated)
     assert all(item["claim"] == {
         "value": "spec-generated",

@@ -229,21 +229,21 @@
   ],
   "manifest": {
     "path": "ProgramManifest.json",
-    "sha256": "6ad1015b6a0dee11aba3f16f0257129d4b681c9c33d8493e6cc415b379ba6fbb"
+    "sha256": "4b54dfc569d6f1e77f463c57bc4bf2b12c8d5fa201853a2834aef5cf6d3c1a6a"
   },
   "models": {
     "kind": "models",
-    "parent_sha256": "6ad1015b6a0dee11aba3f16f0257129d4b681c9c33d8493e6cc415b379ba6fbb",
+    "parent_sha256": "4b54dfc569d6f1e77f463c57bc4bf2b12c8d5fa201853a2834aef5cf6d3c1a6a",
     "path": "Models.lean",
-    "sha256": "92dfac8582166091ee09ac47ed66003e46c70c5854b9a9ea7158db963b0e1045"
+    "sha256": "53874525e12bdeab210ab6c0d81685fd97f93a023515da772286badccaeaefea"
   },
   "namespace": "SALT.Corpus.qu8vaddminmax",
   "schema_version": 1,
   "spec": {
     "kind": "spec",
-    "parent_sha256": "92dfac8582166091ee09ac47ed66003e46c70c5854b9a9ea7158db963b0e1045",
+    "parent_sha256": "53874525e12bdeab210ab6c0d81685fd97f93a023515da772286badccaeaefea",
     "path": "Spec.lean",
-    "sha256": "5fd14b517ece13947f07bc0419cc544cbe9dd9ebf0b9f9a4173dcd99d0aa80cb"
+    "sha256": "baebb30ea31bad9fc1bce9881144d0af938f4c8319e11fceff64e2b8f3eaff31"
   },
-  "stack_sha256": "e001c4aa81640674527f36e04ae2f3fa53a32fe2f0e97abf5ebff25b664e9eb3"
+  "stack_sha256": "4e6b6de7b6d96b54e40b4705e491303307d7a700b8b5950f09fd20a1e6b6a9bf"
 }

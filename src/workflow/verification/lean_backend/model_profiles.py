@@ -124,6 +124,7 @@ class ModelProfile:
             raise ValueError("a model cannot configure unary and binary obligations")
         if (
             self.prefix_tail is not None
+            and not self.multiphase_widths
             and self.neon_block_lanes != self.prefix_tail.load_lanes
         ):
             raise ValueError(

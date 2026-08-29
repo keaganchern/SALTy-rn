@@ -2371,15 +2371,15 @@
       "status_layer": "lexical-preflight"
     },
     {
-      "artifact_index": null,
-      "detail": "CaseEmissionError: unsupported multi-phase widths (16, 8)",
+      "artifact_index": "programs/qs8-vadd-minmax/ArtifactIndex.json",
+      "detail": "typed manifest, Models, and proof-free Spec generated",
       "entry_contract_preflight": "equal",
       "input_streams": [
         "input_a",
         "input_b"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": null,
+      "manifest_sha256": "fb412a59d31e61f85cdefb9a846f63890fda528cd1a704aeb387eab1634dcf14",
       "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
@@ -2438,8 +2438,8 @@
       ],
       "rvv_source": "kernels/target/qs8-vadd-minmax.c",
       "schedule_preflight": "multi-phase",
-      "status": "generation-failed",
-      "status_layer": "typed-compiler"
+      "status": "spec-generated",
+      "status_layer": "typed-generated"
     },
     {
       "artifact_index": "programs/qs8-vcvt/ArtifactIndex.json",
@@ -2449,7 +2449,7 @@
         "input"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": "4b14fca14352c8c83b9b642d352c2d8797f42444ab989c1074edea5fd1e37dc1",
+      "manifest_sha256": "19efce08dfa1f2ab5689cf9b6a4530a5164d9d00bbb07c319f472be78441f3d4",
       "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
@@ -2501,7 +2501,7 @@
         "input"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": "8c8fe6c60f2e5665ea775cd388a19e8930a6ae377a5ccccf1a6124fd7bba3c19",
+      "manifest_sha256": "c5c82d2e6510aac80e06b60f1248863f6c16012eb00c697acc1169accb9b6b7b",
       "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
@@ -2709,7 +2709,7 @@
         "input_b"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": "6ad1015b6a0dee11aba3f16f0257129d4b681c9c33d8493e6cc415b379ba6fbb",
+      "manifest_sha256": "4b54dfc569d6f1e77f463c57bc4bf2b12c8d5fa201853a2834aef5cf6d3c1a6a",
       "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
@@ -2778,7 +2778,7 @@
         "input"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": "1bd29e3b25d955e9769730862a3d5081da96c98b750e5840ad2ad29588438d8d",
+      "manifest_sha256": "8cbbcfdd8ad2f7a805af3fe6f9c32dc2593c54bf20b1201b77d49107f3dd9e87",
       "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
@@ -2819,13 +2819,12 @@
       "status_layer": "typed-generated"
     }
   ],
-  "report_sha256": "0b505b547c84e6747b4c8e080741b2641bdb9a512697b03a136b22cae155d5b4",
+  "report_sha256": "41c70d1a481e787919b4c18b4d165ddb6e3e9e2bbe2840ea7083f04cddbcf394",
   "scalar_layout_scope": 19,
   "schema_version": 1,
   "status_counts": {
-    "generation-failed": 1,
     "intrinsic-missing": 14,
     "layout-unrecognized": 1,
-    "spec-generated": 4
+    "spec-generated": 5
   }
 }

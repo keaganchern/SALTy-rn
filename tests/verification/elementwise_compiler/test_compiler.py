@@ -120,6 +120,24 @@ def test_binary_pair_uses_same_compiler_and_schedule_capabilities(tmp_path: Path
     assert "SALT.Randomized.Deep.BinaryFixture" in binary.stack.models_text
 
 
+def test_nested_binary_two_phase_pair_generates_the_parameterized_schedule(
+    tmp_path: Path,
+) -> None:
+    result = compile_pair(
+        _request(
+            "qs8-vadd-minmax",
+            tmp_path / "two-phase",
+            namespace="SALT.Randomized.NestedTwoPhase",
+        )
+    )
+
+    assert result.recognition.neon.phase_widths == (16, 8)
+    assert "runTwoPhaseTail2 16 8" in result.stack.models_text
+    assert "def neonBlock8FromIntrinsics" in result.stack.models_text
+    assert "List.zipWith (fNeon p)" in result.stack.spec_text
+    assert "theorem " not in result.stack.spec_text
+
+
 def test_pointer_step_mutation_fails_before_artifacts_are_written(tmp_path: Path) -> None:
     source = ROOT / "kernels/source/qs8-vcvt.c"
     mutated = ROOT / "kernels/source/compiler-heldout-pointer-step.c"

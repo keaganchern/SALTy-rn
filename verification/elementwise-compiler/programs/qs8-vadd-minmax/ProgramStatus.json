@@ -1,13 +1,13 @@
 {
-  "artifact_index": null,
-  "detail": "CaseEmissionError: unsupported multi-phase widths (16, 8)",
+  "artifact_index": "programs/qs8-vadd-minmax/ArtifactIndex.json",
+  "detail": "typed manifest, Models, and proof-free Spec generated",
   "entry_contract_preflight": "equal",
   "input_streams": [
     "input_a",
     "input_b"
   ],
   "layout_preflight": "scalar-lane",
-  "manifest_sha256": null,
+  "manifest_sha256": "fb412a59d31e61f85cdefb9a846f63890fda528cd1a704aeb387eab1634dcf14",
   "missing_intrinsics": [],
   "neon_function": "test_neon",
   "neon_intrinsics": [
@@ -65,6 +65,6 @@
   ],
   "rvv_source": "kernels/target/qs8-vadd-minmax.c",
   "schedule_preflight": "multi-phase",
-  "status": "generation-failed",
-  "status_layer": "typed-compiler"
+  "status": "spec-generated",
+  "status_layer": "typed-generated"
 }

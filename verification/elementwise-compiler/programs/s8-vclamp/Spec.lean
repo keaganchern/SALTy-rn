@@ -3,8 +3,8 @@ import SALT.Corpus.s8vclamp.Models
 
 namespace SALT.Corpus.s8vclamp
 
-def manifestSha256InSpec : String := "1bd29e3b25d955e9769730862a3d5081da96c98b750e5840ad2ad29588438d8d"
-def modelsSha256InSpec : String := "a9eccc3ab76e04a932691552e00576652073b0c19ff165c9994fc4741600edc6"
+def manifestSha256InSpec : String := "8cbbcfdd8ad2f7a805af3fe6f9c32dc2593c54bf20b1201b77d49107f3dd9e87"
+def modelsSha256InSpec : String := "cfb08192c8bd9296ec25d7afd1786d155ef2deb21e691928f13eca8d060e2a7f"
 def sharedEntryContractSha256 : String := "d3451fad1964124247d8f6f7c65b8c38cb60dd2b873b45589dc153cba6644130"
 
 def neonBlockEqualsMapClaim : Prop :=

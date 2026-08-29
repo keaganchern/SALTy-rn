@@ -135,10 +135,14 @@ def infer_model_profile(
         raise GenerationError("the current block emitter supports 8-bit input/output streams")
     fields = _field_widths((neon, rvv))
     prefix = None
-    if recognition.neon.kind is ScheduleKind.FIXED_TAIL:
+    if recognition.neon.kind in {ScheduleKind.FIXED_TAIL, ScheduleKind.MULTI_PHASE}:
         prefix = PrefixTailProfile(
             recognition.neon.element_c_type,
-            recognition.neon.lanes,
+            (
+                recognition.neon.phase_widths[-1]
+                if recognition.neon.kind is ScheduleKind.MULTI_PHASE
+                else recognition.neon.lanes
+            ),
             recognition.neon.store_widths,
         )
     return ModelProfile(
@@ -252,22 +256,37 @@ def _model_extensions(
                 ]
             )
     elif recognition.neon.kind is ScheduleKind.MULTI_PHASE:
-        if len(inputs) != 1:
-            raise GenerationError(
-                "the current multi-phase value emitter supports one input stream"
-            )
-        name = inputs[0]
         lines.extend(
             [
                 "",
                 "/-- Generated RVV positive-partition assembly. -/",
                 f"def rvvValueLoopFromIntrinsics (p : {profile.parameter_type})",
-                f"    ({name} : List (BitVec {width}))",
-                f"    (schedule : SALT.Kernel.Schedule.PositivePartition {name}.length) :",
-                f"    List (BitVec {width}) :=",
-                f"  SALT.Kernel.Schedule.processBlocks ({profile.rvv_function} p) {name} schedule",
             ]
         )
+        if len(inputs) == 1:
+            name = inputs[0]
+            lines.extend(
+                [
+                    f"    ({name} : List (BitVec {width}))",
+                    f"    (schedule : SALT.Kernel.Schedule.PositivePartition {name}.length) :",
+                    f"    List (BitVec {width}) :=",
+                    f"  SALT.Kernel.Schedule.processBlocks ({profile.rvv_function} p) {name} schedule",
+                ]
+            )
+        elif len(inputs) == 2:
+            first, second = inputs
+            lines.extend(
+                [
+                    f"    ({first} {second} : List (BitVec {width}))",
+                    f"    (sameLength : {first}.length = {second}.length)",
+                    f"    (schedule : SALT.Kernel.Schedule.PositivePartition {first}.length) :",
+                    f"    List (BitVec {width}) :=",
+                    f"  SALT.Kernel.Schedule.processBlocks2 ({profile.rvv_function} p)",
+                    f"    {first} {second} sameLength schedule",
+                ]
+            )
+        else:
+            raise GenerationError("multi-phase value loops support one or two input streams")
     return lines
 
 
@@ -388,6 +407,11 @@ def _spec_text(
                 "def neonSecondaryBlockEqualsMapClaim : Prop :=",
                 f"  ∀ (p : {profile.parameter_type}) {list_binders},",
                 f"    {inputs[0]}.length = {small_width} →",
+                *(
+                    [f"    {inputs[0]}.length = {inputs[1]}.length →"]
+                    if binary
+                    else []
+                ),
                 f"    neonBlock{small_width}FromIntrinsics p {params} = {map_expr}",
             ]
         )
