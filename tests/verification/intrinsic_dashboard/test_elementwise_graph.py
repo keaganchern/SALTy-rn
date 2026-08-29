@@ -69,7 +69,13 @@ def test_graph_is_derived_from_the_twenty_discovered_programs(tmp_path: Path) ->
 
     graph = build_elementwise_graph(output)
 
+    assert graph["schema_version"] == 2
     assert graph["available"] is True
+    assert graph["authority"] == {
+        "program_discovery": "paired-single-output-vsetvl-vector-load-store-v1",
+        "program_status": "content-addressed-artifact-closure",
+        "legacy_case_lists_used": False,
+    }
     assert graph["summary"]["discovered_elementwise"] == 20
     assert graph["summary"]["scalar_layout_scope"] == 19
     assert graph["summary"]["grouped_layout_deferred"] == 1
@@ -88,12 +94,32 @@ def test_graph_is_derived_from_the_twenty_discovered_programs(tmp_path: Path) ->
     assert sum(item["claim"]["value"] == "failed" for item in generated) == 1
     assert all(item["claim"]["c"] == "not-established" for item in generated)
     assert all(item["claim"]["isa"] == "not-established" for item in generated)
+    clamp = next(item for item in generated if item["program_id"] == "s8-vclamp")
+    assert clamp["input_condition"] == {
+        "scope": "xnnpack-registered-domain",
+        "status": "required-missing",
+    }
+    assert clamp["cross_phase"]["status"] == "counterexample"
+    assert clamp["counterexample"] == {
+        "claim": "SALT.Corpus.s8vclamp.neonPhaseFunctionsEqualClaim",
+        "parameters": {"max": 0, "min": 5},
+        "inputs": [0],
+        "left_output": 0,
+        "right_output": 5,
+    }
 
     source = (
         ROOT / "src/workflow/verification/intrinsic_dashboard/elementwise_graph.py"
     ).read_text(encoding="utf-8")
-    assert "supported_cases" not in source
-    assert "qs8-vcvt" not in source
+    for forbidden in (
+        "supported_cases",
+        "PROOF_CASES",
+        "GENERATED_CASES",
+        "FRONTEND_PROFILES",
+        "SCALE_UP_MODELS",
+        "qs8-vcvt",
+    ):
+        assert forbidden not in source
 
 
 def test_changed_child_artifact_propagates_to_stale_program(tmp_path: Path) -> None:
@@ -121,6 +147,7 @@ def test_changed_child_artifact_propagates_to_stale_program(tmp_path: Path) -> N
 
 def test_missing_report_is_explicitly_unavailable(tmp_path: Path) -> None:
     graph = build_elementwise_graph(tmp_path)
+    assert graph["schema_version"] == 2
     assert graph["available"] is False
     assert graph["programs"] == []
 
@@ -140,6 +167,11 @@ def test_frozen_task_and_checked_result_change_program_state(tmp_path: Path) -> 
         if item["program_id"] == generated["program_id"]
     )
     assert node["status"] == "proof-ready"
+    assert node["input_condition"] == {
+        "scope": "local-unconditional-claim",
+        "status": "not-required",
+    }
+    assert node["cross_phase"] == {"status": "not-applicable", "trial_count": 0}
     assert node["artifacts"]["proof_task"] is True
     assert node["claim"]["value"] == "ready"
 

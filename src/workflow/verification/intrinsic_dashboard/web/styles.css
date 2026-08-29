@@ -802,6 +802,25 @@ summary {
   font-size: 0.65rem;
 }
 
+.counterexample-evidence {
+  margin-top: 0.4rem;
+  color: var(--danger);
+  font-size: 0.72rem;
+}
+
+.counterexample-evidence summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.counterexample-evidence code {
+  display: block;
+  margin-top: 0.22rem;
+  max-width: 28rem;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
 .claim-value {
   color: var(--ink);
   font-weight: 650;

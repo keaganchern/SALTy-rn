@@ -526,3 +526,29 @@ passed. See
 **Unresolved:** the eight registered XNNPACK parameter domains remain
 `required-missing`; a bounded cross-phase search with no witness remains a
 diagnostic, not a proof.
+
+## 2026-08-29 — Single elementwise dashboard authority milestone
+
+**Question:** Does the website now implement the puzzle model without a second
+program list, and can an unseen same-family program become proof-ready without a
+dashboard edit?
+
+**Conclusion:** yes after one review correction. `/api/elementwise` derives every
+row from `CorpusReport.json` plus the verified M/E/D/S/A/C/T/R artifact closure;
+the production graph imports none of the legacy program/profile authorities. A
+checked-in held-out VMax compiles and reaches `proof-ready` after being published
+to a temporary report, with no dashboard configuration.
+
+The first independent review returned `NO-GO` because the page showed only the
+condition and phase statuses, not their full audit evidence. The UI now also shows
+condition scope, bounded-search trial count, and the complete counterexample
+witness. The convergence review returned `GO`. The old case table remains only as
+an explicitly labeled historical/non-elementwise view and cannot drive the new
+projection.
+
+**Evidence:** schema-v2 elementwise graph and UI; held-out graph regression; 141
+dashboard tests and 50 focused graph/web/server tests; reviewer record
+`notes/reviews/elementwise-m3-dashboard-review-2026-08-29.md`.
+
+**Unresolved:** intrinsic review remains zero. The next work is a hash-bound,
+independently reviewed intrinsic capability batch ordered by corpus fan-out.

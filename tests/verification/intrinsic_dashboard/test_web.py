@@ -223,6 +223,41 @@ def test_frontend_consumes_only_the_authoritative_projection() -> None:
         assert legacy_field not in script
 
 
+def test_elementwise_frontend_uses_only_schema_v2_artifact_graph_fields() -> None:
+    script = (WEB / "elementwise.js").read_text(encoding="utf-8")
+    html = (WEB / "index.html").read_text(encoding="utf-8")
+
+    assert "payload.schema_version !== 2" in script
+    for artifact in (
+        "manifest",
+        "external_condition",
+        "models",
+        "spec",
+        "cross_phase_audit",
+        "counterexample",
+        "proof_task",
+        "result",
+    ):
+        assert f'"{artifact}"' in script
+    assert "input condition blocked" in script
+    assert "checked counterexample" in script
+    assert "program.input_condition" in script
+    assert "program.cross_phase" in script
+    assert "condition.scope" in script
+    assert "phase.trial_count" in script
+    assert "program.counterexample" in script
+    for witness_field in (
+        "counterexample.claim",
+        "counterexample.parameters",
+        "counterexample.inputs",
+        "counterexample.left_output",
+        "counterexample.right_output",
+    ):
+        assert witness_field in script
+    assert "Legacy proof prototypes" in html
+    assert "not the authority for element-wise compiler status" in html
+
+
 def test_group_approval_requires_exact_aggregate_status_and_variant_counts() -> None:
     approved = _intrinsic(reviewed=True)
     state = _normalize(
@@ -426,7 +461,8 @@ def test_kernel_table_names_and_displays_explicit_claim_scopes() -> None:
     page = (WEB / "index.html").read_text(encoding="utf-8")
     script = (WEB / "app.js").read_text(encoding="utf-8")
 
-    assert "Kernel proof claims" in page
+    assert "Legacy proof prototypes" in page
+    assert "not the authority for element-wise compiler status" in page
     assert "Scope review" in page
     assert "File unlocks" not in page
     assert "claim_scope" in script

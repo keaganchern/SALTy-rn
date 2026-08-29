@@ -30,8 +30,11 @@
   function artifactChain(artifacts) {
     const ordered = [
       ["M", "manifest"],
+      ["E", "external_condition"],
       ["D", "models"],
       ["S", "spec"],
+      ["A", "cross_phase_audit"],
+      ["C", "counterexample"],
       ["T", "proof_task"],
       ["R", "result"],
     ];
@@ -53,10 +56,22 @@
     return container;
   }
 
+  function counterexampleEvidence(counterexample) {
+    if (!counterexample) return null;
+    const details = document.createElement("details");
+    details.className = "counterexample-evidence";
+    details.append(text("summary", "checked witness"));
+    details.append(text("code", `claim: ${counterexample.claim || "unknown"}`));
+    details.append(text("code", `parameters: ${JSON.stringify(counterexample.parameters || {})}`));
+    details.append(text("code", `inputs: ${JSON.stringify(counterexample.inputs || [])}`));
+    details.append(text("code", `outputs: ${counterexample.left_output} / ${counterexample.right_output}`));
+    return details;
+  }
+
   function render(payload) {
     clear(summary);
     clear(body);
-    if (!payload || payload.schema_version !== 1 || payload.available !== true) {
+    if (!payload || payload.schema_version !== 2 || payload.available !== true) {
       counts.textContent = "No generated report";
       message.textContent = payload && payload.message ? payload.message : "Elementwise artifact graph is unavailable.";
       return;
@@ -71,7 +86,9 @@
       summaryCard("deferred grouped layout", data.grouped_layout_deferred || 0),
       summaryCard("intrinsics configured", `${data.configured_intrinsics || 0}/${data.intrinsic_dependencies || 0}`),
       summaryCard("intrinsics reviewed", `${data.reviewed_intrinsics || 0}/${data.intrinsic_dependencies || 0}`),
-      summaryCard("spec generated", statusCounts["spec-generated"] || 0),
+      summaryCard("input condition blocked", statusCounts["external-condition-missing"] || 0),
+      summaryCard("checked counterexample", statusCounts.counterexample || 0),
+      summaryCard("proof ready", statusCounts["proof-ready"] || 0),
       summaryCard("value verified", statusCounts["verified(value)"] || 0),
     );
     for (const program of programs) {
@@ -87,6 +104,12 @@
       const statusCell = document.createElement("td");
       statusCell.append(text("span", program.status || "unknown", `elementwise-status status-${String(program.status || "unknown").replace(/[^a-z]+/g, "-")}`));
       statusCell.append(text("small", program.status_layer || ""));
+      const condition = program.input_condition || {};
+      const phase = program.cross_phase || {};
+      statusCell.append(text("small", `input: ${condition.status || "unknown"} (${condition.scope || "unknown scope"})`));
+      statusCell.append(text("small", `phase: ${phase.status || "unknown"} (${phase.trial_count || 0} trials)`));
+      const witness = counterexampleEvidence(program.counterexample);
+      if (witness) statusCell.append(witness);
       row.append(statusCell);
       row.append(text("td", program.layout || "unknown"));
       row.append(text("td", program.schedule || "unknown"));

@@ -317,6 +317,15 @@ def _program_node(
         "result": False,
     }
     claim = {"value": "not-checked", "c": "not-established", "isa": "not-established"}
+    input_condition: dict[str, object] = {
+        "scope": "not-generated",
+        "status": str(record.get("external_condition_status", "not-generated")),
+    }
+    cross_phase: dict[str, object] = {
+        "status": str(record.get("cross_phase_status", "not-generated")),
+        "trial_count": 0,
+    }
+    counterexample_record: dict[str, object] | None = None
     stale = False
     detail = str(record.get("detail", "no detail"))
     intrinsic_capabilities: tuple[IntrinsicCapability, ...] = ()
@@ -328,6 +337,25 @@ def _program_node(
                 raise ElementwiseGraphError("CorpusReport manifest binding mismatch")
             task = stack["task"]
             result = stack["result"]
+            external = stack["external"]
+            phase = stack["phase"]
+            counterexample = stack["counterexample"]
+            input_condition = {
+                "scope": external.scope.value,
+                "status": external.status.value,
+            }
+            cross_phase = {
+                "status": phase.status.value,
+                "trial_count": phase.trial_count,
+            }
+            if counterexample is not None:
+                counterexample_record = {
+                    "claim": counterexample.claim,
+                    "parameters": dict(counterexample.parameter_values),
+                    "inputs": list(counterexample.input_values),
+                    "left_output": counterexample.left_output,
+                    "right_output": counterexample.right_output,
+                }
             artifacts.update(
                 manifest=True,
                 models=True,
@@ -372,6 +400,9 @@ def _program_node(
             "contract": str(record.get("entry_contract_preflight", "unknown")),
             "missing_intrinsics": list(record.get("missing_intrinsics", [])),
             "artifacts": artifacts,
+            "input_condition": input_condition,
+            "cross_phase": cross_phase,
+            "counterexample": counterexample_record,
             "claim": claim,
             "stale": stale,
             "detail": detail,
@@ -389,7 +420,7 @@ def build_elementwise_graph(
     report_path = root / "CorpusReport.json"
     if not report_path.is_file():
         return {
-            "schema_version": 1,
+            "schema_version": 2,
             "available": False,
             "message": f"Run the elementwise corpus compiler to create {report_path.name}",
             "summary": {},
@@ -437,9 +468,14 @@ def build_elementwise_graph(
     for node in program_nodes:
         status_counts[node["status"]] = status_counts.get(node["status"], 0) + 1
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "available": True,
         "report_sha256": report["report_sha256"],
+        "authority": {
+            "program_discovery": str(report["discovery_rule"]),
+            "program_status": "content-addressed-artifact-closure",
+            "legacy_case_lists_used": False,
+        },
         "summary": {
             "discovered_elementwise": report["discovered_elementwise"],
             "scalar_layout_scope": report["scalar_layout_scope"],
@@ -450,6 +486,24 @@ def build_elementwise_graph(
             ),
             "reviewed_intrinsics": sum(item["reviewed"] for item in dependency_nodes),
             "intrinsic_dependencies": len(dependency_nodes),
+            "input_condition_counts": {
+                status: sum(
+                    node["input_condition"]["status"] == status
+                    for node in program_nodes
+                )
+                for status in sorted(
+                    {str(node["input_condition"]["status"]) for node in program_nodes}
+                )
+            },
+            "cross_phase_counts": {
+                status: sum(
+                    node["cross_phase"]["status"] == status
+                    for node in program_nodes
+                )
+                for status in sorted(
+                    {str(node["cross_phase"]["status"]) for node in program_nodes}
+                )
+            },
         },
         "programs": sorted(program_nodes, key=lambda item: item["program_id"]),
         "capabilities": sorted(dependency_nodes, key=lambda item: item["id"]),

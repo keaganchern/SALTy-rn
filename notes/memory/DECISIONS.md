@@ -424,3 +424,19 @@ non-applicability, a missing external domain, a bounded search with no witness, 
 a Lean-checked counterexample. A bounded miss remains only a diagnostic. A bound
 counterexample is terminal and `prepare_proof_task` must reject it even if some
 other condition is also missing.
+
+## EC-036: Elementwise Status Has One Artifact Authority
+
+**Status:** Accepted and implemented, 2026-08-29.
+
+`/api/elementwise` derives program discovery, readiness, failure, and verification
+only from the structural corpus report and verified content-addressed artifact
+closure. It must not import legacy supported/proof/generated case lists. A new
+program becomes visible after generic compilation and report publication without
+adding dashboard configuration.
+
+The page must expose the complete M/E/D/S/A/C/T/R chain, input-condition scope and
+status, cross-phase status and trial count, concrete counterexample witness, and
+separate value/C/ISA claim layers. The old `/api/state` table may remain for
+non-elementwise and historical records only when it is visibly labeled
+non-authoritative for the elementwise compiler.

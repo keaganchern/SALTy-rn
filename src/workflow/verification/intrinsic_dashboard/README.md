@@ -45,6 +45,15 @@ Manifest, Models, Spec, ProofTask, or Result progress. It does not read the lega
 `supported_cases` lists. Missing intrinsic spellings are puzzle dependencies;
 changing one generated child marks the corresponding row stale.
 
+For element-wise programs this projection is the sole production status
+authority. Its API declares the structural discovery rule and
+`legacy_case_lists_used: false`. The lower "Legacy proof prototypes" table keeps
+older case-scoped records visible for historical comparison and for other kernel
+families, but those rows do not determine element-wise compiler progress. A
+checked-in held-out VMax regression compiles a new source pair, adds its generated
+artifact index to a temporary report, and verifies that the page reaches
+`proof-ready` without any dashboard program entry.
+
 The tracked policy also pins the exact local Lean and Lake binaries, their
 reported versions, the shared Lean runtime, and every importable `.olean` under
 the selected Lean sysroot. The checker resolves absolute executables and removes

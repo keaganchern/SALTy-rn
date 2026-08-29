@@ -264,14 +264,15 @@ reproduced the 20/19/1 and 5/14/1 counts.
 reproduced standalone/registered clamp rejection and standalone VMax proof-task
 preparation, then returned `GO`.
 
-**Historical independent audit verdict:** `GO WITH GAPS` for the reusable framework and
-`NO-GO` for claiming all nineteen scalar programs proved. The new
-`/api/elementwise` graph is artifact-driven, but the legacy `/api/state` path still
-uses hardcoded proof/generated-case authorities. Held-out C can be shown by the
-new graph without configuration (manually reproduced by the reviewer), but that
-dashboard integration is not yet a checked-in regression. Its missing
-counterexample-producer finding is now superseded by the external-condition M2
-implementation below. `reviewed_intrinsics` remains zero.
+**Confirmed dashboard-authority closure:** `/api/elementwise` derives discovery and
+status only from `CorpusReport.json` plus the content-addressed M/E/D/S/A/C/T/R
+artifact closure. A checked-in held-out VMax pair reaches `proof-ready` without a
+dashboard case entry. The page displays input-condition scope/status, cross-phase
+status/trial count, concrete counterexample witnesses, and separate value/C/ISA
+claims. The retained legacy table is labeled historical and cannot affect the
+elementwise projection. An independent review first found three missing evidence
+fields in the UI; after they were added, convergence review returned `GO`.
+`reviewed_intrinsics` remains zero, so the active milestone is intrinsic review.
 
 **Confirmed concrete false obligation:** `s8-vclamp`'s 64-byte Neon phase applies
 signed max-with-min and then min-with-max, while its 8-byte and tail phases apply

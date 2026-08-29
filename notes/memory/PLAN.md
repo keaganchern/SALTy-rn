@@ -235,9 +235,11 @@ external-condition, cross-phase, and dashboard-authority gates below.
 1. **Completed and independently reviewed:** mandatory content-addressed external input
    audits, explicit missing states, generic cross-phase audits, and checked
    counterexample rejection;
-2. **Active:** migrate or retire legacy `/api/state` case authorities and add a checked-in
-   held-out-to-dashboard regression;
-3. add independently reviewed integer/FP intrinsic capabilities, starting from
+2. **Completed and independently reviewed:** `/api/elementwise` uses only the
+   verified artifact closure; a checked-in held-out VMax reaches `proof-ready`
+   without dashboard configuration, and the UI exposes conditions, phase audit,
+   witnesses, and M/E/D/S/A/C/T/R;
+3. **Active:** add independently reviewed integer/FP intrinsic capabilities, starting from
    the dependencies shared by the largest number of the fourteen blocked scalar
    programs;
 4. add parse facades as mechanical typed declarations where missing;
@@ -272,8 +274,9 @@ separate grouped-layout milestone.
    and initializer in a content-addressed artifact. Establishing reusable
    postconditions that promote the eight current `required-missing` states to
    `resolved` remains capability work;
-4. make the artifact graph the only production dashboard authority and retire the
-   legacy case lists.
+4. **Completed:** make the artifact graph the only production elementwise dashboard
+   authority. Keep the legacy table only as an explicitly non-authoritative
+   historical/non-elementwise view.
 
 ## Eight-Commit Execution Ledger
 
@@ -289,9 +292,13 @@ separate grouped-layout milestone.
    The first review found three fail-open paths; after mandatory audit bindings,
    generic compiler integration, and terminal counterexample rejection were
    added, the convergence review returned `GO`.
-3. **Single artifact/dashboard authority — next:** retire production case lists and make
-   verified artifact closure the only status source.
-4. **Intrinsic batch 1:** shared high-fanout integer/bitwise/conversion pieces with
+3. **Single artifact/dashboard authority — completed and independently reviewed:**
+   `/api/elementwise` reads only CorpusReport and the verified M/E/D/S/A/C/T/R
+   closure; held-out VMax needs no dashboard config; concrete condition/phase/
+   witness evidence is visible. The first review returned `NO-GO` for missing UI
+   evidence; the convergence review returned `GO` after all three fields landed.
+4. **Intrinsic batch 1 — active:** shared high-fanout structural, integer,
+   bitwise, conversion, and simple FP pieces with
    exact typed definitions and independent review records.
 5. **Intrinsic batch 2:** remaining FP and typed variants with the same review
    gates.
