@@ -4,14 +4,12 @@ Last updated: 2026-08-29 (Asia/Seoul)
 
 ## Active Milestone
 
-The width/tail milestone is committed. The external-condition/counterexample
-milestone is implemented and independently reviewed after closing three
-fail-open paths. Models and Spec
-preserve distinct 8/16/32-bit widths; external audits bind the pinned registration
-and initializer and fail closed as `required-missing`; S8 clamp has a Lean-checked
-cross-phase counterexample. No external condition is currently `resolved`. The
-active milestone is retiring the legacy dashboard's parallel case
-authorities before capability expansion becomes the only production status source.
+The first three framework milestones and the first nine-item intrinsic batch are
+complete and independently reviewed. Models and Spec preserve distinct
+8/16/32-bit widths; external audits remain fail closed; the dashboard has one
+artifact authority; and the first F32 structural/schedule puzzle pieces have exact
+review bindings. The active milestone is the remaining high-fanout semantic
+intrinsic families, followed by program proof/review batches.
 
 ## Canonical Artifact Chain
 
@@ -297,10 +295,13 @@ separate grouped-layout milestone.
    closure; held-out VMax needs no dashboard config; concrete condition/phase/
    witness evidence is visible. The first review returned `NO-GO` for missing UI
    evidence; the convergence review returned `GO` after all three fields landed.
-4. **Intrinsic batch 1 — active:** shared high-fanout structural, integer,
-   bitwise, conversion, and simple FP pieces with
-   exact typed definitions and independent review records.
-5. **Intrinsic batch 2:** remaining FP and typed variants with the same review
+4. **Intrinsic batch 1 — completed and independently reviewed:** nine shared F32
+   structural/schedule variants, mechanically rendered facade, exact descriptor
+   and implementation bindings, pinned primary evidence, Lean/negative checks,
+   and generated dashboard registry. Reviewer verdict: `GO` after the lane-store
+   immediate bug was fixed without narrowing the legal lane set.
+5. **Intrinsic batch 2 — active:** remaining arithmetic, conversion, integer, and
+   FP typed variants with the same review
    gates.
 6. **Program batch 1:** generate, prove or explicitly fail, and independently
    review the first scalar-layout program batch.

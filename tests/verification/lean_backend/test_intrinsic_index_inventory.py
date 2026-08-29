@@ -22,6 +22,9 @@ from pathlib import Path
 from workflow.verification.lean_backend.intrinsic_index import (
     CANONICAL_INTRINSIC_INDEX,
 )
+from workflow.verification.lean_backend.intrinsic_library import (
+    render_elementwise_shared_facade,
+)
 from workflow.verification.lean_backend.registry import QS8_VADD_MINMAX_SPECS
 from workflow.verification.lean_backend.scaleup_catalog import SCALEUP_CATALOGS
 from workflow.verification.lean_backend.schema import Architecture, IntrinsicSpec
@@ -69,24 +72,24 @@ def _onboarding_status(
     return "unknown"
 
 
-def test_five_case_inventory_counts_and_architecture_split_are_stable() -> None:
+def test_configured_inventory_counts_and_architecture_split_are_stable() -> None:
     variants = CANONICAL_INTRINSIC_INDEX.variants
     grouped = _variants_by_architecture_and_spelling()
 
-    assert sum(len(variant.provenance) for variant in variants) == 161
-    assert len(grouped) == 85
-    assert len(variants) == 96
+    assert sum(len(variant.provenance) for variant in variants) == 170
+    assert len(grouped) == 94
+    assert len(variants) == 105
 
     assert Counter(
         origin.architecture
         for variant in variants
         for origin in variant.provenance
-    ) == Counter({Architecture.NEON: 102, Architecture.RVV: 59})
+    ) == Counter({Architecture.NEON: 108, Architecture.RVV: 62})
     assert Counter(architecture for architecture, _ in grouped) == Counter(
-        {Architecture.NEON: 49, Architecture.RVV: 36}
+        {Architecture.NEON: 55, Architecture.RVV: 39}
     )
     assert Counter(variant.spec.architecture for variant in variants) == Counter(
-        {Architecture.NEON: 54, Architecture.RVV: 42}
+        {Architecture.NEON: 60, Architecture.RVV: 45}
     )
 
 
@@ -105,7 +108,15 @@ def test_exact_variant_case_support_distribution_is_stable() -> None:
         for variant in CANONICAL_INTRINSIC_INDEX.variants
     )
 
-    assert support_counts == Counter({1: 60, 2: 21, 3: 3, 4: 10, 5: 2})
+    assert support_counts == Counter({1: 69, 2: 21, 3: 3, 4: 10, 5: 2})
+
+
+def test_shared_parse_facade_is_generated_from_the_typed_library() -> None:
+    facade = (
+        Path(__file__).resolve().parents[3]
+        / "src/workflow/verification/lean_backend/facade/elementwise_shared.h"
+    )
+    assert facade.read_text(encoding="utf-8") == render_elementwise_shared_facade()
 
 
 def test_sequential_onboarding_uses_only_prior_complete_descriptors() -> None:

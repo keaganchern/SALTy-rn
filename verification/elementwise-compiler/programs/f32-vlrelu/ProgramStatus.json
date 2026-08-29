@@ -16,22 +16,13 @@
     "neon:vbslq_f32",
     "neon:vcltq_s32",
     "neon:vdupq_n_f32",
-    "neon:vget_high_f32",
-    "neon:vget_low_f32",
-    "neon:vld1q_f32",
     "neon:vmovq_n_s32",
     "neon:vmulq_f32",
     "neon:vreinterpretq_s32_f32",
-    "neon:vst1_f32",
-    "neon:vst1_lane_f32",
-    "neon:vst1q_f32",
     "rvv:__riscv_vfmul_vf_f32m8",
-    "rvv:__riscv_vle32_v_f32m8",
     "rvv:__riscv_vmerge_vvm_f32m8",
     "rvv:__riscv_vmslt_vx_i32m8_b4",
-    "rvv:__riscv_vreinterpret_v_f32m8_i32m8",
-    "rvv:__riscv_vse32_v_f32m8",
-    "rvv:__riscv_vsetvl_e32m8"
+    "rvv:__riscv_vreinterpret_v_f32m8_i32m8"
   ],
   "neon_function": "test_neon",
   "neon_intrinsics": [

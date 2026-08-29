@@ -30,7 +30,6 @@
     "neon:vdupq_n_u32",
     "neon:vext_u16",
     "neon:vget_low_u16",
-    "neon:vld1q_f32",
     "neon:vmaxq_u32",
     "neon:vmovn_u32",
     "neon:vmulq_f32",
@@ -49,7 +48,6 @@
     "rvv:__riscv_vfabs_v_f32m8",
     "rvv:__riscv_vfadd_vv_f32m8",
     "rvv:__riscv_vfmul_vf_f32m8",
-    "rvv:__riscv_vle32_v_f32m8",
     "rvv:__riscv_vmaxu_vx_u32m8",
     "rvv:__riscv_vmerge_vxm_u16m4",
     "rvv:__riscv_vmsgtu_vx_u32m8_b4",
@@ -57,8 +55,7 @@
     "rvv:__riscv_vor_vv_u16m4",
     "rvv:__riscv_vreinterpret_v_f32m8_u32m8",
     "rvv:__riscv_vreinterpret_v_u32m8_f32m8",
-    "rvv:__riscv_vse16_v_u16m4",
-    "rvv:__riscv_vsetvl_e32m8"
+    "rvv:__riscv_vse16_v_u16m4"
   ],
   "neon_function": "test_neon",
   "neon_intrinsics": [

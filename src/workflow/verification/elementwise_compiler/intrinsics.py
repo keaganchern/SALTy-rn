@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import hashlib
 from collections import defaultdict
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Iterable, Mapping
 
@@ -26,7 +26,13 @@ from workflow.verification.lean_backend.schema import (
 )
 
 from .capabilities import IntrinsicCapability, IntrinsicRole
-from .schema import Architecture, CapabilityRef, ElementwiseSchemaError
+from .reviews import IntrinsicReview, load_intrinsic_reviews
+from .schema import (
+    Architecture,
+    CapabilityRef,
+    ElementwiseSchemaError,
+    canonical_sha256,
+)
 
 
 class IntrinsicResolutionError(ElementwiseSchemaError):
@@ -144,31 +150,38 @@ def _implementation_digest(
     repository_root: Path,
     spec: IntrinsicSpec,
 ) -> str:
+    relatives = [
+        "src/workflow/verification/lean_backend/emit_lean.py",
+        "src/workflow/verification/lean_backend/case_emit.py",
+    ]
     if isinstance(spec, SemanticIntrinsic):
-        relative = (
+        relatives.append(
             "src/verification_bw/lean/SALT/Intrinsics/Neon.lean"
             if spec.architecture is BackendArchitecture.NEON
             else "src/verification_bw/lean/SALT/Intrinsics/RVV.lean"
         )
     elif isinstance(spec, ScheduleIntrinsic):
-        relative = "src/verification_bw/lean/SALT/Kernel/Schedule.lean"
-    else:
-        relative = "src/workflow/verification/lean_backend/emit_lean.py"
-    path = repository_root / relative
-    if not path.is_file():
-        raise IntrinsicResolutionError(
-            "intrinsic-missing", f"capability implementation file is absent: {relative}"
-        )
-    return _file_sha256(path)
+        relatives.append("src/verification_bw/lean/SALT/Kernel/Schedule.lean")
+    records = []
+    for relative in sorted(relatives):
+        path = repository_root / relative
+        if not path.is_file():
+            raise IntrinsicResolutionError(
+                "intrinsic-missing",
+                f"capability implementation file is absent: {relative}",
+            )
+        records.append({"path": relative, "sha256": _file_sha256(path)})
+    return canonical_sha256(records)
 
 
 def _capability(
     repository_root: Path,
     source: SourceIntrinsicDescriptor,
     variant: CanonicalIntrinsicVariant,
+    reviews: Mapping[tuple[object, ...], IntrinsicReview],
 ) -> IntrinsicCapability:
     spec = variant.spec
-    return IntrinsicCapability(
+    capability = IntrinsicCapability(
         architecture=_architecture(source.architecture),
         spelling=source.spelling,
         function_type=source.function_type,
@@ -177,6 +190,46 @@ def _capability(
         descriptor_sha256=canonical_spec_digest(spec),
         implementation_sha256=_implementation_digest(repository_root, spec),
         semantic_symbol=spec.lean_name if isinstance(spec, SemanticIntrinsic) else None,
+    )
+    review = reviews.get(
+        (
+            capability.architecture,
+            capability.spelling,
+            capability.function_type,
+            capability.argument_count,
+            capability.descriptor_sha256,
+            capability.implementation_sha256,
+        )
+    )
+    return (
+        capability
+        if review is None
+        else replace(capability, review_evidence_sha256=review.sha256)
+    )
+
+
+def configured_intrinsic_capabilities(
+    repository_root: str | Path,
+    *,
+    index: CanonicalIntrinsicIndex = CANONICAL_INTRINSIC_INDEX,
+) -> tuple[IntrinsicCapability, ...]:
+    """Materialize every configured exact variant with any approved review binding."""
+
+    root = Path(repository_root).resolve()
+    reviews = load_intrinsic_reviews(root)
+    return tuple(
+        sorted(
+            (
+                _capability(
+                    root,
+                    SourceIntrinsicDescriptor.from_spec(variant.spec),
+                    variant,
+                    reviews,
+                )
+                for variant in index.variants
+            ),
+            key=lambda item: (item.capability_id, item.sha256),
+        )
     )
 
 
@@ -190,6 +243,7 @@ def resolve_intrinsics(
     """Resolve every extracted call group and return exact global registries."""
 
     root = Path(repository_root).resolve()
+    reviews = load_intrinsic_reviews(root)
     capabilities: dict[str, IntrinsicCapability] = {}
     registries: dict[BackendArchitecture, dict[str, IntrinsicSpec]] = {
         BackendArchitecture.NEON: {},
@@ -217,7 +271,7 @@ def resolve_intrinsics(
                 classification.status,
                 classification.variants,
             )
-            capability = _capability(root, group[0], variant)
+            capability = _capability(root, group[0], variant, reviews)
             previous = capabilities.setdefault(capability.capability_id, capability)
             if previous != capability:
                 raise IntrinsicResolutionError(

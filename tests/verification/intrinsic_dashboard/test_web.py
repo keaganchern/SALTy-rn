@@ -246,6 +246,12 @@ def test_elementwise_frontend_uses_only_schema_v2_artifact_graph_fields() -> Non
     assert "condition.scope" in script
     assert "phase.trial_count" in script
     assert "program.counterexample" in script
+    assert "payload.capabilities" in script
+    assert "capability.defined" in script
+    assert "capability.lean_checked" in script
+    assert "capability.independently_reviewed" in script
+    assert "capability.review_sha256" in script
+    assert "Reusable intrinsic pieces" in html
     for witness_field in (
         "counterexample.claim",
         "counterexample.parameters",

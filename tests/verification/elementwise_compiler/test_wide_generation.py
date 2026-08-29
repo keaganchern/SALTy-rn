@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 from workflow.verification.elementwise_compiler.compiler import CompilerRequest, compile_pair
+from workflow.verification.elementwise_compiler.intrinsics import IntrinsicResolutionError
 from workflow.verification.elementwise_compiler.proof import prepare_proof_task
 from workflow.verification.lean_backend.intrinsic_index import (
     CanonicalIntrinsicIndex,
@@ -315,6 +316,103 @@ def test_f32_fixed_tail_stack_is_parsed_generated_and_elaborates(tmp_path: Path)
     assert result.recognition.element_width == 32
     assert "List (BitVec 32)" in result.stack.models_text
     assert prepare_proof_task(ROOT, output).theorem == f"{namespace}.completeValueEquivalence"
+
+
+def test_real_f32_structural_library_reaches_proof_task_without_local_index(
+    tmp_path: Path,
+) -> None:
+    output = tmp_path / "real-f32"
+    namespace = "SALT.Generated.HeldoutRealF32Copy"
+    result = compile_pair(
+        CompilerRequest(
+            repository_root=ROOT,
+            neon_source=FIXTURES / "real-f32-neon.c",
+            rvv_source=FIXTURES / "real-f32-rvv.c",
+            neon_function="test_neon_real_f32",
+            rvv_function="test_rvv_real_f32",
+            neon_facade=(
+                ROOT
+                / "src/workflow/verification/lean_backend/facade/elementwise_shared.h"
+            ),
+            rvv_facade=(
+                ROOT
+                / "src/workflow/verification/lean_backend/facade/elementwise_shared.h"
+            ),
+            neon_target="aarch64-none-elf",
+            rvv_target="riscv64-none-elf",
+            namespace=namespace,
+            output_directory=output,
+        )
+    )
+
+    assert {item.spelling for item in result.intrinsics.capabilities} == {
+        "vget_high_f32",
+        "vget_low_f32",
+        "vld1q_f32",
+        "vst1_f32",
+        "vst1_lane_f32",
+        "vst1q_f32",
+        "__riscv_vsetvl_e32m8",
+        "__riscv_vle32_v_f32m8",
+        "__riscv_vse32_v_f32m8",
+    }
+    assert prepare_proof_task(ROOT, output).theorem == f"{namespace}.completeValueEquivalence"
+
+
+def test_real_f32_lane_store_uses_the_requested_lane(tmp_path: Path) -> None:
+    output = tmp_path / "real-f32-lane1"
+    result = compile_pair(
+        CompilerRequest(
+            repository_root=ROOT,
+            neon_source=FIXTURES / "real-f32-neon-lane1.c",
+            rvv_source=FIXTURES / "real-f32-rvv.c",
+            neon_function="test_neon_real_f32_lane1",
+            rvv_function="test_rvv_real_f32",
+            neon_facade=(
+                ROOT
+                / "src/workflow/verification/lean_backend/facade/elementwise_shared.h"
+            ),
+            rvv_facade=(
+                ROOT
+                / "src/workflow/verification/lean_backend/facade/elementwise_shared.h"
+            ),
+            neon_target="aarch64-none-elf",
+            rvv_target="riscv64-none-elf",
+            namespace="SALT.Generated.HeldoutRealF32Lane1",
+            output_directory=output,
+        )
+    )
+
+    assert ").drop 1).take 1" in result.stack.models_text
+    assert "then (after2).take 1" not in result.stack.models_text
+
+
+def test_real_f32_lane_store_rejects_out_of_range_lane(tmp_path: Path) -> None:
+    with pytest.raises(
+        IntrinsicResolutionError,
+        match="vst1_lane_f32: configured index returned same-name-mismatch",
+    ):
+        compile_pair(
+            CompilerRequest(
+                repository_root=ROOT,
+                neon_source=FIXTURES / "real-f32-neon-lane2.c",
+                rvv_source=FIXTURES / "real-f32-rvv.c",
+                neon_function="test_neon_real_f32_lane2",
+                rvv_function="test_rvv_real_f32",
+                neon_facade=(
+                    ROOT
+                    / "src/workflow/verification/lean_backend/facade/elementwise_shared.h"
+                ),
+                rvv_facade=(
+                    ROOT
+                    / "src/workflow/verification/lean_backend/facade/elementwise_shared.h"
+                ),
+                neon_target="aarch64-none-elf",
+                rvv_target="riscv64-none-elf",
+                namespace="SALT.Generated.HeldoutRealF32Lane2",
+                output_directory=tmp_path / "real-f32-lane2",
+            )
+        )
 
 
 def test_u16_no_tail_stack_is_generated_and_elaborates(tmp_path: Path) -> None:

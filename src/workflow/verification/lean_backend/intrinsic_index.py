@@ -19,6 +19,7 @@ from .descriptor import (
     canonical_spec_json,
     canonical_spec_record,
 )
+from .intrinsic_library import ELEMENTWISE_SHARED_SPECS
 from .registry import QS8_VADD_MINMAX_SPECS
 from .scaleup_catalog import SCALEUP_CATALOGS
 from .schema import (
@@ -481,6 +482,19 @@ def configured_intrinsic_occurrences() -> tuple[IntrinsicOccurrence, ...]:
     """Return every case-scoped configured descriptor with its provenance."""
 
     occurrences: list[IntrinsicOccurrence] = []
+
+    for spec in ELEMENTWISE_SHARED_SPECS:
+        occurrences.append(
+            IntrinsicOccurrence(
+                spec,
+                DescriptorProvenance(
+                    case_id="elementwise-shared",
+                    source_catalog="intrinsic_library.ELEMENTWISE_SHARED_SPECS",
+                    architecture=spec.architecture,
+                    spelling=spec.spelling,
+                ),
+            )
+        )
 
     for spec in QS8_VADD_MINMAX_SPECS:
         occurrences.append(

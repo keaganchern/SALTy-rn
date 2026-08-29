@@ -6,6 +6,7 @@
   const message = document.querySelector("#elementwise-message");
   const summary = document.querySelector("#elementwise-summary");
   const body = document.querySelector("#elementwise-body");
+  const capabilityBody = document.querySelector("#elementwise-capability-body");
   const refresh = document.querySelector("#refresh-button");
 
   function clear(node) {
@@ -71,6 +72,7 @@
   function render(payload) {
     clear(summary);
     clear(body);
+    clear(capabilityBody);
     if (!payload || payload.schema_version !== 2 || payload.available !== true) {
       counts.textContent = "No generated report";
       message.textContent = payload && payload.message ? payload.message : "Elementwise artifact graph is unavailable.";
@@ -78,6 +80,7 @@
     }
     const data = payload.summary || {};
     const programs = Array.isArray(payload.programs) ? payload.programs : [];
+    const capabilities = Array.isArray(payload.capabilities) ? payload.capabilities : [];
     const statusCounts = data.status_counts || {};
     counts.textContent = `${data.scalar_layout_scope || 0} scalar-layout / ${data.discovered_elementwise || 0} discovered`;
     message.textContent = "States below come from verified parent hashes. Value proof does not establish C or ISA correctness.";
@@ -85,6 +88,7 @@
       summaryCard("ordinary scalar layout", data.scalar_layout_scope || 0),
       summaryCard("deferred grouped layout", data.grouped_layout_deferred || 0),
       summaryCard("intrinsics configured", `${data.configured_intrinsics || 0}/${data.intrinsic_dependencies || 0}`),
+      summaryCard("intrinsics Lean checked", `${data.lean_checked_intrinsics || 0}/${data.intrinsic_dependencies || 0}`),
       summaryCard("intrinsics reviewed", `${data.reviewed_intrinsics || 0}/${data.intrinsic_dependencies || 0}`),
       summaryCard("input condition blocked", statusCounts["external-condition-missing"] || 0),
       summaryCard("checked counterexample", statusCounts.counterexample || 0),
@@ -126,6 +130,26 @@
       claimCell.append(text("span", "ISA: not established", "claim-outside"));
       row.append(claimCell);
       body.append(row);
+    }
+    for (const capability of capabilities) {
+      const row = document.createElement("tr");
+      const intrinsicCell = document.createElement("td");
+      intrinsicCell.append(text("strong", capability.spelling || "unknown"));
+      intrinsicCell.append(text("small", capability.architecture || "unknown"));
+      row.append(intrinsicCell);
+      row.append(text("td", capability.defined ? "yes" : "missing", capability.defined ? "piece-done" : "piece-missing"));
+      row.append(text("td", capability.lean_checked ? "passed" : "pending", capability.lean_checked ? "piece-done" : "piece-missing"));
+      const reviewCell = document.createElement("td");
+      reviewCell.append(text("span", capability.independently_reviewed ? "approved" : "pending", capability.independently_reviewed ? "piece-done" : "piece-missing"));
+      if (capability.independently_reviewed && Array.isArray(capability.review_sha256)) {
+        for (const digest of capability.review_sha256) reviewCell.append(text("code", String(digest).slice(0, 12)));
+      }
+      row.append(reviewCell);
+      row.append(text("td", capability.typed_variants || 0));
+      const programsCell = document.createElement("td");
+      programsCell.append(missingList(capability.programs));
+      row.append(programsCell);
+      capabilityBody.append(row);
     }
   }
 

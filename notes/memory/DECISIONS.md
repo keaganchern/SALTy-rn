@@ -440,3 +440,21 @@ status, cross-phase status and trial count, concrete counterexample witness, and
 separate value/C/ISA claim layers. The old `/api/state` table may remain for
 non-elementwise and historical records only when it is visibly labeled
 non-authoritative for the elementwise compiler.
+
+## EC-037: Intrinsic Review Is Exact, Content-Addressed, and Fail-Closed
+
+**Status:** Accepted and implemented for batch 1, 2026-08-29.
+
+An intrinsic is displayed as independently reviewed only when one strict record
+binds its architecture, spelling, Clang function type, arity, descriptor hash,
+actual lowering implementation hash, pinned primary-source evidence, executable
+check output, policy, and reviewer. The generated global registry publishes every
+typed variant and embeds matching records; the dashboard rejects any changed or
+misbound child instead of inferring review from a filename.
+
+Structural implementation hashes include both the generic Lean emitter and the
+context-specific case emitter. This is deliberately conservative: a lowering
+change invalidates approval rather than allowing a stale green puzzle piece.
+Legal immediate sets come from primary evidence and may not be narrowed merely to
+make a review pass. The `vst1_lane_f32` lane-1 counterexample is now a permanent
+positive/negative regression.

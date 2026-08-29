@@ -14,6 +14,7 @@ from workflow.verification.elementwise_compiler.proof import (
 )
 from workflow.verification.elementwise_compiler.schema import canonical_json, canonical_sha256
 from workflow.verification.intrinsic_dashboard.elementwise_graph import (
+    ElementwiseGraphError,
     build_elementwise_graph,
 )
 
@@ -85,6 +86,26 @@ def test_graph_is_derived_from_the_twenty_discovered_programs(tmp_path: Path) ->
         "intrinsic-missing": 14,
         "layout-unrecognized": 1,
     }
+    assert graph["summary"]["configured_intrinsics"] == 94
+    assert graph["summary"]["lean_checked_intrinsics"] == 9
+    assert graph["summary"]["reviewed_intrinsics"] == 9
+    reviewed = {item["id"] for item in graph["capabilities"] if item["reviewed"]}
+    assert reviewed == {
+        "neon:vget_high_f32",
+        "neon:vget_low_f32",
+        "neon:vld1q_f32",
+        "neon:vst1_f32",
+        "neon:vst1_lane_f32",
+        "neon:vst1q_f32",
+        "rvv:__riscv_vle32_v_f32m8",
+        "rvv:__riscv_vse32_v_f32m8",
+        "rvv:__riscv_vsetvl_e32m8",
+    }
+    assert all(
+        item["lean_checked"] and item["independently_reviewed"]
+        for item in graph["capabilities"]
+        if item["id"] in reviewed
+    )
     generated = [
         item for item in graph["programs"] if item["artifacts"]["manifest"]
     ]
@@ -143,6 +164,21 @@ def test_changed_child_artifact_propagates_to_stale_program(tmp_path: Path) -> N
     assert node["status_layer"] == "artifact-integrity"
     assert node["stale"] is True
     assert all(value is False for value in node["artifacts"].values())
+
+
+def test_changed_intrinsic_registry_is_rejected_fail_closed(tmp_path: Path) -> None:
+    output = tmp_path / "corpus"
+    compile_corpus(ROOT, output)
+    registry = output / "IntrinsicRegistry.json"
+    registry.write_text(
+        registry.read_text(encoding="utf-8").replace(
+            '"schema_version": 1', '"schema_version": 2', 1
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ElementwiseGraphError, match="digest disagrees"):
+        build_elementwise_graph(output)
 
 
 def test_missing_report_is_explicitly_unavailable(tmp_path: Path) -> None:

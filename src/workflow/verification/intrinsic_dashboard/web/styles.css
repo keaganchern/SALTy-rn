@@ -736,6 +736,32 @@ summary {
   font-size: 0.7rem;
 }
 
+.elementwise-subtitle {
+  margin: 22px 0 10px;
+  font-size: 1rem;
+}
+
+.elementwise-capability-table td:first-child strong,
+.elementwise-capability-table td:first-child small,
+.elementwise-capability-table td:nth-child(4) span,
+.elementwise-capability-table td:nth-child(4) code {
+  display: block;
+}
+
+.elementwise-capability-table code {
+  color: var(--muted);
+  font-size: 0.64rem;
+}
+
+.piece-done {
+  color: var(--approved-fg);
+  font-weight: 700;
+}
+
+.piece-missing {
+  color: var(--muted);
+}
+
 .elementwise-table td:first-child strong,
 .elementwise-table td:first-child span,
 .elementwise-table td:nth-child(2) span,

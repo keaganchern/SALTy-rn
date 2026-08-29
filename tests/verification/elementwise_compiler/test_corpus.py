@@ -11,6 +11,7 @@ from workflow.verification.elementwise_compiler.corpus import (
     compile_corpus,
     discover_candidates,
 )
+from workflow.verification.elementwise_compiler.schema import canonical_sha256
 
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -56,6 +57,15 @@ def test_corpus_report_is_deterministic_and_tracks_real_blockers(tmp_path: Path)
         "required-missing": 8,
     }
     assert first["counterexample_count"] == 1
+    assert first["schema_version"] == 2
+    registry_path = output / first["intrinsic_registry"]["path"]
+    registry = json.loads(registry_path.read_text(encoding="utf-8"))
+    unsigned_registry = dict(registry)
+    registry_sha256 = unsigned_registry.pop("registry_sha256")
+    assert registry_sha256 == canonical_sha256(unsigned_registry)
+    assert first["intrinsic_registry"]["sha256"] == registry_sha256
+    assert len(registry["variants"]) == 105
+    assert sum(item["review"] is not None for item in registry["variants"]) == 9
     assert all(
         program["entry_contract_preflight"] == "equal"
         for program in first["programs"]

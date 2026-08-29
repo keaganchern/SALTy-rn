@@ -27,6 +27,8 @@ from .compiler import CompilerError, CompilerRequest, compile_pair
 from .counterexamples import CounterexampleError, find_cross_phase_counterexample
 from .emit import GenerationError
 from .intrinsics import IntrinsicResolutionError
+from .intrinsics import configured_intrinsic_capabilities
+from .reviews import load_intrinsic_reviews
 from .external_conditions import (
     ExternalConditionError,
     audit_external_condition,
@@ -226,6 +228,36 @@ def _configured_spellings() -> dict[BackendArchitecture, frozenset[str]]:
     return {architecture: frozenset(values) for architecture, values in result.items()}
 
 
+def _write_intrinsic_registry(
+    repository_root: Path, output: Path
+) -> dict[str, Any]:
+    """Publish all exact configured variants and their independently bound reviews."""
+
+    reviews = load_intrinsic_reviews(repository_root)
+    reviews_by_sha = {review.sha256: review for review in reviews.values()}
+    entries = []
+    for capability in configured_intrinsic_capabilities(repository_root):
+        review = (
+            None
+            if capability.review_evidence_sha256 is None
+            else reviews_by_sha[capability.review_evidence_sha256]
+        )
+        entries.append(
+            {
+                "capability": capability.to_record(),
+                "review": None if review is None else review.to_record(),
+            }
+        )
+    registry: dict[str, Any] = {
+        "artifact_kind": "elementwise-intrinsic-registry",
+        "schema_version": 1,
+        "variants": entries,
+    }
+    registry["registry_sha256"] = canonical_sha256(registry)
+    _atomic_write(output / "IntrinsicRegistry.json", canonical_json(registry, pretty=True))
+    return registry
+
+
 def _status_for_error(error: Exception) -> str:
     if isinstance(error, (RecognitionError, IntrinsicResolutionError)):
         return error.status
@@ -253,6 +285,7 @@ def compile_corpus(
         )
     )
     configured = _configured_spellings()
+    intrinsic_registry = _write_intrinsic_registry(root, output)
     discovered = discover_candidates(root)
     records: list[dict[str, Any]] = []
     dependencies: dict[str, set[str]] = {}
@@ -449,7 +482,7 @@ def compile_corpus(
     scalar_records = [record for record in records if record["layout_preflight"] == "scalar-lane"]
     report: dict[str, Any] = {
         "artifact_kind": "elementwise-corpus-report",
-        "schema_version": 1,
+        "schema_version": 2,
         "discovery_rule": "paired-single-output-vsetvl-vector-load-store-v1",
         "discovered_elementwise": len(records),
         "scalar_layout_scope": len(scalar_records),
@@ -465,6 +498,10 @@ def compile_corpus(
             )
         },
         "counterexample_count": sum(record["counterexample"] is not None for record in records),
+        "intrinsic_registry": {
+            "path": "IntrinsicRegistry.json",
+            "sha256": intrinsic_registry["registry_sha256"],
+        },
         "programs": records,
         "intrinsic_dependencies": [
             {

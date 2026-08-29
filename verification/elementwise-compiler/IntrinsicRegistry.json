@@ -1,0 +1,2428 @@
+{
+  "artifact_kind": "elementwise-intrinsic-registry",
+  "registry_sha256": "b606951b0d2e0007a64501fa83f4f165ec0afe1d19314768f9159116c9bfac2e",
+  "schema_version": 1,
+  "variants": [
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 3,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vbslq_s16:bbe9592b37608ec8",
+        "capability_sha256": "9f2a950fb6bf7979754dbc2dec18dc570a505965b181c578b0f6ac10f4f6e1cc",
+        "descriptor_sha256": "40b888d3861ceec03f229090107388d98364fc9938ba1e7c0f191826ca070532",
+        "function_type": "int16x8_t (uint16x8_t, int16x8_t, int16x8_t)",
+        "implementation_sha256": "1c203f1fd72b773ae52c1de8e62c909a272d5c4f618ca1830e6db8df739ae619",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.Neon.vbslq_s16",
+        "spelling": "vbslq_s16",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 2,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vcltq_s16:a2a737958f82630e",
+        "capability_sha256": "fea829481cd62fa34d8dcdab2eb1b18a89ebeb901283aca7fd335423e9bd4894",
+        "descriptor_sha256": "157a66a673fc54b250c50648cdea792660dd3ea078044a02858b761d893be751",
+        "function_type": "uint16x8_t (int16x8_t, int16x8_t)",
+        "implementation_sha256": "1c203f1fd72b773ae52c1de8e62c909a272d5c4f618ca1830e6db8df739ae619",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.Neon.vcltq_s16",
+        "spelling": "vcltq_s16",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 2,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vcombine_s16:abd9567b68808fbc",
+        "capability_sha256": "f6624aebc37f89bb94cbf2936c07663e461c84edf9fe31e9ae966371d5750b05",
+        "descriptor_sha256": "8d1f66e12e999942fd913535a58c1ded5cfaa3919a60ebf96d9386e3101ddedd",
+        "function_type": "int16x8_t (int16x4_t, int16x4_t)",
+        "implementation_sha256": "3a64078e066f44b20371cca5ee7e5cd336b284e60443b0a04130a513a53da521",
+        "review_evidence_sha256": null,
+        "role": "structural",
+        "schema_version": 1,
+        "semantic_symbol": null,
+        "spelling": "vcombine_s16",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 2,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vcombine_s8:772100bf6f59e9df",
+        "capability_sha256": "3e919da7f344efa62032171b74466de0302cc6dab8af2e3554862800d971c7fe",
+        "descriptor_sha256": "6cca478ed2867434b4a562c8eabf5eaad622a1db20959366296f382313c9c181",
+        "function_type": "int8x16_t (int8x8_t, int8x8_t)",
+        "implementation_sha256": "3a64078e066f44b20371cca5ee7e5cd336b284e60443b0a04130a513a53da521",
+        "review_evidence_sha256": null,
+        "role": "structural",
+        "schema_version": 1,
+        "semantic_symbol": null,
+        "spelling": "vcombine_s8",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 1,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vdup_n_s8:ded76ea09898fd5c",
+        "capability_sha256": "bb0df0b7686d31e4a00dea0611216ed9c1985a928db5c87213b0f50b8a4270db",
+        "descriptor_sha256": "c177d47a62c85d116abb887dbe0fc9a1db4603dbdef0697b7bcfdae76aafa231",
+        "function_type": "int8x8_t (int8_t)",
+        "implementation_sha256": "3a64078e066f44b20371cca5ee7e5cd336b284e60443b0a04130a513a53da521",
+        "review_evidence_sha256": null,
+        "role": "structural",
+        "schema_version": 1,
+        "semantic_symbol": null,
+        "spelling": "vdup_n_s8",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 1,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vdup_n_u8:875283c9ad9c234b",
+        "capability_sha256": "8fa9aafcca9be17013819c4ca982218d3441b20202b8bd6a3a910ba0d3c96a74",
+        "descriptor_sha256": "1c0ed8ce5e5cd17c0e831780e3d5afe7b3627cb21a70e815bcc529c1529f7d18",
+        "function_type": "uint8x8_t (uint8_t)",
+        "implementation_sha256": "3a64078e066f44b20371cca5ee7e5cd336b284e60443b0a04130a513a53da521",
+        "review_evidence_sha256": null,
+        "role": "structural",
+        "schema_version": 1,
+        "semantic_symbol": null,
+        "spelling": "vdup_n_u8",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 1,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vdupq_n_s16:89d565c46a281191",
+        "capability_sha256": "d349ac7e9a6cb4fcdbb8dce09c243cf00f75130e31b8446a5e331db19d0ccd3a",
+        "descriptor_sha256": "ce27b4c2785db90425291e51461efe3e8caa1bda4b78289e4cea8cd6ff97ac17",
+        "function_type": "int16x8_t (int16_t)",
+        "implementation_sha256": "3a64078e066f44b20371cca5ee7e5cd336b284e60443b0a04130a513a53da521",
+        "review_evidence_sha256": null,
+        "role": "structural",
+        "schema_version": 1,
+        "semantic_symbol": null,
+        "spelling": "vdupq_n_s16",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 1,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vdupq_n_s32:d9bf97572d3956b4",
+        "capability_sha256": "00354374755905de0a92bb9f0d558a61f1e9af18a727c0bab14aebb97bdf0943",
+        "descriptor_sha256": "037603bd92bd88c7ea91e84ed56a17ce0bf57582e8c79d7d232c80366c0bddb6",
+        "function_type": "int32x4_t (int32_t)",
+        "implementation_sha256": "3a64078e066f44b20371cca5ee7e5cd336b284e60443b0a04130a513a53da521",
+        "review_evidence_sha256": null,
+        "role": "structural",
+        "schema_version": 1,
+        "semantic_symbol": null,
+        "spelling": "vdupq_n_s32",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 1,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vdupq_n_s8:8501da31aa4fae5c",
+        "capability_sha256": "153d30080c95086353c41cb69ac8c2febd2aae988fb9b0738198a98b01b7b886",
+        "descriptor_sha256": "b8ecfba65b489f4b480bf4782a3913e53669a9ca537a58e133bd9aec6e4f15e7",
+        "function_type": "int8x16_t (int8_t)",
+        "implementation_sha256": "3a64078e066f44b20371cca5ee7e5cd336b284e60443b0a04130a513a53da521",
+        "review_evidence_sha256": null,
+        "role": "structural",
+        "schema_version": 1,
+        "semantic_symbol": null,
+        "spelling": "vdupq_n_s8",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 3,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vext_s8:1aa05ae2f5d3793c",
+        "capability_sha256": "fb3fbcb16e56667d2800f1b4ae2bd494c661350f90460cb818c93e484c71e44d",
+        "descriptor_sha256": "4a85b80953b1bb3adf2b9221cb3ec6020e8729d11488040911b2c339431b740c",
+        "function_type": "int8x8_t (int8x8_t, int8x8_t, int)",
+        "implementation_sha256": "3a64078e066f44b20371cca5ee7e5cd336b284e60443b0a04130a513a53da521",
+        "review_evidence_sha256": null,
+        "role": "structural",
+        "schema_version": 1,
+        "semantic_symbol": null,
+        "spelling": "vext_s8",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 3,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vext_u8:151a3215c173bcff",
+        "capability_sha256": "ecf40c6c21dd2561aa6b483e77b718273885db3946984555e87de9ad6a238527",
+        "descriptor_sha256": "ff9d617e1c995b85849a7ca06cc4910446095500e75fce37f79751a2bed3328f",
+        "function_type": "uint8x8_t (uint8x8_t, uint8x8_t, int)",
+        "implementation_sha256": "3a64078e066f44b20371cca5ee7e5cd336b284e60443b0a04130a513a53da521",
+        "review_evidence_sha256": null,
+        "role": "structural",
+        "schema_version": 1,
+        "semantic_symbol": null,
+        "spelling": "vext_u8",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 1,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vget_high_f32:522e8e8dfecbe374",
+        "capability_sha256": "88aa507b93da225803245e481a7c804a19bb1c8c488ffb842bd1acade53b0562",
+        "descriptor_sha256": "8cc841b2e0aa95d5774a23058b3e74af3ff28a0ca5a1b9749cb1a2285bb32d32",
+        "function_type": "float32x2_t (float32x4_t)",
+        "implementation_sha256": "3a64078e066f44b20371cca5ee7e5cd336b284e60443b0a04130a513a53da521",
+        "review_evidence_sha256": "6f4aaa6ad19b4211056ea3e3de92404c8d1160c97cd927363ede71028a97655a",
+        "role": "structural",
+        "schema_version": 1,
+        "semantic_symbol": null,
+        "spelling": "vget_high_f32",
+        "version": 1
+      },
+      "review": {
+        "architecture": "neon",
+        "argument_count": 1,
+        "artifact_kind": "intrinsic-review",
+        "checks": [
+          {
+            "command": "PYTHONPATH=.:src pytest -q tests/verification/elementwise_compiler/test_reviews.py tests/verification/lean_backend/test_intrinsic_index.py tests/verification/lean_backend/test_intrinsic_index_inventory.py tests/verification/elementwise_compiler/test_wide_generation.py::test_real_f32_lane_store_uses_the_requested_lane tests/verification/elementwise_compiler/test_wide_generation.py::test_real_f32_lane_store_rejects_out_of_range_lane",
+            "name": "descriptor-tests",
+            "output_path": "notes/reviews/evidence/elementwise-m4-descriptor-tests.txt",
+            "output_sha256": "bfc10633a372eaa2dbd109a77a4ced1ffca55f677920671061fe7ccf9a32a8a8",
+            "status": "passed"
+          },
+          {
+            "command": "PYTHONPATH=.:src pytest -q tests/verification/elementwise_compiler/test_wide_generation.py::test_real_f32_structural_library_reaches_proof_task_without_local_index",
+            "name": "lean-elaboration",
+            "output_path": "notes/reviews/evidence/elementwise-m4-lean-elaboration.txt",
+            "output_sha256": "37cb23fbf2c07bbe26e2a595bdf52fed651fad263676040165a991df9c3a6fec",
+            "status": "passed"
+          }
+        ],
+        "descriptor_sha256": "8cc841b2e0aa95d5774a23058b3e74af3ff28a0ca5a1b9749cb1a2285bb32d32",
+        "detail": "Exact float32x4_t -> float32x2_t high-half extract remains approved; held-out real-f32 path still reaches ProofTask through the shared typed library.",
+        "evidence": [
+          {
+            "authority": "Arm ACLE",
+            "file_sha256": "256d3e337a243cabf13d9afa2b16bdfbaba67fa7c8a23db136f4a41cb2497928",
+            "path": "tools/intrinsic_db/advsimd.csv",
+            "revision": "c218a6b499897e70d88ceab7c6148d692541929f",
+            "selectors": [
+              "vget_high_f32"
+            ],
+            "source_url": "https://github.com/ARM-software/acle/blob/c218a6b499897e70d88ceab7c6148d692541929f/tools/intrinsic_db/advsimd.csv"
+          }
+        ],
+        "function_type": "float32x2_t (float32x4_t)",
+        "implementation_sha256": "3a64078e066f44b20371cca5ee7e5cd336b284e60443b0a04130a513a53da521",
+        "policy_path": "notes/policies/elementwise-intrinsic-review-v1.md",
+        "policy_sha256": "3ec443abda592ed59dbe58c9fca118942f4306457f8d4992bae5be5139e8ecc5",
+        "review_id": "intrinsic-review:neon:vget_high_f32:522e8e8dfecbe374",
+        "review_sha256": "6f4aaa6ad19b4211056ea3e3de92404c8d1160c97cd927363ede71028a97655a",
+        "reviewer": "agent:independent-reviewer",
+        "schema_version": 1,
+        "spelling": "vget_high_f32",
+        "verdict": "approved"
+      }
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 1,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vget_high_s16:a45b2d67be9397b6",
+        "capability_sha256": "571cc1015d13a67d46e0d6a2961073b094481c44995bf9b8c3d66dcc513359d8",
+        "descriptor_sha256": "53ffbc68c7b37b7a35d8f9d381f3461d0a38108848a63f9577eaf14706b66349",
+        "function_type": "int16x4_t (int16x8_t)",
+        "implementation_sha256": "3a64078e066f44b20371cca5ee7e5cd336b284e60443b0a04130a513a53da521",
+        "review_evidence_sha256": null,
+        "role": "structural",
+        "schema_version": 1,
+        "semantic_symbol": null,
+        "spelling": "vget_high_s16",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 1,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vget_low_f32:829354c82b42b1fe",
+        "capability_sha256": "a5152ce3728b9a1c9fb0154998d0f1c990bac6a3c7111663a4c14c461ea068b5",
+        "descriptor_sha256": "041b6cff0efad75f6f8cddc928c4c58d1c5451a407a81b22b766440ef104ad3e",
+        "function_type": "float32x2_t (float32x4_t)",
+        "implementation_sha256": "3a64078e066f44b20371cca5ee7e5cd336b284e60443b0a04130a513a53da521",
+        "review_evidence_sha256": "ab8691a14e9090e0697f1030f808ab9b0d83121f16a88ca89d2f2bcc35a72d8e",
+        "role": "structural",
+        "schema_version": 1,
+        "semantic_symbol": null,
+        "spelling": "vget_low_f32",
+        "version": 1
+      },
+      "review": {
+        "architecture": "neon",
+        "argument_count": 1,
+        "artifact_kind": "intrinsic-review",
+        "checks": [
+          {
+            "command": "PYTHONPATH=.:src pytest -q tests/verification/elementwise_compiler/test_reviews.py tests/verification/lean_backend/test_intrinsic_index.py tests/verification/lean_backend/test_intrinsic_index_inventory.py tests/verification/elementwise_compiler/test_wide_generation.py::test_real_f32_lane_store_uses_the_requested_lane tests/verification/elementwise_compiler/test_wide_generation.py::test_real_f32_lane_store_rejects_out_of_range_lane",
+            "name": "descriptor-tests",
+            "output_path": "notes/reviews/evidence/elementwise-m4-descriptor-tests.txt",
+            "output_sha256": "bfc10633a372eaa2dbd109a77a4ced1ffca55f677920671061fe7ccf9a32a8a8",
+            "status": "passed"
+          },
+          {
+            "command": "PYTHONPATH=.:src pytest -q tests/verification/elementwise_compiler/test_wide_generation.py::test_real_f32_structural_library_reaches_proof_task_without_local_index",
+            "name": "lean-elaboration",
+            "output_path": "notes/reviews/evidence/elementwise-m4-lean-elaboration.txt",
+            "output_sha256": "37cb23fbf2c07bbe26e2a595bdf52fed651fad263676040165a991df9c3a6fec",
+            "status": "passed"
+          }
+        ],
+        "descriptor_sha256": "041b6cff0efad75f6f8cddc928c4c58d1c5451a407a81b22b766440ef104ad3e",
+        "detail": "Exact float32x4_t -> float32x2_t low-half extract remains approved; held-out real-f32 path still reaches ProofTask through the shared typed library.",
+        "evidence": [
+          {
+            "authority": "Arm ACLE",
+            "file_sha256": "256d3e337a243cabf13d9afa2b16bdfbaba67fa7c8a23db136f4a41cb2497928",
+            "path": "tools/intrinsic_db/advsimd.csv",
+            "revision": "c218a6b499897e70d88ceab7c6148d692541929f",
+            "selectors": [
+              "vget_low_f32"
+            ],
+            "source_url": "https://github.com/ARM-software/acle/blob/c218a6b499897e70d88ceab7c6148d692541929f/tools/intrinsic_db/advsimd.csv"
+          }
+        ],
+        "function_type": "float32x2_t (float32x4_t)",
+        "implementation_sha256": "3a64078e066f44b20371cca5ee7e5cd336b284e60443b0a04130a513a53da521",
+        "policy_path": "notes/policies/elementwise-intrinsic-review-v1.md",
+        "policy_sha256": "3ec443abda592ed59dbe58c9fca118942f4306457f8d4992bae5be5139e8ecc5",
+        "review_id": "intrinsic-review:neon:vget_low_f32:829354c82b42b1fe",
+        "review_sha256": "ab8691a14e9090e0697f1030f808ab9b0d83121f16a88ca89d2f2bcc35a72d8e",
+        "reviewer": "agent:independent-reviewer",
+        "schema_version": 1,
+        "spelling": "vget_low_f32",
+        "verdict": "approved"
+      }
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 1,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vget_low_s16:51b2e725ae472bd4",
+        "capability_sha256": "ba1bf11d8f55cd1e4134474249a4f20963f3b8dc52a3c00d5537b5b70a9df13f",
+        "descriptor_sha256": "867baa816c92b73e6890a2cc4ad57e7b1df6446598fe5a35b5e58ce5534c0102",
+        "function_type": "int16x4_t (int16x8_t)",
+        "implementation_sha256": "3a64078e066f44b20371cca5ee7e5cd336b284e60443b0a04130a513a53da521",
+        "review_evidence_sha256": null,
+        "role": "structural",
+        "schema_version": 1,
+        "semantic_symbol": null,
+        "spelling": "vget_low_s16",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 1,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vget_low_s8:4b71d9a8ca9f8fa6",
+        "capability_sha256": "742758af70b418300603577b41e82626e33f8a693d16dd9cd6cb1b17d8a9d0f4",
+        "descriptor_sha256": "a7b142bdcc919391258f1857b985522dda7aefe60ccfe212db1be5460215933d",
+        "function_type": "int8x8_t (int8x16_t)",
+        "implementation_sha256": "3a64078e066f44b20371cca5ee7e5cd336b284e60443b0a04130a513a53da521",
+        "review_evidence_sha256": null,
+        "role": "structural",
+        "schema_version": 1,
+        "semantic_symbol": null,
+        "spelling": "vget_low_s8",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 1,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vld1_s8:e08b633e4217c5d8",
+        "capability_sha256": "e7df74552973b2416c91f221abe0a5c67d965d9444805e9d4645a7cae792ca80",
+        "descriptor_sha256": "1d4b3a1cbc29140193ae6bb61c117d8f181fed334d7d1bd0922b9f63bf822488",
+        "function_type": "int8x8_t (const int8_t *)",
+        "implementation_sha256": "3a64078e066f44b20371cca5ee7e5cd336b284e60443b0a04130a513a53da521",
+        "review_evidence_sha256": null,
+        "role": "structural",
+        "schema_version": 1,
+        "semantic_symbol": null,
+        "spelling": "vld1_s8",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 1,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vld1_u8:c6f9176e5826e62c",
+        "capability_sha256": "499c4777860509833226bae253490921899863dc5af3c2cd506cacca40319e9d",
+        "descriptor_sha256": "acd4ffd9dc1a4bce06f9290463074c89ac1b3074ca2316eb4fa1875ba112c8fd",
+        "function_type": "uint8x8_t (const uint8_t *)",
+        "implementation_sha256": "3a64078e066f44b20371cca5ee7e5cd336b284e60443b0a04130a513a53da521",
+        "review_evidence_sha256": null,
+        "role": "structural",
+        "schema_version": 1,
+        "semantic_symbol": null,
+        "spelling": "vld1_u8",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 1,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vld1q_f32:9a461e2c0f96b43e",
+        "capability_sha256": "5f6510b841a1d883c0cba76076ae79b832f3df60f0864be3eeeca20f5725afae",
+        "descriptor_sha256": "41f86291aabe3b2acead596303ccd1b1fa63c5b7f21a9e2807eb6f8344e7c2be",
+        "function_type": "float32x4_t (const float *)",
+        "implementation_sha256": "3a64078e066f44b20371cca5ee7e5cd336b284e60443b0a04130a513a53da521",
+        "review_evidence_sha256": "9c8a3ac5c7a8435c8710e3c8fe62536c432c9ca544ef0e8d40f087fc977d7db6",
+        "role": "structural",
+        "schema_version": 1,
+        "semantic_symbol": null,
+        "spelling": "vld1q_f32",
+        "version": 1
+      },
+      "review": {
+        "architecture": "neon",
+        "argument_count": 1,
+        "artifact_kind": "intrinsic-review",
+        "checks": [
+          {
+            "command": "PYTHONPATH=.:src pytest -q tests/verification/elementwise_compiler/test_reviews.py tests/verification/lean_backend/test_intrinsic_index.py tests/verification/lean_backend/test_intrinsic_index_inventory.py tests/verification/elementwise_compiler/test_wide_generation.py::test_real_f32_lane_store_uses_the_requested_lane tests/verification/elementwise_compiler/test_wide_generation.py::test_real_f32_lane_store_rejects_out_of_range_lane",
+            "name": "descriptor-tests",
+            "output_path": "notes/reviews/evidence/elementwise-m4-descriptor-tests.txt",
+            "output_sha256": "bfc10633a372eaa2dbd109a77a4ced1ffca55f677920671061fe7ccf9a32a8a8",
+            "status": "passed"
+          },
+          {
+            "command": "PYTHONPATH=.:src pytest -q tests/verification/elementwise_compiler/test_wide_generation.py::test_real_f32_structural_library_reaches_proof_task_without_local_index",
+            "name": "lean-elaboration",
+            "output_path": "notes/reviews/evidence/elementwise-m4-lean-elaboration.txt",
+            "output_sha256": "37cb23fbf2c07bbe26e2a595bdf52fed651fad263676040165a991df9c3a6fec",
+            "status": "passed"
+          }
+        ],
+        "descriptor_sha256": "41f86291aabe3b2acead596303ccd1b1fa63c5b7f21a9e2807eb6f8344e7c2be",
+        "detail": "Exact const float* -> float32x4_t structural load remains approved; the held-out real-name fixture resolves through the shared canonical index without local indexing.",
+        "evidence": [
+          {
+            "authority": "Arm ACLE",
+            "file_sha256": "256d3e337a243cabf13d9afa2b16bdfbaba67fa7c8a23db136f4a41cb2497928",
+            "path": "tools/intrinsic_db/advsimd.csv",
+            "revision": "c218a6b499897e70d88ceab7c6148d692541929f",
+            "selectors": [
+              "vld1q_f32"
+            ],
+            "source_url": "https://github.com/ARM-software/acle/blob/c218a6b499897e70d88ceab7c6148d692541929f/tools/intrinsic_db/advsimd.csv"
+          }
+        ],
+        "function_type": "float32x4_t (const float *)",
+        "implementation_sha256": "3a64078e066f44b20371cca5ee7e5cd336b284e60443b0a04130a513a53da521",
+        "policy_path": "notes/policies/elementwise-intrinsic-review-v1.md",
+        "policy_sha256": "3ec443abda592ed59dbe58c9fca118942f4306457f8d4992bae5be5139e8ecc5",
+        "review_id": "intrinsic-review:neon:vld1q_f32:9a461e2c0f96b43e",
+        "review_sha256": "9c8a3ac5c7a8435c8710e3c8fe62536c432c9ca544ef0e8d40f087fc977d7db6",
+        "reviewer": "agent:independent-reviewer",
+        "schema_version": 1,
+        "spelling": "vld1q_f32",
+        "verdict": "approved"
+      }
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 1,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vld1q_s8:f203ec9002ac73d5",
+        "capability_sha256": "9b576c6940fb2166fcb76c801507fafd148b9cf3433445cced11cd988afc1312",
+        "descriptor_sha256": "9cb6f47f5b22833e013507fe0896d23ab7c525499d268f72e45a15cc4fff7361",
+        "function_type": "int8x16_t (const int8_t *)",
+        "implementation_sha256": "3a64078e066f44b20371cca5ee7e5cd336b284e60443b0a04130a513a53da521",
+        "review_evidence_sha256": null,
+        "role": "structural",
+        "schema_version": 1,
+        "semantic_symbol": null,
+        "spelling": "vld1q_s8",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 2,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vmax_s8:4666f8cef17a6832",
+        "capability_sha256": "0f4904a8b2ffb258bdcdb09bc4a38fec9be299a276fac281ab5d481f8bc86a8f",
+        "descriptor_sha256": "18a752324eb1d1d8adbe8472bd792167af29709c628d63fa1512eca98af9f812",
+        "function_type": "int8x8_t (int8x8_t, int8x8_t)",
+        "implementation_sha256": "1c203f1fd72b773ae52c1de8e62c909a272d5c4f618ca1830e6db8df739ae619",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.Neon.vmax_s8",
+        "spelling": "vmax_s8",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 2,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vmax_s8:4666f8cef17a6832",
+        "capability_sha256": "812b0f6b43b7e4cdea4ad22e7e84b955cfa5991d089914e6776557e7e321eb3b",
+        "descriptor_sha256": "a205e52eadcd15553a2116bc8214c77fa2d90c61c357aa8541f005b78d888681",
+        "function_type": "int8x8_t (int8x8_t, int8x8_t)",
+        "implementation_sha256": "1c203f1fd72b773ae52c1de8e62c909a272d5c4f618ca1830e6db8df739ae619",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.Neon.vmax_s8_vec",
+        "spelling": "vmax_s8",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 2,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vmax_u8:084ba63e2505e511",
+        "capability_sha256": "adf0c5f3aba42a96e93b9058e64326d51ea8507ee9b1d5e73c4250490f397b13",
+        "descriptor_sha256": "2d0b050e86d3c23426a048d66384453d187285ab3c0582626a966933243e90e1",
+        "function_type": "uint8x8_t (uint8x8_t, uint8x8_t)",
+        "implementation_sha256": "1c203f1fd72b773ae52c1de8e62c909a272d5c4f618ca1830e6db8df739ae619",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.Neon.vmax_u8",
+        "spelling": "vmax_u8",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 2,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vmaxq_s8:b0ec1487faf3a039",
+        "capability_sha256": "0cc9ba91e3b985a8a787d945c65a0701f8d24daf51ee2177d48205efc1330b1b",
+        "descriptor_sha256": "4e208d7011b7aac8c30dc62dd81f2d8af2084b9eef84a915e6079910a7e6e7e3",
+        "function_type": "int8x16_t (int8x16_t, int8x16_t)",
+        "implementation_sha256": "1c203f1fd72b773ae52c1de8e62c909a272d5c4f618ca1830e6db8df739ae619",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.Neon.vmax_s8",
+        "spelling": "vmaxq_s8",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 2,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vmaxq_s8:b0ec1487faf3a039",
+        "capability_sha256": "95f61d1250c4b6d22daf785b4c1c7b83be549719847230bc6e7092696423bd73",
+        "descriptor_sha256": "aa81c668394d0a69e614468e30793845b3d7c0cee1c4146a3f2a8016b5d63684",
+        "function_type": "int8x16_t (int8x16_t, int8x16_t)",
+        "implementation_sha256": "1c203f1fd72b773ae52c1de8e62c909a272d5c4f618ca1830e6db8df739ae619",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.Neon.vmaxq_s8",
+        "spelling": "vmaxq_s8",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 2,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vmin_s8:d722c931326e6b6d",
+        "capability_sha256": "1962dfd2181d1758beba172311af67df07abc221b81374b41197ad4dc9d45c67",
+        "descriptor_sha256": "91de107e2e7e13e0c32464af104add90e087c2dbc744b2ca90e712134e16aa9d",
+        "function_type": "int8x8_t (int8x8_t, int8x8_t)",
+        "implementation_sha256": "1c203f1fd72b773ae52c1de8e62c909a272d5c4f618ca1830e6db8df739ae619",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.Neon.vmin_s8",
+        "spelling": "vmin_s8",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 2,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vmin_s8:d722c931326e6b6d",
+        "capability_sha256": "38518418b4cd8cbc216dbb36f09bb84cda5d472b13f2a3e63420fc172b8d9346",
+        "descriptor_sha256": "4c082577830ced7a4bb72cf64a00771e0fdc3b43e053c1b1819de63f96ff04df",
+        "function_type": "int8x8_t (int8x8_t, int8x8_t)",
+        "implementation_sha256": "1c203f1fd72b773ae52c1de8e62c909a272d5c4f618ca1830e6db8df739ae619",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.Neon.vmin_s8_vec",
+        "spelling": "vmin_s8",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 2,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vmin_u8:73f618b0a0c4e3b5",
+        "capability_sha256": "bd8e57da986abac3f810592e4daa9a0e34f805600f1cdb7d7abeedc28e75c4c4",
+        "descriptor_sha256": "5f2fed941337a4aac7b2a8c2d1b5fa4cb69b45225fc939080b639143aad41f18",
+        "function_type": "uint8x8_t (uint8x8_t, uint8x8_t)",
+        "implementation_sha256": "1c203f1fd72b773ae52c1de8e62c909a272d5c4f618ca1830e6db8df739ae619",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.Neon.vmin_u8",
+        "spelling": "vmin_u8",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 2,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vminq_s8:251823a01718f0d0",
+        "capability_sha256": "2635bab993d0bb292d67b94d83236c15fae0447e68d5014a15c1a79143e8aa02",
+        "descriptor_sha256": "4a3f3eab1ad579e79e2b50f746e7ea25bf840d51530987a9efa26dba22e8bc34",
+        "function_type": "int8x16_t (int8x16_t, int8x16_t)",
+        "implementation_sha256": "1c203f1fd72b773ae52c1de8e62c909a272d5c4f618ca1830e6db8df739ae619",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.Neon.vmin_s8",
+        "spelling": "vminq_s8",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 2,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vminq_s8:251823a01718f0d0",
+        "capability_sha256": "d14ad557c28862ae7b999c0b7051c14f4449a52eff9d059e11f0ec2d2d09eb75",
+        "descriptor_sha256": "3c319a34b58116baa7d0e1b7b14dee57c8ff727681f283d8effc5b6249696b74",
+        "function_type": "int8x16_t (int8x16_t, int8x16_t)",
+        "implementation_sha256": "1c203f1fd72b773ae52c1de8e62c909a272d5c4f618ca1830e6db8df739ae619",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.Neon.vminq_s8",
+        "spelling": "vminq_s8",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 3,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vmlaq_s32:23d92cb0987ab111",
+        "capability_sha256": "af776371483c26e4bc482583c4eeff2ed3a60b66137ba0a481f86f4951e23710",
+        "descriptor_sha256": "945e6b3e36a60f88f170982f87c4bee4df39e08b67aacbf46c79cadb1a18c74d",
+        "function_type": "int32x4_t (int32x4_t, int32x4_t, int32x4_t)",
+        "implementation_sha256": "1c203f1fd72b773ae52c1de8e62c909a272d5c4f618ca1830e6db8df739ae619",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.Neon.vmlaq_s32",
+        "spelling": "vmlaq_s32",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 1,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vmovl_s16:10559ba73ac2ebf4",
+        "capability_sha256": "28ea5db79e53cb13aee83827336a442095809e28a53c4e66aef7ca51e3fad397",
+        "descriptor_sha256": "e45d76a2cc32f930af8b87ed0a591ba28154bdd613a92274653ae0b321f7cf82",
+        "function_type": "int32x4_t (int16x4_t)",
+        "implementation_sha256": "1c203f1fd72b773ae52c1de8e62c909a272d5c4f618ca1830e6db8df739ae619",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.Neon.vmovl_s16",
+        "spelling": "vmovl_s16",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 1,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vmovq_n_s16:5185b2179a8b205c",
+        "capability_sha256": "5d7ffeaf5e8b2db010c85172f2c72891ac7c302699b0f2e4d3e43d962bdf3440",
+        "descriptor_sha256": "d0a40a4dabc638b7583d022d648870e5925a9a7dcb76c397f814242bada4aabd",
+        "function_type": "int16x8_t (int16_t)",
+        "implementation_sha256": "3a64078e066f44b20371cca5ee7e5cd336b284e60443b0a04130a513a53da521",
+        "review_evidence_sha256": null,
+        "role": "structural",
+        "schema_version": 1,
+        "semantic_symbol": null,
+        "spelling": "vmovq_n_s16",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 2,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vmulq_s32:840522d35360462f",
+        "capability_sha256": "7af024d2afd8d0b9574df8cfca605b23cf490c362c613d9ff2fef5ca5c0d1528",
+        "descriptor_sha256": "a3c498b4051ab5d4bf3efbcbb6483044de41a3132106bbf792759fe3dac6c7a4",
+        "function_type": "int32x4_t (int32x4_t, int32x4_t)",
+        "implementation_sha256": "1c203f1fd72b773ae52c1de8e62c909a272d5c4f618ca1830e6db8df739ae619",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.Neon.vmulq_s32",
+        "spelling": "vmulq_s32",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 2,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vqaddq_s16:8ac37652d3517caf",
+        "capability_sha256": "79aefc2f69c104aee97bb5cb3737e9b81bb2f006bc569dc3901354180024510e",
+        "descriptor_sha256": "f6c77dce512b806b9ddbc966c4420498a347b865f581ea340a787d5ded354a18",
+        "function_type": "int16x8_t (int16x8_t, int16x8_t)",
+        "implementation_sha256": "1c203f1fd72b773ae52c1de8e62c909a272d5c4f618ca1830e6db8df739ae619",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.Neon.vqaddq_s16",
+        "spelling": "vqaddq_s16",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 1,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vqmovn_s16:ae23a475a4ca66e5",
+        "capability_sha256": "c5680ee60ea2574dacddb707795678e60386ccb3628981e91fca648d6ad33ded",
+        "descriptor_sha256": "fe31bdd88edf9352baa03d96aee92e568e6b338f602031af7804fd979f505d29",
+        "function_type": "int8x8_t (int16x8_t)",
+        "implementation_sha256": "1c203f1fd72b773ae52c1de8e62c909a272d5c4f618ca1830e6db8df739ae619",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.Neon.vqmovn_s16",
+        "spelling": "vqmovn_s16",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 1,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vqmovn_s32:736b4c2cd91fdbc0",
+        "capability_sha256": "f42689dcf2251cf50e26f683148b0f402cb9fa3a70c6c5cd24b1d40d2f221a2c",
+        "descriptor_sha256": "bed41129cba868c1d80ac7cb4e5954bf7da0b624af7bd635687d6503d4e43d43",
+        "function_type": "int16x4_t (int32x4_t)",
+        "implementation_sha256": "1c203f1fd72b773ae52c1de8e62c909a272d5c4f618ca1830e6db8df739ae619",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.Neon.vqmovn_s32",
+        "spelling": "vqmovn_s32",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 1,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vqmovun_s16:468c16516bf46353",
+        "capability_sha256": "f0924e05afc9ec27ba0b947d26aa3ff492fbfaacd0456060758a29c83f7041f6",
+        "descriptor_sha256": "c2562ce6abfd9a660502e64e85c6c21631e83194001c8754daeee75e38a9ef5c",
+        "function_type": "uint8x8_t (int16x8_t)",
+        "implementation_sha256": "1c203f1fd72b773ae52c1de8e62c909a272d5c4f618ca1830e6db8df739ae619",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.Neon.vqmovun_s16",
+        "spelling": "vqmovun_s16",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 2,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vqrdmulhq_s16:7ba191a28a8be930",
+        "capability_sha256": "040ba6b7b7b43aa492c9432dae136d320e027d3d8eb5e638b906f87890863fff",
+        "descriptor_sha256": "579acd531d42ba47e02ce7abc6b5a6ce4a5bdbc213fd4b1094d2fd960442bcb0",
+        "function_type": "int16x8_t (int16x8_t, int16x8_t)",
+        "implementation_sha256": "1c203f1fd72b773ae52c1de8e62c909a272d5c4f618ca1830e6db8df739ae619",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.Neon.vqrdmulhq_s16",
+        "spelling": "vqrdmulhq_s16",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 1,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vreinterpret_u16_s8:6050a5808f36a6c7",
+        "capability_sha256": "7475bfd0f21826d78417ec0bf4e2ff35c8caed5f425649687bd7ef4353ee1eb9",
+        "descriptor_sha256": "79add9b75ad7db177b42ea7eeca8efad340599f342c3b7474b4fef3660955f58",
+        "function_type": "uint16x4_t (int8x8_t)",
+        "implementation_sha256": "3a64078e066f44b20371cca5ee7e5cd336b284e60443b0a04130a513a53da521",
+        "review_evidence_sha256": null,
+        "role": "structural",
+        "schema_version": 1,
+        "semantic_symbol": null,
+        "spelling": "vreinterpret_u16_s8",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 1,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vreinterpret_u16_u8:12a03c0fd17221f0",
+        "capability_sha256": "6e634dd0fdd0bc018c0958c964120550c8fee45bacf0d2dbf6c4dfd8c4df7455",
+        "descriptor_sha256": "ca4489a55d236dbc0f75caba2d33b394290f0d9fbfd2c3102e8be9b1235b3b6c",
+        "function_type": "uint16x4_t (uint8x8_t)",
+        "implementation_sha256": "3a64078e066f44b20371cca5ee7e5cd336b284e60443b0a04130a513a53da521",
+        "review_evidence_sha256": null,
+        "role": "structural",
+        "schema_version": 1,
+        "semantic_symbol": null,
+        "spelling": "vreinterpret_u16_u8",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 1,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vreinterpret_u32_s8:bdc1448be14e2f25",
+        "capability_sha256": "91b0c2f0ac15c5553756af7c37d50a31798c52597881a7d97fd4240c2f4f9dd7",
+        "descriptor_sha256": "c1f68f2093dec87eb5f5dd4c4f6f5bbb0b2adc33e9707a6600a2d50b7860183f",
+        "function_type": "uint32x2_t (int8x8_t)",
+        "implementation_sha256": "3a64078e066f44b20371cca5ee7e5cd336b284e60443b0a04130a513a53da521",
+        "review_evidence_sha256": null,
+        "role": "structural",
+        "schema_version": 1,
+        "semantic_symbol": null,
+        "spelling": "vreinterpret_u32_s8",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 1,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vreinterpret_u32_u8:84a28e83997db0a8",
+        "capability_sha256": "4b36a3b9b201d18fa50c9f9acfd08ad6214cf30190324c847367b22041db5c7d",
+        "descriptor_sha256": "a5010c19e856bf55132e2a0e038959d6a63c15294cf8e242ccbb557dbafbf243",
+        "function_type": "uint32x2_t (uint8x8_t)",
+        "implementation_sha256": "3a64078e066f44b20371cca5ee7e5cd336b284e60443b0a04130a513a53da521",
+        "review_evidence_sha256": null,
+        "role": "structural",
+        "schema_version": 1,
+        "semantic_symbol": null,
+        "spelling": "vreinterpret_u32_u8",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 1,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vreinterpretq_s16_u16:6752c15999d9f162",
+        "capability_sha256": "1aa90a39562e893b6fc6acddd15585ca854b0f8de6b18adce1da39ac4a137abf",
+        "descriptor_sha256": "0070088329f486a8b522a11f7e853737115458efab63aef1e9518e1c3bc6cb91",
+        "function_type": "int16x8_t (uint16x8_t)",
+        "implementation_sha256": "3a64078e066f44b20371cca5ee7e5cd336b284e60443b0a04130a513a53da521",
+        "review_evidence_sha256": null,
+        "role": "structural",
+        "schema_version": 1,
+        "semantic_symbol": null,
+        "spelling": "vreinterpretq_s16_u16",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 2,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vrshlq_s32:a41ee162e8202735",
+        "capability_sha256": "248406c39c067a359258300019c0bb939edf48e174268576b09c6b3bb331e262",
+        "descriptor_sha256": "4df776f9ab6d0c2d84040108f4803fb5554639f8c5d0326e01bb627d1cca422f",
+        "function_type": "int32x4_t (int32x4_t, int32x4_t)",
+        "implementation_sha256": "1c203f1fd72b773ae52c1de8e62c909a272d5c4f618ca1830e6db8df739ae619",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.Neon.vrshlq_s32",
+        "spelling": "vrshlq_s32",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 2,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vrshlq_s32:a41ee162e8202735",
+        "capability_sha256": "d5b8bf57297aa7b5250452a08d7469acee1c3fd00adc51d29cdc148f29f52dec",
+        "descriptor_sha256": "052d731c18d9af70fa36c6b771fe354dc2dd6a04ff55a06cb89798c65145b701",
+        "function_type": "int32x4_t (int32x4_t, int32x4_t)",
+        "implementation_sha256": "1c203f1fd72b773ae52c1de8e62c909a272d5c4f618ca1830e6db8df739ae619",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.Neon.vrshlq_s32_vec",
+        "spelling": "vrshlq_s32",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 2,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vshlq_n_s16:5db56647e772c438",
+        "capability_sha256": "4f7188595db3f3149e6a5aa4370e8d775f10d572144c6510c2330616cc32b366",
+        "descriptor_sha256": "f163f0abae90cb28f126400c140750e917c1c0f16e833b710cc9a1d51e174f36",
+        "function_type": "int16x8_t (int16x8_t, int)",
+        "implementation_sha256": "1c203f1fd72b773ae52c1de8e62c909a272d5c4f618ca1830e6db8df739ae619",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.Neon.vshlq_n_s16",
+        "spelling": "vshlq_n_s16",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 2,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vst1_f32:f50072cf22d7495e",
+        "capability_sha256": "ccdc65d69860682b99d5309ec44a795d2456388c8b196988fc86349c7f8b761e",
+        "descriptor_sha256": "e2fea3c0edcea30136b2c1a270ee0a5cf907c2126c94809f7d2ac66b2a6b4472",
+        "function_type": "void (float *, float32x2_t)",
+        "implementation_sha256": "3a64078e066f44b20371cca5ee7e5cd336b284e60443b0a04130a513a53da521",
+        "review_evidence_sha256": "bb4be943c145801ab05ca6f9ca0a06f084f1d909541c5440c4e5903ec2fed3bd",
+        "role": "structural",
+        "schema_version": 1,
+        "semantic_symbol": null,
+        "spelling": "vst1_f32",
+        "version": 1
+      },
+      "review": {
+        "architecture": "neon",
+        "argument_count": 2,
+        "artifact_kind": "intrinsic-review",
+        "checks": [
+          {
+            "command": "PYTHONPATH=.:src pytest -q tests/verification/elementwise_compiler/test_reviews.py tests/verification/lean_backend/test_intrinsic_index.py tests/verification/lean_backend/test_intrinsic_index_inventory.py tests/verification/elementwise_compiler/test_wide_generation.py::test_real_f32_lane_store_uses_the_requested_lane tests/verification/elementwise_compiler/test_wide_generation.py::test_real_f32_lane_store_rejects_out_of_range_lane",
+            "name": "descriptor-tests",
+            "output_path": "notes/reviews/evidence/elementwise-m4-descriptor-tests.txt",
+            "output_sha256": "bfc10633a372eaa2dbd109a77a4ced1ffca55f677920671061fe7ccf9a32a8a8",
+            "status": "passed"
+          },
+          {
+            "command": "PYTHONPATH=.:src pytest -q tests/verification/elementwise_compiler/test_wide_generation.py::test_real_f32_structural_library_reaches_proof_task_without_local_index",
+            "name": "lean-elaboration",
+            "output_path": "notes/reviews/evidence/elementwise-m4-lean-elaboration.txt",
+            "output_sha256": "37cb23fbf2c07bbe26e2a595bdf52fed651fad263676040165a991df9c3a6fec",
+            "status": "passed"
+          }
+        ],
+        "descriptor_sha256": "e2fea3c0edcea30136b2c1a270ee0a5cf907c2126c94809f7d2ac66b2a6b4472",
+        "detail": "Exact float* / float32x2_t structural store remains approved; the generated stack still reaches ProofTask on the held-out real-f32 pair.",
+        "evidence": [
+          {
+            "authority": "Arm ACLE",
+            "file_sha256": "256d3e337a243cabf13d9afa2b16bdfbaba67fa7c8a23db136f4a41cb2497928",
+            "path": "tools/intrinsic_db/advsimd.csv",
+            "revision": "c218a6b499897e70d88ceab7c6148d692541929f",
+            "selectors": [
+              "vst1_f32"
+            ],
+            "source_url": "https://github.com/ARM-software/acle/blob/c218a6b499897e70d88ceab7c6148d692541929f/tools/intrinsic_db/advsimd.csv"
+          }
+        ],
+        "function_type": "void (float *, float32x2_t)",
+        "implementation_sha256": "3a64078e066f44b20371cca5ee7e5cd336b284e60443b0a04130a513a53da521",
+        "policy_path": "notes/policies/elementwise-intrinsic-review-v1.md",
+        "policy_sha256": "3ec443abda592ed59dbe58c9fca118942f4306457f8d4992bae5be5139e8ecc5",
+        "review_id": "intrinsic-review:neon:vst1_f32:f50072cf22d7495e",
+        "review_sha256": "bb4be943c145801ab05ca6f9ca0a06f084f1d909541c5440c4e5903ec2fed3bd",
+        "reviewer": "agent:independent-reviewer",
+        "schema_version": 1,
+        "spelling": "vst1_f32",
+        "verdict": "approved"
+      }
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 3,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vst1_lane_f32:e7d8eb67bb725c80",
+        "capability_sha256": "ab92c2323effe3e9778a7b3df4e26d3fa42c96df86c06ba1aec266abcf459061",
+        "descriptor_sha256": "d7db8dc41108b09bbeb9366c534dfdf0d99a7ed88b5b0b692d25f23931e724fa",
+        "function_type": "void (float *, float32x2_t, int)",
+        "implementation_sha256": "3a64078e066f44b20371cca5ee7e5cd336b284e60443b0a04130a513a53da521",
+        "review_evidence_sha256": "321ad102762ab3e050ec155eaa40087fd26b6abb844fce4cd5d4fa3442268b84",
+        "role": "structural",
+        "schema_version": 1,
+        "semantic_symbol": null,
+        "spelling": "vst1_lane_f32",
+        "version": 1
+      },
+      "review": {
+        "architecture": "neon",
+        "argument_count": 3,
+        "artifact_kind": "intrinsic-review",
+        "checks": [
+          {
+            "command": "PYTHONPATH=.:src pytest -q tests/verification/elementwise_compiler/test_reviews.py tests/verification/lean_backend/test_intrinsic_index.py tests/verification/lean_backend/test_intrinsic_index_inventory.py tests/verification/elementwise_compiler/test_wide_generation.py::test_real_f32_lane_store_uses_the_requested_lane tests/verification/elementwise_compiler/test_wide_generation.py::test_real_f32_lane_store_rejects_out_of_range_lane",
+            "name": "descriptor-tests",
+            "output_path": "notes/reviews/evidence/elementwise-m4-descriptor-tests.txt",
+            "output_sha256": "bfc10633a372eaa2dbd109a77a4ced1ffca55f677920671061fe7ccf9a32a8a8",
+            "status": "passed"
+          },
+          {
+            "command": "PYTHONPATH=.:src pytest -q tests/verification/elementwise_compiler/test_wide_generation.py::test_real_f32_structural_library_reaches_proof_task_without_local_index",
+            "name": "lean-elaboration",
+            "output_path": "notes/reviews/evidence/elementwise-m4-lean-elaboration.txt",
+            "output_sha256": "37cb23fbf2c07bbe26e2a595bdf52fed651fad263676040165a991df9c3a6fec",
+            "status": "passed"
+          }
+        ],
+        "descriptor_sha256": "d7db8dc41108b09bbeb9366c534dfdf0d99a7ed88b5b0b692d25f23931e724fa",
+        "detail": "Exact float* / float32x2_t / int lane store approved after fix; legal lanes remain {0,1}, lane 1 now lowers to drop-then-take, and out-of-range lane 2 is rejected fail-closed.",
+        "evidence": [
+          {
+            "authority": "Arm ACLE",
+            "file_sha256": "256d3e337a243cabf13d9afa2b16bdfbaba67fa7c8a23db136f4a41cb2497928",
+            "path": "tools/intrinsic_db/advsimd.csv",
+            "revision": "c218a6b499897e70d88ceab7c6148d692541929f",
+            "selectors": [
+              "vst1_lane_f32"
+            ],
+            "source_url": "https://github.com/ARM-software/acle/blob/c218a6b499897e70d88ceab7c6148d692541929f/tools/intrinsic_db/advsimd.csv"
+          }
+        ],
+        "function_type": "void (float *, float32x2_t, int)",
+        "implementation_sha256": "3a64078e066f44b20371cca5ee7e5cd336b284e60443b0a04130a513a53da521",
+        "policy_path": "notes/policies/elementwise-intrinsic-review-v1.md",
+        "policy_sha256": "3ec443abda592ed59dbe58c9fca118942f4306457f8d4992bae5be5139e8ecc5",
+        "review_id": "intrinsic-review:neon:vst1_lane_f32:e7d8eb67bb725c80",
+        "review_sha256": "321ad102762ab3e050ec155eaa40087fd26b6abb844fce4cd5d4fa3442268b84",
+        "reviewer": "agent:independent-reviewer",
+        "schema_version": 1,
+        "spelling": "vst1_lane_f32",
+        "verdict": "approved"
+      }
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 3,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vst1_lane_s8:ab5d66fb411245d0",
+        "capability_sha256": "c1d1af18b22872b2fcccc3f37a3f888e914effa04d13e30da7da9ee444228876",
+        "descriptor_sha256": "6c5f677ecfb14347441b72f87e1dfed16d2249e9e520ab99c534e66511edbf76",
+        "function_type": "void (int8_t *, int8x8_t, int)",
+        "implementation_sha256": "3a64078e066f44b20371cca5ee7e5cd336b284e60443b0a04130a513a53da521",
+        "review_evidence_sha256": null,
+        "role": "structural",
+        "schema_version": 1,
+        "semantic_symbol": null,
+        "spelling": "vst1_lane_s8",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 3,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vst1_lane_u16:8c29885c2a5c8302",
+        "capability_sha256": "cce312ad8d1cc3e3dfb6e719905d76b75057672ed7c8db5e77c9ffea047a4714",
+        "descriptor_sha256": "798336d0336243420f629374f193b1acfcd759ab327f4222fe90a6ee5eceb2e6",
+        "function_type": "void (uint16_t *, uint16x4_t, int)",
+        "implementation_sha256": "3a64078e066f44b20371cca5ee7e5cd336b284e60443b0a04130a513a53da521",
+        "review_evidence_sha256": null,
+        "role": "structural",
+        "schema_version": 1,
+        "semantic_symbol": null,
+        "spelling": "vst1_lane_u16",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 3,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vst1_lane_u32:7f96fd355ade363b",
+        "capability_sha256": "0b3e39edba025ab828bdca955e30e088a856c180c80a36980c776bf11836d6d7",
+        "descriptor_sha256": "20caed7be74d7115115e9b3167eebb407933aba3acff00d4213b923375dca45f",
+        "function_type": "void (uint32_t *, uint32x2_t, int)",
+        "implementation_sha256": "3a64078e066f44b20371cca5ee7e5cd336b284e60443b0a04130a513a53da521",
+        "review_evidence_sha256": null,
+        "role": "structural",
+        "schema_version": 1,
+        "semantic_symbol": null,
+        "spelling": "vst1_lane_u32",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 3,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vst1_lane_u8:1bd22fe776f5a8cd",
+        "capability_sha256": "676434a51c6def972ae2329909b4e9b41a29e2882f78df747539aae865fc7060",
+        "descriptor_sha256": "651cb4c50bcc143f0efe18e59656e91ff37acab93f103341655b976187ca34c7",
+        "function_type": "void (uint8_t *, uint8x8_t, int)",
+        "implementation_sha256": "3a64078e066f44b20371cca5ee7e5cd336b284e60443b0a04130a513a53da521",
+        "review_evidence_sha256": null,
+        "role": "structural",
+        "schema_version": 1,
+        "semantic_symbol": null,
+        "spelling": "vst1_lane_u8",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 2,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vst1_s8:bc8d3aeeda2133bf",
+        "capability_sha256": "e4380d050280bb05011cfe7f2cc3e449db2e576f7766ba056791f96485ebbe6c",
+        "descriptor_sha256": "3bd230c18056ff02ae5dcffc93738482ca3736c92dfb17af67f2270c09a507a0",
+        "function_type": "void (int8_t *, int8x8_t)",
+        "implementation_sha256": "3a64078e066f44b20371cca5ee7e5cd336b284e60443b0a04130a513a53da521",
+        "review_evidence_sha256": null,
+        "role": "structural",
+        "schema_version": 1,
+        "semantic_symbol": null,
+        "spelling": "vst1_s8",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 2,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vst1_u8:7b5f1b37cae180ad",
+        "capability_sha256": "68c8356bb34ad941b2028f871608cf4ccbce401f3bd44115574bae27ed850641",
+        "descriptor_sha256": "9537c7b58be978bfaeb133bf7d541b1ea47fab6bc7fd0e0a5c3fe977ae3f996c",
+        "function_type": "void (uint8_t *, uint8x8_t)",
+        "implementation_sha256": "3a64078e066f44b20371cca5ee7e5cd336b284e60443b0a04130a513a53da521",
+        "review_evidence_sha256": null,
+        "role": "structural",
+        "schema_version": 1,
+        "semantic_symbol": null,
+        "spelling": "vst1_u8",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 2,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vst1q_f32:83f34dfc2b4cc113",
+        "capability_sha256": "2768c7754301a0b4e166a6cdba1f4fa958502bf84c370f448578f9fc2120df53",
+        "descriptor_sha256": "2240b9097fcdc621712325883227d8724b61864b3bd969752ded23a2acf65cf7",
+        "function_type": "void (float *, float32x4_t)",
+        "implementation_sha256": "3a64078e066f44b20371cca5ee7e5cd336b284e60443b0a04130a513a53da521",
+        "review_evidence_sha256": "3133f3113f779edc0cde074e2cdad28f35c5db96a44c703dbeeb08c8ad989920",
+        "role": "structural",
+        "schema_version": 1,
+        "semantic_symbol": null,
+        "spelling": "vst1q_f32",
+        "version": 1
+      },
+      "review": {
+        "architecture": "neon",
+        "argument_count": 2,
+        "artifact_kind": "intrinsic-review",
+        "checks": [
+          {
+            "command": "PYTHONPATH=.:src pytest -q tests/verification/elementwise_compiler/test_reviews.py tests/verification/lean_backend/test_intrinsic_index.py tests/verification/lean_backend/test_intrinsic_index_inventory.py tests/verification/elementwise_compiler/test_wide_generation.py::test_real_f32_lane_store_uses_the_requested_lane tests/verification/elementwise_compiler/test_wide_generation.py::test_real_f32_lane_store_rejects_out_of_range_lane",
+            "name": "descriptor-tests",
+            "output_path": "notes/reviews/evidence/elementwise-m4-descriptor-tests.txt",
+            "output_sha256": "bfc10633a372eaa2dbd109a77a4ced1ffca55f677920671061fe7ccf9a32a8a8",
+            "status": "passed"
+          },
+          {
+            "command": "PYTHONPATH=.:src pytest -q tests/verification/elementwise_compiler/test_wide_generation.py::test_real_f32_structural_library_reaches_proof_task_without_local_index",
+            "name": "lean-elaboration",
+            "output_path": "notes/reviews/evidence/elementwise-m4-lean-elaboration.txt",
+            "output_sha256": "37cb23fbf2c07bbe26e2a595bdf52fed651fad263676040165a991df9c3a6fec",
+            "status": "passed"
+          }
+        ],
+        "descriptor_sha256": "2240b9097fcdc621712325883227d8724b61864b3bd969752ded23a2acf65cf7",
+        "detail": "Exact float* / float32x4_t structural store remains approved; the held-out real-f32 pair still reaches ProofTask with no program-local special casing.",
+        "evidence": [
+          {
+            "authority": "Arm ACLE",
+            "file_sha256": "256d3e337a243cabf13d9afa2b16bdfbaba67fa7c8a23db136f4a41cb2497928",
+            "path": "tools/intrinsic_db/advsimd.csv",
+            "revision": "c218a6b499897e70d88ceab7c6148d692541929f",
+            "selectors": [
+              "vst1q_f32"
+            ],
+            "source_url": "https://github.com/ARM-software/acle/blob/c218a6b499897e70d88ceab7c6148d692541929f/tools/intrinsic_db/advsimd.csv"
+          }
+        ],
+        "function_type": "void (float *, float32x4_t)",
+        "implementation_sha256": "3a64078e066f44b20371cca5ee7e5cd336b284e60443b0a04130a513a53da521",
+        "policy_path": "notes/policies/elementwise-intrinsic-review-v1.md",
+        "policy_sha256": "3ec443abda592ed59dbe58c9fca118942f4306457f8d4992bae5be5139e8ecc5",
+        "review_id": "intrinsic-review:neon:vst1q_f32:83f34dfc2b4cc113",
+        "review_sha256": "3133f3113f779edc0cde074e2cdad28f35c5db96a44c703dbeeb08c8ad989920",
+        "reviewer": "agent:independent-reviewer",
+        "schema_version": 1,
+        "spelling": "vst1q_f32",
+        "verdict": "approved"
+      }
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 2,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vst1q_s8:0999c7ee3f441eee",
+        "capability_sha256": "07a8da61f2a746c2a414fa2d739047e25fcd95049a40626a6fb05bd3074d370b",
+        "descriptor_sha256": "c4ff80d822660fa9925ae23ca6d74d82201c6592fd453c81711f67543f658a79",
+        "function_type": "void (int8_t *, int8x16_t)",
+        "implementation_sha256": "3a64078e066f44b20371cca5ee7e5cd336b284e60443b0a04130a513a53da521",
+        "review_evidence_sha256": null,
+        "role": "structural",
+        "schema_version": 1,
+        "semantic_symbol": null,
+        "spelling": "vst1q_s8",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 2,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vsubl_s8:162192394b59b1fa",
+        "capability_sha256": "c6901651a018917f17f1c911d92ff4760c93d2720f042c77fc03092becd0a42e",
+        "descriptor_sha256": "b9c7def36dbe418680a3b82d732d5ba64dad1cdc1368bd948c7f7bf2df44ba16",
+        "function_type": "int16x8_t (int8x8_t, int8x8_t)",
+        "implementation_sha256": "1c203f1fd72b773ae52c1de8e62c909a272d5c4f618ca1830e6db8df739ae619",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.Neon.vsubl_s8",
+        "spelling": "vsubl_s8",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 2,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vsubl_u8:0eb18cb7dbbbc640",
+        "capability_sha256": "7ebe0e9b94b3096b7231eb7a4f1d52dfa5e47d3d88a446686885cbcfd9e68f1f",
+        "descriptor_sha256": "ce51d2fafd2fe1fce80422b25a4431754f6a1f40c022f56e687e237c36fea717",
+        "function_type": "uint16x8_t (uint8x8_t, uint8x8_t)",
+        "implementation_sha256": "1c203f1fd72b773ae52c1de8e62c909a272d5c4f618ca1830e6db8df739ae619",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.Neon.vsubl_u8",
+        "spelling": "vsubl_u8",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "neon",
+        "argument_count": 2,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:neon:vsubw_s8:d629c39fec3ee85e",
+        "capability_sha256": "3621ff578b3a37313fc5b8d882f2e66366e74891edc4e21618c80baa6585c307",
+        "descriptor_sha256": "91f1a1eb1781a22d90661a9e6ee0c2831601591abf1ada8322fc9354564aacdb",
+        "function_type": "int16x8_t (int16x8_t, int8x8_t)",
+        "implementation_sha256": "1c203f1fd72b773ae52c1de8e62c909a272d5c4f618ca1830e6db8df739ae619",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.Neon.vsubw_s8",
+        "spelling": "vsubw_s8",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "rvv",
+        "argument_count": 2,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:rvv:__riscv_vle32_v_f32m8:fa0c46c87d228e3b",
+        "capability_sha256": "c1a2989ce87db28bfd51f2b0d8cb0cf027a0a1bf85e44e7fbd2ac0063aeb7d47",
+        "descriptor_sha256": "6d1cbc2347728e5054589dbeb9677af6ebbdb7272ceef6e7e11ec2daf8246760",
+        "function_type": "vfloat32m8_t (const float *, size_t)",
+        "implementation_sha256": "3a64078e066f44b20371cca5ee7e5cd336b284e60443b0a04130a513a53da521",
+        "review_evidence_sha256": "16bd2c9dd927d2c435ffb538c3e513a52688c7296bc7db0afe02c5b914f629e5",
+        "role": "structural",
+        "schema_version": 1,
+        "semantic_symbol": null,
+        "spelling": "__riscv_vle32_v_f32m8",
+        "version": 1
+      },
+      "review": {
+        "architecture": "rvv",
+        "argument_count": 2,
+        "artifact_kind": "intrinsic-review",
+        "checks": [
+          {
+            "command": "PYTHONPATH=.:src pytest -q tests/verification/elementwise_compiler/test_reviews.py tests/verification/lean_backend/test_intrinsic_index.py tests/verification/lean_backend/test_intrinsic_index_inventory.py tests/verification/elementwise_compiler/test_wide_generation.py::test_real_f32_lane_store_uses_the_requested_lane tests/verification/elementwise_compiler/test_wide_generation.py::test_real_f32_lane_store_rejects_out_of_range_lane",
+            "name": "descriptor-tests",
+            "output_path": "notes/reviews/evidence/elementwise-m4-descriptor-tests.txt",
+            "output_sha256": "bfc10633a372eaa2dbd109a77a4ced1ffca55f677920671061fe7ccf9a32a8a8",
+            "status": "passed"
+          },
+          {
+            "command": "PYTHONPATH=.:src pytest -q tests/verification/elementwise_compiler/test_wide_generation.py::test_real_f32_structural_library_reaches_proof_task_without_local_index",
+            "name": "lean-elaboration",
+            "output_path": "notes/reviews/evidence/elementwise-m4-lean-elaboration.txt",
+            "output_sha256": "37cb23fbf2c07bbe26e2a595bdf52fed651fad263676040165a991df9c3a6fec",
+            "status": "passed"
+          }
+        ],
+        "descriptor_sha256": "6d1cbc2347728e5054589dbeb9677af6ebbdb7272ceef6e7e11ec2daf8246760",
+        "detail": "Exact const float* / size_t structural load remains approved; the held-out RVV real-f32 path still resolves through the shared canonical index.",
+        "evidence": [
+          {
+            "authority": "RISC-V Vector C Intrinsics",
+            "file_sha256": "fdde5ea5d444bcbe3eb75df89fa628ede8420846a6115aebac45fa42201a4d5a",
+            "path": "auto-generated/api-testing/vle32.c",
+            "revision": "b611045daf6c1f2449a5dad6f1a1a6b244b52798",
+            "selectors": [
+              "__riscv_vle32_v_f32m8"
+            ],
+            "source_url": "https://github.com/riscv-non-isa/rvv-intrinsic-doc/blob/b611045daf6c1f2449a5dad6f1a1a6b244b52798/auto-generated/api-testing/vle32.c"
+          },
+          {
+            "authority": "RISC-V Vector C Intrinsics",
+            "file_sha256": "4513261228660d25e33ffc07ea7a484c17ab2ed7003e41d0d620741fd0dda757",
+            "path": "doc/rvv-intrinsic-spec.adoc",
+            "revision": "b611045daf6c1f2449a5dad6f1a1a6b244b52798",
+            "selectors": [
+              "__riscv_vle32_v_f32m8"
+            ],
+            "source_url": "https://github.com/riscv-non-isa/rvv-intrinsic-doc/blob/b611045daf6c1f2449a5dad6f1a1a6b244b52798/doc/rvv-intrinsic-spec.adoc"
+          }
+        ],
+        "function_type": "vfloat32m8_t (const float *, size_t)",
+        "implementation_sha256": "3a64078e066f44b20371cca5ee7e5cd336b284e60443b0a04130a513a53da521",
+        "policy_path": "notes/policies/elementwise-intrinsic-review-v1.md",
+        "policy_sha256": "3ec443abda592ed59dbe58c9fca118942f4306457f8d4992bae5be5139e8ecc5",
+        "review_id": "intrinsic-review:rvv:__riscv_vle32_v_f32m8:fa0c46c87d228e3b",
+        "review_sha256": "16bd2c9dd927d2c435ffb538c3e513a52688c7296bc7db0afe02c5b914f629e5",
+        "reviewer": "agent:independent-reviewer",
+        "schema_version": 1,
+        "spelling": "__riscv_vle32_v_f32m8",
+        "verdict": "approved"
+      }
+    },
+    {
+      "capability": {
+        "architecture": "rvv",
+        "argument_count": 2,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:rvv:__riscv_vle8_v_i8m2:2d3c1892f5eaa8e8",
+        "capability_sha256": "57892017714783e5bccf614886e96b0e94775fa56f32ad786151edcdca2d48f3",
+        "descriptor_sha256": "fc3cfd310f0058a2716f8e814bf1a9c2e4fa6fab123e004a6209d979602e29a2",
+        "function_type": "vint8m2_t (const int8_t *, size_t)",
+        "implementation_sha256": "3a64078e066f44b20371cca5ee7e5cd336b284e60443b0a04130a513a53da521",
+        "review_evidence_sha256": null,
+        "role": "structural",
+        "schema_version": 1,
+        "semantic_symbol": null,
+        "spelling": "__riscv_vle8_v_i8m2",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "rvv",
+        "argument_count": 2,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:rvv:__riscv_vle8_v_i8m8:264df61944019333",
+        "capability_sha256": "2e7b64ca29b13bd9a7ebad03d21dd5f479b4d18d969dac30872a2e962c9bd4e3",
+        "descriptor_sha256": "0100dcbad71d016b02addcea2f23c3a751127c740abf7a589f105eaec8f1d51b",
+        "function_type": "vint8m8_t (const int8_t *, size_t)",
+        "implementation_sha256": "3a64078e066f44b20371cca5ee7e5cd336b284e60443b0a04130a513a53da521",
+        "review_evidence_sha256": null,
+        "role": "structural",
+        "schema_version": 1,
+        "semantic_symbol": null,
+        "spelling": "__riscv_vle8_v_i8m8",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "rvv",
+        "argument_count": 2,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:rvv:__riscv_vle8_v_u8m2:f22995213e6d22f4",
+        "capability_sha256": "2687c821977201ac1460711422224e0739b1ef4c6a91c2fe43e05f0dd31e4604",
+        "descriptor_sha256": "7ab732d81e1f86e4997000f762d7ead818891cf91a7fde8cb0c8afac76d3d71b",
+        "function_type": "vuint8m2_t (const uint8_t *, size_t)",
+        "implementation_sha256": "3a64078e066f44b20371cca5ee7e5cd336b284e60443b0a04130a513a53da521",
+        "review_evidence_sha256": null,
+        "role": "structural",
+        "schema_version": 1,
+        "semantic_symbol": null,
+        "spelling": "__riscv_vle8_v_u8m2",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "rvv",
+        "argument_count": 4,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:rvv:__riscv_vmacc_vx_i32m8:fae0f4ce0ca83e54",
+        "capability_sha256": "dd53651ff1dcfd320719282ed892b8d870a2197a611497718d243782d1ea5330",
+        "descriptor_sha256": "d29f38246de55ee011a2423f9b117593c0900895f48ee446360d0cfc68ba4319",
+        "function_type": "vint32m8_t (vint32m8_t, int32_t, vint32m8_t, size_t)",
+        "implementation_sha256": "e74b6088472e47a7a928e47e0494d326f4c6aa5de592483aae5ad04264d39d21",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.RVV.vmacc_vx",
+        "spelling": "__riscv_vmacc_vx_i32m8",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "rvv",
+        "argument_count": 3,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:rvv:__riscv_vmax_vx_i16m4:12b8080f9f38b4d4",
+        "capability_sha256": "89f1b339a5b0270a9672cf4cff8cfc74c37c376d19091cbd0eae9c1ec6d9ac88",
+        "descriptor_sha256": "d3d9511c0071bca1dac88d74d02f381322b55a4062096817cfc9e2f79a5b0904",
+        "function_type": "vint16m4_t (vint16m4_t, int16_t, size_t)",
+        "implementation_sha256": "e74b6088472e47a7a928e47e0494d326f4c6aa5de592483aae5ad04264d39d21",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.RVV.vmax_vx_i16",
+        "spelling": "__riscv_vmax_vx_i16m4",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "rvv",
+        "argument_count": 3,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:rvv:__riscv_vmax_vx_i8m2:62de80b99d186cbf",
+        "capability_sha256": "5562aba73c78819ff2f52d04abe3a96fcd0df1be8cf6f363f871aea2c0e726c8",
+        "descriptor_sha256": "124c66192e81bf3094f14bff4a2d440268f3508046506d04b5699d36f16ca515",
+        "function_type": "vint8m2_t (vint8m2_t, int8_t, size_t)",
+        "implementation_sha256": "e74b6088472e47a7a928e47e0494d326f4c6aa5de592483aae5ad04264d39d21",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.RVV.vmax_vx",
+        "spelling": "__riscv_vmax_vx_i8m2",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "rvv",
+        "argument_count": 3,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:rvv:__riscv_vmax_vx_i8m8:8dd331b2c67216d6",
+        "capability_sha256": "06e28cc243260354cd4de6a3ab05179497fcbde91c63526f5354488b174463b2",
+        "descriptor_sha256": "4fa72259692ace277f9f3eb26a2eebb0a72d7320c853048a09f8999fd5f44b7f",
+        "function_type": "vint8m8_t (vint8m8_t, int8_t, size_t)",
+        "implementation_sha256": "e74b6088472e47a7a928e47e0494d326f4c6aa5de592483aae5ad04264d39d21",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.RVV.vmax_vx",
+        "spelling": "__riscv_vmax_vx_i8m8",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "rvv",
+        "argument_count": 3,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:rvv:__riscv_vmaxu_vx_u8m2:13e720c0fc63fa5f",
+        "capability_sha256": "998c9a47a2ac21cee0626e1359cc381c133e6c811b0cd38e540b8eb69be2b708",
+        "descriptor_sha256": "95a30094d5b9233e49816df287faf331f439a4f0507544f07871363789bbb905",
+        "function_type": "vuint8m2_t (vuint8m2_t, uint8_t, size_t)",
+        "implementation_sha256": "e74b6088472e47a7a928e47e0494d326f4c6aa5de592483aae5ad04264d39d21",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.RVV.vmaxu_vx_u8",
+        "spelling": "__riscv_vmaxu_vx_u8m2",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "rvv",
+        "argument_count": 4,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:rvv:__riscv_vmerge_vxm_i16m4:e4a87669b248abff",
+        "capability_sha256": "48e00031b61073d6e3b533d321adc160782f78c755ca19a7547e808e1c111b26",
+        "descriptor_sha256": "6653f2f26b677a8b405b989d169ee94672840e2b73a2395d8fcf52d88b25eee6",
+        "function_type": "vint16m4_t (vint16m4_t, int16_t, vbool4_t, size_t)",
+        "implementation_sha256": "e74b6088472e47a7a928e47e0494d326f4c6aa5de592483aae5ad04264d39d21",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.RVV.vmerge_vxm_i16",
+        "spelling": "__riscv_vmerge_vxm_i16m4",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "rvv",
+        "argument_count": 3,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:rvv:__riscv_vmin_vx_i8m2:97884c76ddab734a",
+        "capability_sha256": "9694a1e653a059f43df88e338a6f130f2630d34c751c5bb40df86c18995127fb",
+        "descriptor_sha256": "e07ec6d963657c0ba860402805776ba5dcc1aef7977d9895658d7a001ee8294c",
+        "function_type": "vint8m2_t (vint8m2_t, int8_t, size_t)",
+        "implementation_sha256": "e74b6088472e47a7a928e47e0494d326f4c6aa5de592483aae5ad04264d39d21",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.RVV.vmin_vx",
+        "spelling": "__riscv_vmin_vx_i8m2",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "rvv",
+        "argument_count": 3,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:rvv:__riscv_vmin_vx_i8m8:f7eb76b84712f9a9",
+        "capability_sha256": "747ab9c502d54c79ac28c34c7d3279acdbad2296610e21fd36b15771ba3fa3ad",
+        "descriptor_sha256": "b9ad2d8a7610a4c4fe8732e86fcb56b4f63b9074e5071fbd33c457e33093db51",
+        "function_type": "vint8m8_t (vint8m8_t, int8_t, size_t)",
+        "implementation_sha256": "e74b6088472e47a7a928e47e0494d326f4c6aa5de592483aae5ad04264d39d21",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.RVV.vmin_vx",
+        "spelling": "__riscv_vmin_vx_i8m8",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "rvv",
+        "argument_count": 3,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:rvv:__riscv_vminu_vx_u8m2:ea387c3e7f284275",
+        "capability_sha256": "02faa00bf7a1bdc8b62889b6194715fac0043a006d82b2693d2d8e3a88b3d73e",
+        "descriptor_sha256": "192e99d690d6de4c3393d0cd310341de886bb28ee8648ec431345370f552a596",
+        "function_type": "vuint8m2_t (vuint8m2_t, uint8_t, size_t)",
+        "implementation_sha256": "e74b6088472e47a7a928e47e0494d326f4c6aa5de592483aae5ad04264d39d21",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.RVV.vminu_vx_u8",
+        "spelling": "__riscv_vminu_vx_u8m2",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "rvv",
+        "argument_count": 3,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:rvv:__riscv_vmslt_vx_i16m4_b4:a0f827257bbad6c5",
+        "capability_sha256": "ebf6ffb2328e0ab7e54288b854377108505f98cf4582b66c3c3d14fa13f73180",
+        "descriptor_sha256": "af4b61e0fac67f84a4955426c93a4d14a4a6e2ae43dc3e9cfc86890acbf94a44",
+        "function_type": "vbool4_t (vint16m4_t, int16_t, size_t)",
+        "implementation_sha256": "e74b6088472e47a7a928e47e0494d326f4c6aa5de592483aae5ad04264d39d21",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.RVV.vmslt_vx_i16",
+        "spelling": "__riscv_vmslt_vx_i16m4_b4",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "rvv",
+        "argument_count": 3,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:rvv:__riscv_vmul_vx_i32m8:790304208e03a633",
+        "capability_sha256": "60f258e5a5552878c7c200c7449f4ede00d5d85274e8a7ebb4f735f2cfde1987",
+        "descriptor_sha256": "6be620e01ab63f6cde455d425248dd6886bda8672c406beb6153d57487e2875c",
+        "function_type": "vint32m8_t (vint32m8_t, int32_t, size_t)",
+        "implementation_sha256": "e74b6088472e47a7a928e47e0494d326f4c6aa5de592483aae5ad04264d39d21",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.RVV.vmul_vx",
+        "spelling": "__riscv_vmul_vx_i32m8",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "rvv",
+        "argument_count": 2,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:rvv:__riscv_vmv_v_x_i16m4:22a4fd8f3458b837",
+        "capability_sha256": "d7fd1cee18c02b72feb17359c64aacf0511ce5c0b27d0988cdda7d3996249018",
+        "descriptor_sha256": "502e70f9d272a6ea74341a0cdb1b9f108a68ecfdf86d6ae45c5843b30c0bb429",
+        "function_type": "vint16m4_t (int16_t, size_t)",
+        "implementation_sha256": "3a64078e066f44b20371cca5ee7e5cd336b284e60443b0a04130a513a53da521",
+        "review_evidence_sha256": null,
+        "role": "structural",
+        "schema_version": 1,
+        "semantic_symbol": null,
+        "spelling": "__riscv_vmv_v_x_i16m4",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "rvv",
+        "argument_count": 4,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:rvv:__riscv_vnclip_wx_i16m4:450dd1dd13f3f24c",
+        "capability_sha256": "2b6e7957560d958bd55cc50bcc79feb03bf5de389f496a678c06312a8d2666a3",
+        "descriptor_sha256": "706f50c676a2d809fa3acbba53a05a7edc0f3bb9115ad69100f3c315ec4bb800",
+        "function_type": "vint16m4_t (vint32m8_t, size_t, unsigned int, size_t)",
+        "implementation_sha256": "e74b6088472e47a7a928e47e0494d326f4c6aa5de592483aae5ad04264d39d21",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.RVV.vnclip_wx_i16_mode",
+        "spelling": "__riscv_vnclip_wx_i16m4",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "rvv",
+        "argument_count": 4,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:rvv:__riscv_vnclip_wx_i16m4:450dd1dd13f3f24c",
+        "capability_sha256": "5133e45cc0f2573cdb7362c802e13060c46066867f851f08c28b2387ef3fc797",
+        "descriptor_sha256": "8ac677bfab56bafc410b2e682eed28a705f7a2165340ab2a3cb66c701ba0f971",
+        "function_type": "vint16m4_t (vint32m8_t, size_t, unsigned int, size_t)",
+        "implementation_sha256": "e74b6088472e47a7a928e47e0494d326f4c6aa5de592483aae5ad04264d39d21",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.RVV.vnclip_wx_i16_mode",
+        "spelling": "__riscv_vnclip_wx_i16m4",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "rvv",
+        "argument_count": 4,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:rvv:__riscv_vnclip_wx_i16m4:450dd1dd13f3f24c",
+        "capability_sha256": "766db32d327be659d073659107697a4a28b554113e97a76fad819f9aceef8997",
+        "descriptor_sha256": "f70e2a4163c7f997eb5392e3dac7f010bce3f5005083eda27eacb030046fd15c",
+        "function_type": "vint16m4_t (vint32m8_t, size_t, unsigned int, size_t)",
+        "implementation_sha256": "e74b6088472e47a7a928e47e0494d326f4c6aa5de592483aae5ad04264d39d21",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.RVV.vnclip_wx_i16",
+        "spelling": "__riscv_vnclip_wx_i16m4",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "rvv",
+        "argument_count": 4,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:rvv:__riscv_vnclip_wx_i16m4:450dd1dd13f3f24c",
+        "capability_sha256": "9d446cabaeaa48e7b18ee7d5ff40d03460d42a98e6e1dcb34ab2f74dc4967658",
+        "descriptor_sha256": "ccbd259d8f0913a5a91d9c0a88f8c956c9e20d8c4e3a92ecfdf895bfdb8c0c60",
+        "function_type": "vint16m4_t (vint32m8_t, size_t, unsigned int, size_t)",
+        "implementation_sha256": "e74b6088472e47a7a928e47e0494d326f4c6aa5de592483aae5ad04264d39d21",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.RVV.vnclip_wx_i16_mode",
+        "spelling": "__riscv_vnclip_wx_i16m4",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "rvv",
+        "argument_count": 4,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:rvv:__riscv_vnclip_wx_i8m2:0c1330e68cb264a6",
+        "capability_sha256": "4f1132eb98a44345975f8cb74b4137583c2352a38d705754e06ff6a01d5ed647",
+        "descriptor_sha256": "3b8b35ea7392ab33f8924861e4f78a0f65d04e14bbdeca204aae52528daf3563",
+        "function_type": "vint8m2_t (vint16m4_t, size_t, unsigned int, size_t)",
+        "implementation_sha256": "e74b6088472e47a7a928e47e0494d326f4c6aa5de592483aae5ad04264d39d21",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.RVV.vnclip_wx_i8_mode",
+        "spelling": "__riscv_vnclip_wx_i8m2",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "rvv",
+        "argument_count": 4,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:rvv:__riscv_vnclip_wx_i8m2:0c1330e68cb264a6",
+        "capability_sha256": "ff8003370f714862b400ce23ae882859e5a3009278eed00a7bcf38f1dafdd41c",
+        "descriptor_sha256": "16e5c039aa71df14cdd8eaf9aa9bbe3a618b3dbc999c6345c1e115ed4061d0fb",
+        "function_type": "vint8m2_t (vint16m4_t, size_t, unsigned int, size_t)",
+        "implementation_sha256": "e74b6088472e47a7a928e47e0494d326f4c6aa5de592483aae5ad04264d39d21",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.RVV.vnclip_wx_i8",
+        "spelling": "__riscv_vnclip_wx_i8m2",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "rvv",
+        "argument_count": 4,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:rvv:__riscv_vnclipu_wx_u8m2:8bbd9d378d74aabe",
+        "capability_sha256": "c7fe59d0cbef2b2178cdef2c40112ef2d74f34cdb589328b8b42acb3ef72cd12",
+        "descriptor_sha256": "a03d9709b4db35e009270d6805b5485913cece2a4059f7c3918e7faf263303c9",
+        "function_type": "vuint8m2_t (vuint16m4_t, size_t, unsigned int, size_t)",
+        "implementation_sha256": "e74b6088472e47a7a928e47e0494d326f4c6aa5de592483aae5ad04264d39d21",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.RVV.vnclipu_wx_u8_mode",
+        "spelling": "__riscv_vnclipu_wx_u8m2",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "rvv",
+        "argument_count": 1,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:rvv:__riscv_vreinterpret_v_i16m4_u16m4:1fad7130a1e82f59",
+        "capability_sha256": "694395eb06529fc9439f711462aca9245e66662d31f3ff605c48acf11c51f561",
+        "descriptor_sha256": "b20bd7556a0d83c3aeed3947f03f4fd975604a21d71f1ebc289526cb22fd0cdd",
+        "function_type": "vuint16m4_t (vint16m4_t)",
+        "implementation_sha256": "3a64078e066f44b20371cca5ee7e5cd336b284e60443b0a04130a513a53da521",
+        "review_evidence_sha256": null,
+        "role": "structural",
+        "schema_version": 1,
+        "semantic_symbol": null,
+        "spelling": "__riscv_vreinterpret_v_i16m4_u16m4",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "rvv",
+        "argument_count": 1,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:rvv:__riscv_vreinterpret_v_u16m4_i16m4:a8a3e08e2b4eeabd",
+        "capability_sha256": "e8ba3a68fccf7e95787ba141686f4997a18a51a21f391730694c59b723ba02a9",
+        "descriptor_sha256": "e2a12cb72b6ba1f37756ca402fe9751f7253de4f0810e2459faf5c03b910f9e7",
+        "function_type": "vint16m4_t (vuint16m4_t)",
+        "implementation_sha256": "3a64078e066f44b20371cca5ee7e5cd336b284e60443b0a04130a513a53da521",
+        "review_evidence_sha256": null,
+        "role": "structural",
+        "schema_version": 1,
+        "semantic_symbol": null,
+        "spelling": "__riscv_vreinterpret_v_u16m4_i16m4",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "rvv",
+        "argument_count": 3,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:rvv:__riscv_vrsub_vx_i16m4:82177e3812e57191",
+        "capability_sha256": "332cea266f43d2c3c8b222620de4053f1fe0dd126074032dd6e505961a33a76a",
+        "descriptor_sha256": "b7fa15aba313386be03e9c734ea006b83aacb6734a3790c831166ebdd858e656",
+        "function_type": "vint16m4_t (vint16m4_t, int16_t, size_t)",
+        "implementation_sha256": "e74b6088472e47a7a928e47e0494d326f4c6aa5de592483aae5ad04264d39d21",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.RVV.vrsub_vx_i16",
+        "spelling": "__riscv_vrsub_vx_i16m4",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "rvv",
+        "argument_count": 3,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:rvv:__riscv_vsadd_vx_i16m4:3a32ed7deda570f2",
+        "capability_sha256": "f3f1aa4be798f7131322a8d2e1ca906699405ccc7b3c1f1f1944a4dcbcd816cb",
+        "descriptor_sha256": "b9a7ec90f62071bba1eba130bfd9d6d3bc6adaafed15aa8b767a6058bff66cfa",
+        "function_type": "vint16m4_t (vint16m4_t, int16_t, size_t)",
+        "implementation_sha256": "e74b6088472e47a7a928e47e0494d326f4c6aa5de592483aae5ad04264d39d21",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.RVV.vsadd_vx",
+        "spelling": "__riscv_vsadd_vx_i16m4",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "rvv",
+        "argument_count": 3,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:rvv:__riscv_vse32_v_f32m8:d6cf96e6b0cf7289",
+        "capability_sha256": "58b67320da61bcd9bf0e4502cf4ec558a36492c7a48fa9a5f2c4c72a54390428",
+        "descriptor_sha256": "4cc2952e2a6f3919672d7666a62bb650c31e835710e3fe84e510dc12e4ae32f5",
+        "function_type": "void (float *, vfloat32m8_t, size_t)",
+        "implementation_sha256": "3a64078e066f44b20371cca5ee7e5cd336b284e60443b0a04130a513a53da521",
+        "review_evidence_sha256": "5f8a24c011ac6107a04d3ccadfdffa74ea77030017d1034e04104757a5fc25c4",
+        "role": "structural",
+        "schema_version": 1,
+        "semantic_symbol": null,
+        "spelling": "__riscv_vse32_v_f32m8",
+        "version": 1
+      },
+      "review": {
+        "architecture": "rvv",
+        "argument_count": 3,
+        "artifact_kind": "intrinsic-review",
+        "checks": [
+          {
+            "command": "PYTHONPATH=.:src pytest -q tests/verification/elementwise_compiler/test_reviews.py tests/verification/lean_backend/test_intrinsic_index.py tests/verification/lean_backend/test_intrinsic_index_inventory.py tests/verification/elementwise_compiler/test_wide_generation.py::test_real_f32_lane_store_uses_the_requested_lane tests/verification/elementwise_compiler/test_wide_generation.py::test_real_f32_lane_store_rejects_out_of_range_lane",
+            "name": "descriptor-tests",
+            "output_path": "notes/reviews/evidence/elementwise-m4-descriptor-tests.txt",
+            "output_sha256": "bfc10633a372eaa2dbd109a77a4ced1ffca55f677920671061fe7ccf9a32a8a8",
+            "status": "passed"
+          },
+          {
+            "command": "PYTHONPATH=.:src pytest -q tests/verification/elementwise_compiler/test_wide_generation.py::test_real_f32_structural_library_reaches_proof_task_without_local_index",
+            "name": "lean-elaboration",
+            "output_path": "notes/reviews/evidence/elementwise-m4-lean-elaboration.txt",
+            "output_sha256": "37cb23fbf2c07bbe26e2a595bdf52fed651fad263676040165a991df9c3a6fec",
+            "status": "passed"
+          }
+        ],
+        "descriptor_sha256": "4cc2952e2a6f3919672d7666a62bb650c31e835710e3fe84e510dc12e4ae32f5",
+        "detail": "Exact float* / vfloat32m8_t / size_t structural store remains approved; the held-out RVV real-f32 path still resolves through the shared canonical index.",
+        "evidence": [
+          {
+            "authority": "RISC-V Vector C Intrinsics",
+            "file_sha256": "67f2e2cbd8966167d75236b4d60b1f4929009d3efbcce7cd98e79142aa205ffc",
+            "path": "auto-generated/api-testing/vse32.c",
+            "revision": "b611045daf6c1f2449a5dad6f1a1a6b244b52798",
+            "selectors": [
+              "__riscv_vse32_v_f32m8"
+            ],
+            "source_url": "https://github.com/riscv-non-isa/rvv-intrinsic-doc/blob/b611045daf6c1f2449a5dad6f1a1a6b244b52798/auto-generated/api-testing/vse32.c"
+          },
+          {
+            "authority": "RISC-V Vector C Intrinsics",
+            "file_sha256": "4513261228660d25e33ffc07ea7a484c17ab2ed7003e41d0d620741fd0dda757",
+            "path": "doc/rvv-intrinsic-spec.adoc",
+            "revision": "b611045daf6c1f2449a5dad6f1a1a6b244b52798",
+            "selectors": [
+              "__riscv_vse32_v_f32m8"
+            ],
+            "source_url": "https://github.com/riscv-non-isa/rvv-intrinsic-doc/blob/b611045daf6c1f2449a5dad6f1a1a6b244b52798/doc/rvv-intrinsic-spec.adoc"
+          }
+        ],
+        "function_type": "void (float *, vfloat32m8_t, size_t)",
+        "implementation_sha256": "3a64078e066f44b20371cca5ee7e5cd336b284e60443b0a04130a513a53da521",
+        "policy_path": "notes/policies/elementwise-intrinsic-review-v1.md",
+        "policy_sha256": "3ec443abda592ed59dbe58c9fca118942f4306457f8d4992bae5be5139e8ecc5",
+        "review_id": "intrinsic-review:rvv:__riscv_vse32_v_f32m8:d6cf96e6b0cf7289",
+        "review_sha256": "5f8a24c011ac6107a04d3ccadfdffa74ea77030017d1034e04104757a5fc25c4",
+        "reviewer": "agent:independent-reviewer",
+        "schema_version": 1,
+        "spelling": "__riscv_vse32_v_f32m8",
+        "verdict": "approved"
+      }
+    },
+    {
+      "capability": {
+        "architecture": "rvv",
+        "argument_count": 3,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:rvv:__riscv_vse8_v_i8m2:5049ebcfe4ca0ef5",
+        "capability_sha256": "1747a2a38982e16677970d25656781bad104bad2f5ea77272b684c7bfb7cd088",
+        "descriptor_sha256": "7d90c52a4ce1a1ebb7be5ec15c7063e8f3ae8f07b606462aebec5644cb9d7623",
+        "function_type": "void (int8_t *, vint8m2_t, size_t)",
+        "implementation_sha256": "3a64078e066f44b20371cca5ee7e5cd336b284e60443b0a04130a513a53da521",
+        "review_evidence_sha256": null,
+        "role": "structural",
+        "schema_version": 1,
+        "semantic_symbol": null,
+        "spelling": "__riscv_vse8_v_i8m2",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "rvv",
+        "argument_count": 3,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:rvv:__riscv_vse8_v_i8m8:3764806a2d79805d",
+        "capability_sha256": "67809167ddbf26af912543354ad55db65afc01044f96423823f75db462097055",
+        "descriptor_sha256": "0fec7837a70fb0935d1e981f204f2e253353c18e7b48d45eff6c51519b513341",
+        "function_type": "void (int8_t *, vint8m8_t, size_t)",
+        "implementation_sha256": "3a64078e066f44b20371cca5ee7e5cd336b284e60443b0a04130a513a53da521",
+        "review_evidence_sha256": null,
+        "role": "structural",
+        "schema_version": 1,
+        "semantic_symbol": null,
+        "spelling": "__riscv_vse8_v_i8m8",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "rvv",
+        "argument_count": 3,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:rvv:__riscv_vse8_v_u8m2:fbbbc0761e0fc51c",
+        "capability_sha256": "5ef09c8fca1f4a4a216493d06f15ae18379a3bc12881506a3205a6d6f94d6d9b",
+        "descriptor_sha256": "6b6d45930d4b2ce2a3b21fa36c01e3ec093f4df0c810b469d28ab278ea42761c",
+        "function_type": "void (uint8_t *, vuint8m2_t, size_t)",
+        "implementation_sha256": "3a64078e066f44b20371cca5ee7e5cd336b284e60443b0a04130a513a53da521",
+        "review_evidence_sha256": null,
+        "role": "structural",
+        "schema_version": 1,
+        "semantic_symbol": null,
+        "spelling": "__riscv_vse8_v_u8m2",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "rvv",
+        "argument_count": 1,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:rvv:__riscv_vsetvl_e32m8:62f2a61979a6ba14",
+        "capability_sha256": "6eee5fa73eb78f7714f16ee0458da19f0ffaef102f948d8f30dd55f9b1a8a47b",
+        "descriptor_sha256": "b603b7763a13453deeab05e2364e916d4514ff15e4ad779c18a19b85f888659c",
+        "function_type": "size_t (size_t)",
+        "implementation_sha256": "9f60f7ec06eb4205d0bb3196366303cea46db021fe043dbb49ea4a5c4f37d6d4",
+        "review_evidence_sha256": "741b59a854486e95fbb09750d2a4b16cd782eb44a64e1658e15a2c89c1609f18",
+        "role": "schedule",
+        "schema_version": 1,
+        "semantic_symbol": null,
+        "spelling": "__riscv_vsetvl_e32m8",
+        "version": 1
+      },
+      "review": {
+        "architecture": "rvv",
+        "argument_count": 1,
+        "artifact_kind": "intrinsic-review",
+        "checks": [
+          {
+            "command": "PYTHONPATH=.:src pytest -q tests/verification/elementwise_compiler/test_reviews.py tests/verification/lean_backend/test_intrinsic_index.py tests/verification/lean_backend/test_intrinsic_index_inventory.py tests/verification/elementwise_compiler/test_wide_generation.py::test_real_f32_lane_store_uses_the_requested_lane tests/verification/elementwise_compiler/test_wide_generation.py::test_real_f32_lane_store_rejects_out_of_range_lane",
+            "name": "descriptor-tests",
+            "output_path": "notes/reviews/evidence/elementwise-m4-descriptor-tests.txt",
+            "output_sha256": "bfc10633a372eaa2dbd109a77a4ced1ffca55f677920671061fe7ccf9a32a8a8",
+            "status": "passed"
+          },
+          {
+            "command": "PYTHONPATH=.:src pytest -q tests/verification/elementwise_compiler/test_wide_generation.py::test_real_f32_structural_library_reaches_proof_task_without_local_index",
+            "name": "lean-elaboration",
+            "output_path": "notes/reviews/evidence/elementwise-m4-lean-elaboration.txt",
+            "output_sha256": "37cb23fbf2c07bbe26e2a595bdf52fed651fad263676040165a991df9c3a6fec",
+            "status": "passed"
+          }
+        ],
+        "descriptor_sha256": "b603b7763a13453deeab05e2364e916d4514ff15e4ad779c18a19b85f888659c",
+        "detail": "Exact size_t(size_t) schedule intrinsic remains approved at value scope; the held-out RVV real-f32 path still compiles and participates in ProofTask generation.",
+        "evidence": [
+          {
+            "authority": "RISC-V Vector C Intrinsics",
+            "file_sha256": "1f1d5e3e03746423d71dceed4640efec93e191b43fda9dccd62ff2e9101ec7b2",
+            "path": "auto-generated/api-testing/vsetvl.c",
+            "revision": "b611045daf6c1f2449a5dad6f1a1a6b244b52798",
+            "selectors": [
+              "__riscv_vsetvl_e32m8"
+            ],
+            "source_url": "https://github.com/riscv-non-isa/rvv-intrinsic-doc/blob/b611045daf6c1f2449a5dad6f1a1a6b244b52798/auto-generated/api-testing/vsetvl.c"
+          },
+          {
+            "authority": "RISC-V Vector C Intrinsics",
+            "file_sha256": "4513261228660d25e33ffc07ea7a484c17ab2ed7003e41d0d620741fd0dda757",
+            "path": "doc/rvv-intrinsic-spec.adoc",
+            "revision": "b611045daf6c1f2449a5dad6f1a1a6b244b52798",
+            "selectors": [
+              "__riscv_vsetvl_e32m8"
+            ],
+            "source_url": "https://github.com/riscv-non-isa/rvv-intrinsic-doc/blob/b611045daf6c1f2449a5dad6f1a1a6b244b52798/doc/rvv-intrinsic-spec.adoc"
+          }
+        ],
+        "function_type": "size_t (size_t)",
+        "implementation_sha256": "9f60f7ec06eb4205d0bb3196366303cea46db021fe043dbb49ea4a5c4f37d6d4",
+        "policy_path": "notes/policies/elementwise-intrinsic-review-v1.md",
+        "policy_sha256": "3ec443abda592ed59dbe58c9fca118942f4306457f8d4992bae5be5139e8ecc5",
+        "review_id": "intrinsic-review:rvv:__riscv_vsetvl_e32m8:62f2a61979a6ba14",
+        "review_sha256": "741b59a854486e95fbb09750d2a4b16cd782eb44a64e1658e15a2c89c1609f18",
+        "reviewer": "agent:independent-reviewer",
+        "schema_version": 1,
+        "spelling": "__riscv_vsetvl_e32m8",
+        "verdict": "approved"
+      }
+    },
+    {
+      "capability": {
+        "architecture": "rvv",
+        "argument_count": 1,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:rvv:__riscv_vsetvl_e8m2:d793f686aba364cc",
+        "capability_sha256": "830c1eaaf14f0fa6b032fc8c9ed38aa38f4c4bd1ca470a79998d0f604ee1cb67",
+        "descriptor_sha256": "9a17ba45eb1daf13e965acf4cc68df3956b6547f5932f745a0ddbb3971693248",
+        "function_type": "size_t (size_t)",
+        "implementation_sha256": "9f60f7ec06eb4205d0bb3196366303cea46db021fe043dbb49ea4a5c4f37d6d4",
+        "review_evidence_sha256": null,
+        "role": "schedule",
+        "schema_version": 1,
+        "semantic_symbol": null,
+        "spelling": "__riscv_vsetvl_e8m2",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "rvv",
+        "argument_count": 1,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:rvv:__riscv_vsetvl_e8m8:ff8292e21b51482a",
+        "capability_sha256": "79ca3e646d699996493bb1c998976ccafb75a7ac455f5db4f4424ed69da622d9",
+        "descriptor_sha256": "5c794fcdf8d468234faceb3c0d4ff57ae4f95d85cbc321d9d24641de463114e5",
+        "function_type": "size_t (size_t)",
+        "implementation_sha256": "9f60f7ec06eb4205d0bb3196366303cea46db021fe043dbb49ea4a5c4f37d6d4",
+        "review_evidence_sha256": null,
+        "role": "schedule",
+        "schema_version": 1,
+        "semantic_symbol": null,
+        "spelling": "__riscv_vsetvl_e8m8",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "rvv",
+        "argument_count": 2,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:rvv:__riscv_vsext_vf2_i16m4:32e4afab8ffdf4f5",
+        "capability_sha256": "8ca57b2f4ac146584d500778c29a32036f05874b3fed78b3fc0fbb070ba867fc",
+        "descriptor_sha256": "044e07bff2d7c6d0bac0ef66ca7a5b01d558dbe351d967ad8f32f1d7b8954bbc",
+        "function_type": "vint16m4_t (vint8m2_t, size_t)",
+        "implementation_sha256": "e74b6088472e47a7a928e47e0494d326f4c6aa5de592483aae5ad04264d39d21",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.RVV.vsext_vf2_i16",
+        "spelling": "__riscv_vsext_vf2_i16m4",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "rvv",
+        "argument_count": 2,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:rvv:__riscv_vsext_vf2_i32m8:9c894ee45bd0b3b6",
+        "capability_sha256": "e89743a900a9f08db56aa8d67f29fd8bf8a51102e2151a423a78ed0833fafbd9",
+        "descriptor_sha256": "33a67c1fdc63113561613f98da4c0c3dc7c68e096c121bc1f6c68654d21e6f65",
+        "function_type": "vint32m8_t (vint16m4_t, size_t)",
+        "implementation_sha256": "e74b6088472e47a7a928e47e0494d326f4c6aa5de592483aae5ad04264d39d21",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.RVV.vsext_vf2",
+        "spelling": "__riscv_vsext_vf2_i32m8",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "rvv",
+        "argument_count": 3,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:rvv:__riscv_vsll_vx_i16m4:f8e94fdf3221f885",
+        "capability_sha256": "7e7cf15ec1f183ff2913524d476e39eeb7ce8d82b67147da50459f4145e2815a",
+        "descriptor_sha256": "dc3bf21e6d591cbd60824ac9a3536a4012f2eb133b4b666b44c0f316ab384faa",
+        "function_type": "vint16m4_t (vint16m4_t, size_t, size_t)",
+        "implementation_sha256": "e74b6088472e47a7a928e47e0494d326f4c6aa5de592483aae5ad04264d39d21",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.RVV.vsll_vx_i16",
+        "spelling": "__riscv_vsll_vx_i16m4",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "rvv",
+        "argument_count": 3,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:rvv:__riscv_vsll_vx_i32m8:d10d08bf33b99ee3",
+        "capability_sha256": "1fedfa368d15bbfcbe5c238b7e0a6ebb36024c19673f47dce6a7642a726ea6b0",
+        "descriptor_sha256": "b87bd40cec950a403b20b7237da65569f5f96684df9b20366407fdbba1ead1ea",
+        "function_type": "vint32m8_t (vint32m8_t, size_t, size_t)",
+        "implementation_sha256": "e74b6088472e47a7a928e47e0494d326f4c6aa5de592483aae5ad04264d39d21",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.RVV.vsll_vx_i32",
+        "spelling": "__riscv_vsll_vx_i32m8",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "rvv",
+        "argument_count": 3,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:rvv:__riscv_vsll_vx_i32m8:d10d08bf33b99ee3",
+        "capability_sha256": "be37196f7d983e8ecf0465393220cbe0c74c3d397264c8640749799c245b670e",
+        "descriptor_sha256": "c6e8327f72204bfc8f622e44194de19b2918d721367d1e1503953cb10439223b",
+        "function_type": "vint32m8_t (vint32m8_t, size_t, size_t)",
+        "implementation_sha256": "e74b6088472e47a7a928e47e0494d326f4c6aa5de592483aae5ad04264d39d21",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.RVV.vsll_vx_i32",
+        "spelling": "__riscv_vsll_vx_i32m8",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "rvv",
+        "argument_count": 4,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:rvv:__riscv_vssra_vx_i32m8:291b1c0df22f6e0c",
+        "capability_sha256": "0c0d5997d7ea6779983f2d32159f06602182ddad8cc73d5d2293f66a4f274e33",
+        "descriptor_sha256": "ad19f8a265b276fb4355fcee3febb8e4b0a817999018b525468083b10866c28c",
+        "function_type": "vint32m8_t (vint32m8_t, size_t, unsigned int, size_t)",
+        "implementation_sha256": "e74b6088472e47a7a928e47e0494d326f4c6aa5de592483aae5ad04264d39d21",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.RVV.vssra_vx_i32_mode",
+        "spelling": "__riscv_vssra_vx_i32m8",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "rvv",
+        "argument_count": 4,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:rvv:__riscv_vssra_vx_i32m8:291b1c0df22f6e0c",
+        "capability_sha256": "d86dbc27beba3e14ba9b70e8f4a3bdeb18e57583808b5ce41b66dd80e8caac6f",
+        "descriptor_sha256": "0aa8d82621ca6ac93ac8bda1b0a4f08146b7f1b4cde96515a4f15f834641f042",
+        "function_type": "vint32m8_t (vint32m8_t, size_t, unsigned int, size_t)",
+        "implementation_sha256": "e74b6088472e47a7a928e47e0494d326f4c6aa5de592483aae5ad04264d39d21",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.RVV.vssra_vx_rnu",
+        "spelling": "__riscv_vssra_vx_i32m8",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "rvv",
+        "argument_count": 3,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:rvv:__riscv_vwmul_vv_i32m8:2d2e60edabc56063",
+        "capability_sha256": "2845d696ea79b77d6c553f1eb3388c8ef35e4ba706931add5089f34e55639cab",
+        "descriptor_sha256": "2809f3df22a5a8fbf14f70b779c39ec2c87997ae566d7b96b159e65fdd78a12f",
+        "function_type": "vint32m8_t (vint16m4_t, vint16m4_t, size_t)",
+        "implementation_sha256": "e74b6088472e47a7a928e47e0494d326f4c6aa5de592483aae5ad04264d39d21",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.RVV.vwmul_vv_i32",
+        "spelling": "__riscv_vwmul_vv_i32m8",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "rvv",
+        "argument_count": 3,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:rvv:__riscv_vwmul_vx_i32m8:3e39031d023cd3a2",
+        "capability_sha256": "16eb3674d2ca665e8ac375201adda9f20169965d638ef520947489eaefee0081",
+        "descriptor_sha256": "bc22cd9cb74a14993557f4404fadc5ed9fe4c74e9fbee4412eeb828d49e6aa5b",
+        "function_type": "vint32m8_t (vint16m4_t, int16_t, size_t)",
+        "implementation_sha256": "e74b6088472e47a7a928e47e0494d326f4c6aa5de592483aae5ad04264d39d21",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.RVV.vwmul_vx_i32",
+        "spelling": "__riscv_vwmul_vx_i32m8",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "rvv",
+        "argument_count": 3,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:rvv:__riscv_vwsub_vx_i16m4:0d4e95a573b25fad",
+        "capability_sha256": "5038559833944a3c5737306ca51f4883153b06940e577ca7648dc92159ce9d2e",
+        "descriptor_sha256": "4de4de648afadd1c0ddab2c2bbdcc363b840a76cabe4d8cfd0ebcbccf78c6706",
+        "function_type": "vint16m4_t (vint8m2_t, int8_t, size_t)",
+        "implementation_sha256": "e74b6088472e47a7a928e47e0494d326f4c6aa5de592483aae5ad04264d39d21",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.RVV.vwsub_vx",
+        "spelling": "__riscv_vwsub_vx_i16m4",
+        "version": 1
+      },
+      "review": null
+    },
+    {
+      "capability": {
+        "architecture": "rvv",
+        "argument_count": 3,
+        "artifact_kind": "intrinsic-capability",
+        "capability_id": "intrinsic:rvv:__riscv_vwsubu_vx_u16m4:f6ad1af1520edf69",
+        "capability_sha256": "e57b907282b55e2a70cb5541d8de521f2d80d91aa5b5ab2cf32c0daeba0a6006",
+        "descriptor_sha256": "2b9476b05bc85e4f5a0552d42a26f28fe3b6763e88ac102d8358265b991c9270",
+        "function_type": "vuint16m4_t (vuint8m2_t, uint8_t, size_t)",
+        "implementation_sha256": "e74b6088472e47a7a928e47e0494d326f4c6aa5de592483aae5ad04264d39d21",
+        "review_evidence_sha256": null,
+        "role": "semantic",
+        "schema_version": 1,
+        "semantic_symbol": "SALT.Intrinsics.RVV.vwsubu_vx_u16",
+        "spelling": "__riscv_vwsubu_vx_u16m4",
+        "version": 1
+      },
+      "review": null
+    }
+  ]
+}

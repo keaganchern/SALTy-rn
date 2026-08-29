@@ -552,3 +552,36 @@ dashboard tests and 50 focused graph/web/server tests; reviewer record
 
 **Unresolved:** intrinsic review remains zero. The next work is a hash-bound,
 independently reviewed intrinsic capability batch ordered by corpus fan-out.
+
+## 2026-08-29 — First reviewed intrinsic puzzle batch
+
+**Question:** Can reusable intrinsic progress be generated and audited once per
+exact typed piece, then appear automatically for every dependent program?
+
+**Conclusion:** yes for the first nine F32 structural/schedule variants. A shared
+typed library and generated parse facade feed the production canonical index. A
+content-addressed `IntrinsicRegistry.json` contains all 105 exact variants and
+embeds matching independent reviews; the dependency graph currently shows 94
+configured spellings and 9 Lean-checked/reviewed spellings. No program id or
+dashboard case entry selects them.
+
+The first independent audit returned `NO-GO` for `vst1_lane_f32`: the official
+descriptor correctly allowed lanes 0 and 1, but the context-specific emitter
+always took lane 0. The implementation now reads the constant lane and generates
+`drop (lane * width)` followed by `take width`; lane 1 is modeled distinctly and
+lane 2 fails closed. The implementation hash was widened to include the
+context-specific emitter so this class of change invalidates old reviews. The
+convergence review returned `GO` for all 9 items.
+
+**Evidence:** pinned Arm ACLE r2026Q1 commit
+`c218a6b499897e70d88ceab7c6148d692541929f`; ratified RISC-V Vector C Intrinsics
+v1.0 commit `b611045daf6c1f2449a5dad6f1a1a6b244b52798`; review policy and check-output
+hashes under `notes/`; nine records under
+`verification/elementwise-compiler/intrinsic-reviews/`; 35 focused descriptor/
+held-out tests, 8 corpus/graph integrity tests, a deterministic corpus rebuild,
+and the complete 412-test repository suite.
+
+**Unresolved:** fourteen scalar programs still have missing semantic intrinsics;
+eight quantized programs retain their independently visible external-condition
+dimension. Batch 2 must add and review semantic families without weakening either
+condition or cross-phase gates.

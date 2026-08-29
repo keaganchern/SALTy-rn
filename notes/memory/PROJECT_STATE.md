@@ -100,7 +100,7 @@ program names have local assertions: twelve have only derived invariants, while
 `f32-dwconv-minmax` and `f32-igemm-minmax` contain real pointer-table non-null
 constraints. See `../elementwise-compiler/ASSERT_AUDIT.md`.
 
-**Confirmed intrinsic snapshot:** the configured index has 96 exact typed variants:
+**Historical intrinsic snapshot before M4:** the configured index had 96 exact typed variants:
 54 Neon variants under 49 spellings and 42 RVV variants under 36 spellings. The
 local corpus contains 190 Neon and 165 RVV lexical spellings. Semantic adequacy is
 not established and there are zero configured independent reviewers.
@@ -272,7 +272,27 @@ status/trial count, concrete counterexample witnesses, and separate value/C/ISA
 claims. The retained legacy table is labeled historical and cannot affect the
 elementwise projection. An independent review first found three missing evidence
 fields in the UI; after they were added, convergence review returned `GO`.
-`reviewed_intrinsics` remains zero, so the active milestone is intrinsic review.
+The generated intrinsic registry now has 105 exact typed variants. Across the
+twenty-program dependency graph, 94 architecture/spelling pieces are configured;
+the first nine F32 structural/schedule pieces are Lean-checked and independently
+reviewed. The active milestone is the remaining semantic intrinsic families.
+
+**Confirmed first intrinsic-review batch:** one program-independent typed library
+adds exact F32 load/store, low/high extraction, lane store, RVV load/store, and
+active-length descriptors. Its parse facade is mechanically rendered from that
+library. Nine content-addressed review records bind exact source type, descriptor,
+the real generic/context-specific lowering files, pinned Arm ACLE or RISC-V Vector
+C Intrinsics evidence, check outputs, policy, and reviewer. A first audit found
+that `vst1_lane_f32` accepted lane 1 but always modeled lane 0; the lowering now
+uses `drop (lane * width)` and rejects lane 2. Convergence review returned `GO`.
+These approvals establish repository value-model evidence only, not complete C or
+ISA correctness.
+
+**Confirmed intrinsic-batch validation:** the complete repository suite passes
+412 tests. Rebuilding the checked-in corpus twice produces the same complete tree
+digest; the graph has zero stale program nodes and reports 9/94 reviewed dependency
+pieces. The independent convergence audit returned `GO` for all nine exact
+variants after reproducing the lane-1 positive and lane-2 rejection tests.
 
 **Confirmed concrete false obligation:** `s8-vclamp`'s 64-byte Neon phase applies
 signed max-with-min and then min-with-max, while its 8-byte and tail phases apply

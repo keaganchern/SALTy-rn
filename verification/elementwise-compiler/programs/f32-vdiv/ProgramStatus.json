@@ -15,16 +15,7 @@
   "manifest_sha256": null,
   "missing_intrinsics": [
     "neon:vdivq_f32",
-    "neon:vget_high_f32",
-    "neon:vget_low_f32",
-    "neon:vld1q_f32",
-    "neon:vst1_f32",
-    "neon:vst1_lane_f32",
-    "neon:vst1q_f32",
-    "rvv:__riscv_vfdiv_vv_f32m8",
-    "rvv:__riscv_vle32_v_f32m8",
-    "rvv:__riscv_vse32_v_f32m8",
-    "rvv:__riscv_vsetvl_e32m8"
+    "rvv:__riscv_vfdiv_vv_f32m8"
   ],
   "neon_function": "test_neon",
   "neon_intrinsics": [

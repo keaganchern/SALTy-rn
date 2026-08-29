@@ -1,0 +1,55 @@
+{
+  "architecture": "rvv",
+  "argument_count": 3,
+  "artifact_kind": "intrinsic-review",
+  "checks": [
+    {
+      "command": "PYTHONPATH=.:src pytest -q tests/verification/elementwise_compiler/test_reviews.py tests/verification/lean_backend/test_intrinsic_index.py tests/verification/lean_backend/test_intrinsic_index_inventory.py tests/verification/elementwise_compiler/test_wide_generation.py::test_real_f32_lane_store_uses_the_requested_lane tests/verification/elementwise_compiler/test_wide_generation.py::test_real_f32_lane_store_rejects_out_of_range_lane",
+      "name": "descriptor-tests",
+      "output_path": "notes/reviews/evidence/elementwise-m4-descriptor-tests.txt",
+      "output_sha256": "bfc10633a372eaa2dbd109a77a4ced1ffca55f677920671061fe7ccf9a32a8a8",
+      "status": "passed"
+    },
+    {
+      "command": "PYTHONPATH=.:src pytest -q tests/verification/elementwise_compiler/test_wide_generation.py::test_real_f32_structural_library_reaches_proof_task_without_local_index",
+      "name": "lean-elaboration",
+      "output_path": "notes/reviews/evidence/elementwise-m4-lean-elaboration.txt",
+      "output_sha256": "37cb23fbf2c07bbe26e2a595bdf52fed651fad263676040165a991df9c3a6fec",
+      "status": "passed"
+    }
+  ],
+  "descriptor_sha256": "4cc2952e2a6f3919672d7666a62bb650c31e835710e3fe84e510dc12e4ae32f5",
+  "detail": "Exact float* / vfloat32m8_t / size_t structural store remains approved; the held-out RVV real-f32 path still resolves through the shared canonical index.",
+  "evidence": [
+    {
+      "authority": "RISC-V Vector C Intrinsics",
+      "file_sha256": "67f2e2cbd8966167d75236b4d60b1f4929009d3efbcce7cd98e79142aa205ffc",
+      "path": "auto-generated/api-testing/vse32.c",
+      "revision": "b611045daf6c1f2449a5dad6f1a1a6b244b52798",
+      "selectors": [
+        "__riscv_vse32_v_f32m8"
+      ],
+      "source_url": "https://github.com/riscv-non-isa/rvv-intrinsic-doc/blob/b611045daf6c1f2449a5dad6f1a1a6b244b52798/auto-generated/api-testing/vse32.c"
+    },
+    {
+      "authority": "RISC-V Vector C Intrinsics",
+      "file_sha256": "4513261228660d25e33ffc07ea7a484c17ab2ed7003e41d0d620741fd0dda757",
+      "path": "doc/rvv-intrinsic-spec.adoc",
+      "revision": "b611045daf6c1f2449a5dad6f1a1a6b244b52798",
+      "selectors": [
+        "__riscv_vse32_v_f32m8"
+      ],
+      "source_url": "https://github.com/riscv-non-isa/rvv-intrinsic-doc/blob/b611045daf6c1f2449a5dad6f1a1a6b244b52798/doc/rvv-intrinsic-spec.adoc"
+    }
+  ],
+  "function_type": "void (float *, vfloat32m8_t, size_t)",
+  "implementation_sha256": "3a64078e066f44b20371cca5ee7e5cd336b284e60443b0a04130a513a53da521",
+  "policy_path": "notes/policies/elementwise-intrinsic-review-v1.md",
+  "policy_sha256": "3ec443abda592ed59dbe58c9fca118942f4306457f8d4992bae5be5139e8ecc5",
+  "review_id": "intrinsic-review:rvv:__riscv_vse32_v_f32m8:d6cf96e6b0cf7289",
+  "review_sha256": "5f8a24c011ac6107a04d3ccadfdffa74ea77030017d1034e04104757a5fc25c4",
+  "reviewer": "agent:independent-reviewer",
+  "schema_version": 1,
+  "spelling": "__riscv_vse32_v_f32m8",
+  "verdict": "approved"
+}

@@ -17,6 +17,7 @@ from workflow.verification.elementwise_compiler.capabilities import (
     LayoutViewCapability,
     ScheduleFamilyCapability,
 )
+from workflow.verification.elementwise_compiler.reviews import IntrinsicReview
 from workflow.verification.elementwise_compiler.schema import (
     ArtifactKind,
     CounterexampleWitness,
@@ -83,6 +84,60 @@ def _verify_report(root: Path) -> Mapping[str, Any]:
     ):
         raise ElementwiseGraphError("CorpusReport collections are malformed")
     return report
+
+
+def _verify_intrinsic_registry(
+    root: Path, binding: object
+) -> tuple[tuple[IntrinsicCapability, IntrinsicReview | None], ...]:
+    if not isinstance(binding, Mapping):
+        raise ElementwiseGraphError("intrinsic registry binding is malformed")
+    path = _bound_path(root, binding.get("path"), "intrinsic registry path")
+    registry = _json(path)
+    unsigned = dict(registry)
+    digest = unsigned.pop("registry_sha256", None)
+    if (
+        registry.get("artifact_kind") != "elementwise-intrinsic-registry"
+        or registry.get("schema_version") != 1
+        or digest != canonical_sha256(unsigned)
+        or binding.get("sha256") != digest
+    ):
+        raise ElementwiseGraphError("intrinsic registry digest disagrees with contents")
+    raw_variants = registry.get("variants")
+    if not isinstance(raw_variants, list):
+        raise ElementwiseGraphError("intrinsic registry variants are malformed")
+    variants: list[tuple[IntrinsicCapability, IntrinsicReview | None]] = []
+    seen: set[tuple[str, str]] = set()
+    for raw in raw_variants:
+        if not isinstance(raw, Mapping) or set(raw) != {"capability", "review"}:
+            raise ElementwiseGraphError("intrinsic registry entry is malformed")
+        capability_raw = raw["capability"]
+        if not isinstance(capability_raw, Mapping):
+            raise ElementwiseGraphError("intrinsic registry capability is malformed")
+        capability = IntrinsicCapability.from_record(capability_raw)
+        review_raw = raw["review"]
+        review = None
+        if review_raw is not None:
+            if not isinstance(review_raw, Mapping):
+                raise ElementwiseGraphError("intrinsic registry review is malformed")
+            review = IntrinsicReview.from_record(review_raw)
+            if (
+                capability.review_evidence_sha256 != review.sha256
+                or capability.architecture is not review.architecture
+                or capability.spelling != review.spelling
+                or capability.function_type != review.function_type
+                or capability.argument_count != review.argument_count
+                or capability.descriptor_sha256 != review.descriptor_sha256
+                or capability.implementation_sha256 != review.implementation_sha256
+            ):
+                raise ElementwiseGraphError("intrinsic review does not bind its capability")
+        elif capability.review_evidence_sha256 is not None:
+            raise ElementwiseGraphError("reviewed capability has no review record")
+        identity = (capability.capability_id, capability.sha256)
+        if identity in seen:
+            raise ElementwiseGraphError("duplicate intrinsic registry variant")
+        seen.add(identity)
+        variants.append((capability, review))
+    return tuple(variants)
 
 
 def _parse_capability(record: Mapping[str, Any]) -> object:
@@ -428,6 +483,13 @@ def build_elementwise_graph(
             "capabilities": [],
         }
     report = _verify_report(root)
+    registry_variants = _verify_intrinsic_registry(
+        root, report.get("intrinsic_registry")
+    )
+    registry_by_identity = {
+        (capability.capability_id, capability.sha256): capability
+        for capability, _ in registry_variants
+    }
     program_nodes: list[dict[str, Any]] = []
     typed_capabilities: dict[str, IntrinsicCapability] = {}
     for raw in report["programs"]:
@@ -436,6 +498,10 @@ def build_elementwise_graph(
         node, capabilities = _program_node(root, raw)
         program_nodes.append(node)
         for capability in capabilities:
+            if (capability.capability_id, capability.sha256) not in registry_by_identity:
+                raise ElementwiseGraphError(
+                    "program capability is absent from the bound intrinsic registry"
+                )
             typed_capabilities[capability.capability_id] = capability
 
     dependency_nodes: list[dict[str, Any]] = []
@@ -447,19 +513,33 @@ def build_elementwise_graph(
         if separator != ":" or architecture not in {"neon", "rvv"} or not spelling:
             raise ElementwiseGraphError("intrinsic dependency id is malformed")
         matching = [
-            item
-            for item in typed_capabilities.values()
-            if item.architecture.value == architecture and item.spelling == spelling
+            (capability, review)
+            for capability, review in registry_variants
+            if capability.architecture.value == architecture
+            and capability.spelling == spelling
         ]
+        lean_checked = bool(matching) and all(
+            review is not None
+            and any(check.name == "lean-elaboration" for check in review.checks)
+            for _, review in matching
+        )
+        independently_reviewed = bool(matching) and all(
+            review is not None for _, review in matching
+        )
         dependency_nodes.append(
             {
                 "id": intrinsic,
                 "architecture": architecture,
                 "spelling": spelling,
                 "configured": bool(raw.get("configured")) and bool(matching),
-                "reviewed": bool(matching)
-                and all(item.review_evidence_sha256 is not None for item in matching),
+                "defined": bool(raw.get("configured")) and bool(matching),
+                "lean_checked": lean_checked,
+                "reviewed": independently_reviewed,
+                "independently_reviewed": independently_reviewed,
                 "typed_variants": len(matching),
+                "review_sha256": sorted(
+                    review.sha256 for _, review in matching if review is not None
+                ),
                 "programs": list(raw.get("programs", [])),
             }
         )
@@ -485,6 +565,9 @@ def build_elementwise_graph(
                 item["configured"] for item in dependency_nodes
             ),
             "reviewed_intrinsics": sum(item["reviewed"] for item in dependency_nodes),
+            "lean_checked_intrinsics": sum(
+                item["lean_checked"] for item in dependency_nodes
+            ),
             "intrinsic_dependencies": len(dependency_nodes),
             "input_condition_counts": {
                 status: sum(

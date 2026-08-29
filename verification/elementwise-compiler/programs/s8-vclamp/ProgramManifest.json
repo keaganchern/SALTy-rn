@@ -1,6 +1,6 @@
 {
   "artifact_kind": "elementwise-program-manifest",
-  "compiler_sha256": "f79bdddd9e2621d190afd6445bad81254fbedeb1d86d35210d6def174e2b6673",
+  "compiler_sha256": "6a2233897cf100d77d51bca094c62686dd92fb45219c186539675ccdcb9c4628",
   "consumed_effects_sha256": "f07b94c87c7e15e283b898e9a0482fb2e409e22d12aa197b5043c127fe562dce",
   "contracts": {
     "neon": {
@@ -339,107 +339,107 @@
   "intrinsic_capabilities": [
     {
       "capability_id": "intrinsic:neon:vdupq_n_s8:8501da31aa4fae5c",
-      "sha256": "6ecce24494d803a9071f894cf5671a280cc135da9034a6938880ef7173fe5ce2",
+      "sha256": "153d30080c95086353c41cb69ac8c2febd2aae988fb9b0738198a98b01b7b886",
       "version": 1
     },
     {
       "capability_id": "intrinsic:neon:vext_s8:1aa05ae2f5d3793c",
-      "sha256": "412b691257f271315da93ce7486e52a4963295ab46c58ef429a46d5bea80a94a",
+      "sha256": "fb3fbcb16e56667d2800f1b4ae2bd494c661350f90460cb818c93e484c71e44d",
       "version": 1
     },
     {
       "capability_id": "intrinsic:neon:vget_low_s8:4b71d9a8ca9f8fa6",
-      "sha256": "b4faac97d518dc87002869e614f3b601a78e410082f1776382a78c028843ad81",
+      "sha256": "742758af70b418300603577b41e82626e33f8a693d16dd9cd6cb1b17d8a9d0f4",
       "version": 1
     },
     {
       "capability_id": "intrinsic:neon:vld1_s8:e08b633e4217c5d8",
-      "sha256": "4e5dc8782e4b299d1b4f18e8cbdca5e9ee2b243d591037aec852b64aa45e6217",
+      "sha256": "e7df74552973b2416c91f221abe0a5c67d965d9444805e9d4645a7cae792ca80",
       "version": 1
     },
     {
       "capability_id": "intrinsic:neon:vld1q_s8:f203ec9002ac73d5",
-      "sha256": "de5f6cc18b752b5a1139d9b4042688030ad230785022f4fd6f26fe82a0f9ba6e",
+      "sha256": "9b576c6940fb2166fcb76c801507fafd148b9cf3433445cced11cd988afc1312",
       "version": 1
     },
     {
       "capability_id": "intrinsic:neon:vmax_s8:4666f8cef17a6832",
-      "sha256": "cd095ed914ffd0a23f178709b3375be4af57fe0c37f9cd5682788d786f912196",
+      "sha256": "812b0f6b43b7e4cdea4ad22e7e84b955cfa5991d089914e6776557e7e321eb3b",
       "version": 1
     },
     {
       "capability_id": "intrinsic:neon:vmaxq_s8:b0ec1487faf3a039",
-      "sha256": "ed61e3634b637423afd43effa278b8f50dd8ba4c5ab51aa33ace8cc4cf19ddc3",
+      "sha256": "95f61d1250c4b6d22daf785b4c1c7b83be549719847230bc6e7092696423bd73",
       "version": 1
     },
     {
       "capability_id": "intrinsic:neon:vmin_s8:d722c931326e6b6d",
-      "sha256": "827fbe7c19fabc1f4b4dd61f66017972105c52250c8aa8e190be926bb910aadd",
+      "sha256": "38518418b4cd8cbc216dbb36f09bb84cda5d472b13f2a3e63420fc172b8d9346",
       "version": 1
     },
     {
       "capability_id": "intrinsic:neon:vminq_s8:251823a01718f0d0",
-      "sha256": "e72d9dbb523453fa929d1e5d8b5c39d9c6fd249138e9083786e0c91a5693189b",
+      "sha256": "d14ad557c28862ae7b999c0b7051c14f4449a52eff9d059e11f0ec2d2d09eb75",
       "version": 1
     },
     {
       "capability_id": "intrinsic:neon:vreinterpret_u16_s8:6050a5808f36a6c7",
-      "sha256": "33aba16e77f13e0ef8257c53a0420404c8f23009848ae65a53a5222f0f4dc371",
+      "sha256": "7475bfd0f21826d78417ec0bf4e2ff35c8caed5f425649687bd7ef4353ee1eb9",
       "version": 1
     },
     {
       "capability_id": "intrinsic:neon:vreinterpret_u32_s8:bdc1448be14e2f25",
-      "sha256": "56a25bed68f01e3f017ca3dd20c5889386a51df2fd923edebff3a6ced5bc52ee",
+      "sha256": "91b0c2f0ac15c5553756af7c37d50a31798c52597881a7d97fd4240c2f4f9dd7",
       "version": 1
     },
     {
       "capability_id": "intrinsic:neon:vst1_lane_s8:ab5d66fb411245d0",
-      "sha256": "cda9081c11095e8877fcb36bc38316171cb7c5d44d51e574a8cc1987775c63d3",
+      "sha256": "c1d1af18b22872b2fcccc3f37a3f888e914effa04d13e30da7da9ee444228876",
       "version": 1
     },
     {
       "capability_id": "intrinsic:neon:vst1_lane_u16:8c29885c2a5c8302",
-      "sha256": "95f5fab18d4988b8a2a13ccce7f9929409e32c14b7af27516b60eff4801a2317",
+      "sha256": "cce312ad8d1cc3e3dfb6e719905d76b75057672ed7c8db5e77c9ffea047a4714",
       "version": 1
     },
     {
       "capability_id": "intrinsic:neon:vst1_lane_u32:7f96fd355ade363b",
-      "sha256": "3e4cccb02f961db91969aa1ce38f0f5540a16eff5cd7604f62f0ded7a0ac3ec9",
+      "sha256": "0b3e39edba025ab828bdca955e30e088a856c180c80a36980c776bf11836d6d7",
       "version": 1
     },
     {
       "capability_id": "intrinsic:neon:vst1_s8:bc8d3aeeda2133bf",
-      "sha256": "97d71a94f04cc6577d1b56b8fded71ab918d78279e5381eb84bc58b574146dfa",
+      "sha256": "e4380d050280bb05011cfe7f2cc3e449db2e576f7766ba056791f96485ebbe6c",
       "version": 1
     },
     {
       "capability_id": "intrinsic:neon:vst1q_s8:0999c7ee3f441eee",
-      "sha256": "4a30a4ad134239d4830b9586655ecf1953ff2916f8f95cea4a0ab9177381d71a",
+      "sha256": "07a8da61f2a746c2a414fa2d739047e25fcd95049a40626a6fb05bd3074d370b",
       "version": 1
     },
     {
       "capability_id": "intrinsic:rvv:__riscv_vle8_v_i8m8:264df61944019333",
-      "sha256": "696880047e3c973fdc1130f3a824a3d8239f45316e67a230e06b6baaea961956",
+      "sha256": "2e7b64ca29b13bd9a7ebad03d21dd5f479b4d18d969dac30872a2e962c9bd4e3",
       "version": 1
     },
     {
       "capability_id": "intrinsic:rvv:__riscv_vmax_vx_i8m8:8dd331b2c67216d6",
-      "sha256": "0f64ca7021c97b0eeea038385c7d8464a9afa4a7eb3aa1b413cc2d46cdf49610",
+      "sha256": "06e28cc243260354cd4de6a3ab05179497fcbde91c63526f5354488b174463b2",
       "version": 1
     },
     {
       "capability_id": "intrinsic:rvv:__riscv_vmin_vx_i8m8:f7eb76b84712f9a9",
-      "sha256": "142ccb5d47d881ac4c433a07b1537061a2a49db9cfa84b4d701c07a40638ae5b",
+      "sha256": "747ab9c502d54c79ac28c34c7d3279acdbad2296610e21fd36b15771ba3fa3ad",
       "version": 1
     },
     {
       "capability_id": "intrinsic:rvv:__riscv_vse8_v_i8m8:3764806a2d79805d",
-      "sha256": "44e429ee60d5996192a631a0e7d801cb05f8325424e1a1c468ede719ad9cdbd6",
+      "sha256": "67809167ddbf26af912543354ad55db65afc01044f96423823f75db462097055",
       "version": 1
     },
     {
       "capability_id": "intrinsic:rvv:__riscv_vsetvl_e8m8:ff8292e21b51482a",
-      "sha256": "a57c82fd2869ab1fc250d45a5421cd43cdd6a27d3caf6c5de4603aecb450a60b",
+      "sha256": "79ca3e646d699996493bb1c998976ccafb75a7ac455f5db4f4424ed69da622d9",
       "version": 1
     }
   ],
@@ -467,7 +467,7 @@
     ]
   },
   "local_assertions": [],
-  "manifest_sha256": "2113815149b0aff4ea1929b961021a4a70edfe70866eb6fce04d193dd98b3793",
+  "manifest_sha256": "834eb4a825afe9afa322341c9aaddeb8bd407095b07155ebfbdc31726ac3da3e",
   "schedules": [
     {
       "architecture": "neon",

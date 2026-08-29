@@ -274,7 +274,7 @@
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "neon:vget_high_f32",
       "programs": [
         "f32-vadd",
@@ -304,7 +304,7 @@
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "neon:vget_low_f32",
       "programs": [
         "f32-vadd",
@@ -376,7 +376,7 @@
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "neon:vld1q_f32",
       "programs": [
         "f32-f16-vcvt",
@@ -749,7 +749,7 @@
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "neon:vst1_f32",
       "programs": [
         "f32-vadd",
@@ -768,7 +768,7 @@
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "neon:vst1_lane_f32",
       "programs": [
         "f32-vadd",
@@ -856,7 +856,7 @@
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "neon:vst1q_f32",
       "programs": [
         "f32-vadd",
@@ -1098,7 +1098,7 @@
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "rvv:__riscv_vle32_v_f32m8",
       "programs": [
         "f32-f16-vcvt",
@@ -1398,7 +1398,7 @@
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "rvv:__riscv_vse32_v_f32m8",
       "programs": [
         "f32-vadd",
@@ -1447,7 +1447,7 @@
       ]
     },
     {
-      "configured": false,
+      "configured": true,
       "intrinsic": "rvv:__riscv_vsetvl_e32m8",
       "programs": [
         "f32-f16-vcvt",
@@ -1572,6 +1572,10 @@
       ]
     }
   ],
+  "intrinsic_registry": {
+    "path": "IntrinsicRegistry.json",
+    "sha256": "b606951b0d2e0007a64501fa83f4f165ec0afe1d19314768f9159116c9bfac2e"
+  },
   "programs": [
     {
       "artifact_index": null,
@@ -1605,7 +1609,6 @@
         "neon:vdupq_n_u32",
         "neon:vext_u16",
         "neon:vget_low_u16",
-        "neon:vld1q_f32",
         "neon:vmaxq_u32",
         "neon:vmovn_u32",
         "neon:vmulq_f32",
@@ -1624,7 +1627,6 @@
         "rvv:__riscv_vfabs_v_f32m8",
         "rvv:__riscv_vfadd_vv_f32m8",
         "rvv:__riscv_vfmul_vf_f32m8",
-        "rvv:__riscv_vle32_v_f32m8",
         "rvv:__riscv_vmaxu_vx_u32m8",
         "rvv:__riscv_vmerge_vxm_u16m4",
         "rvv:__riscv_vmsgtu_vx_u32m8_b4",
@@ -1632,8 +1634,7 @@
         "rvv:__riscv_vor_vv_u16m4",
         "rvv:__riscv_vreinterpret_v_f32m8_u32m8",
         "rvv:__riscv_vreinterpret_v_u32m8_f32m8",
-        "rvv:__riscv_vse16_v_u16m4",
-        "rvv:__riscv_vsetvl_e32m8"
+        "rvv:__riscv_vse16_v_u16m4"
       ],
       "neon_function": "test_neon",
       "neon_intrinsics": [
@@ -1717,16 +1718,7 @@
       "manifest_sha256": null,
       "missing_intrinsics": [
         "neon:vaddq_f32",
-        "neon:vget_high_f32",
-        "neon:vget_low_f32",
-        "neon:vld1q_f32",
-        "neon:vst1_f32",
-        "neon:vst1_lane_f32",
-        "neon:vst1q_f32",
-        "rvv:__riscv_vfadd_vv_f32m8",
-        "rvv:__riscv_vle32_v_f32m8",
-        "rvv:__riscv_vse32_v_f32m8",
-        "rvv:__riscv_vsetvl_e32m8"
+        "rvv:__riscv_vfadd_vv_f32m8"
       ],
       "neon_function": "test_neon",
       "neon_intrinsics": [
@@ -1772,15 +1764,9 @@
       "layout_preflight": "grouped-planar",
       "manifest_sha256": null,
       "missing_intrinsics": [
-        "neon:vget_high_f32",
-        "neon:vget_low_f32",
-        "neon:vld1q_f32",
         "neon:vmlaq_f32",
         "neon:vmlsq_f32",
         "neon:vmulq_f32",
-        "neon:vst1_f32",
-        "neon:vst1_lane_f32",
-        "neon:vst1q_f32",
         "rvv:__riscv_vfadd_vv_f32m4",
         "rvv:__riscv_vfmul_vv_f32m4",
         "rvv:__riscv_vfsub_vv_f32m4",
@@ -1837,16 +1823,7 @@
       "manifest_sha256": null,
       "missing_intrinsics": [
         "neon:vdivq_f32",
-        "neon:vget_high_f32",
-        "neon:vget_low_f32",
-        "neon:vld1q_f32",
-        "neon:vst1_f32",
-        "neon:vst1_lane_f32",
-        "neon:vst1q_f32",
-        "rvv:__riscv_vfdiv_vv_f32m8",
-        "rvv:__riscv_vle32_v_f32m8",
-        "rvv:__riscv_vse32_v_f32m8",
-        "rvv:__riscv_vsetvl_e32m8"
+        "rvv:__riscv_vfdiv_vv_f32m8"
       ],
       "neon_function": "test_neon",
       "neon_intrinsics": [
@@ -1894,22 +1871,13 @@
         "neon:vbslq_f32",
         "neon:vcltq_s32",
         "neon:vdupq_n_f32",
-        "neon:vget_high_f32",
-        "neon:vget_low_f32",
-        "neon:vld1q_f32",
         "neon:vmovq_n_s32",
         "neon:vmulq_f32",
         "neon:vreinterpretq_s32_f32",
-        "neon:vst1_f32",
-        "neon:vst1_lane_f32",
-        "neon:vst1q_f32",
         "rvv:__riscv_vfmul_vf_f32m8",
-        "rvv:__riscv_vle32_v_f32m8",
         "rvv:__riscv_vmerge_vvm_f32m8",
         "rvv:__riscv_vmslt_vx_i32m8_b4",
-        "rvv:__riscv_vreinterpret_v_f32m8_i32m8",
-        "rvv:__riscv_vse32_v_f32m8",
-        "rvv:__riscv_vsetvl_e32m8"
+        "rvv:__riscv_vreinterpret_v_f32m8_i32m8"
       ],
       "neon_function": "test_neon",
       "neon_intrinsics": [
@@ -1963,17 +1931,8 @@
       "layout_preflight": "scalar-lane",
       "manifest_sha256": null,
       "missing_intrinsics": [
-        "neon:vget_high_f32",
-        "neon:vget_low_f32",
-        "neon:vld1q_f32",
         "neon:vmaxq_f32",
-        "neon:vst1_f32",
-        "neon:vst1_lane_f32",
-        "neon:vst1q_f32",
-        "rvv:__riscv_vfmax_vv_f32m8",
-        "rvv:__riscv_vle32_v_f32m8",
-        "rvv:__riscv_vse32_v_f32m8",
-        "rvv:__riscv_vsetvl_e32m8"
+        "rvv:__riscv_vfmax_vv_f32m8"
       ],
       "neon_function": "test_neon",
       "neon_intrinsics": [
@@ -2019,17 +1978,8 @@
       "layout_preflight": "scalar-lane",
       "manifest_sha256": null,
       "missing_intrinsics": [
-        "neon:vget_high_f32",
-        "neon:vget_low_f32",
-        "neon:vld1q_f32",
         "neon:vminq_f32",
-        "neon:vst1_f32",
-        "neon:vst1_lane_f32",
-        "neon:vst1q_f32",
-        "rvv:__riscv_vfmin_vv_f32m8",
-        "rvv:__riscv_vle32_v_f32m8",
-        "rvv:__riscv_vse32_v_f32m8",
-        "rvv:__riscv_vsetvl_e32m8"
+        "rvv:__riscv_vfmin_vv_f32m8"
       ],
       "neon_function": "test_neon",
       "neon_intrinsics": [
@@ -2075,17 +2025,8 @@
       "layout_preflight": "scalar-lane",
       "manifest_sha256": null,
       "missing_intrinsics": [
-        "neon:vget_high_f32",
-        "neon:vget_low_f32",
-        "neon:vld1q_f32",
         "neon:vmulq_f32",
-        "neon:vst1_f32",
-        "neon:vst1_lane_f32",
-        "neon:vst1q_f32",
-        "rvv:__riscv_vfmul_vv_f32m8",
-        "rvv:__riscv_vle32_v_f32m8",
-        "rvv:__riscv_vse32_v_f32m8",
-        "rvv:__riscv_vsetvl_e32m8"
+        "rvv:__riscv_vfmul_vv_f32m8"
       ],
       "neon_function": "test_neon",
       "neon_intrinsics": [
@@ -2131,18 +2072,9 @@
       "layout_preflight": "scalar-lane",
       "manifest_sha256": null,
       "missing_intrinsics": [
-        "neon:vget_high_f32",
-        "neon:vget_low_f32",
         "neon:vld1q_dup_f32",
-        "neon:vld1q_f32",
         "neon:vmulq_f32",
-        "neon:vst1_f32",
-        "neon:vst1_lane_f32",
-        "neon:vst1q_f32",
-        "rvv:__riscv_vfmul_vf_f32m8",
-        "rvv:__riscv_vle32_v_f32m8",
-        "rvv:__riscv_vse32_v_f32m8",
-        "rvv:__riscv_vsetvl_e32m8"
+        "rvv:__riscv_vfmul_vf_f32m8"
       ],
       "neon_function": "test_neon",
       "neon_intrinsics": [
@@ -2192,29 +2124,20 @@
         "neon:vaddq_f32",
         "neon:vbslq_f32",
         "neon:vcaltq_f32",
-        "neon:vget_high_f32",
-        "neon:vget_low_f32",
-        "neon:vld1q_f32",
         "neon:vmovq_n_u32",
         "neon:vorrq_u32",
         "neon:vreinterpretq_f32_u32",
-        "neon:vst1_f32",
-        "neon:vst1_lane_f32",
-        "neon:vst1q_f32",
         "neon:vsubq_f32",
         "rvv:__riscv_vfabs_v_f32m8",
         "rvv:__riscv_vfadd_vf_f32m8",
         "rvv:__riscv_vfsgnj_vv_f32m8",
         "rvv:__riscv_vfsub_vf_f32m8",
-        "rvv:__riscv_vle32_v_f32m8",
         "rvv:__riscv_vmerge_vvm_f32m8",
         "rvv:__riscv_vmfgt_vf_f32m8_b4",
         "rvv:__riscv_vmfne_vv_f32m8_b4",
         "rvv:__riscv_vor_vx_u32m8",
         "rvv:__riscv_vreinterpret_v_f32m8_u32m8",
-        "rvv:__riscv_vreinterpret_v_u32m8_f32m8",
-        "rvv:__riscv_vse32_v_f32m8",
-        "rvv:__riscv_vsetvl_e32m8"
+        "rvv:__riscv_vreinterpret_v_u32m8_f32m8"
       ],
       "neon_function": "test_neon",
       "neon_intrinsics": [
@@ -2276,17 +2199,8 @@
       "layout_preflight": "scalar-lane",
       "manifest_sha256": null,
       "missing_intrinsics": [
-        "neon:vget_high_f32",
-        "neon:vget_low_f32",
-        "neon:vld1q_f32",
         "neon:vsqrtq_f32",
-        "neon:vst1_f32",
-        "neon:vst1_lane_f32",
-        "neon:vst1q_f32",
-        "rvv:__riscv_vfsqrt_v_f32m8",
-        "rvv:__riscv_vle32_v_f32m8",
-        "rvv:__riscv_vse32_v_f32m8",
-        "rvv:__riscv_vsetvl_e32m8"
+        "rvv:__riscv_vfsqrt_v_f32m8"
       ],
       "neon_function": "test_neon",
       "neon_intrinsics": [
@@ -2332,17 +2246,8 @@
       "layout_preflight": "scalar-lane",
       "manifest_sha256": null,
       "missing_intrinsics": [
-        "neon:vget_high_f32",
-        "neon:vget_low_f32",
-        "neon:vld1q_f32",
-        "neon:vst1_f32",
-        "neon:vst1_lane_f32",
-        "neon:vst1q_f32",
         "neon:vsubq_f32",
-        "rvv:__riscv_vfsub_vv_f32m8",
-        "rvv:__riscv_vle32_v_f32m8",
-        "rvv:__riscv_vse32_v_f32m8",
-        "rvv:__riscv_vsetvl_e32m8"
+        "rvv:__riscv_vfsub_vv_f32m8"
       ],
       "neon_function": "test_neon",
       "neon_intrinsics": [
@@ -2390,15 +2295,9 @@
         "neon:vaddw_s8",
         "neon:vcvtq_f32_s32",
         "neon:vdupq_n_f32",
-        "neon:vget_high_f32",
-        "neon:vget_low_f32",
         "neon:vmulq_f32",
-        "neon:vst1_f32",
-        "neon:vst1_lane_f32",
-        "neon:vst1q_f32",
         "rvv:__riscv_vfcvt_f_x_v_f32m8",
         "rvv:__riscv_vfmul_vf_f32m8",
-        "rvv:__riscv_vse32_v_f32m8",
         "rvv:__riscv_vsub_vx_i16m4"
       ],
       "neon_function": "test_neon",
@@ -2454,7 +2353,7 @@
         "input_b"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": "b8cb81a4ab13907b6ecc61a36fafb042ed57634a9990a3e094a9d30459241e81",
+      "manifest_sha256": "cc7595cc1a7d04d7e86616c8db70271b3178bb1cdc2369b407873a2bd44cf609",
       "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
@@ -2529,7 +2428,7 @@
         "input"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": "847e90c63140b69dab10d8f62d813de613a24953beb389ffa949e85e986623a2",
+      "manifest_sha256": "a1b161284ee2777cee9fb2a5f5e4a16bcb03de5143a2331ba6d462aad14246ac",
       "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
@@ -2586,7 +2485,7 @@
         "input"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": "0b381186609b8141d72a70300036831f33b861e37bf41599407cacb782f6589f",
+      "manifest_sha256": "d3c276208da8d9e9ccd1808595f752ae3c1b1a4713333ec8f331876ea175a93a",
       "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
@@ -2740,17 +2639,11 @@
         "neon:vaddw_u8",
         "neon:vcvtq_f32_s32",
         "neon:vdupq_n_f32",
-        "neon:vget_high_f32",
-        "neon:vget_low_f32",
         "neon:vmulq_f32",
         "neon:vreinterpretq_u16_s16",
-        "neon:vst1_f32",
-        "neon:vst1_lane_f32",
-        "neon:vst1q_f32",
         "rvv:__riscv_vadd_vx_u16m4",
         "rvv:__riscv_vfcvt_f_x_v_f32m8",
         "rvv:__riscv_vfmul_vf_f32m8",
-        "rvv:__riscv_vse32_v_f32m8",
         "rvv:__riscv_vzext_vf2_u16m4"
       ],
       "neon_function": "test_neon",
@@ -2809,7 +2702,7 @@
         "input_b"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": "5b87af7efafd01e3cacadfc326ce92111c8f9757898ea42a03ca73c358bfceec",
+      "manifest_sha256": "2c994efdaee21b1118801123275d69c05d71e3db3a890cd4c1999b7268c936cb",
       "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
@@ -2884,7 +2777,7 @@
         },
         "path": "programs/s8-vclamp/Counterexample.json",
         "right_output": 5,
-        "sha256": "8b1021e6f167222f35401042d3ad570a792988286ba41cb5c487e3f5d2c606c3"
+        "sha256": "2a8d0e8e373027f9930e98a48618bc7b1a04c5265c3fd4cc8fe0d8fd8af17907"
       },
       "cross_phase_status": "lean-checked-counterexample",
       "detail": "Lean checked a concrete disagreement between generated Neon phases",
@@ -2896,7 +2789,7 @@
         "input"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": "2113815149b0aff4ea1929b961021a4a70edfe70866eb6fce04d193dd98b3793",
+      "manifest_sha256": "834eb4a825afe9afa322341c9aaddeb8bd407095b07155ebfbdc31726ac3da3e",
       "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
@@ -2937,9 +2830,9 @@
       "status_layer": "typed-generated"
     }
   ],
-  "report_sha256": "0e69a285e7d12cc6eafd3c0ed2a65c739e8e2a11fad93716593fc192e981fcf1",
+  "report_sha256": "20ba0a07638eae07dfd8d2d00da2462b2fdf068e32153e6a517271bee663cb6d",
   "scalar_layout_scope": 19,
-  "schema_version": 1,
+  "schema_version": 2,
   "status_counts": {
     "counterexample": 1,
     "external-condition-missing": 4,

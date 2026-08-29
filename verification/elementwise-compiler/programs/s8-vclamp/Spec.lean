@@ -3,8 +3,8 @@ import SALT.Corpus.s8vclamp.Models
 
 namespace SALT.Corpus.s8vclamp
 
-def manifestSha256InSpec : String := "2113815149b0aff4ea1929b961021a4a70edfe70866eb6fce04d193dd98b3793"
-def modelsSha256InSpec : String := "e26918393ea91f126a4ac098fe6c16681057c4d751ca6dfc06c359a80078e828"
+def manifestSha256InSpec : String := "834eb4a825afe9afa322341c9aaddeb8bd407095b07155ebfbdc31726ac3da3e"
+def modelsSha256InSpec : String := "2e52b53cc556ff6d424a3d2d13ddf623c482521bacfd2d39429975dd87e0300b"
 def sharedEntryContractSha256 : String := "d3451fad1964124247d8f6f7c65b8c38cb60dd2b873b45589dc153cba6644130"
 def externalConditionSha256InSpec : String := "490a7cade552bd3a2d41e3e0ad1a0c87bac72e4f266d03998c2c973ea3531104"
 

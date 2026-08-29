@@ -688,10 +688,19 @@ def _consume_little_endian_lane_store(
     ):
         raise CaseEmissionError(f"{call.spelling}: expected a reviewed lane store")
     emitter._validate_immediates(call, spec)
+    lane = call.arguments[2].constant_value
+    if not isinstance(lane, int):
+        raise CaseEmissionError(f"{call.spelling}: lane must be an integer constant")
     value = emitter._resolve(call.arguments[1])
+    offset = lane * width
+    selected = (
+        f"({value}).take {width}"
+        if offset == 0
+        else f"(({value}).drop {offset}).take {width}"
+    )
     emitter.consumed.add(call.node_id)
     emitter.lines.append(
-        f"  let {name} := if live.testBit {bit} then ({value}).take {width} else []"
+        f"  let {name} := if live.testBit {bit} then {selected} else []"
     )
     return name
 

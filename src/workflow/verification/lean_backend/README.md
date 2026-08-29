@@ -74,7 +74,7 @@ registry binding and the dashboard. `intrinsic_index.py` preserves every
 case-scoped occurrence and groups only descriptors whose architecture, signature,
 immediate contract, operation, Lean target, and operand transforms are identical.
 The current five catalogs contain 161 occurrences, 85 architecture/spelling keys,
-and 96 complete variants. Nine keys have multiple variants despite sharing a C
+and 105 complete variants. Nine keys have multiple variants despite sharing a C
 function signature.
 
 The onboarding report runs the real restricted frontend and suggests compatible
