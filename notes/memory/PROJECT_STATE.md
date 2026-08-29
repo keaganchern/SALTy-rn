@@ -235,19 +235,67 @@ verifies every Manifest/Models/Spec/ProofTask/Proof/Result parent hash before
 displaying progress; a modified child becomes `stale-artifact`. It shows value,
 C, and ISA claim layers separately.
 
-**Remaining capability work:** the fourteen blocked scalar programs need exact
-typed parse facades and reviewed integer/FP intrinsic definitions. `f32-vcmul`
-needs a grouped complex layout/view. These are visible puzzle pieces, not hidden
-program profiles or control-flow generator work. No current corpus program is
-claimed `verified(value)` merely because its Spec was generated.
+**Post-implementation reviewer correction:** the fourteen blocked scalar programs
+do need exact typed parse facades and reviewed integer/FP intrinsic definitions,
+but those are not yet proven to be the only missing pieces. The current emitter
+also accepts only 8-bit input/output streams, and the prefix-tail emitter accepts
+exactly an 8-lane load with 4/2/1 stores. Capability expansion must expose and
+remove those reusable width/tail limitations before claiming that all nineteen
+scalar-layout programs can be unlocked only by adding intrinsics. `f32-vcmul`
+still needs a grouped complex layout/view. No current corpus program is claimed
+`verified(value)` merely because its Spec was generated.
 
 **Confirmed final validation:** the complete repository suite passes with 379
 tests. The refreshed twenty-program graph has zero stale nodes, and the checked-in
-legacy generated models pass deterministic regeneration checks.
+legacy generated models pass deterministic regeneration checks. A later
+independent audit at HEAD `a77933b` reran 57 focused compiler/dashboard tests and
+reproduced the 20/19/1 and 5/14/1 counts.
+
+**Independent final audit verdict:** `GO WITH GAPS` for the reusable framework and
+`NO-GO` for claiming all nineteen scalar programs proved. The new
+`/api/elementwise` graph is artifact-driven, but the legacy `/api/state` path still
+uses hardcoded proof/generated-case authorities. Held-out C can be shown by the
+new graph without configuration (manually reproduced by the reviewer), but that
+dashboard integration is not yet a checked-in regression. The terminal
+`counterexample` state has a schema but no producer. All five generated corpus
+programs stop at proof-free Spec; `reviewed_intrinsics` remains zero.
+
+**Confirmed concrete false obligation:** `s8-vclamp`'s 64-byte Neon phase applies
+signed max-with-min and then min-with-max, while its 8-byte and tail phases apply
+them in the opposite order. Under the currently extracted entry contract,
+`x = 0`, `min = 10`, `max = 5` makes those phases return 5 and 10 respectively.
+Therefore its generated single-`fNeon` secondary-block and whole-loop claims are
+false unless separately evidenced input conditions include `min <= max`.
+Models/Spec generation has not accepted a false theorem—the Spec is proof-free—but
+the pipeline must report this as a checked counterexample/family-contract failure
+or bind an evidenced external contract, rather than leave it as an unexplained
+`spec-generated` program.
+
+**Confirmed upstream contract source:** the extracted kernel body itself does not
+assert `min <= max`; its local harness merely chooses `min = -100` and `max = 100`.
+In full XNNPACK, subgraph validation rejects an output range with lower bound above
+upper bound, and the registered S8 clamp parameter initializer derives the
+microkernel fields from those validated clamp bounds. The older direct S8 minmax
+initializer also asserts `output_min < output_max`. Thus the intended condition is
+real caller/API evidence that our isolated C pair currently drops. The missing
+work is an implemented, content-addressed external-contract bridge from that
+validation/initializer chain to signed `params.min <= params.max` in the generated
+value model; the architecture documents this artifact, but production code does
+not yet generate or consume it.
+
+**Confirmed external-input audit:** the same category affects eight of the twenty
+elementwise programs, not only `s8-vclamp`. They are the eight quantized-parameter
+programs: S8 clamp, QS8/QU8 add, QS8 conversion, QS8 LReLU, QS8 multiply, and the
+QS8/QU8-to-F32 conversions. Their legal parameter ranges or relations are
+constructed/validated outside the isolated kernel entry assertions. Eleven
+programs have no semantic parameter fields; `f32-vlrelu` copies one slope without
+an analogous hidden relation found. See
+`../elementwise-compiler/EXTERNAL_INPUT_AUDIT.md`.
 
 ## Immediate Objective
 
-Expand reviewed intrinsic capabilities through the now-complete artifact chain:
+Close the remaining reusable-width/dashboard gaps, then expand reviewed intrinsic
+capabilities through the artifact chain:
 
 ```text
 registered intrinsics/layout/families + discovered C pair
@@ -258,9 +306,16 @@ registered intrinsics/layout/families + discovered C pair
 ```
 
 The two randomized S8 VMax positives and semantic/structural negatives already
-satisfy the zero-framework-edit gate. New program support must now arrive by
-adding reusable intrinsic or layout capability records, never by adding a program
-id to the compiler or dashboard.
+satisfy the zero-framework-edit gate for the supported 8-bit family. New program
+support must arrive by adding or generalizing reusable intrinsic, layout, element
+width, or tail capabilities, never by adding a program id to the compiler or
+dashboard.
+
+**Delivery target:** all nineteen scalar-layout programs, with every exact
+intrinsic and every final program carrying separate hash-bound independent review
+records. This is executable only after the width/tail, external-input,
+cross-phase/counterexample, and dashboard-authority gaps are closed; success for
+all nineteen cannot be promised before those checks expose remaining mismatches.
 
 ## Independent Plan Review
 

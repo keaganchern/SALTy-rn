@@ -318,3 +318,117 @@ audit; generated `SALT.Generated.GenericSeparateTwoPhase` ProofTask.
 
 **Unresolved:** capability expansion and independent semantic review remain the
 next milestone; this entry closes the compiler-infrastructure milestone only.
+
+## 2026-08-29 — Independent final implementation audit
+
+**Question:** Does HEAD `a77933b` fully match the original elementwise-compiler
+plan, and can the current status be called a finished framework or nineteen
+completed proofs?
+
+**Conclusion:** the independent reviewer returned `GO WITH GAPS` for the framework
+and `NO-GO` for nineteen completed proofs. It reran 57 focused tests, reproduced
+the 20 discovered / 19 scalar / 1 grouped and 5 Spec / 14 intrinsic-missing / 1
+layout counts, and confirmed that the new compiler and `/api/elementwise` graph do
+not use a program allowlist. It also manually fed a randomized held-out artifact
+report to the graph and observed `verified(value)` without dashboard configuration.
+
+The audit found three previously understated gaps. First, the current block
+emitter supports only 8-bit input/output streams and the prefix-tail emitter is
+fixed to an 8-lane load with 4/2/1 stores, so adding intrinsics alone is not yet
+shown sufficient for all nineteen scalar programs. Second, legacy `/api/state`
+still depends on `PROOF_CASES`, `GENERATED_CASES`, and older profile/catalog data.
+Third, `counterexample` is defined as a terminal status but has no producer. The
+held-out dashboard capability also needs a checked-in regression.
+
+**Evidence:** reviewer inspection of `emit.py`, `model_profiles.py`,
+`intrinsic_dashboard/state.py`, `targets.py`, `freshness.py`, and
+`elementwise_graph.py`; 57 focused tests passed in 78.37 seconds; temporary corpus
+and held-out graph runs.
+
+**Unresolved:** generalize width/tail emission, migrate or retire the legacy graph,
+add the held-out dashboard regression and counterexample path, then expand and
+independently review intrinsic capabilities before generating proofs for all
+nineteen scalar programs.
+
+## 2026-08-29 — `s8-vclamp` exposes a real contract/counterexample gap
+
+**Question:** Is the generated two-phase `s8-vclamp` Spec actually true under the
+entry assertions extracted from C?
+
+**Conclusion:** no. The 64-byte Neon block executes max-with-min then min-with-max;
+the 8-byte and tail blocks execute the reverse. With signed `x = 0`, `min = 10`,
+and `max = 5`, they return 5 and 10. The entry assertions contain no
+`min <= max`, so the generated secondary-block and whole-loop single-`fNeon`
+obligations are false. The independent reviewer confirmed the source and generated
+model paths preserve this difference.
+
+This has not produced an unsound proof: `Spec.lean` is proof-free and the program
+status is only `spec-generated`. It does show that the absent counterexample
+producer and external-contract path are required for an intelligible end-to-end
+result. An agent proof may not add `min <= max`; that condition needs independent
+evidence and hash binding, otherwise the direct claim must fail with the concrete
+counterexample.
+
+**Evidence:** `kernels/source/s8-vclamp.c:16-20,24-38,45-57`;
+`verification/elementwise-compiler/programs/s8-vclamp/Models.lean:30-79,109-111`;
+`Spec.lean:15-19,27-31`.
+
+**Follow-up evidence:** full XNNPACK does supply the intended caller/API condition.
+`xnn_subgraph_check_output_min_max` rejects `output_min > output_max`; the
+S8-vclamp registration selects `xnn_init_qs8_clamp_scalar_params`, which quantizes
+those clamp bounds into the microkernel's scalar min/max fields. The older direct
+`xnn_init_s8_minmax_scalar_params` additionally asserts strict
+`output_min < output_max`. In this repository, the harness only instantiates one
+valid pair (`-100`, `100`) and is not a universal contract.
+
+**Unresolved:** implement the counterexample result producer and the
+content-addressed external-contract bridge from upstream validation/initialization
+evidence to the generated signed parameter relation.
+
+## 2026-08-29 — Frequency of missing external parameter conditions
+
+**Question:** Is the missing caller/initializer condition seen in `s8-vclamp` rare
+enough to defer entirely?
+
+**Conclusion:** no. An audit of all twenty elementwise pairs found eight quantized
+parameter programs whose intended XNNPACK parameter ranges or relations are
+constructed or checked outside the isolated kernel entry assertions. Eleven
+programs have no semantic parameter fields, and `f32-vlrelu` has one copied slope
+without a comparable hidden relation found. The detailed classification is in
+`notes/elementwise-compiler/EXTERNAL_INPUT_AUDIT.md`.
+
+The practical decision is not to implement whole-XNNPACK interprocedural analysis
+immediately, but also not to ignore the issue. The dashboard/compiler must first
+surface an unchecked-external-input state for these eight programs. A later
+reusable evidence extractor should follow XNNPACK validation and registered
+microparameter initializer paths without per-program compiler branches.
+
+**Evidence:** current corpus C and report; XNNPACK `tensor.c`,
+`subgraph/validation.c`, `microparams-init.c`, and kernel `.inc` registrations;
+legacy `param_configs.py` as non-trusted corroboration.
+
+**Unresolved:** implement the status and generic external-contract artifact;
+independently prove the initializer-to-generated-parameter relations used by each
+program family.
+
+## 2026-08-29 — Proposal for nineteen reviewed deliveries
+
+**Question:** Is the branch ready to finish the nineteen scalar-layout programs by
+completing intrinsic puzzle pieces, with independent intrinsic and program review,
+and can its commit history stay below eight commits?
+
+**Conclusion:** an independent reviewer returned `GO WITH GAPS`. The delivery plan
+is practical, but the branch is not yet in an all-program intrinsic-only phase.
+Reusable width/tail generation, external input evidence, cross-phase scalar-action
+checking/counterexamples, and dashboard authority must be closed first. After
+that, exact intrinsic definitions can be added and reviewed once per semantic
+piece, followed by Lean-checked proofs and separate program review records.
+
+The reviewer agreed that nineteen scalar-layout programs are a reasonable target
+but that their successful proofs cannot be guaranteed before those gates expose
+any further semantic mismatch. Memory-only commits will be folded into the code
+milestones they document. The next delivery series, rather than the entire branch
+history, should stay within roughly eight large commits.
+
+**Unresolved:** user approval to begin the staged implementation and history
+cleanup; actual intrinsic semantic review remains zero.

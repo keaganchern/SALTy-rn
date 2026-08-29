@@ -4,10 +4,12 @@ Last updated: 2026-08-29 (Asia/Seoul)
 
 ## Active Milestone
 
-The elementwise compiler infrastructure milestone is complete. The active work is
-now capability expansion: add reviewed exact intrinsic variants, then rerun the
-corpus compiler so every newly completed puzzle piece unlocks all dependent
-programs automatically.
+The reusable 8-bit compiler skeleton is complete, but the final independent audit
+found three framework gaps: generalize the 8-bit/8-lane tail emitters, retire the
+legacy dashboard's parallel case authorities, and wire a real counterexample
+producer. The `s8-vclamp` audit also demonstrates that cross-phase single-function
+obligations can be false without an evidenced external contract. Capability
+expansion and these reusable fixes are now active together.
 
 ## Canonical Artifact Chain
 
@@ -152,7 +154,8 @@ Exit gates:
 
 ### M3 — Dashboard Reads the Real Artifact Graph
 
-**Status:** Completed in implementation stage 5.
+**Status:** Completed for the new `/api/elementwise` path; legacy-dashboard
+migration and a checked-in held-out-to-dashboard regression remain active gaps.
 
 Deliver:
 
@@ -214,17 +217,97 @@ Fill missing integer intrinsic variants. Then establish reviewed FP semantics an
 new layout/view capabilities, including planar complex grouping, before claiming
 coverage of all 20 audited elementwise pairs.
 
+Before treating the fourteen scalar blockers as intrinsic-only, generalize the
+current emitter beyond 8-bit input/output streams and generalize the prefix-tail
+emitter beyond exactly one 8-lane load plus 4/2/1 stores.
+
 ## Immediate Work Queue
 
-1. add independently reviewed integer/FP intrinsic capabilities, starting from
+1. turn the current 8-bit stream and exact 8-lane 4/2/1-tail restrictions into
+   explicit reusable capabilities or general emitters, with held-out tests;
+2. migrate or retire legacy `/api/state` case authorities and add a checked-in
+   held-out-to-dashboard regression;
+3. add independently reviewed integer/FP intrinsic capabilities, starting from
    the dependencies shared by the largest number of the fourteen blocked scalar
    programs;
-2. add parse facades as mechanical typed declarations where missing;
-3. rerun `workflow.verification.elementwise_compiler.corpus` and require the
+4. add parse facades as mechanical typed declarations where missing;
+5. rerun `workflow.verification.elementwise_compiler.corpus` and require the
    checked-in report/dashboard to change only through the artifact graph;
-4. generate proof tasks for newly unblocked programs and delegate only
+6. generate proof tasks for newly unblocked programs and delegate only
    `Proof.lean`;
-5. keep grouped `f32-vcmul` deferred until a reviewed complex layout/view exists.
+7. keep grouped `f32-vcmul` deferred until a reviewed complex layout/view exists;
+8. implement the currently unproduced `counterexample` terminal state and use it
+   to explain false cross-phase/equivalence obligations;
+9. implement the content-addressed external-contract path and, for `s8-vclamp`,
+   bind the confirmed upstream range validation plus parameter initializer to the
+   generated signed `min <= max` condition; preserve the false direct claim and
+   never add the condition inside an agent proof.
+10. until that path exists, mark all eight audited quantized-parameter programs as
+    having unchecked external input conditions; do not present them as proof ready
+    solely because Models/Spec were generated.
+
+## Nineteen-Program Delivery and Review Plan
+
+The delivery target is the nineteen scalar-layout pairs. `f32-vcmul` remains a
+separate grouped-layout milestone.
+
+### Stage A — Close Reusable Framework Gaps
+
+1. generalize element widths, phase widths, loads, and tail stores together with
+   the family theorem and generated Spec shape;
+2. require every phase to implement one scalar action under the bound conditions,
+   otherwise emit a concrete counterexample or an explicit missing-condition
+   state;
+3. implement content-addressed external input evidence from XNNPACK validation and
+   registered parameter initializers;
+4. make the artifact graph the only production dashboard authority and retire the
+   legacy case lists.
+
+### Stage B — Intrinsic Puzzle Completion and Review
+
+Add exact typed intrinsic definitions by reusable semantic family. Each intrinsic
+review record must bind the definition hash, authoritative evidence hash, review
+policy, reviewer identity, and any executable/Lean checks. The reviewer agent is
+read-only over the reviewed definition and may only emit its review record. A
+review record is advisory/hash-gated evidence; Lean and parent-hash checks remain
+the mechanical acceptance gates.
+
+The dashboard must distinguish `defined`, `Lean-checked`, and
+`independently-reviewed`. Completing one intrinsic review unlocks every dependent
+program without a program-specific entry.
+
+### Stage C — Program Proof and Review
+
+For each of the nineteen programs, regenerate the full artifact chain, delegate
+only `Proof.lean`, run the frozen-goal/axiom/parent-hash checker, and then obtain an
+independent program review record. That record binds the source, manifest, Models,
+Spec, ProofTask, Proof, Result, toolchain, and review policy hashes. The program
+reviewer checks source consumption, claim scope, conditions, and result status; it
+cannot modify implementation, Spec, or proof.
+
+The dashboard must show generated, proof-attempted, Lean-verified, and
+independently-reviewed as separate states. A real counterexample remains a valid
+audited outcome, but it does not satisfy the target that all nineteen translations
+pass.
+
+### Stage D — Final Corpus Audit
+
+Run held-out width/tail/condition variants, full repository tests, deterministic
+regeneration, stale-artifact mutations, and a final independent corpus review.
+Report any program that cannot be proved rather than adding an assumption in its
+agent proof.
+
+## Commit Policy
+
+Do not treat memory/documentation updates as standalone delivery commits. During
+history cleanup, fold the existing planning/review commits into the implementation
+milestone they explain; there is no requirement to compress all current work into
+four commits.
+
+For the next nineteen-program delivery series, target no more than roughly eight
+large semantic commits covering framework-gap closure, reviewed intrinsic
+families, program proof/review batches, and final integration. Fold future memory
+updates into the relevant implementation commit.
 
 ## Global Acceptance Gates
 

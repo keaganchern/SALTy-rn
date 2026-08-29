@@ -289,3 +289,67 @@ well typed in the same dataflow, generate the changed model instead of comparing
 the body with a remembered program template. The resulting equivalence proof must
 then succeed, fail, or produce a checked counterexample against the regenerated
 claim. This rule enabled removal of the fixed `s8-vclamp` call-number table.
+
+## EC-028: Separate Skeleton Completion From Corpus Proof Completion
+
+**Status:** Accepted after independent final audit, 2026-08-29.
+
+Report the current result as a reusable 8-bit elementwise compiler skeleton, not
+as a completed nineteen-program proof pipeline. The five generated programs have
+Manifest/Models/proof-free Spec only; fourteen scalar programs remain blocked and
+independent intrinsic review is zero.
+
+Do not describe all fourteen scalar blockers as intrinsic-only until the reusable
+emitter is generalized beyond 8-bit input/output streams and the exact 8-lane
+load plus 4/2/1 prefix-tail shape. Treat the new artifact-driven
+`/api/elementwise` graph and the legacy case-driven `/api/state` graph as distinct
+until the latter is migrated or retired.
+
+## EC-029: False Generated Obligations Need an Explanatory Terminal Result
+
+**Status:** Accepted after concrete `s8-vclamp` review, 2026-08-29.
+
+A proof-free generated Spec is a candidate obligation, not an accepted theorem.
+It may therefore be false without making the checker unsound. However, when two
+parsed phases do not implement the same scalar function under the bound entry
+contract, the pipeline must not present the program as merely waiting for proof.
+It must emit a checked counterexample or an explicit family/contract failure.
+
+For `s8-vclamp`, `min <= max` may be added only through the separately evidenced,
+hash-bound external-contract path. The confirmed evidence is XNNPACK's output
+range validation followed by its registered S8 clamp parameter initializer; the
+local harness is only a test instance, not general evidence. The proof agent may
+not invent the condition. The direct claim under the isolated source assertions
+remains false and must stay visible.
+
+## EC-030: External Parameter Conditions Are a Reusable Capability Gap
+
+**Status:** Accepted after twenty-program audit, 2026-08-29.
+
+Eight of the twenty elementwise programs consume quantized parameter structs whose
+legal ranges or relations are established outside the isolated kernel body. This
+is too frequent to classify as one `s8-vclamp` exception. Until a generic,
+content-addressed validation/initializer evidence path exists, show an explicit
+unchecked-external-input state and do not call these programs proof ready.
+
+Do not build per-program condition tables into the new compiler. The later generic
+mechanism should follow the selected XNNPACK parameter initializer and its upstream
+validation evidence. The old handwritten `PARAM_CONSTRAINTS` may be used for
+diagnostic comparison only, not as trusted proof input.
+
+## EC-031: Nineteen Reviewed Programs and Milestone Commit Discipline
+
+**Status:** Accepted as the next delivery proposal, 2026-08-29.
+
+Target all nineteen scalar-layout programs with separate hash-bound intrinsic and
+program review records. An intrinsic review is performed once per exact semantic
+definition and automatically benefits every dependent program. A program review
+binds the entire generated/proved artifact closure. Reviewer agents may emit
+review records but may not modify the artifacts they review.
+
+Do not promise all nineteen will verify before the reusable width, external-input,
+and cross-phase checks have run; counterexamples must remain visible. Fold existing
+and future memory-only commits into their corresponding implementation milestones.
+The next delivery series should use no more than roughly eight large semantic
+commits; this limit does not require compressing all work already completed into
+four commits.
