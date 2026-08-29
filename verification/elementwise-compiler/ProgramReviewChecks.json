@@ -1,7 +1,7 @@
 {
   "artifact_kind": "elementwise-program-review-checks",
-  "checker_sha256": "3b77f3944ee6ac073c0f82a2c53c91d819339e53124f61692d0a7900fdd1a7b8",
-  "checks_sha256": "a6fd17712b87ec3998b9cc90140fe3890b1d856f32e2a57e807118ad72977020",
+  "checker_sha256": "91e62a43b9458e4b6fa0056bbeb0f2934e4e35b82cb4dfc13400cb21a6b77bd5",
+  "checks_sha256": "a674437b707afbe842fb87ef7f65c19e8967f01121ac224cc9a39ba004610eb1",
   "claim_scope": "lean-value-model-only",
   "counts": {
     "passed_programs": 19

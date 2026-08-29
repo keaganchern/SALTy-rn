@@ -1,16 +1,16 @@
 # Elementwise Compiler Active Plan
 
-Last updated: 2026-08-29 (Asia/Seoul)
+Last updated: 2026-08-30 (Asia/Seoul)
 
 ## Active Milestone
 
-The shared compiler now generates Manifest/Models/proof-free Spec for all nineteen
-scalar-layout programs. Widths, tails, multi-phase schedules, external audits,
-counterexamples, and the schema-v3 artifact dashboard are independently reviewed.
-Independent review of all 180 exact intrinsic variants used by those programs is
-complete. The active milestone is proof-task/result generation followed by
-independent review of all nineteen program outcomes. The older nine schema-v1
-approvals remain historical and cannot satisfy the live loader.
+**Status: completed.** The shared compiler generates Manifest/Models/proof-free
+Spec for all nineteen scalar-layout programs. Widths, tails, multi-phase
+schedules, external audits, checked counterexamples, 180/180 used exact intrinsic
+reviews, eight frozen Lean proofs, and nineteen independent outcome reviews are
+published. The final outcomes are 8 `verified(value)`, 4 `counterexample`, and 7
+`external-condition-missing`. The grouped `f32-vcmul` and higher C/ISA claim
+layers remain explicit future work rather than hidden acceptance gaps.
 
 ## Canonical Artifact Chain
 
@@ -33,6 +33,11 @@ ScheduleFamilyCapability ┘          │ manifest_sha256
                                     v
                                 Result.json
 ```
+
+A false generated claim follows `Models/Spec -> Counterexample.lean/json ->
+Result.json` instead of creating a ProofTask. A missing external condition stops
+before either branch. `ProgramReviewPlan/Checks` then bind each exact terminal
+stack and an independent report publishes one `program-reviews/<id>.json` record.
 
 `ExternalCondition.json` is mandatory, separately evidenced, and
 content-addressed. XNNPACK-domain runs bind registrations and initializers;
@@ -314,10 +319,13 @@ separate grouped-layout milestone.
    official exact Arm/RVV prototypes, transitive implementation hashes, explicit
    FP state scope, twelve review families, 180 machine-check packs, schema-v2
    records, and fail-closed dashboard parents. Reviewer verdict: `GO (180/180)`.
-7. **Program proof and outcome review:** generate, prove or explicitly fail all
-   nineteen scalar-layout outcomes without program-specific framework edits.
-8. **Final audit:** randomized held-out cases, deterministic regeneration, stale
-   mutation tests, full regression, corpus review, dashboard snapshot, and memory.
+7. **Program proof and outcome review — completed and independently reviewed:**
+   all nineteen scalar-layout outcomes are generated without program-specific
+   framework edits; eight prove, four have named checked witnesses, and seven
+   remain blocked without fabricated assumptions. Reviewer verdict: `GO (19/19)`.
+8. **Final audit — completed:** randomized held-out programs, deterministic
+   regeneration, stale-parent/checker mutations, full 444-test regression,
+   dashboard snapshot with 19 reviews, cache cleanup, and memory reconciliation.
 
 ### Stage B — Intrinsic Puzzle Completion and Review
 
@@ -334,6 +342,8 @@ program without a program-specific entry.
 
 ### Stage C — Program Proof and Review
 
+**Status:** Completed for the nineteen scalar-layout programs.
+
 For each of the nineteen programs, regenerate the full artifact chain, delegate
 only `Proof.lean`, run the frozen-goal/axiom/parent-hash checker, and then obtain an
 independent program review record. That record binds the source, manifest, Models,
@@ -348,10 +358,17 @@ pass.
 
 ### Stage D — Final Corpus Audit
 
+**Status:** Completed on 2026-08-30 (Asia/Seoul).
+
 Run held-out width/tail/condition variants, full repository tests, deterministic
 regeneration, stale-artifact mutations, and a final independent corpus review.
 Report any program that cannot be proved rather than adding an assumption in its
 agent proof.
+
+Final evidence: 247 elementwise compiler/dashboard tests, 29 convergence tests,
+and 444 complete repository tests pass. The independent program convergence report
+binds the final 19-review publication. See
+`notes/reviews/elementwise-m8-final-audit-2026-08-30.md`.
 
 ## Commit Policy
 
@@ -384,6 +401,15 @@ updates into the relevant implementation commit.
 
 ## Deferred but Visible
 
+- make repeated `proof check` byte-idempotent, or separate the mutable result edge
+  from the protected pre-proof closure so a recheck does not stale published reviews;
+- add a generic checked producer-contract bridge: first close the two direct-copy
+  dequantization initializers from tensor validation, then translate initializer
+  `assert`s separately from caller-established guarantees for the remaining five
+  quantized programs;
+- replace shared host-Float32 arithmetic with architecture-conditioned Neon/RVV NaN
+  semantics before treating the eight FP `verified(value)` results as exact-bit ISA
+  evidence; rerun `f32-vrndne`, `f32-vmin`, and `f32-vmax` afterward;
 - grouped/planar logical layouts such as `f32-vcmul`;
 - full byte-memory, alias/restrict, frame, and legal overread refinement;
 - real-header/compiler dependency closure;

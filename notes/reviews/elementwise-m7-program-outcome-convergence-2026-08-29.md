@@ -21,8 +21,8 @@ self-digests and equal fresh recomputation from the live artifact graph. Their
 current identities are:
 
 - plan: `f3ab122c12f018563956932119d69a67c794eca0b70d4a61097730aaf2c233d6`
-- checks: `a6fd17712b87ec3998b9cc90140fe3890b1d856f32e2a57e807118ad72977020`
-- checks implementation: `3b77f3944ee6ac073c0f82a2c53c91d819339e53124f61692d0a7900fdd1a7b8`
+- checks: `a674437b707afbe842fb87ef7f65c19e8967f01121ac224cc9a39ba004610eb1`
+- checks implementation: `91e62a43b9458e4b6fa0056bbeb0f2934e4e35b82cb4dfc13400cb21a6b77bd5`
 
 The plan covers nineteen unique subjects with the exact split 8
 `verified(value)` / 4 `counterexample` / 7 `external-condition-missing`. For all
@@ -68,6 +68,14 @@ rows and the exact 8/4/7 outcome split. The separately deferred grouped-layout
 `f32-vcmul` remains `layout-unrecognized` and is not counted among the nineteen.
 All graph rows kept C and ISA at `not-established`.
 
+**Confirmed.** Graph validation now establishes `IntrinsicAudit.json` and
+`IntrinsicReviewPlan.json` before loading per-program approvals. This changes only
+diagnostic priority: a copied corpus with a missing or corrupted intrinsic parent
+reports that intrinsic-integrity failure instead of first failing on absent
+external program-review policy/report files. Both affected mutation tests passed
+2/2. The normal graph without program-review display still reports the exact
+8/4/7 scalar outcomes and 180/180 intrinsic closure.
+
 **Confirmed.** Publisher and loader fail closed. In a temporary repository clone,
 both accepted the unchanged nineteen-record baseline. Changing the live
 whole-program counterexample checker caused both publisher and loader to reject
@@ -80,14 +88,20 @@ checker sources.
 `--reviewer-report`, normalizes it to a safe repository-relative POSIX path, and
 still rejects absolute paths or parent traversal. A real CLI publish in a
 temporary repository clone returned `{"published": 19}`; it wrote nineteen
-records and the strict loader accepted all nineteen. The live repository review
-directory remained empty during this dry run.
+records and the strict loader accepted all nineteen. The repository currently
+contains the nineteen records from the preceding publication; the graph correctly
+rejects them as stale after this checker-order change. They must be republished
+against this updated report and latest Checks before the website may count them.
 
 **Confirmed.** The supplied focused evidence records `48 passed in 275.85s`.
 Additionally, the program-review and web suites passed 22/22 during convergence,
 the final program-review suite including the real CLI-`Path` regression passed
-6/6, and the proof/counterexample spot checks above were run from temporary
-staging roots without changing repository artifacts.
+6/6, the two diagnostic-priority regressions passed 2/2 after the ordering fix,
+and the proof/counterexample spot checks above were run from temporary staging
+roots without changing repository artifacts. The most recent full-repository run
+before this fix recorded 442 passes and only those two now-repaired failures; a
+fresh full run remains the post-publication gate rather than evidence claimed by
+this review.
 
 ## Nineteen reviewed program outcomes
 

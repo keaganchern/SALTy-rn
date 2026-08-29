@@ -1,6 +1,6 @@
 {
   "artifact_kind": "elementwise-program-review",
-  "checks_sha256": "a6fd17712b87ec3998b9cc90140fe3890b1d856f32e2a57e807118ad72977020",
+  "checks_sha256": "a674437b707afbe842fb87ef7f65c19e8967f01121ac224cc9a39ba004610eb1",
   "detail": "Independent reviewer accepted the integrity and honest counterexample outcome; this approval does not widen the Lean value-model claim scope.",
   "outcome_status": "counterexample",
   "plan_sha256": "f3ab122c12f018563956932119d69a67c794eca0b70d4a61097730aaf2c233d6",
@@ -8,10 +8,10 @@
   "policy_sha256": "b9b3c56cc90b8631ccc7786a67d59166b563af1e8b2ddfebeedab021fffc1886",
   "program_id": "f32-vmax",
   "review_id": "program-review:f32-vmax",
-  "review_sha256": "8736ce3cc27e565300cb2c93b005c3e75b57af9859785deed78314af009767d8",
+  "review_sha256": "4f7bc3562d3126a258098dd6849d6c23ce14f5ac46ffba28f2b5c884bc24c314",
   "reviewer": "agent:program_review_convergence",
   "reviewer_report_path": "notes/reviews/elementwise-m7-program-outcome-convergence-2026-08-29.md",
-  "reviewer_report_sha256": "d7cf60cecbffdde9320ac5dc00c7e33b2890c34699f31492b67288d3c4082539",
+  "reviewer_report_sha256": "c3e6a7a78ed2414a12b6898521be9b185e460a86ce6162e61a8544136ad037cc",
   "schema_version": 1,
   "subject_sha256": "773ead15a605a3cdb46f6a3f9242fdd5bdab361aae6876c84f103ad6253c2bde",
   "verdict": "approved-outcome"

@@ -644,3 +644,130 @@ Python tests, and fresh 46-job plus seven-target Lean builds.
 their listed state conditions. Seven program claims still lack external caller
 conditions, S8 clamp has a checked counterexample, eleven direct claims still need
 proof attempts, and none of these reviews establishes full C or ISA refinement.
+
+## 2026-08-30 — Nineteen scalar program outcomes and final integration
+
+**Question:** After the reusable intrinsic puzzle is complete, can the framework
+advance every scalar-layout program without per-program Python/Lean framework
+edits, publish honest terminal outcomes, and independently review the whole chain?
+
+**Conclusion:** yes for the current Lean value-model scope. The same generated
+Manifest/Models/Spec path covers all nineteen scalar programs. Eight direct claims
+have frozen agent-written `Proof.lean` files accepted by the exact theorem,
+protected-parent, forbidden-token, axiom, checker, and toolchain gates. Generic
+bounded search found and Lean-checked three whole-program FP witnesses
+(`f32-vrndne`, `f32-vmax`, `f32-vmin`); the mandatory compiler audit retained the
+`s8-vclamp` cross-phase witness. Seven quantized programs stop at independently
+visible missing external conditions without proof artifacts.
+
+The first program reviewer returned `NO-GO` because the S8 witness theorem was
+anonymous/stale and the review checker closure omitted the two counterexample
+producers. Those were fixed, every generated stack was rebuilt under a corrected
+reachable-code compiler identity, and all eight proofs were re-frozen and checked.
+The publisher and loader now recompute live parents. A final full-suite failure
+then exposed diagnostic ordering in copied-corpus audit tests; intrinsic parents
+now validate before program reviews. The convergence reviewer repeatedly dry-ran
+strict publication and returned `GO (19/19)` on the final snapshot.
+
+**Evidence:** commit `92aad8c` contains the nineteen outcome stacks and first
+published reviews; `ProgramReviewPlan.json`, `ProgramReviewChecks.json`, and 19
+records under `program-reviews/` bind the final state; reviewer report
+`notes/reviews/elementwise-m7-program-outcome-convergence-2026-08-29.md`; 247
+elementwise compiler/dashboard tests, 29 final convergence tests, and 444 complete
+repository tests pass. The final audit is
+`notes/reviews/elementwise-m8-final-audit-2026-08-30.md`.
+
+**Unresolved:** four direct value claims are false under current models, seven need
+caller-condition evidence, `f32-vcmul` needs a reusable grouped layout, and full C
+memory/overread/alias plus ISA and binary correspondence remain unproved layers.
+
+## 2026-08-30 — Owner-facing Git, eight-item, and end-to-end audit
+
+**Question:** Which branch contains the current edits, how many commits landed in
+the last two days, were they pushed, did the eight-item delivery finish, and does
+the result support zero-framework-edit onboarding with an agent-reviewed end-to-end
+example?
+
+**Confirmed:** the active worktree began clean at
+`feat/elementwise-compiler@4ae0cd5`. It contains 23 commits after base `1707e5e`,
+all within the preceding 48 hours. Live `ls-remote` found no same-named branch on
+either `fork` or `origin`; the fork's older `feat/neon-rvv-to-lean` still ends at
+`f6ff9c4`, so the current head is not remotely published.
+
+**Confirmed:** all eight items in the execution ledger have implementation and
+review evidence. The supported claim is zero new Python/Lean framework source for
+a held-out same-family C pair after its exact intrinsics, scalar layout, and
+schedule family exist. It is automated code generation, not “zero code generation,”
+and it consumes a Neon/RVV pair plus explicit frontend metadata rather than one
+arbitrary C file. Nineteen scalar programs currently produce the honest 8 verified
+/ 4 counterexample / 7 external-condition-missing split; grouped `f32-vcmul` and
+non-elementwise families remain out of scope.
+
+**Evidence:** a live dashboard rebuild reproduced 20 discovered pairs, 19 scalar,
+180/180 reviewed used variants, 19 independent program reviews, and explicit
+`not-established` C/ISA layers. A fresh isolated Python 3.13 run passed 248 focused
+compiler/dashboard tests. `f32-vadd` was traced through C, Manifest, independently
+generated Models, proof-free Spec, frozen ProofTask, agent-owned Proof, Lean Result,
+and independent program review; Lean reaccepted the frozen value theorem.
+
+**New issue:** re-running `proof check` on that already published stack rewrote
+`Result.json` and `ArtifactIndex.json` with a new closure hash even though protected
+parents and proof were unchanged. The cause is that the protected closure hashes
+`ArtifactIndex.json`, which already contains the previous result edge. The checked-in
+files were restored after diagnosis. Also, the default uv-selected Python 3.12.7
+environment segfaults in pytest's readline capture initialization on this host;
+the same tests pass under isolated Homebrew Python 3.13.
+
+**Unresolved:** make proof rechecks idempotent; establish seven external caller
+conditions; decide FP NaN policy for three refuted pairs; add the complex layout;
+and separately build C-memory, legal-overread, alias/frame, real `vsetvl`, ISA, and
+binary correspondence layers.
+
+## 2026-08-30 — Classify failed outcomes, producer conditions, and NaN reachability
+
+**Question:** Are the eleven non-verified scalar outcomes caused by incomplete Lean
+translation, real source/target differences, or external XNNPACK constraints; can
+the seven external conditions be translated; and are NaNs actually legal inputs?
+
+**Confirmed conclusions:** the failures are mixed. `f32-vmax` and `f32-vmin` use
+Neon FMAX/FMIN versus RVV maximumNumber/minimumNumber, so one-NaN inputs produce a
+real instruction-level value difference. `f32-vrndne` is different: the RVV C
+explicitly detects NaN and restores the quieted input payload, but the current Lean
+model uses one host `Float32.add/sub` operation for both architectures and makes its
+Neon path canonicalize. Under the reviewed Arm `FPCR.DN=0` condition, that witness
+is a Lean-model artifact. `s8-vclamp` is a real phase-order difference only when
+`min > max`; the pinned unary call path still supplies no established ordered-bound
+guarantee.
+
+For the seven external blockers, QINT8/QUINT8 zero-point ranges and positive normal
+scales are runtime-validated in `tensor.c`. The two dequantizers merely copy those
+validated values and should be the first automatically resolvable producer cases.
+The remaining five initializers compute scale ratios and then assert bounds on
+ratios, multipliers, shifts, or LReLU negative scale. The unary/binary operator
+creation paths validate individual scales but do not enforce those derived bounds;
+LReLU does not validate the slope bounds either. A generic initializer frontend can
+translate assignments, `fabsf`, `lrintf`, bit reinterpretation, and `assert` into a
+conditional `WellFormedParams` theorem, but the asserted predicates must remain
+distinct from facts proved by callers. Otherwise a debug assertion would be
+silently promoted into an XNNPACK API guarantee.
+
+FP32 dense-tensor creation checks datatype/shape but does not scan element values.
+The XNNPACK binary microkernel tester explicitly skips checking NaN reference
+outputs with the comment that not all kernels handle them. Therefore NaN is not
+excluded by the actual input path, although a cross-platform exact NaN result is
+also not clearly promised. Exact-bit verification must model architecture-specific
+NaN behavior. Excluding NaN or quotienting NaN payloads is a possible explicit
+upper-layer contract/observation choice, not a fact the compiler may infer.
+
+**Evidence:** `benchmark/XNNPACK/src/tensor.c:50-98,130-160,163-217,318-343`;
+`src/operators/unary-elementwise-nc.c:89-147,243-277`;
+`src/operators/binary-elementwise-nd.c:134-210`;
+`src/microparams-init.c:674-703,830-934,1052-1071,1207-1234,1267-1275`;
+`test/vbinary-microkernel-tester.cc:80-119`; corpus source/target files and checked
+counterexamples; official Arm Neon intrinsic mapping and Arm FMAX semantics; official
+RISC-V F/V NaN and minimumNumber/maximumNumber specifications.
+
+**Unresolved:** decide the intended XNNPACK-level NaN observation; determine whether
+the five assert-only producer domains should become explicit API preconditions or
+upstream runtime checks; implement and review the generic producer bridge; and
+re-run all FP outcomes after architecture-specific arithmetic NaN semantics land.

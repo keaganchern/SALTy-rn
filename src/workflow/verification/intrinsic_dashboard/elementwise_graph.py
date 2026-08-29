@@ -696,16 +696,6 @@ def build_elementwise_graph(
                 )
             used_by_program.setdefault(identity, set()).add(str(node["program_id"]))
 
-    try:
-        program_reviews = load_program_reviews(root) if include_program_reviews else {}
-    except ProgramReviewError as error:
-        raise ElementwiseGraphError(str(error)) from error
-    for node in program_nodes:
-        review = program_reviews.get(str(node["program_id"]))
-        node["independently_reviewed"] = review is not None
-        node["program_review_sha256"] = None if review is None else review.sha256
-        node["reviewed_outcome"] = None if review is None else review.outcome_status
-
     intrinsic_audit = (
         _verify_intrinsic_audit(
             root,
@@ -725,6 +715,20 @@ def build_elementwise_graph(
         if include_intrinsic_audit
         else {}
     )
+
+    # Establish the reusable intrinsic review closure before loading per-program
+    # approvals.  This preserves fail-closed diagnostic priority and prevents a
+    # copied corpus with external review parents absent from hiding a corrupted
+    # intrinsic audit.
+    try:
+        program_reviews = load_program_reviews(root) if include_program_reviews else {}
+    except ProgramReviewError as error:
+        raise ElementwiseGraphError(str(error)) from error
+    for node in program_nodes:
+        review = program_reviews.get(str(node["program_id"]))
+        node["independently_reviewed"] = review is not None
+        node["program_review_sha256"] = None if review is None else review.sha256
+        node["reviewed_outcome"] = None if review is None else review.outcome_status
 
     spelling_nodes: list[dict[str, Any]] = []
     for raw in report["intrinsic_dependencies"]:

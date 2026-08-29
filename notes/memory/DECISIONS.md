@@ -1,6 +1,6 @@
 # Elementwise Compiler Decision Ledger
 
-Last updated: 2026-08-29 (Asia/Seoul)
+Last updated: 2026-08-30 (Asia/Seoul)
 
 This file is append-only. A later choice must mark the earlier decision
 superseded rather than silently editing its meaning.
@@ -505,3 +505,38 @@ Review execution output is content-addressed. Refresh it through a staged file:
 run checks while the previous evidence remains valid, atomically install the new
 passing output, then immediately republish reviews. Tests must never pass by
 temporarily ignoring stale review bindings.
+
+## EC-041: Program Review Approves the Recorded Outcome, Not Equivalence
+
+**Status:** Accepted and implemented, 2026-08-30.
+
+Every scalar program gets an independently reviewed terminal outcome. A review may
+approve the integrity of `verified(value)`, `counterexample`, or
+`external-condition-missing`; only the first is an equivalence theorem. Review
+subjects bind sources and the complete generated/checker/toolchain chain. Missing
+external conditions must have no ProofTask, Proof, Result, or counterexample, and
+checked counterexamples must have no proof branch.
+
+## EC-042: Generator Identity Tracks Reachable Generation Code
+
+**Status:** Accepted and implemented, 2026-08-30.
+
+`ProgramManifest.compiler_sha256` is computed from the static local Python import
+closure reachable from the compiler entry, including its mandatory cross-phase
+audit. Proof search, whole-program diagnostic search, program review, corpus
+orchestration, and dashboard code are outside that closure and have their own
+checker identities. Editing those consumers must not spuriously invalidate every
+generated Manifest; editing reachable generation code must invalidate it.
+
+Shared Lean staging/toolchain helpers live in a separate module so the mandatory
+cross-phase compiler audit does not import the complete proof-search policy.
+
+## EC-043: Review Publication and Display Recompute Live Parents
+
+**Status:** Accepted and implemented, 2026-08-30.
+
+Both publisher and loader recompute the current program review plan and machine
+checks before accepting records. A self-consistent but stale stored Plan/Checks
+pair is insufficient. The dashboard verifies IntrinsicAudit and
+IntrinsicReviewPlan before loading program approvals, so a missing external review
+policy in a copied corpus cannot hide a corrupted reusable intrinsic parent.
