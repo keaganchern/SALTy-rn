@@ -178,3 +178,31 @@ block claiming all nineteen complete, but do not block starting the framework.
 
 **Evidence:** fourth review pass over commit `345a3bd`, the nineteen C pairs, and
 `notes/elementwise-compiler/ASSERT_AUDIT.md`.
+
+## 2026-08-29 — Implementation stage 1: schemas, explicit parsing, and contracts
+
+**Question:** Can the first compiler layer be implemented without adding another
+program profile, while retaining exact typed calls and distinguishing entry from
+local assertions?
+
+**Conclusion:** yes. The new elementwise package now owns strict canonical schemas
+for capabilities, contracts, manifests, generated artifacts, proof tasks, and
+results. A new explicit Clang entry point derives the function signature and every
+reachable direct-call parse contract from the supplied C/facade pair. It returns
+assertions instead of comparing them with a handwritten table. A restricted typed
+parser accepts the audited pure assertion grammar and rejects calls, assignment,
+subscripts, and increment/decrement.
+
+All five existing integer pairs parse through this explicit path without their
+named frontend profiles and produce equal normalized entry contracts. The
+`qs8-vcvt` tail bounds are retained as two local facts under the same tail-control
+node. The old profile entry point still passes its regression tests.
+
+**Evidence:** 48 focused tests under
+`tests/verification/elementwise_compiler` and
+`tests/verification/lean_backend/test_frontend.py`.
+
+**Unresolved:** global intrinsic resolution currently exposes several exact typed
+spellings with multiple configured lowering descriptors. Stage 2 must either bind
+one reviewed program-independent capability or return `intrinsic-ambiguous`; it
+must not choose by former case provenance.

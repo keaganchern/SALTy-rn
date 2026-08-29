@@ -171,12 +171,26 @@ content-addressed chain from manifest through result; proof acceptance uses
 before/after protected-closure digests and is an integrity gate, not process
 isolation.
 
-## Current Gap
+## Current Implementation
 
-**Confirmed:** the architecture and proof shape are settled; the generic compiler
-path is not implemented. The current backend still requires named profiles,
-catalogs, model switches, and proof targets. The existing dashboard is present but
-uses the old case-scoped data model and does not show execution-family nodes.
+**Confirmed:** implementation stage 1 now provides strict content-addressed
+schemas for intrinsic/layout/schedule capabilities, typed entry contracts,
+program manifests, generated artifacts, proof tasks, and terminal results. It also
+adds a profile-free Clang entry point: callers explicitly provide both C paths,
+function names, architectures, target triples, and parse facades. Reachable call
+types are discovered from the facade declarations; assertions are emitted with
+their control context and translated by a fail-closed typed expression parser.
+
+The generic path has been exercised on all five existing integer pairs without
+reading their named frontend profiles. Their normalized entry contracts match;
+`qs8-vcvt`'s two local tail assertions remain local facts. Forty-eight focused
+schema/frontend tests pass.
+
+**Remaining gap:** intrinsic ambiguity resolution, whole-function effect
+accounting, layout/schedule recognition, generated Models/Spec, proof execution,
+held-out tests, and artifact-driven dashboard integration are not yet complete.
+The old case-scoped backend remains only as regression evidence while those pieces
+move to the new path.
 
 ## Immediate Objective
 

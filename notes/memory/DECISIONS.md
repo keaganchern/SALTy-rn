@@ -187,3 +187,21 @@ and automatically discharge only assertions equal to facts derived from its loop
 exit and tail reach condition. Any other local assertion fails recognition in phase
 one. This covers all eleven local assertions in the five affected phase-one
 elementwise pairs without a per-program profile.
+
+## EC-020: The Production Frontend Has Only Explicit Inputs
+
+**Status:** Accepted and implemented, 2026-08-29.
+
+The production entry point receives the C path, exact function name, architecture,
+target triple, and parse-facade path explicitly. It never selects a case, facade,
+target, or function from a basename or `source`/`target` directory. Clang binds
+every reachable direct call to one unique facade declaration; the compiler then
+resolves that typed call against global intrinsic capabilities. The old
+profile-based entry point remains a regression adapter and is forbidden from the
+held-out acceptance path.
+
+The frontend returns every assertion with its containing control id. A separate
+restricted parser translates side-effect-free C conditions into typed normalized
+trees. Entry assertions form the side contract; nested assertions remain local
+obligations. No handwritten expected-assertion list participates in the production
+path.

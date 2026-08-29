@@ -52,7 +52,7 @@ Exit gates:
 
 ### M1a — Minimal Core Schemas
 
-**Status:** In progress.
+**Status:** Completed in implementation stage 1.
 
 Deliver only the schemas and canonical hashing needed by the vertical slice:
 
@@ -76,7 +76,7 @@ Exit gates:
 
 ### M1b — Thin Generic Fixed-No-Tail Slice
 
-**Status:** Pending.
+**Status:** In progress.
 
 Deliver the narrowest real compiler path before broad dashboard work:
 
@@ -217,17 +217,17 @@ coverage of all 20 audited elementwise pairs.
 
 Only the first incomplete item is active:
 
-1. implement canonical capability/assumption/manifest/result schema types and
-   digest closure;
-2. implement the explicit-entry generic frontend and fixed-no-tail manifest;
-3. generate Models/Spec from that manifest;
-4. generate/check ProofTask/Result;
-5. run the two-positive/one-negative held-out matrix;
-6. make the dashboard read those real artifacts;
-7. migrate fixed-tail unary/binary fixtures;
-8. add multi-phase composition;
-9. expand integer intrinsics;
-10. add FP and grouped logical-element layouts.
+1. implement the explicit-entry generic frontend and fixed-no-tail manifest;
+   the explicit frontend and typed contract translation are complete, while
+   intrinsic resolution, effect accounting, and family recognition remain;
+2. generate Models/Spec from that manifest;
+3. generate/check ProofTask/Result;
+4. run the two-positive/one-negative held-out matrix;
+5. make the dashboard read those real artifacts;
+6. migrate fixed-tail unary/binary fixtures;
+7. add multi-phase composition;
+8. expand integer intrinsics;
+9. add FP and grouped logical-element layouts.
 
 ## Global Acceptance Gates
 

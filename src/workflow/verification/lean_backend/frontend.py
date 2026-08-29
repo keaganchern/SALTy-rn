@@ -25,6 +25,7 @@ from pathlib import Path
 from typing import Any, Iterable, Iterator, Sequence
 
 from .profiles import FrontendAssertion, FrontendSideProfile, QS8_VADD_MINMAX
+from .schema import Architecture
 
 
 class FrontendError(RuntimeError):
@@ -129,6 +130,7 @@ class KernelExtraction:
     definitions: tuple[DefinitionFact, ...]
     controls: tuple[ControlFact, ...]
     reachable_ast_nodes: int
+    assertions: tuple[FrontendAssertion, ...] = ()
 
     def to_dict(self) -> dict[str, Any]:
         return dataclasses.asdict(self)
@@ -492,6 +494,79 @@ def _validate_kernel_signature(
         )
 
 
+def _validate_explicit_kernel_signature(function: dict[str, Any]) -> None:
+    """Reject linkage/declaration tricks without a handwritten signature table."""
+
+    function_name = str(function.get("name") or "")
+    if not function_name or function.get("mangledName") != function_name:
+        raise UnsupportedConstructError(
+            f"kernel linkage name differs from its source identifier {function_name!r}"
+        )
+    if function.get("previousDecl") is not None or function.get("storageClass") is not None:
+        raise UnsupportedConstructError(
+            "kernel redeclarations and explicit storage classes are outside this slice"
+        )
+    unexpected_children = [
+        child.get("kind")
+        for child in _children(function)
+        if child.get("kind") not in {"ParmVarDecl", "CompoundStmt"}
+    ]
+    if unexpected_children:
+        raise UnsupportedConstructError(
+            f"unsupported kernel declaration attributes {unexpected_children!r}"
+        )
+    parameters = [
+        child for child in _children(function) if child.get("kind") == "ParmVarDecl"
+    ]
+    names = [str(parameter.get("name") or "") for parameter in parameters]
+    if not names or any(not name for name in names) or len(names) != len(set(names)):
+        raise UnsupportedConstructError(
+            "explicit kernel parameters must have unique non-empty names"
+        )
+    if not str((function.get("type") or {}).get("qualType") or ""):
+        raise UnsupportedConstructError("explicit kernel has no Clang function type")
+
+
+def _discover_reachable_call_contracts(
+    function: dict[str, Any],
+) -> tuple[dict[str, int], dict[str, str]]:
+    """Discover exact direct-call arities/types from the typed function body.
+
+    This only discovers the parse contract.  It does not assign semantics to a
+    spelling; the global intrinsic index performs that separate step.
+    """
+
+    body = next(
+        child for child in _children(function) if child.get("kind") == "CompoundStmt"
+    )
+    contracts: dict[str, tuple[int, str, str]] = {}
+    for node in _walk(body):
+        if node.get("kind") != "CallExpr":
+            continue
+        children = _children(node)
+        referenced = _function_reference(children[0]) if children else None
+        if referenced is None:
+            raise UnsupportedConstructError("indirect calls are outside this slice")
+        spelling = str(referenced.get("name") or "")
+        declaration_id = str(referenced.get("id") or "")
+        function_type = str((referenced.get("type") or {}).get("qualType") or "")
+        arity = max(0, len(node.get("inner", [])) - 1)
+        if not spelling or not declaration_id or not function_type:
+            raise UnsupportedConstructError("reachable call lacks a complete declaration")
+        contract = (arity, function_type, declaration_id)
+        previous = contracts.setdefault(spelling, contract)
+        if previous != contract:
+            raise UnsupportedConstructError(
+                f"{spelling}: reachable calls do not share one exact declaration"
+            )
+    if not contracts:
+        raise UnsupportedConstructError("kernel contains no reachable intrinsic calls")
+    return (
+        {spelling: contract[0] for spelling, contract in contracts.items()},
+        {spelling: contract[1] for spelling, contract in contracts.items()},
+    )
+
+
 def _direct_variable(node: dict[str, Any]) -> tuple[str, str] | None:
     current = node
     while current.get("kind") in {"ImplicitCastExpr", "CStyleCastExpr", "ParenExpr"}:
@@ -700,7 +775,7 @@ class _Extractor:
         source: _Source,
         function: dict[str, Any],
         allowed_calls: dict[str, int],
-        expected_assertions: tuple[FrontendAssertion, ...],
+        expected_assertions: tuple[FrontendAssertion, ...] | None,
         member_roots: frozenset[str],
     ) -> None:
         self.source = source
@@ -722,6 +797,7 @@ class _Extractor:
         tuple[IntrinsicCall, ...],
         tuple[DefinitionFact, ...],
         tuple[ControlFact, ...],
+        tuple[FrontendAssertion, ...],
     ]:
         parameters = []
         for parameter in (
@@ -744,7 +820,10 @@ class _Extractor:
             child for child in _children(self.function) if child.get("kind") == "CompoundStmt"
         )
         self._statement(body, None)
-        if tuple(self._assertions) != self.expected_assertions:
+        if (
+            self.expected_assertions is not None
+            and tuple(self._assertions) != self.expected_assertions
+        ):
             raise UnsupportedConstructError(
                 f"kernel assertions changed from {self.expected_assertions!r} "
                 f"to {tuple(self._assertions)!r}"
@@ -754,6 +833,7 @@ class _Extractor:
             tuple(self.calls),
             tuple(self.definitions),
             tuple(self.controls),
+            tuple(self._assertions),
         )
 
     def _current(self, name: str) -> str:
@@ -1082,6 +1162,87 @@ class _Extractor:
         )
 
 
+def parse_kernel_explicit(
+    path: str | Path,
+    *,
+    architecture: Architecture,
+    function_name: str,
+    facade: str | Path,
+    target_triple: str,
+    clang: str = "clang",
+) -> KernelExtraction:
+    """Parse one kernel without any case, path, or function-name fallback.
+
+    The facade is parse-only input and must provide unique declarations for all
+    reachable direct calls.  Their exact types are discovered from Clang and are
+    resolved against the global intrinsic capability index by the next compiler
+    stage.  Assertions are returned as source facts instead of compared with a
+    handwritten program profile.
+    """
+
+    if not isinstance(architecture, Architecture):
+        raise FrontendError("explicit architecture must be a lean-backend Architecture")
+    if not function_name or function_name.strip() != function_name:
+        raise FrontendError("explicit function name must be a trimmed non-empty string")
+    if not target_triple or target_triple.strip() != target_triple:
+        raise FrontendError("explicit target triple must be a trimmed non-empty string")
+
+    source_path = Path(path).resolve()
+    facade_path = Path(facade).resolve()
+    if not source_path.is_file():
+        raise FrontendError(f"kernel source does not exist: {source_path}")
+    if not facade_path.is_file():
+        raise FrontendError(f"parse facade does not exist: {facade_path}")
+    _reject_source_preprocessor_directives(source_path)
+
+    ast, command, preprocess_command, clang_version, preprocessed_sha256 = _clang_ast(
+        source_path, facade_path, clang, target_triple
+    )
+    function = _find_function(ast, source_path, function_name)
+    _validate_explicit_kernel_signature(function)
+    allowed_calls, expected_signatures = _discover_reachable_call_contracts(function)
+    declaration_ids = _facade_declaration_ids(ast, expected_signatures)
+    reachable = _audit_function(
+        function, allowed_calls, expected_signatures, declaration_ids
+    )
+    member_roots = frozenset(
+        str(parameter.get("name"))
+        for parameter in _children(function)
+        if parameter.get("kind") == "ParmVarDecl"
+        and "struct " in _type_spelling(parameter)
+    )
+    source = _Source(source_path)
+    parameters, calls, definitions, controls, assertions = _Extractor(
+        source,
+        function,
+        allowed_calls,
+        None,
+        member_roots,
+    ).extract()
+    return KernelExtraction(
+        schema_version=3,
+        source_path=str(source_path),
+        source_sha256=_sha256(source_path),
+        facade_path=str(facade_path),
+        facade_sha256=_sha256(facade_path),
+        clang_executable=clang,
+        clang_version=clang_version,
+        target_triple=target_triple,
+        clang_command=command,
+        preprocess_command=preprocess_command,
+        preprocessed_sha256=preprocessed_sha256,
+        function_name=str(function.get("name")),
+        function_type=_type_spelling(function),
+        dialect=architecture.value,
+        parameters=parameters,
+        calls=calls,
+        definitions=definitions,
+        controls=controls,
+        reachable_ast_nodes=reachable,
+        assertions=assertions,
+    )
+
+
 def parse_kernel(
     path: str | Path,
     *,
@@ -1153,7 +1314,7 @@ def parse_kernel(
         function, allowed_calls, expected_signatures, declaration_ids
     )
     source = _Source(source_path)
-    parameters, calls, definitions, controls = _Extractor(
+    parameters, calls, definitions, controls, assertions = _Extractor(
         source,
         function,
         allowed_calls,
@@ -1181,6 +1342,7 @@ def parse_kernel(
         definitions=definitions,
         controls=controls,
         reachable_ast_nodes=reachable,
+        assertions=assertions,
     )
 
 
