@@ -197,15 +197,28 @@ regeneration is byte deterministic. The old named profiles remain regression
 adapters; the production compiler accepts no case id and its generation path no
 longer dispatches on one.
 
-**Remaining gap:** ProofTask/proof/result execution, held-out mutation gates,
-artifact-driven dashboard integration, batch coverage reporting for all nineteen,
-multi-phase recognition, and broader integer/FP intrinsic semantics are not yet
-complete.
+The proof gate now elaborates the frozen generated claim, emits
+`ProofTask.json`, permits an external agent to modify only `Proof.lean` inside the
+accepted closure, rejects proof escape identifiers, checks the exact theorem type
+and transitive axioms with Lean, and publishes content-addressed `Result.json`.
+It compiles its small Lean dependency closure in a temporary root, so checking does
+not modify the repository's tracked `.lake` products.
+
+**Confirmed held-out gate:** two S8 VMax C pairs pass generation and proof after
+full output deletion. The second pair uses randomized directories, basenames,
+function identifiers, and Lean namespace. A Neon max-to-min change invalidates the
+agent proof, and pointer-step, loop-update, entry-assertion, and active-`vl`
+mutations all fail closed. The complete run leaves every tracked repository file
+byte-identical.
+
+**Remaining gap:** artifact-driven dashboard integration, batch coverage reporting
+for all nineteen, multi-phase recognition, and broader integer/FP intrinsic
+semantics are not yet complete.
 
 ## Immediate Objective
 
-Generate and check ProofTask/Result, then make fixed-no-tail generation pass the
-two-positive/one-negative held-out gate:
+Make the dashboard and nineteen-program batch report consume the real artifact
+chain:
 
 ```text
 registered intrinsics/layout/families + two positive C pairs + one mutation

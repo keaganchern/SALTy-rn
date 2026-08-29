@@ -230,3 +230,19 @@ each loop equals its map/zipWith form, the two element functions agree, and the
 complete value observations agree. Neither artifact contains proof search output.
 The later `ProofTask.json` binds their hashes and designates `Proof.lean` as the
 only mutable proof artifact.
+
+## EC-023: Proof Checking Builds an External Temporary Lean Closure
+
+**Status:** Accepted and implemented, 2026-08-29.
+
+Elaborate Models, Spec, the agent proof, and the audit in a temporary Lean module
+root. Copy and compile the small checked dependency source closure there rather
+than trusting or updating repository `.lake` products. Freeze the checked claim's
+elaborated print, exact toolchain identity, checker policy, and parent hashes in
+`ProofTask.json` before delegation.
+
+The delegated command receives the task path and acceptance requires every output
+file except `Proof.lean` to remain byte-identical. The checker then rejects escape
+identifiers, verifies the theorem has exactly the frozen claim type, audits
+transitive axioms, compares protected-closure digests, and emits `Result.json`.
+This is still an integrity gate rather than OS process isolation.

@@ -233,3 +233,26 @@ and `SALT.Example.S8VMax.Audit`.
 **Unresolved:** build and validate ProofTask/Result; run held-out and mutation
 gates; batch-classify all nineteen; add general multi-phase recognition and missing
 integer/FP semantics; drive the dashboard from the artifact graph.
+
+## 2026-08-29 — Implementation stage 3: frozen proof task and held-out gate
+
+**Question:** Does the generic stack remain fixed while an agent writes only the
+proof, and does it reject program identity tricks and semantic/structural changes?
+
+**Conclusion:** yes for the fixed-no-tail S8 VMax vertical slice. The checker
+elaborates the generated Models and proof-free Spec before writing a hash-bound
+ProofTask. An external command may create `Proof.lean`; every other output artifact
+is protected by before/after hashes. Lean then checks the exact named theorem,
+forbidden-token policy, and transitive axioms before `verified(value)` is emitted.
+
+The held-out runner generated two positive C pairs without framework edits. The
+second used new randomized paths, basenames, function names, and namespace, and
+remained byte-deterministic after deleting its output. Replacing Neon max by min
+made the same proof fail. Mutating the pointer step, loop decrement, entry
+assertion, or RVV active `vl` was rejected before a valid stack was produced.
+
+**Evidence:** four proof/held-out tests, including an actual delegated proof command
+and Lean checking; the gate snapshots every tracked file before and after.
+
+**Unresolved:** batch visibility for all nineteen programs, structural two-phase
+recognition, artifact-graph dashboard integration, and missing reviewed semantics.

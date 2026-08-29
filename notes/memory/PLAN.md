@@ -4,8 +4,8 @@ Last updated: 2026-08-29 (Asia/Seoul)
 
 ## Active Milestone
 
-Close the proof/result integrity gate around the generated Models/Spec vertical
-slice. Do not broaden the dashboard before the accepted result artifact exists.
+Batch-classify the nineteen scalar-layout pairs and make the dashboard consume the
+now-complete generated proof/result chain.
 
 The first production gate remains: take two fixed-no-tail C pairs whose typed
 intrinsics already exist and generate/check the entire stack with zero Python/Lean
@@ -106,7 +106,7 @@ Exit gates:
 
 ### M1c — Proof Task, Result, and Integrity Gate
 
-**Status:** Pending.
+**Status:** Completed in implementation stage 3.
 
 Deliver:
 
@@ -129,7 +129,7 @@ Exit gates:
 
 ### M2 — Honest Held-Out Gate
 
-**Status:** Pending.
+**Status:** Completed in implementation stage 3.
 
 Run in a clean temporary checkout and output root:
 
@@ -217,13 +217,11 @@ coverage of all 20 audited elementwise pairs.
 
 Only the first incomplete item is active:
 
-1. generate/check ProofTask/Result and protect the frozen parent closure;
-2. run the two-positive/one-negative held-out matrix plus structural mutations;
-3. make the dashboard read those real artifacts;
-4. batch-classify the nineteen scalar-layout pairs from explicit inputs;
-5. add multi-phase composition for the three identified programs;
-6. expand integer intrinsics;
-7. add reviewed FP semantics; keep grouped `f32-vcmul` deferred.
+1. batch-classify the nineteen scalar-layout pairs from explicit inputs;
+2. add multi-phase composition for the three identified programs;
+3. make the dashboard read the real capability/manifest/task/result graph;
+4. expand integer intrinsics;
+5. add reviewed FP semantics; keep grouped `f32-vcmul` deferred.
 
 ## Global Acceptance Gates
 
