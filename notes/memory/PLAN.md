@@ -59,8 +59,8 @@ Deliver only the schemas and canonical hashing needed by the vertical slice:
 - global exact `IntrinsicCapability` without `supported_cases` authority;
 - scalar-lane `LayoutViewCapability`;
 - fixed-no-tail and RVV-strip-mine `ScheduleFamilyCapability` identities;
-- typed entry contracts, local assertion obligations, common-domain identity, and
-  separately reported contract-implication results;
+- typed entry contracts, normalized cross-side equality, and derived local-tail
+  assertion facts;
 - canonical `ProgramManifest`, `ProofTask`, and terminal `Result` schemas;
 - explicit parent hashes and stable failure-state enum.
 
@@ -94,10 +94,10 @@ Exit gates:
   generation;
 - call signature, pointer step, loop/count update, assertion, or `vl` mutations
   change the manifest or fail closed;
-- a stronger RVV entry assertion narrows only the labeled common-domain theorem;
-  the result must report that full Neon-to-RVV replacement coverage failed;
+- unequal normalized entry contracts return `entry-contract-mismatch`;
 - tail-local assertions are proved from the path condition and current remainder,
   not copied into the function-entry contract;
+- any non-derived local assertion fails phase-one family recognition;
 - generated family instances bind the exact parsed control/effect inventory;
 - no code branch depends on kernel id, input path, basename, function name, or
   generated namespace;
@@ -116,7 +116,7 @@ Deliver:
   checks;
 - `Result.json` with terminal states:
   `parse-unsupported`, `intrinsic-missing`, `intrinsic-ambiguous`,
-  `layout-unrecognized`, `family-unrecognized`, `generation-failed`,
+  `entry-contract-mismatch`, `layout-unrecognized`, `family-unrecognized`, `generation-failed`,
   `proof-search-failed`, `counterexample`, `lean-failed`, and `verified(value)`.
 
 Exit gates:
@@ -132,7 +132,8 @@ Exit gates:
 
 Run in a clean temporary checkout and output root:
 
-- positive fixture A: existing S8 VMax semantics through the generic CLI;
+- positive fixture A: S8 VMax semantics with normalized equal entry contracts
+  through the generic CLI;
 - positive fixture B: same family/intrinsics but randomized directories,
   basenames, function identifiers, and generated module namespace;
 - negative fixture: one supported side changed from max to min;
@@ -142,6 +143,7 @@ Run in a clean temporary checkout and output root:
 Exit gates:
 
 - both positive fixtures generate deterministic artifacts after output deletion;
+- both positive fixtures have equal normalized Neon/RVV entry contracts;
 - `git diff --exit-code` passes for all tracked framework files;
 - `git status --porcelain` shows only allowed generated/proof artifacts under the
   temporary output root, preferably zero tracked changes anywhere;

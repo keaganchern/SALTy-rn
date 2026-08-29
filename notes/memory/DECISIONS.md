@@ -171,3 +171,19 @@ the conjunction of their entry contracts. It separately reports the two contract
 implications, so a common-domain proof cannot be presented as full RVV replacement
 coverage. Assertions nested under control flow remain local proof obligations and
 are never added to the entry-contract conjunction.
+
+## EC-019: Phase One Requires Equal Entry Contracts
+
+**Status:** Accepted, 2026-08-29. Narrows EC-018 for the initial nineteen-program
+scope and removes contract-implication reporting from the first implementation.
+
+Parse both entry contracts into normalized typed expressions and require equality.
+The generated theorem uses that shared contract. A mismatch is unsupported rather
+than intersected, implied, or treated as a replacement-coverage question. Positive
+new-program acceptance fixtures must obey the same rule.
+
+Do not silently erase arbitrary local assertions. The fixed-tail family may consume
+and automatically discharge only assertions equal to facts derived from its loop
+exit and tail reach condition. Any other local assertion fails recognition in phase
+one. This covers all eleven local assertions in the five affected phase-one
+elementwise pairs without a per-program profile.

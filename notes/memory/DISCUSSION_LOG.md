@@ -137,3 +137,27 @@ corresponding RVV files have no local assertions.
 
 **Unresolved:** expose common-domain, Neon-implies-RVV, and RVV-implies-Neon as
 separate generated/result fields and dashboard states.
+
+## 2026-08-29 — Equal-entry phase-one rule and full local-assert audit
+
+**Question:** Can phase one require normal pairs with equal entry assertions and
+simply ignore assertions inside the function?
+
+**Conclusion:** require normalized entry-contract equality and drop contract
+implication/replacement reporting from phase one. The held-out positive fixtures
+must satisfy the same rule. Do not ignore arbitrary local assertions. The fixed-tail
+recognizer can automatically discharge the eleven remainder assertions in the five
+affected phase-one programs because they follow immediately from the loop exit and
+nonzero tail condition; every other local assertion fails recognition.
+
+Across the full paired corpus, fourteen program names contain local assertions.
+Twelve contain only assignment/control-derived invariants. Two non-elementwise
+programs, `f32-dwconv-minmax` and `f32-igemm-minmax`, check caller-supplied pointer
+table entries and therefore contain real data-dependent constraints.
+
+**Evidence:** one-by-one audit recorded in
+`notes/elementwise-compiler/ASSERT_AUDIT.md`.
+
+**Unresolved:** the existing synthetic S8 VMax fixture has mismatched entry
+assertions and must be normalized or replaced before it can serve as a positive
+phase-one acceptance fixture.

@@ -137,3 +137,8 @@ where both entry contracts hold, rather than claiming RVV accepts every Neon-val
 call. EC-018 therefore makes common-domain equality the default and retains EC-017
 as a separately labeled stronger replacement theorem. Local-assert handling is
 unchanged: nested assertions remain program-point obligations.
+
+A final scope clarification narrowed this further: the initial nineteen-program
+slice accepts only pairs whose normalized entry contracts are equal (EC-019). It
+does not implement implication or replacement reporting. The complete local-assert
+audit is recorded separately in `notes/elementwise-compiler/ASSERT_AUDIT.md`.

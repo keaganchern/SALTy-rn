@@ -95,7 +95,10 @@ streams into a logical complex element. None of the twenty uses an overlapping
 **Confirmed assertion audit:** all twenty pairs have textually equal entry
 assertions. Five Neon files contain eleven tail-local remainder assertions while
 their RVV partners contain no local assertion. These are program-point invariants,
-not extra function-entry restrictions.
+not extra function-entry restrictions. Across the whole paired corpus, fourteen
+program names have local assertions: twelve have only derived invariants, while
+`f32-dwconv-minmax` and `f32-igemm-minmax` contain real pointer-table non-null
+constraints. See `../elementwise-compiler/ASSERT_AUDIT.md`.
 
 **Confirmed intrinsic snapshot:** the configured index has 96 exact typed variants:
 54 Neon variants under 49 spellings and 42 RVV variants under 36 spellings. The
@@ -159,13 +162,14 @@ The proof agent may not add axioms, weaken a frozen goal, or invent a preconditi
 A false or unsupported direct claim returns failure or a counterexample. An
 optional contextual claim is regenerated only from separately supplied evidence.
 
-The phase-one pair theorem uses the conjunction of Neon and RVV entry contracts,
-matching equivalence where both supplied programs are valid. Contract implication
-results remain separate, so this theorem is not mislabeled as full RVV replacement
-coverage. Assertions below a branch or loop are local reach-point obligations,
-not entry assumptions. Generated artifacts form a canonical content-addressed
-chain from manifest through result; proof acceptance uses before/after
-protected-closure digests and is an integrity gate, not process isolation.
+Phase one requires the normalized Neon and RVV entry contracts to match and proves
+equivalence under that shared contract. It does not attempt implication or complete
+replacement coverage. The fixed-tail recognizer automatically discharges only
+local remainder assertions derived from its loop/tail structure; any other local
+assertion fails recognition. Generated artifacts form a canonical
+content-addressed chain from manifest through result; proof acceptance uses
+before/after protected-closure digests and is an integrity gate, not process
+isolation.
 
 ## Current Gap
 
@@ -186,10 +190,10 @@ registered intrinsics/layout/families + two positive C pairs + one mutation
   -> dashboard program state derived automatically
 ```
 
-One positive may use the existing synthetic `s8-vmax`; the second must randomize
-path, filename, function, and module identities. The negative changes one side from
-max to min. Do not onboard a sixth named case by adding another profile while this
-gate is open.
+One positive may use the synthetic `s8-vmax` only after its Neon/RVV entry
+assertions are normalized to match; the second must randomize path, filename,
+function, and module identities. The negative changes one side from max to min. Do
+not onboard a sixth named case by adding another profile while this gate is open.
 
 ## Independent Plan Review
 

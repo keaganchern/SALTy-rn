@@ -132,17 +132,12 @@ Classify each assertion by where it executes:
 - an unsupported or effectful assertion expression fails closed.
 
 Let `C_neon` be the supported Neon entry contract and let `C_rvv` be the RVV entry
-contract. The phase-one paired-program theorem proves output equality under the
-common valid domain `C_neon && C_rvv`. This matches the claim that the two supplied
-programs agree whenever both are specified to run.
+contract. Phase one requires their normalized typed expression trees to be equal.
+The paired-program theorem then proves output equality under this one shared entry
+contract. A mismatch returns `entry-contract-mismatch`; phase one does not attempt
+contract implication or replacement-coverage claims.
 
-The compiler must keep domain coverage separate from result equality. It reports
-whether `C_neon -> C_rvv`, `C_rvv -> C_neon`, or neither. A stronger replacement
-claim--that RVV can replace Neon for every Neon-valid call--additionally requires
-`C_neon -> C_rvv` and proves equality under `C_neon`; it is not inferred from a
-common-domain proof.
-
-For both claim modes, the compiler checks:
+The compiler checks:
 
 1. every reachable local assertion on each side from that side's entry contract
    and path condition;
@@ -155,7 +150,10 @@ Static intrinsic restrictions, such as an immediate operand range, are checked b
 the compiler rather than added to the theorem precondition. A missing or incorrect
 intrinsic semantic definition never becomes a precondition.
 
-An optional equal-domain API claim additionally requires `C_neon <-> C_rvv`.
+The fixed-tail recognizer may automatically discharge a local remainder assertion
+only when it exactly follows from the recognized loop exit and tail reach condition.
+Every other local assertion fails closed. See `ASSERT_AUDIT.md` for the corpus
+classification.
 
 In phase one, entry `assert(...)` is an audited contract declaration under the
 pinned preprocessing policy. This is not a theorem about debug abort behavior,
