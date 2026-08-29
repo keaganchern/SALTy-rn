@@ -142,3 +142,17 @@ A final scope clarification narrowed this further: the initial nineteen-program
 slice accepts only pairs whose normalized entry contracts are equal (EC-019). It
 does not implement implication or replacement reporting. The complete local-assert
 audit is recorded separately in `notes/elementwise-compiler/ASSERT_AUDIT.md`.
+
+## Round 4: Nineteen-Program Scope Check
+
+Final quick verdict: **GO**.
+
+The reviewer checked the revised nineteen-program scope and confirmed that no
+second grouped layout is hidden after excluding `f32-vcmul`. The five affected
+elementwise files' eleven local assertions fit one reusable fixed-tail remainder
+rule. The implementation must derive preserved element-size divisibility as well
+as remainder bounds because `f32-f16-vcvt` asserts both.
+
+No issue blocks M1a. Full nineteen-program coverage still depends on the three
+documented multi-phase controls and reviewed FP/broader intrinsic semantics. Those
+are coverage gates, not reasons to delay the compiler foundation.

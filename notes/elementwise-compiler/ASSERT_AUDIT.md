@@ -39,9 +39,11 @@ invariants. Their RVV partners contain no local assertions because RVV processes
 remaining active length directly.
 
 **Proposal:** the fixed-tail recognizer consumes only local assertions matching its
-derived remainder facts. It records them as automatically discharged. Any other
-local assertion fails recognition instead of being silently erased or promoted to
-an entry assumption. This is a family rule, not a per-program profile.
+derived remainder facts. Those facts include both the strict remainder range and
+preserved element-size divisibility/alignment; `f32-f16-vcvt` exercises both. It
+records matching assertions as automatically discharged. Any other local assertion
+fails recognition instead of being silently erased or promoted to an entry
+assumption. This is a family rule, not a per-program profile.
 
 ## Claim Boundary
 

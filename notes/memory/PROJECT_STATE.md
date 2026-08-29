@@ -203,3 +203,6 @@ domains, content-addressed parent hashes, honest proof-process wording, mileston
 reordering, and a stronger anti-special-casing gate were incorporated, its
 convergence review returned `GO`: no remaining design-document defect blocks M1a.
 The review is preserved in `notes/reviews/elementwise-compiler-plan-review-2026-08-29.md`.
+After the scope narrowed to nineteen scalar-layout pairs and equal entry contracts,
+a fourth quick pass again returned `GO`; it required the fixed-tail checker to
+preserve element-size divisibility in addition to proving remainder bounds.

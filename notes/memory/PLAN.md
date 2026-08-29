@@ -97,6 +97,8 @@ Exit gates:
 - unequal normalized entry contracts return `entry-contract-mismatch`;
 - tail-local assertions are proved from the path condition and current remainder,
   not copied into the function-entry contract;
+- derived tail facts include preserved element-size divisibility/alignment as well
+  as lower and upper remainder bounds;
 - any non-derived local assertion fails phase-one family recognition;
 - generated family instances bind the exact parsed control/effect inventory;
 - no code branch depends on kernel id, input path, basename, function name, or

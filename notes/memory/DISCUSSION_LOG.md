@@ -161,3 +161,20 @@ table entries and therefore contain real data-dependent constraints.
 **Unresolved:** the existing synthetic S8 VMax fixture has mismatched entry
 assertions and must be normalized or replaced before it can serve as a positive
 phase-one acceptance fixture.
+
+## 2026-08-29 — Reviewer convergence on the nineteen-program scope
+
+**Question:** After excluding `f32-vcmul` and narrowing assertion handling, can
+implementation start without another design pass?
+
+**Reviewer verdict:** `GO`. No hidden layout or claim gap blocks M1a. All eleven
+local assertions in the five affected elementwise files belong to one reusable
+fixed-tail fact family. The one implementation caution is to derive preserved
+element-size divisibility/alignment as well as range bounds.
+
+**Remaining coverage gates:** three multi-phase programs (`f32-f16-vcvt`,
+`qs8-vadd-minmax`, `s8-vclamp`) and reviewed FP/broader intrinsic semantics. These
+block claiming all nineteen complete, but do not block starting the framework.
+
+**Evidence:** fourth review pass over commit `345a3bd`, the nineteen C pairs, and
+`notes/elementwise-compiler/ASSERT_AUDIT.md`.
