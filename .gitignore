@@ -29,3 +29,21 @@ build/verification/harnesses/verify_*.cpp
 
 # Editor
 .vscode/
+
+# Local research memory and user-facing working notes
+/.local/
+/notes/memory/
+/notes/DRAFT_PR_ELEMENTWISE_COMPILER.md
+/notes/PROJECT_PROGRESS_OVERVIEW.md
+/notes/elementwise-compiler/CLEAN_PR_REPRODUCIBILITY_AUDIT.md
+/figures/saltyrn-project-pipeline.md
+/figures/saltyrn-project-pipeline.mmd
+/figures/saltyrn-project-pipeline.png
+
+# Generated elementwise working tree; curated results remain under verification/
+/build/verification/elementwise-compiler/
+
+# Local review and deferred differential-audit evidence
+/verification/elementwise-compiler/intrinsic-reviews/
+/verification/elementwise-compiler/program-reviews/
+/verification/elementwise-compiler/intrinsic-review-history/
