@@ -603,3 +603,58 @@ When a real vector-vector intrinsic is used with a source broadcast, the registr
 retains faithful vector-vector identity lowering. A separate theorem may recover a
 scalar kernel helper only from explicit broadcast provenance and any required
 input bound. Generated proofs may not silently scalarize the intrinsic descriptor.
+
+## EC-048: The Publication PR Is Code-and-Curated-Results Focused
+
+**Status:** Accepted for cleanup implementation, 2026-08-31.
+
+The publication PR will remain on `feat/elementwise-compiler` unless cleanup
+cannot be completed safely there. It will exclude the dashboard, the 180
+per-intrinsic review records, raw differential-audit inputs/outputs, historical
+reviews, local memory, Chinese user-facing notes, Lean build caches, and other
+local working output.
+
+The PR will retain all nineteen scalar result chains plus the deferred
+`f32-vcmul` status in a dedicated low-pollution result directory. Saved
+`Proof.lean` files for the two positive results and Lean/JSON counterexamples for
+the ten refuted results are publication evidence and must remain. The seven
+external-condition blockers retain their Models, Spec, conditions, and status
+without fabricating a Proof or Result.
+
+Intrinsic semantic source code and the exact intrinsic registry remain part of
+the implementation; only the separate review-record publication is excluded.
+Accordingly, the clean PR must not claim that its checked-in tree independently
+reproduces the former 180/180 intrinsic-review closure unless that evidence is
+published separately and explicitly linked.
+
+## EC-049: Local Memory and User-Facing Chinese Notes Are Not Publication Inputs
+
+**Status:** Accepted for cleanup implementation, 2026-08-31.
+
+`notes/memory/*` and documents written only to explain progress to the local user
+are local project-management state. They will live under an ignored local-notes
+root and will not enter the source PR. The local memory protocol may continue to
+operate outside Git.
+
+Tracked documentation is English and limited to operational README material,
+architecture/contract explanations needed by reviewers, formal policies that
+remain live, and concise final review or reproduction evidence. Historical plans,
+intermediate review rounds, raw traces, spreadsheets, and superseded reports are
+not publication inputs.
+
+## EC-050: Program Reviews and Differential Audits Are Not Publication Artifacts
+
+**Status:** Accepted for cleanup implementation, 2026-08-31.
+
+The nineteen JSON records under
+`verification/elementwise-compiler/program-reviews/` are local independent-review
+metadata, not generated program results. They will not enter the clean PR. Review
+may still be run locally, but the publication contains the checked-in translation,
+proof, counterexample, and blocker results rather than the local approval records.
+
+Differential-audit scripts, tests, inputs, and outputs are all deferred to a
+separate future PR. The current PR therefore makes no locally reproducible claim
+about the former differential-audit or 180/180 intrinsic-review closure.
+
+The original-C `f32-vmax` Neon/RVV executable counterexample demo is retained as
+compact, direct evidence for one published counterexample.

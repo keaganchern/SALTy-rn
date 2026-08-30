@@ -1,11 +1,11 @@
 # Elementwise Compiler Project State
 
-Last updated: 2026-08-30 (Asia/Seoul)
+Last updated: 2026-08-31 (Asia/Seoul)
 
 ## Snapshot
 
 - Branch: `feat/elementwise-compiler`
-- Audited implementation head before the final memory update: `4ae0cd5`
+- Audited implementation head: `78ee4ac`
 - Base: `1707e5e1b847fe0c4a0a17ff058928485db82cee`
 - First branch commit: `986acd4` (`s8-vmax` target-architecture prototype)
 - Upstream corpus baseline: `origin/main@6acdf7a522e2b97b96831f8e95b578e6edf42a83`
@@ -341,6 +341,19 @@ registered intrinsics/layout/families + discovered C pair
   -> independent outcome review
   -> dashboard program state derived automatically
 ```
+
+**Accepted publication cleanup, 2026-08-31:** the Draft PR remains on
+`feat/elementwise-compiler` and will emphasize core code plus a dedicated
+170-file curated result projection. Dashboard code, intrinsic review records, raw
+differential audit artifacts, local memory, Chinese user-facing notes, and legacy
+generated/examples are excluded from the publication diff. The intrinsic semantic
+implementation remains. This cleanup has not yet been implemented or revalidated;
+the current 1,137-file committed tree remains the only fully audited layout.
+
+Program-review JSON is also excluded because it is local approval metadata rather
+than a program translation result. Differential-audit code, tests, inputs, and
+outputs move together to a future PR. The original-C `f32-vmax` executable
+counterexample remains in the clean publication.
 
 The two randomized S8 VMax positives and semantic/structural negatives already
 satisfy the zero-framework-edit gate for the supported 8-bit family. New program

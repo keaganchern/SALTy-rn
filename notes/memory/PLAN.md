@@ -409,6 +409,32 @@ large semantic commits covering framework-gap closure, reviewed intrinsic
 families, program proof/review batches, and final integration. Fold future memory
 updates into the relevant implementation commit.
 
+## Publication Cleanup Plan
+
+**Status:** Accepted direction; implementation not started.
+
+1. keep `feat/elementwise-compiler` as the PR branch and add cleanup/refactor
+   commits rather than replaying the implementation on a new branch;
+2. move the complete regenerated working tree to ignored
+   `build/verification/elementwise-compiler/`;
+3. create a dedicated checked-in results root containing the 169 scalar outcome
+   files plus the one deferred `f32-vcmul` status;
+4. replace 487 program-local capability files with a global exact capability
+   authority or deterministic regeneration, then rebind every retained artifact;
+5. exclude dashboard code/tests, intrinsic and program review records, all
+   differential-audit code/tests/inputs/outputs, historical reviews, local memory,
+   and Chinese user-facing notes;
+6. retain the intrinsic semantic implementation, compiler/checker core, focused
+   tests, saved Proofs, checked counterexamples, and minimal English documentation;
+7. rerun clean-clone generation, proof replay, counterexample replay, 2/10/7
+   outcome checks, mutation gates, and deterministic output comparison;
+8. obtain a new local independent review of the cleaned code-and-results
+   publication without committing the review metadata.
+
+Because the intrinsic review closure is intentionally omitted, update public
+claims and result schemas so the clean PR does not present the old 180/180
+review-publication state as locally loadable evidence.
+
 ## Global Acceptance Gates
 
 1. **Zero framework edits:** held-out same-family onboarding changes no framework

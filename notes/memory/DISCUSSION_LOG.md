@@ -1031,3 +1031,127 @@ loop scheduling, missing XMLPack parameter constraints, or a portable RVV oracle
 **Evidence:** `notes/demos/f32-vmax-c-counterexample/run.sh` rebuilds both sides,
 checks the RVV disassembly, inspects the Spike result, and prints the two bit-exact
 outputs. The run passed on 2026-08-31.
+
+## 2026-08-31 — Draft the scalar-elementwise pull request
+
+**Question:** Is the elementwise branch ready for a Draft PR, and how should the
+project evolution and current 2/10/7 outcome split be presented without
+overclaiming?
+
+**Confirmed:** `feat/elementwise-compiler@78ee4ac` is published at the matching
+`fork/feat/elementwise-compiler` remote head. `ProgramReviewPlan.json` records two
+`verified(value)`, ten `counterexample`, and seven
+`external-condition-missing` outcomes, and `ProgramReviewChecks.json` passes all
+nineteen exact subjects. The correct summary is that all nineteen scalar programs
+complete generation and outcome audit, while twelve reach definite semantic
+verdicts and only two are proved equivalent.
+
+**Confirmed PR-readiness limitation:** the implementation and audit closure is
+ready to expose as a Draft PR, but the local worktree is not clean: tracked Lean
+`.lake` build outputs are modified, additional build outputs and `.DS_Store` are
+untracked, and the intended review base is not yet published at local
+`feat/neon-rvv-to-lean@1707e5e`. A direct PR against upstream `main` would include
+the earlier Lean stack as well as this twenty-five-commit elementwise series.
+
+**Artifact:** `notes/DRAFT_PR_ELEMENTWISE_COMPILER.md` contains the proposed title,
+body, result table, claim boundary, validation record, future work, and review
+order.
+
+**Unresolved:** clean generated build artifacts and choose whether to publish the
+three missing base commits for a stacked PR or intentionally submit the full Lean
+stack against upstream `main`.
+
+## 2026-08-31 — Classify the prospective PR by file role
+
+**Question:** Why does the direct `origin/main..feat/elementwise-compiler` diff
+contain 1,137 files, and how small could a reproducible code-focused PR become?
+
+**Confirmed:** the diff contains 838 JSON, 109 Python, 95 Lean, 35 Markdown, 21 C,
+10 text, 9 headers, 6 CSV, and 14 other files. The dominant directory is
+`verification/elementwise-compiler/` with 886 files: 657 per-program generated
+artifacts (487 capability snapshots, 120 other JSON, and 50 Lean), 180 intrinsic
+review records, 19 program reviews, 16 corpus/audit indexes, 9 historical reviews,
+and 5 schemas. The executable source is much smaller: 76 workflow files and 44
+Lean-tree files, accompanied by 64 tests and 53 notes.
+
+**Inference:** a code-focused branch that regenerates C-to-Manifest-to-Models/
+Spec/ProofTask and checks Lean needs roughly 80–120 files after dependency pruning,
+or about 120–150 files when retaining the focused audit machinery and regression
+tests. Keeping the exact current independent-review closure is incompatible with
+that small diff because the review hashes bind the generated program artifacts.
+
+**Proposal:** retain one or two small checked-in golden examples, regenerate the
+nineteen-program corpus in CI, and publish the complete content-addressed audit
+closure as a CI/release artifact rather than reviewing all 886 generated files in
+the source PR. Validate the exact file manifest on a clean `origin/main` branch
+before claiming a final count.
+
+## 2026-08-31 — Retain all nineteen curated result chains
+
+**Question:** Should a clean PR omit all generated program results, or retain the
+final translation/proof evidence for every current scalar case?
+
+**Confirmed:** the 657 files under `programs/` split into 487 per-program
+`Capabilities/` snapshots and 170 direct program-chain files. The latter comprise
+the nineteen Manifest/Models/Spec/external-condition/cross-phase/index/status
+chains, ten Lean/JSON counterexamples plus Results, and two ProofTask/Proof/Result
+chains. The capability snapshots duplicate globally identified intrinsic,
+layout, and schedule information across programs.
+
+**Refined proposal:** keep a curated, checked-in result chain for all nineteen
+scalar programs, not only one or two examples. Generate the complete working tree
+under an ignored `build/verification/elementwise-compiler/` root, publish the
+validated 170-file program projection plus nineteen program reviews to a stable
+results directory, and replace per-program capability copies with references to a
+single global registry/content-addressed store. Publish raw differential traces
+and other bulky audit intermediates as CI artifacts while retaining compact
+summaries and reproduction commands in Git.
+
+**Unresolved:** changing the capability representation changes artifact hashes,
+so the nineteen program reviews must be regenerated and independently republished
+after the cleanup.
+
+## 2026-08-31 — Choose a code-and-curated-results publication
+
+**Question:** Which artifacts and documentation should enter the eventual PR?
+
+**Accepted direction:** continue on `feat/elementwise-compiler`; do not create a
+new PR branch unless cleanup proves unsafe. Exclude the dashboard, the 180
+intrinsic review files, all raw differential-audit inputs/outputs, local memory,
+Chinese user-facing documentation, historical review material, legacy generated
+Lean examples, and build/editor output. Keep intrinsic semantic code and the
+translation/checking framework.
+
+Keep all nineteen scalar result chains plus the deferred `f32-vcmul` status in a
+dedicated checked-in results directory. This includes the two saved agent proofs,
+ten checked Lean/JSON counterexamples, and seven explicit external-condition
+blockers. Full working output moves under ignored `build/verification/`.
+
+**Confirmed consequence:** omitting intrinsic review records means the cleaned PR
+cannot locally load or advertise the previous 180/180 independent-review closure.
+The result/review schemas and PR wording must be adjusted honestly; intrinsic
+definitions and focused semantic tests remain.
+
+**Inference:** after removing dashboard, review/audit publication, local docs, and
+legacy material, while retaining the 170 result files, the likely clean diff is
+roughly 260--310 files. The exact count requires implementation of the global
+capability representation and a clean-base dependency/test pass.
+
+## 2026-08-31 — Drop local review metadata and defer differential audit
+
+**Question:** Are program reviews part of the generated result, and should the
+differential-audit implementation remain in the same PR?
+
+**Confirmed:** `verification/elementwise-compiler/program-reviews/` contains
+nineteen local independent-approval JSON records and is a sibling of the generated
+`programs/` directory. It is not the Manifest/Models/Spec/Proof/Counterexample/
+Result chain itself.
+
+**Accepted direction:** omit all intrinsic review and program review records from
+the clean PR. Omit differential-audit scripts, tests, inputs, and outputs and
+consider them in a later standalone PR. Retain all curated program results and the
+five-file original-C `f32-vmax` executable counterexample demo.
+
+**Consequence:** local reviewers may still rerun checks, but the clean PR must not
+describe the omitted review/audit closures as checked-in, independently loadable
+evidence.
