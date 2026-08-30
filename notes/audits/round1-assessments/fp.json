@@ -1,0 +1,365 @@
+{
+  "scope": "44 exact FP-related variants in verification/elementwise-compiler/IntrinsicRegistry.json; read-only three-layer audit of kernel call sites, pinned-authority metadata/selectors, and Lean value implementations",
+  "limitations": "The pinned ACLE/ISA source files named by IntrinsicAudit.json are not present in this checkout; selectors, prototypes, revisions, line numbers and hashes were checked through the content-bound IntrinsicAudit artifact. Thus confirmed means confirmed for pure active-lane value/bit semantics, not flags, traps, C memory, or compiled ISA semantics.",
+  "summary": {
+    "total": 44,
+    "confirmed": 21,
+    "conditional": 7,
+    "needs_deep_audit": 16,
+    "suspected_bug": 0
+  },
+  "rows": [
+    {
+      "capability_id": "intrinsic:neon:vabsq_f32:d7921418b0f67e9a",
+      "deep_verdict": "confirmed",
+      "risk": "low",
+      "evidence": ["IntrinsicAudit.json: ACLE advsimd.csv@c218a6b line 1616, FABS Vd.4S,Vn.4S", "kernels/source/f32-vrndne.c:22 and f32-f16-vcvt.c:31", "SALT/Intrinsics/Neon.lean:26-27; FP32.lean:245-246"],
+      "finding": "Kernel operand order is unary and Lean clears only bit 31. This matches the pure bit-value behavior used by the two kernels, including signed zero and NaN payload preservation.",
+      "next_action": "Add direct Arm DN=0/DN=1 and signaling-NaN hardware probes before extending the claim to FP state modes."
+    },
+    {
+      "capability_id": "intrinsic:neon:vaddq_f32:eb0f2841c6e04bda",
+      "deep_verdict": "needs_deep_audit",
+      "risk": "high",
+      "evidence": ["IntrinsicAudit.json: ACLE advsimd.csv@c218a6b line 35, FADD Vd.4S,Vn.4S,Vm.4S", "kernels/source/f32-vrndne.c:25 and f32-vadd.c", "Neon.lean:11-12; FP32.lean:51-53,70-94"],
+      "finding": "NaN priority, quieting, invalid infinity and canonical invalid result are explicitly separated for Arm DN=0/AH=0. The nonexceptional path still delegates to opaque host Float32.add, with no independent exhaustive oracle for subnormals, tie rounding, signed zero, overflow or underflow.",
+      "next_action": "Differentially sweep structured FP32 boundary pairs against AArch64 FADD under RN,FZ=0,DN=0,AH=0; include flags as separately observed data."
+    },
+    {
+      "capability_id": "intrinsic:neon:vbslq_f32:77a354be995a3c54",
+      "deep_verdict": "confirmed",
+      "risk": "low",
+      "evidence": ["IntrinsicAudit.json: ACLE advsimd.csv@c218a6b line 1834, BSL Vd.16B,Vn.16B,Vm.16B", "kernels/source/f32-vrndne.c:31 and f32-vlrelu.c", "Neon.lean:35-38; FP32 test:51-52"],
+      "finding": "Argument order is mask,true,false and Lean implements exact bit selection per lane. It is insensitive to NaN, signed zero and rounding.",
+      "next_action": "Retain a mask mutation test and random bit-pattern differential test."
+    },
+    {
+      "capability_id": "intrinsic:neon:vcaltq_f32:f3b8c142d67b794b",
+      "deep_verdict": "conditional",
+      "risk": "medium",
+      "evidence": ["IntrinsicAudit.json: ACLE line 669, FACGT Vd.4S,Vm.4S,Vn.4S; conditions FZ=0 and traps disabled", "kernels/source/f32-vrndne.c:23 uses vcaltq_f32(magic,x)", "Neon.lean:40-46; FP32.lean:329-338"],
+      "finding": "The reversed FACGT selector is correctly modeled as abs(left) < abs(right); NaNs produce false and signed zeros compare equal. FPSR/invalid behavior is intentionally absent, so adequacy depends on the recorded FZ/trap/value-only scope.",
+      "next_action": "Probe qNaN/sNaN, both signed zeros, infinities and smallest subnormals on AArch64, recording both mask and FPSR."
+    },
+    {
+      "capability_id": "intrinsic:neon:vcvtq_f32_s32:b9802bf359b030b7",
+      "deep_verdict": "needs_deep_audit",
+      "risk": "high",
+      "evidence": ["IntrinsicAudit.json: ACLE line 1243, SCVTF Vd.4S,Vn.4S; RN/FZ=0/traps-off conditions", "kernels/source/qs8-f32-vcvt.c:31", "Neon.lean:59-60; FP32.lean:290-291"],
+      "finding": "Operand wiring is correct, but all i32-to-f32 rounding is delegated to host Float32.ofInt. No independent check establishes all 2^32 inputs or the 24-bit precision boundaries under Arm RN.",
+      "next_action": "Use a mathematically exact integer-to-binary32 oracle or exhaust all i32 values by exponent buckets against AArch64 SCVTF."
+    },
+    {
+      "capability_id": "intrinsic:neon:vdivq_f32:004323a551f8da88",
+      "deep_verdict": "needs_deep_audit",
+      "risk": "high",
+      "evidence": ["IntrinsicAudit.json: ACLE line 197, FDIV Vd.4S,Vn.4S,Vm.4S", "kernels/source/f32-vdiv.c:20", "Neon.lean:20-21; FP32.lean:61-62,108-128"],
+      "finding": "Left/right order and NaN/0\/0/inf\/inf cases are explicit. Finite division, divide-by-zero sign, subnormal and correctly-rounded last-bit behavior still rely on host Float32.div.",
+      "next_action": "Boundary-pair and randomized AArch64 FDIV comparison, including ±0, smallest subnormals, exact half-ULP cases and all exception classes."
+    },
+    {
+      "capability_id": "intrinsic:neon:vdupq_n_f32:8249edeb665b3be9",
+      "deep_verdict": "confirmed",
+      "risk": "low",
+      "evidence": ["IntrinsicAudit.json: ACLE line 1939, DUP Vd.4S,rn", "kernels/source/f32-f16-vcvt.c:17 and qs8-f32-vcvt.c:22", "intrinsic_library.py:198-203 structural BROADCAST"],
+      "finding": "The scalar is replicated bit-for-bit to four logical lanes; call signatures and argument order match. C scalar evaluation/NaN representation remains outside the pure-value model.",
+      "next_action": "Keep a bit-pattern broadcast test including negative zero and NaN payload."
+    },
+    {
+      "capability_id": "intrinsic:neon:vget_high_f32:ce38d747fe1b6927",
+      "deep_verdict": "confirmed",
+      "risk": "low",
+      "evidence": ["IntrinsicAudit.json: ACLE line 2055, high 64-bit half selector", "kernels/source/f32-vrndne.c:46 and f32-vmax.c:37", "intrinsic_library.py:116-122 structural TAKE_HIGH"],
+      "finding": "Lean/compiler structural extraction preserves lanes 2 and 3 in order and does not interpret FP bits.",
+      "next_action": "Retain lane-order mutation regression."
+    },
+    {
+      "capability_id": "intrinsic:neon:vget_low_f32:8a95cadbc4dbff95",
+      "deep_verdict": "confirmed",
+      "risk": "low",
+      "evidence": ["IntrinsicAudit.json: ACLE line 2070, low 64-bit half selector", "kernels/source/f32-vrndne.c:43 and f32-vmax.c:34", "intrinsic_library.py:123-129 structural TAKE_LOW"],
+      "finding": "Lean/compiler structural extraction preserves lanes 0 and 1 in order and does not interpret FP bits.",
+      "next_action": "Retain lane-order mutation regression."
+    },
+    {
+      "capability_id": "intrinsic:neon:vld1q_dup_f32:6ed02bd5acdc88a3",
+      "deep_verdict": "confirmed",
+      "risk": "low",
+      "evidence": ["IntrinsicAudit.json: ACLE line 2190, LD1R {Vt.4S},[Xn]", "kernels/source/f32-vmulc.c:20", "intrinsic_library.py:138-143 structural LOAD_BROADCAST"],
+      "finding": "One 32-bit memory value is loaded and replicated; pointer order is correct. Alignment, faults, volatile and C alias behavior are outside the current logical-value claim.",
+      "next_action": "Add memory-refinement checks when upgrading from logical list semantics."
+    },
+    {
+      "capability_id": "intrinsic:neon:vld1q_f32:2cd0ee0c55f9163a",
+      "deep_verdict": "confirmed",
+      "risk": "low",
+      "evidence": ["IntrinsicAudit.json: ACLE line 2122, LD1 {Vt.4S},[Xn]", "kernels/source/f32-vadd.c:21 and f32-vrndne.c:20", "intrinsic_library.py:130-136 structural LOAD"],
+      "finding": "Four consecutive 32-bit lanes are loaded in order and remain raw bits in the logical model.",
+      "next_action": "Separate future alignment/fault/alias audit from this value verdict."
+    },
+    {
+      "capability_id": "intrinsic:neon:vmaxq_f32:0179c48d8b09ae1c",
+      "deep_verdict": "conditional",
+      "risk": "medium",
+      "evidence": ["IntrinsicAudit.json: ACLE line 763, FMAX; DN=0,AH=0,FZ=0,traps-off", "kernels/source/f32-vmax.c:24", "Neon.lean:99-100; FP32.lean:351-367"],
+      "finding": "Lean propagates selected NaN payload with signaling-NaN priority and returns +0 for mixed signed zeros. This matches the reviewed DN=0/AH=0 value scope; flags/traps and alternative FPCR modes are excluded.",
+      "next_action": "Hardware matrix for qNaN/sNaN operand priority, ±0 order and DN/AH toggles."
+    },
+    {
+      "capability_id": "intrinsic:neon:vminq_f32:db82f78c6ebf7e64",
+      "deep_verdict": "conditional",
+      "risk": "medium",
+      "evidence": ["IntrinsicAudit.json: ACLE line 779, FMIN; DN=0,AH=0,FZ=0,traps-off", "kernels/source/f32-vmin.c and clamp uses", "Neon.lean:102-103; FP32.lean:357-372"],
+      "finding": "Lean propagates selected NaN payload with signaling-NaN priority and returns -0 for mixed signed zeros. Adequacy is limited to the explicit FPCR pure-value scope.",
+      "next_action": "Hardware matrix for qNaN/sNaN operand priority, ±0 order and DN/AH toggles."
+    },
+    {
+      "capability_id": "intrinsic:neon:vmulq_f32:dcf54b26c84f1dc6",
+      "deep_verdict": "needs_deep_audit",
+      "risk": "high",
+      "evidence": ["IntrinsicAudit.json: ACLE line 173, FMUL", "kernels/source/f32-vmul.c and f32-f16-vcvt.c:37", "Neon.lean:17-18; FP32.lean:58-59,103-122"],
+      "finding": "NaN propagation and 0*infinity invalid are explicit, but every normal/subnormal finite product and final rounding comes from host Float32.mul.",
+      "next_action": "Compare exponent-stratified products against AArch64 FMUL/SoftFloat under RN,FZ=0, including underflow ties and signed zero."
+    },
+    {
+      "capability_id": "intrinsic:neon:vreinterpretq_f32_u32:ced150bd10ca74a0",
+      "deep_verdict": "confirmed",
+      "risk": "low",
+      "evidence": ["IntrinsicAudit.json: ACLE line 3767, NOP", "kernels/source/f32-vrndne.c:18", "intrinsic_library.py:301-307 structural BITCAST"],
+      "finding": "No bits or lane order change; the source and destination type views are correctly wired.",
+      "next_action": "Keep round-trip arbitrary-bit theorem/test."
+    },
+    {
+      "capability_id": "intrinsic:neon:vreinterpretq_s32_f32:2cd2659eac58f991",
+      "deep_verdict": "confirmed",
+      "risk": "low",
+      "evidence": ["IntrinsicAudit.json: ACLE line 3719, NOP", "kernels/source/f32-vlrelu.c", "intrinsic_library.py:272-278 structural BITCAST"],
+      "finding": "Exact 128-bit register bits and lane order are preserved.",
+      "next_action": "Keep sign-bit edge regression."
+    },
+    {
+      "capability_id": "intrinsic:neon:vreinterpretq_u32_f32:28a52ca0f4e39bd2",
+      "deep_verdict": "confirmed",
+      "risk": "low",
+      "evidence": ["IntrinsicAudit.json: ACLE line 3722, NOP", "kernels/source/f32-f16-vcvt.c:34", "intrinsic_library.py:308-314 structural BITCAST"],
+      "finding": "Exact FP32 encodings become unsigned lane values without conversion.",
+      "next_action": "Keep round-trip arbitrary-bit theorem/test."
+    },
+    {
+      "capability_id": "intrinsic:neon:vsqrtq_f32:e84688350b6bf566",
+      "deep_verdict": "needs_deep_audit",
+      "risk": "high",
+      "evidence": ["IntrinsicAudit.json: ACLE line 1704, FSQRT", "kernels/source/f32-vsqrt.c:20", "Neon.lean:23-24; FP32.lean:64-65,113-133"],
+      "finding": "NaN quieting and negative-nonzero invalid are explicit. Positive finite and subnormal square-root rounding is delegated to host Float32.sqrt.",
+      "next_action": "Compare all exponent classes and adversarial midpoint radicands against AArch64 FSQRT or a proven binary32 oracle."
+    },
+    {
+      "capability_id": "intrinsic:neon:vst1_f32:ad0241ade4926fdb",
+      "deep_verdict": "confirmed",
+      "risk": "low",
+      "evidence": ["IntrinsicAudit.json: ACLE line 2219, ST1 {Vt.2S},[Xn]", "kernels/source/f32-vrndne.c:45", "intrinsic_library.py:144-150 structural STORE"],
+      "finding": "Two low-half logical lanes are stored in order with raw FP bits preserved.",
+      "next_action": "Defer alignment/fault/alias properties to the memory bridge."
+    },
+    {
+      "capability_id": "intrinsic:neon:vst1_lane_f32:0d7385dd67f03980",
+      "deep_verdict": "confirmed",
+      "risk": "low",
+      "evidence": ["IntrinsicAudit.json: ACLE line 2249; immediate lane constrained to {0,1}", "kernels/source/f32-vrndne.c:49 uses lane 0", "intrinsic_library.py:151-163 structural LANE_STORE"],
+      "finding": "Lane immediate domain and pointer,value,lane order are exact; current kernels select lane 0.",
+      "next_action": "Retain rejected-immediate tests and a lane-1 fixture."
+    },
+    {
+      "capability_id": "intrinsic:neon:vst1q_f32:22522d502967a1ae",
+      "deep_verdict": "confirmed",
+      "risk": "low",
+      "evidence": ["IntrinsicAudit.json: ACLE line 2220, ST1 {Vt.4S},[Xn]", "kernels/source/f32-vrndne.c:33", "intrinsic_library.py:164-170 structural STORE"],
+      "finding": "Four logical lanes are stored in order with exact bit patterns.",
+      "next_action": "Defer C byte-memory and fault behavior to a separate bridge."
+    },
+    {
+      "capability_id": "intrinsic:neon:vsubq_f32:77371b1c24735320",
+      "deep_verdict": "needs_deep_audit",
+      "risk": "high",
+      "evidence": ["IntrinsicAudit.json: ACLE line 349, FSUB", "kernels/source/f32-vrndne.c:29 and f32-vsub.c", "Neon.lean:14-15; FP32.lean:55-56,75-101"],
+      "finding": "Operand order and NaN/inf-inf invalid cases are explicit. Finite subtraction cancellation, signed zero, subnormal and rounding behavior relies on host Float32.sub.",
+      "next_action": "AArch64/SoftFloat differential sweep emphasizing cancellation, adjacent floats, underflow and both zero signs."
+    },
+    {
+      "capability_id": "intrinsic:rvv:__riscv_vfabs_v_f32m8:8692f7eca5a88c0e",
+      "deep_verdict": "confirmed",
+      "risk": "low",
+      "evidence": ["IntrinsicAudit.json: intrinsic_funcs.adoc@b611045 line 44180; ISA selector vfsgnjx.vv", "kernels/target/f32-vrndne.c:17", "RVV.lean:28-29; FP32.lean:245-246"],
+      "finding": "RVV vfabs pseudoinstruction clears the sign bit through sign injection; Lean does exactly that and preserves NaN payload/signaling bits otherwise.",
+      "next_action": "Retain arbitrary-bit equivalence to x & 0x7fffffff."
+    },
+    {
+      "capability_id": "intrinsic:rvv:__riscv_vfadd_vf_f32m8:01eac112a6054ac6",
+      "deep_verdict": "needs_deep_audit",
+      "risk": "high",
+      "evidence": ["IntrinsicAudit.json: intrinsic_funcs.adoc line 37832, ISA vfadd.vf; frm=RNE", "kernels/target/f32-vrndne.c:22", "RVV.lean:39-40; FP32.lean:51-73"],
+      "finding": "Vector/scalar order and canonical NaN rule are modeled. Finite results rely on host add, scalar NaN-boxing is abstracted, and vl is erased into active-list length.",
+      "next_action": "RVV simulator/hardware comparison across boundary operands under RNE; explicitly test malformed NaN boxing only if widening beyond C float inputs."
+    },
+    {
+      "capability_id": "intrinsic:rvv:__riscv_vfadd_vv_f32m8:fbb8ad033686b702",
+      "deep_verdict": "needs_deep_audit",
+      "risk": "high",
+      "evidence": ["IntrinsicAudit.json: intrinsic_funcs.adoc line 37830, ISA vfadd.vv; frm=RNE", "kernels/target/f32-vadd.c:20", "RVV.lean:10-11; FP32.lean:70-73"],
+      "finding": "Canonical NaNs and invalid infinity are explicit, but ordinary/subnormal arithmetic uses host Float32.add; inactive/tail lanes are omitted by the logical-list abstraction.",
+      "next_action": "Spike Sail/Spike/QEMU or hardware differential tests for active lanes, plus host-oracle independence tests."
+    },
+    {
+      "capability_id": "intrinsic:rvv:__riscv_vfcvt_f_x_v_f32m8:1a8179f58e454cb0",
+      "deep_verdict": "needs_deep_audit",
+      "risk": "high",
+      "evidence": ["IntrinsicAudit.json: intrinsic_funcs.adoc line 45072, ISA vfcvt.f.x.v; frm=RNE", "kernels/target/qs8-f32-vcvt.c:26", "RVV.lean:70-71; FP32.lean:290-291"],
+      "finding": "Correct source type and active-lane wiring, but all integer-to-float rounding is shared with Neon through host Float32.ofInt and has no architecture-independent proof.",
+      "next_action": "Exact integer conversion oracle and exhaustive exponent-boundary comparison with RVV."
+    },
+    {
+      "capability_id": "intrinsic:rvv:__riscv_vfcvt_x_f_v_i32m8:7bff3f9c5713a679",
+      "deep_verdict": "needs_deep_audit",
+      "risk": "high",
+      "evidence": ["IntrinsicAudit.json: intrinsic_funcs.adoc line 45056, ISA vfcvt.x.f.v line 3824; frm=RNE", "kernels/target/qs8-vmul-minmax-fp32.c:37", "RVV.lean:116-118; FP32.lean:293-327; tests FP32.lean:9-26"],
+      "finding": "The custom model covers RNE ties, NaN->INT_MAX, infinities and saturation and looks internally coherent. Coverage is only a handful of vectors; no exhaustive/refinement proof validates every binary32 encoding and fflags are excluded.",
+      "next_action": "Exhaust all 2^32 encodings against an independent integer reference implementation or chunked Spike oracle; separately validate NV/NX."
+    },
+    {
+      "capability_id": "intrinsic:rvv:__riscv_vfdiv_vv_f32m8:c7705c5bae0ef6de",
+      "deep_verdict": "needs_deep_audit",
+      "risk": "high",
+      "evidence": ["IntrinsicAudit.json: intrinsic_funcs.adoc line 39182, ISA vfdiv.vv; frm=RNE", "kernels/target/f32-vdiv.c:20", "RVV.lean:22-23; FP32.lean:108-111"],
+      "finding": "Operand order, canonical NaN and invalid cases are explicit. Correct finite/subnormal quotient rounding and divide-by-zero flags remain host-dependent/outside scope.",
+      "next_action": "Independent RVV/SoftFloat differential suite, including ±0, infinities, subnormals and half-ULP quotients."
+    },
+    {
+      "capability_id": "intrinsic:rvv:__riscv_vfmax_vv_f32m8:81604abed600e94a",
+      "deep_verdict": "conditional",
+      "risk": "medium",
+      "evidence": ["IntrinsicAudit.json: intrinsic_funcs.adoc line 43688, ISA vfmax.vv", "kernels/target/f32-vmax.c:20", "RVV.lean:105-106; FP32.lean:351-378"],
+      "finding": "Lean implements maximumNumber: numeric wins over one NaN, both NaNs yield canonical NaN, and +0 wins. Signaling-NaN NV and inactive lanes are outside the value claim.",
+      "next_action": "RVV tests for qNaN/sNaN combinations, ±0 operand permutations and fflags."
+    },
+    {
+      "capability_id": "intrinsic:rvv:__riscv_vfmin_vv_f32m8:967d79f48e239e74",
+      "deep_verdict": "conditional",
+      "risk": "medium",
+      "evidence": ["IntrinsicAudit.json: intrinsic_funcs.adoc line 43641, ISA vfmin.vv", "kernels/target/f32-vmin.c:20", "RVV.lean:108-109; FP32.lean:357-383"],
+      "finding": "Lean implements minimumNumber: numeric wins over one NaN, both NaNs canonicalize, and -0 wins. Flags/tail state are excluded.",
+      "next_action": "RVV tests for qNaN/sNaN combinations, ±0 operand permutations and fflags."
+    },
+    {
+      "capability_id": "intrinsic:rvv:__riscv_vfmul_vf_f32m8:ab30ef11484ca4d1",
+      "deep_verdict": "needs_deep_audit",
+      "risk": "high",
+      "evidence": ["IntrinsicAudit.json: intrinsic_funcs.adoc line 39137, ISA vfmul.vf; frm=RNE", "kernels/target/f32-vmulc.c:20", "RVV.lean:19-20; FP32.lean:103-106"],
+      "finding": "Vector/scalar order and canonical exceptional results are modeled; finite rounding and scalar NaN boxing are not independently established.",
+      "next_action": "RVV/SoftFloat boundary suite for products, subnormal underflow and scalar NaN cases."
+    },
+    {
+      "capability_id": "intrinsic:rvv:__riscv_vfmul_vv_f32m8:60d852e374befb54",
+      "deep_verdict": "needs_deep_audit",
+      "risk": "high",
+      "evidence": ["IntrinsicAudit.json: intrinsic_funcs.adoc line 39135, ISA vfmul.vv; frm=RNE", "kernels/target/f32-vmul.c:21", "RVV.lean:16-17; FP32.lean:103-106"],
+      "finding": "0*infinity and NaN canonicalization are explicit, while finite/subnormal multiplication remains a host primitive.",
+      "next_action": "RVV/SoftFloat differential product corpus with exact underflow/overflow tie cases."
+    },
+    {
+      "capability_id": "intrinsic:rvv:__riscv_vfsgnj_vv_f32m8:8db550674c7ec257",
+      "deep_verdict": "confirmed",
+      "risk": "low",
+      "evidence": ["IntrinsicAudit.json: intrinsic_funcs.adoc line 43863, ISA vfsgnj.vv", "kernels/target/f32-vrndne.c:26", "RVV.lean:51-54; FP32 test:49-50"],
+      "finding": "Magnitude bits come from vs2 and sign bit from vs1 exactly; NaNs and signed zeros are pure bit operations with no FP exception.",
+      "next_action": "Keep operand-swap mutation and arbitrary-bit test."
+    },
+    {
+      "capability_id": "intrinsic:rvv:__riscv_vfsqrt_v_f32m8:5e4d461f0e1d45b0",
+      "deep_verdict": "needs_deep_audit",
+      "risk": "high",
+      "evidence": ["IntrinsicAudit.json: intrinsic_funcs.adoc line 43350, ISA vfsqrt.v; frm=RNE", "kernels/target/f32-vsqrt.c:16", "RVV.lean:25-26; FP32.lean:113-116"],
+      "finding": "Negative invalid and canonical NaNs are explicit; positive finite/subnormal square-root rounding uses host Float32.sqrt.",
+      "next_action": "Independent exhaustive-by-exponent or correctly-rounded oracle comparison with RVV."
+    },
+    {
+      "capability_id": "intrinsic:rvv:__riscv_vfsub_vf_f32m8:f7bc43ed652f6405",
+      "deep_verdict": "needs_deep_audit",
+      "risk": "high",
+      "evidence": ["IntrinsicAudit.json: intrinsic_funcs.adoc line 37879, ISA vfsub.vf; frm=RNE", "kernels/target/f32-vrndne.c:23", "RVV.lean:42-43; FP32.lean:75-78"],
+      "finding": "Vector-minus-scalar order and canonical NaNs are correct in the model; finite cancellation and rounding use host subtraction.",
+      "next_action": "RVV differential tests emphasizing operand order, cancellation, signed zero and subnormal boundaries."
+    },
+    {
+      "capability_id": "intrinsic:rvv:__riscv_vfsub_vv_f32m8:4d9f7b5945293b44",
+      "deep_verdict": "needs_deep_audit",
+      "risk": "high",
+      "evidence": ["IntrinsicAudit.json: intrinsic_funcs.adoc line 37877, ISA vfsub.vv; frm=RNE", "kernels/target/f32-vsub.c:21", "RVV.lean:13-14; FP32.lean:75-78"],
+      "finding": "vs2-vs1 is passed as left-right consistently; exceptional values canonicalize. Finite/subnormal behavior remains host-backed.",
+      "next_action": "RVV/SoftFloat differential subtraction corpus and operand-swap mutation."
+    },
+    {
+      "capability_id": "intrinsic:rvv:__riscv_vle32_v_f32m8:18bc0ec588792246",
+      "deep_verdict": "confirmed",
+      "risk": "low",
+      "evidence": ["IntrinsicAudit.json: intrinsic_funcs.adoc line 19, ISA vle32.v", "kernels/target/f32-vadd.c:17", "intrinsic_library.py:178-184 structural LOAD"],
+      "finding": "The compiler takes exactly vl active 32-bit lanes from memory in order. Tail values, faults, alignment and byte-memory refinement are outside pure logical-value semantics.",
+      "next_action": "Add the byte-memory/vstart/fault bridge before claiming full intrinsic semantics."
+    },
+    {
+      "capability_id": "intrinsic:rvv:__riscv_vmerge_vvm_f32m8:c2bb824d2d068845",
+      "deep_verdict": "confirmed",
+      "risk": "low",
+      "evidence": ["IntrinsicAudit.json: intrinsic_funcs.adoc line 44948; arguments vs2,vs1,v0,vl; ISA vmerge.vvm", "kernels/target/f32-vrndne.c:29,37", "RVV.lean:34-37; intrinsic_library.py:421-434"],
+      "finding": "False mask selects first/base operand and true selects second/replacement; source call order and Lean semantics match exactly for active lanes.",
+      "next_action": "Retain polarity and operand-order mutation tests."
+    },
+    {
+      "capability_id": "intrinsic:rvv:__riscv_vmfgt_vf_f32m8_b4:057321f12a8ae38e",
+      "deep_verdict": "conditional",
+      "risk": "medium",
+      "evidence": ["IntrinsicAudit.json: intrinsic_funcs.adoc line 44433, ISA vmfgt.vf; fflags outside claim", "kernels/target/f32-vrndne.c:20", "RVV.lean:45-46; FP32.lean:329-338"],
+      "finding": "Ordered vector>scalar value predicate is correct for normals, infinities, signed zeros and NaN=false. Spec says ordered comparisons raise invalid on either qNaN or sNaN, which Lean intentionally omits.",
+      "next_action": "RVV mask+fflags tests for all NaN classes and signed-zero/subnormal boundaries."
+    },
+    {
+      "capability_id": "intrinsic:rvv:__riscv_vmfne_vv_f32m8_b4:23d0cfd59a99f0ce",
+      "deep_verdict": "conditional",
+      "risk": "medium",
+      "evidence": ["IntrinsicAudit.json: intrinsic_funcs.adoc line 44290, ISA vmfne.vv; fflags outside claim", "kernels/target/f32-vrndne.c:33", "RVV.lean:48-49; FP32.lean:340-346"],
+      "finding": "NaN compares not-equal, ±0 compare equal and bit-identical finite values compare equal. Signaling NaN invalid flag is outside the model.",
+      "next_action": "Validate qNaN versus sNaN masks and NV behavior on RVV."
+    },
+    {
+      "capability_id": "intrinsic:rvv:__riscv_vreinterpret_v_f32m8_i32m8:3e094f133b6e8fb2",
+      "deep_verdict": "confirmed",
+      "risk": "low",
+      "evidence": ["IntrinsicAudit.json: intrinsic_funcs.adoc line 50523, reinterpret intrinsic", "kernels/target/f32-vlrelu.c:21", "intrinsic_library.py:402-408 structural BITCAST"],
+      "finding": "FP lane bits are preserved and merely viewed as signed i32 lanes.",
+      "next_action": "Keep arbitrary-bit round-trip test."
+    },
+    {
+      "capability_id": "intrinsic:rvv:__riscv_vreinterpret_v_f32m8_u32m8:99a7f24902fea135",
+      "deep_verdict": "confirmed",
+      "risk": "low",
+      "evidence": ["IntrinsicAudit.json: intrinsic_funcs.adoc line 50528", "kernels/target/f32-vrndne.c:34", "intrinsic_library.py:494-500 structural BITCAST"],
+      "finding": "FP encodings become unsigned lane values without arithmetic conversion or payload loss.",
+      "next_action": "Keep arbitrary-bit round-trip test."
+    },
+    {
+      "capability_id": "intrinsic:rvv:__riscv_vreinterpret_v_u32m8_f32m8:07ea52d7154b56d5",
+      "deep_verdict": "confirmed",
+      "risk": "low",
+      "evidence": ["IntrinsicAudit.json: intrinsic_funcs.adoc line 50508", "kernels/target/f32-vrndne.c:36", "intrinsic_library.py:501-507 structural BITCAST"],
+      "finding": "Unsigned bits become FP encodings unchanged, including signaling NaNs.",
+      "next_action": "Keep arbitrary-bit round-trip test."
+    },
+    {
+      "capability_id": "intrinsic:rvv:__riscv_vse32_v_f32m8:53d23aae8d2de69e",
+      "deep_verdict": "confirmed",
+      "risk": "low",
+      "evidence": ["IntrinsicAudit.json: intrinsic_funcs.adoc line 173, ISA vse32.v", "kernels/target/f32-vrndne.c:39", "intrinsic_library.py:185-196 structural STORE"],
+      "finding": "Pointer,value,vl order is correct and exactly the active prefix is written as 32-bit lane bits.",
+      "next_action": "Add byte-memory, alignment, fault-only and vstart reasoning at the C/ISA bridge layer."
+    }
+  ]
+}

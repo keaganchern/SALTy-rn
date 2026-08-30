@@ -57,18 +57,20 @@ def test_complete_claim_counterexample_is_lean_checked_and_bound(tmp_path: Path)
         prepare_proof_task(ROOT, output)
 
 
-def test_bounded_program_search_miss_creates_no_result(tmp_path: Path) -> None:
+def test_newly_exposed_f32_vadd_nan_gap_is_lean_checked(tmp_path: Path) -> None:
     output = _copy_program(tmp_path, "f32-vadd")
-    before = (output / "ArtifactIndex.json").read_bytes()
-    result_before = (output / "Result.json").read_bytes()
 
     witness = find_program_counterexample(ROOT, output)
 
-    assert witness is None
-    assert (output / "ArtifactIndex.json").read_bytes() == before
-    assert not (output / "Counterexample.json").exists()
-    assert not (output / "Counterexample.lean").exists()
-    assert (output / "Result.json").read_bytes() == result_before
+    assert witness is not None
+    assert witness.claim == "SALT.Corpus.f32vadd.completeValueEquivalenceClaim"
+    assert witness.left_output != witness.right_output
+    result = Result.from_record(
+        json.loads((output / "Result.json").read_text(encoding="utf-8"))
+    )
+    assert result.status is ResultStatus.COUNTEREXAMPLE
+    assert result.counterexample_sha256 == witness.sha256
+    _verify_stack(ROOT, output, _load_index(output))
 
 
 def test_counterexample_lean_mutation_fails_stack_integrity(tmp_path: Path) -> None:

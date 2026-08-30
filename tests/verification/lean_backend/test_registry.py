@@ -137,13 +137,20 @@ class RegistryCompletenessTests(unittest.TestCase):
 
     def test_existing_salt_normalizations_are_recorded(self):
         vmaxq = lookup_intrinsic("vmaxq_s8")
-        self.assertEqual(vmaxq.lean_name, "SALT.Intrinsics.Neon.vmax_s8")
-        self.assertEqual(vmaxq.lean_arguments[1].transform, OperandTransform.UNBROADCAST)
+        self.assertEqual(vmaxq.lean_name, "SALT.Intrinsics.Neon.vmaxq_s8")
+        self.assertEqual(
+            tuple(argument.transform for argument in vmaxq.lean_arguments),
+            (OperandTransform.IDENTITY, OperandTransform.IDENTITY),
+        )
 
         neon_shift = lookup_intrinsic("vrshlq_s32")
         self.assertEqual(
-            neon_shift.lean_arguments[1].transform,
-            OperandTransform.NEGATED_UNBROADCAST_TO_NAT,
+            neon_shift.lean_name,
+            "SALT.Intrinsics.Neon.vrshlq_s32_vec",
+        )
+        self.assertEqual(
+            tuple(argument.transform for argument in neon_shift.lean_arguments),
+            (OperandTransform.IDENTITY, OperandTransform.IDENTITY),
         )
 
         rvv_shift = lookup_intrinsic("__riscv_vssra_vx_i32m8")

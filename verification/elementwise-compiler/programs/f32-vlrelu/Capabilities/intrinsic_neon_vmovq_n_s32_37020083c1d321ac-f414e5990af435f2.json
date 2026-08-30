@@ -1,0 +1,16 @@
+{
+  "architecture": "neon",
+  "argument_count": 1,
+  "artifact_kind": "intrinsic-capability",
+  "capability_id": "intrinsic:neon:vmovq_n_s32:37020083c1d321ac",
+  "capability_sha256": "f414e5990af435f2b427c4f61330cefc789f53168911b055b55686aeb611c641",
+  "descriptor_sha256": "f672ed2b3beb7a02372890655fcae77471721c84af7d3792b3bcc6d476e5066a",
+  "function_type": "int32x4_t (int32_t)",
+  "implementation_sha256": "631ae66353cd91b21c51c66d5d05ffa55c53f6f30eaaafff4f5c152a444b93c1",
+  "review_evidence_sha256": "eb79e41a877feb6eae4c83850d86a9aeef3036a498ed1023e263f3e918bf9f12",
+  "role": "structural",
+  "schema_version": 1,
+  "semantic_symbol": null,
+  "spelling": "vmovq_n_s32",
+  "version": 1
+}

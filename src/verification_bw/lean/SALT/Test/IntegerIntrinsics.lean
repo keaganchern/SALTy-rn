@@ -7,6 +7,35 @@ private def i8 (value : Int) : BitVec 8 := BitVec.ofInt 8 value
 private def i16 (value : Int) : BitVec 16 := BitVec.ofInt 16 value
 private def i32 (value : Int) : BitVec 32 := BitVec.ofInt 32 value
 
+private def armSrshlS32Reference (value : BitVec 32) (count : Int) : BitVec 32 :=
+  if count < 0 then
+    let right := (-count).toNat
+    if 32 ≤ right then 0
+    else BitVec.ofInt 32 ((value.toInt + (1 <<< (right - 1) : Nat)) >>> right)
+  else
+    let left := count.toNat
+    if 32 ≤ left then 0 else value.shiftLeft left
+
+private def signedByteCounts : List Int :=
+  (List.range 256).map (fun count => Int.ofNat count - 128)
+
+private def srshlBoundaryValues : List (BitVec 32) :=
+  [i32 0, i32 1, i32 (-1), i32 (-2147483648), i32 2147483647]
+
+/-- Five important input values crossed with every signed low-byte SRSHL count.
+    The reference uses unbounded `Int`, independently of the implementation helper. -/
+private def srshlSignedByteRegression : Bool :=
+  srshlBoundaryValues.all fun value =>
+    signedByteCounts.all fun count =>
+      SALT.Intrinsics.Neon.vrshlq_s32_vec [value] [i32 count] ==
+        [armSrshlS32Reference value count]
+
+#eval srshlSignedByteRegression
+
+set_option maxRecDepth 100000 in
+example : srshlSignedByteRegression = true := by
+  decide
+
 example : SALT.Intrinsics.Neon.sqrdmulh_s16 (i16 (-32768)) (i16 (-32768)) = i16 32767 := by
   rfl
 
@@ -85,6 +114,33 @@ example : SALT.Intrinsics.RVV.vsll_vx_i32 [i32 3] 33 = [i32 6] := by
   decide
 
 example : SALT.Intrinsics.RVV.vssra_vx_i32_mode [i32 (-3)] 33 0 = [i32 (-1)] := by
+  decide
+
+/-- Exact pre-repair helper, retained only to make the historical Spike mismatch
+    executable: it used the raw `Nat` shift instead of the architectural low bits. -/
+private def legacyRvvRoundingShiftRight (x : BitVec 32) (shift : Nat) : BitVec 32 :=
+  if shift = 0 then x
+  else
+    let shifted : BitVec 32 := x.sshiftRight shift
+    let roundBit : Bool := x.getLsbD (shift - 1)
+    if roundBit then shifted + 1 else shifted
+
+example : legacyRvvRoundingShiftRight (i32 1) 32 = i32 0 := by
+  decide
+
+example : SALT.Intrinsics.RVV.vssra_vx_rnu [i32 1] 31 = [i32 0] := by
+  decide
+
+example : SALT.Intrinsics.RVV.vssra_vx_rnu [i32 1] 32 = [i32 1] := by
+  decide
+
+example : SALT.Intrinsics.RVV.vssra_vx_rnu [i32 3] 33 = [i32 2] := by
+  decide
+
+/-- RV64 `SIZE_MAX` has an effective SEW=32 shift amount of 31. -/
+example :
+    SALT.Intrinsics.RVV.vssra_vx_rnu [i32 0x40000000] 18446744073709551615 =
+      [i32 1] := by
   decide
 
 example : SALT.Intrinsics.RVV.vnclip_wx_i16_mode [i32 65536] 48 0 = [i16 1] := by

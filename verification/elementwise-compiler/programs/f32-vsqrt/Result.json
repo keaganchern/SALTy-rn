@@ -1,14 +1,14 @@
 {
   "artifact_kind": "elementwise-result",
-  "checker_sha256": "469ac021841b5ec89202a377dc4e558ac2175a1bad6f2a0e58c9fa797fc9683c",
-  "counterexample_sha256": null,
-  "detail": "Lean accepted the frozen value claim and proof policy",
-  "end_closure_sha256": "7036cf46d47c40b5aaf03277b6c30b8cd963cab18b7699e26514ea8055ecb3cb",
-  "proof_sha256": "5619056f8ee81c590a24d1062e0ee8cede25db8616a76ebc7e8ccf3ddb8d2049",
-  "proof_task_sha256": "ef627ae11d08866b08d1e756a20169cd6756bae09463b7120022d3e56e38bd7c",
-  "result_sha256": "f1d9d80bf39a00ed6ea438708d3e9258ca42723fb12418cc3edd6b18123b47ea",
+  "checker_sha256": "41244a5ae9e9aa5a7965053270d077d78b3e50ff088235cbf298275da09dc94e",
+  "counterexample_sha256": "a8571cad99027a5e1261d1f5f1817d44e1e1ab9522f60a1a2de2665beb46de28",
+  "detail": "Lean checked a concrete Neon/RVV complete value-claim disagreement",
+  "end_closure_sha256": null,
+  "proof_sha256": null,
+  "proof_task_sha256": null,
+  "result_sha256": "8bcd85a26f152726c36d8e68c0f74b89aa234be09d40bb923707a5497ecb8b04",
   "schema_version": 2,
-  "start_closure_sha256": "7036cf46d47c40b5aaf03277b6c30b8cd963cab18b7699e26514ea8055ecb3cb",
-  "status": "verified(value)",
+  "start_closure_sha256": null,
+  "status": "counterexample",
   "toolchain_sha256": "1ce7d3879378e751ecae7bb5fd76c57bde9e4957e69b20b4693d759eb34a8c6d"
 }

@@ -55,14 +55,34 @@ theorem neonBlock16FromIntrinsics_eq_zipWith
     (p : QS8AddMinmaxParams)
     (chunk_a chunk_b : List (BitVec 8))
     (h_a : chunk_a.length = 16)
-    (h_b : chunk_b.length = 16) :
+    (h_b : chunk_b.length = 16)
+    (h_shift : p.shift.toNat ≤ 31) :
     neonBlock16FromIntrinsics p chunk_a chunk_b =
       List.zipWith (SALT.Kernel.QS8VAdd.Neon.neonElemFn p) chunk_a chunk_b := by
   rcases exists_sixteen_of_length_eq chunk_a h_a with
     ⟨a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, aA, aB, aC, aD, aE, aF, rfl⟩
   rcases exists_sixteen_of_length_eq chunk_b h_b with
     ⟨b0, b1, b2, b3, b4, b5, b6, b7, b8, b9, bA, bB, bC, bD, bE, bF, rfl⟩
-  rfl
+  simp only [neonBlock16FromIntrinsics]
+  rw [SALT.Proof.RoundingEquiv.vrshlq_s32_vec_replicate_neg_eq_scalar
+    _ p.shift 4 (by rfl) h_shift]
+  rw [SALT.Proof.RoundingEquiv.vrshlq_s32_vec_replicate_neg_eq_scalar
+    _ p.shift 4 (by rfl) h_shift]
+  rw [SALT.Proof.RoundingEquiv.vrshlq_s32_vec_replicate_neg_eq_scalar
+    _ p.shift 4 (by rfl) h_shift]
+  rw [SALT.Proof.RoundingEquiv.vrshlq_s32_vec_replicate_neg_eq_scalar
+    _ p.shift 4 (by rfl) h_shift]
+  rw [SALT.Intrinsics.Neon.vmaxq_s8_replicate_eq_scalar
+    _ p.output_min 16 (by rfl)]
+  rw [SALT.Intrinsics.Neon.vminq_s8_replicate_eq_scalar
+    _ p.output_max 16 (by rfl)]
+  simp only [List.take, List.drop, List.zipWith]
+  simp [SALT.Intrinsics.Neon.vsubl_s8, SALT.Intrinsics.Neon.vmovl_s16,
+    SALT.Intrinsics.Neon.vmulq_s32, SALT.Intrinsics.Neon.vmlaq_s32,
+    SALT.Intrinsics.Neon.vrshlq_s32, SALT.Intrinsics.Neon.vqmovn_s32,
+    SALT.Intrinsics.Neon.vqaddq_s16, SALT.Intrinsics.Neon.vqmovn_s16,
+    SALT.Intrinsics.Neon.vmax_s8, SALT.Intrinsics.Neon.vmin_s8,
+    SALT.Kernel.QS8VAdd.Neon.neonElemFn, SALT.clamp]
 
 theorem generated_block_equiv
     (p : QS8AddMinmaxParams)
@@ -72,7 +92,7 @@ theorem generated_block_equiv
     (h_b : chunk_b.length = 16) :
     neonBlock16FromIntrinsics p chunk_a chunk_b =
       rvvBlockFromIntrinsics p chunk_a chunk_b := by
-  rw [neonBlock16FromIntrinsics_eq_zipWith p chunk_a chunk_b h_a h_b]
+  rw [neonBlock16FromIntrinsics_eq_zipWith p chunk_a chunk_b h_a h_b hwf.2.1]
   rw [rvvBlockFromIntrinsics_eq_zipWith p chunk_a chunk_b (h_a.trans h_b.symm)]
   clear h_a h_b
   induction chunk_a generalizing chunk_b with

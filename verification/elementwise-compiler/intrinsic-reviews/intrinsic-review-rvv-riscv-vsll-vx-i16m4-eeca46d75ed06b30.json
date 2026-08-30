@@ -3,33 +3,33 @@
   "architecture_conditions": [],
   "argument_count": 3,
   "artifact_kind": "intrinsic-review",
-  "audit_variant_sha256": "226647d75cc5be7c6ecf239bc4ffed0186ca1213a12495d3b339b44f885da967",
+  "audit_variant_sha256": "4e9ea0adbbb86e879ef22cb7f0664d7a7003ffe172a8d33710f68ee4c8d4b980",
   "checks": [
     {
       "command": "PYTHONPATH=.:src python -m workflow.verification.elementwise_compiler.intrinsic_review_checks",
       "name": "family-audit",
       "output_path": "verification/elementwise-compiler/IntrinsicReviewChecks.json",
-      "output_sha256": "49e9e808ee5b5561ae5e108c165f2214455ad2a096c61cf8224be1fbbdc4cdb5",
+      "output_sha256": "e3a07b58ed02ba6793fd6e7c92bbafb6f147f2f4bbad832f9fd2e923cc17aeea",
       "status": "passed"
     },
     {
       "command": "lake build && lake build SALT.Test.FP32 SALT.Test.IntegerIntrinsics",
       "name": "lean-elaboration",
       "output_path": "notes/reviews/evidence/elementwise-m6-lean-build.txt",
-      "output_sha256": "76fc4baa1115db5d75b31c51c82210239d5efa34cdf9a4e0e63ca05211ef8558",
+      "output_sha256": "45ae5d8cab48b8c43ac1e780a79a8f5cabfe74ef697ba36b18a98c4f3f62eb28",
       "status": "passed"
     },
     {
       "command": "PYTHONPATH=.:src pytest -q tests/verification/elementwise_compiler/test_intrinsic_audit.py tests/verification/elementwise_compiler/test_intrinsic_review_plan.py tests/verification/elementwise_compiler/test_intrinsic_review_checks.py tests/verification/elementwise_compiler/test_intrinsic_review_publish.py tests/verification/elementwise_compiler/test_intrinsics.py tests/verification/elementwise_compiler/test_reviews.py tests/verification/elementwise_compiler/test_wide_generation.py tests/verification/lean_backend/test_binding.py tests/verification/lean_backend/test_emit_lean.py tests/verification/lean_backend/test_case_emit.py tests/verification/lean_backend/test_registry.py tests/verification/lean_backend/test_intrinsic_index.py tests/verification/lean_backend/test_intrinsic_index_inventory.py tests/verification/intrinsic_dashboard/test_web.py",
       "name": "python-regression",
       "output_path": "notes/reviews/evidence/elementwise-m6-python-tests.txt",
-      "output_sha256": "282154a189c6f79dafbfaa214d43ce88d223c8860a1b2466d63b880521a4aa6b",
+      "output_sha256": "0bc25107c7701c70db911523a6824071c363240e22a80f1e346e4efb5ad52aef",
       "status": "passed"
     }
   ],
   "claim_scope": "pure-value-model",
   "descriptor_sha256": "dc3bf21e6d591cbd60824ac9a3536a4012f2eb133b4b666b44c0f316ab384faa",
-  "detail": "I2-integer-saturating-narrow-shift: independently accepted exact Lean value-model subject; reviewer report c78410c223ee5f8c442fc3f7a4f9ba1bb7f0523987e08178850df9ebcde74ef0.",
+  "detail": "I2-integer-saturating-narrow-shift: independently accepted exact Lean value-model subject; reviewer report 11d8e3f040539b239f85e613fbe1e3f21d5f5f9e845423969b2d146b8400a9e7.",
   "evidence": [
     {
       "authority": "RISC-V Instruction Set Manual",
@@ -53,12 +53,12 @@
     }
   ],
   "function_type": "vint16m4_t (vint16m4_t, size_t, size_t)",
-  "implementation_sha256": "5a7133e73c0cfb9dd22e5e0d9972b3585dec7eb54877889425e373e5ac567dc8",
+  "implementation_sha256": "207b553b4f31fa9bfffe7cd4a46b49c38e42d2070b7ed9cafcfd4c785db02f9d",
   "policy_path": "notes/policies/elementwise-intrinsic-review-v2.md",
   "policy_sha256": "54da4eb399c278d7ac5a91bf681741b6c6a6e2307679acdd0c49d860b3d8f624",
   "review_id": "intrinsic-review:rvv:__riscv_vsll_vx_i16m4:eeca46d75ed06b30",
-  "review_sha256": "c16dfa7092d11677a9cee6ea15fd7a1f03f1222f7eb988ac6d6993ce10a41767",
-  "reviewer": "agent:elementwise-plan-review",
+  "review_sha256": "aa60c1713800d296c8cfb46bd3d246d8574915794fdffa86cdfadc4b804b0992",
+  "reviewer": "agent:shift-fix-reviewer",
   "schema_version": 2,
   "spelling": "__riscv_vsll_vx_i16m4",
   "verdict": "approved"

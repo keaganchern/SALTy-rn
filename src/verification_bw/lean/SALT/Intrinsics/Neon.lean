@@ -9,19 +9,19 @@ open SALT
     architecture wrapper is retained so generated Neon and RVV models do not
     share an intrinsic symbol. -/
 def vaddq_f32 (a b : List (BitVec 32)) : List (BitVec 32) :=
-  List.zipWith FP32.add a b
+  List.zipWith FP32.armAddDN0AH0 a b
 
 def vsubq_f32 (a b : List (BitVec 32)) : List (BitVec 32) :=
-  List.zipWith FP32.sub a b
+  List.zipWith FP32.armSubDN0AH0 a b
 
 def vmulq_f32 (a b : List (BitVec 32)) : List (BitVec 32) :=
-  List.zipWith FP32.mul a b
+  List.zipWith FP32.armMulDN0AH0 a b
 
 def vdivq_f32 (a b : List (BitVec 32)) : List (BitVec 32) :=
-  List.zipWith FP32.div a b
+  List.zipWith FP32.armDivDN0AH0 a b
 
 def vsqrtq_f32 (a : List (BitVec 32)) : List (BitVec 32) :=
-  a.map FP32.sqrt
+  a.map FP32.armSqrtDN0AH0
 
 def vabsq_f32 (a : List (BitVec 32)) : List (BitVec 32) :=
   a.map FP32.abs
@@ -149,11 +149,8 @@ def vmlaq_s32 (acc b : List (BitVec 32)) (c : BitVec 32) : List (BitVec 32) :=
 
 def neonRoundingShiftRight (x : BitVec 32) (shift : Nat) : BitVec 32 :=
   if shift = 0 then x
-  else
-    let wide : BitVec 64 := x.signExtend 64
-    let round_const : BitVec 64 := BitVec.ofNat 64 (1 <<< (shift - 1))
-    let rounded : BitVec 64 := wide + round_const
-    (rounded.sshiftRight shift).truncate 32
+  else if 32 ≤ shift then 0
+  else BitVec.ofInt 32 ((x.toInt + (1 <<< (shift - 1) : Nat)) >>> shift)
 
 def vrshlq_s32 (a : List (BitVec 32)) (shift : Nat) : List (BitVec 32) :=
   a.map (fun x => neonRoundingShiftRight x shift)
@@ -208,6 +205,32 @@ def vmax_s8_vec (a b : List (BitVec 8)) : List (BitVec 8) :=
 /-- Signed vector-vector minimum for the 64-bit `vmin_s8` register form. -/
 def vmin_s8_vec (a b : List (BitVec 8)) : List (BitVec 8) :=
   List.zipWith bvSignedMin a b
+
+/-- The faithful vector-vector maximum specializes to the older scalar helper
+    when its second operand is a reviewed broadcast. -/
+theorem vmaxq_s8_replicate_eq_scalar (values : List (BitVec 8))
+    (scalar : BitVec 8) (n : Nat) (hLength : values.length = n) :
+    vmaxq_s8 values (List.replicate n scalar) = vmax_s8 values scalar := by
+  subst n
+  induction values with
+  | nil => simp [vmaxq_s8, vmax_s8]
+  | cons value values ih =>
+      simp only [List.length_cons, List.replicate_succ, vmaxq_s8, vmax_s8,
+        List.zipWith, List.map]
+      congr 1
+
+/-- The vector-vector minimum likewise agrees with the scalar helper on a
+    broadcast right operand. -/
+theorem vminq_s8_replicate_eq_scalar (values : List (BitVec 8))
+    (scalar : BitVec 8) (n : Nat) (hLength : values.length = n) :
+    vminq_s8 values (List.replicate n scalar) = vmin_s8 values scalar := by
+  subst n
+  induction values with
+  | nil => simp [vminq_s8, vmin_s8]
+  | cons value values ih =>
+      simp only [List.length_cons, List.replicate_succ, vminq_s8, vmin_s8,
+        List.zipWith, List.map]
+      congr 1
 
 /-- Widen the signed byte operand and subtract it from a signed 16-bit lane. -/
 def vsubw_s8 (a : List (BitVec 16)) (b : List (BitVec 8)) : List (BitVec 16) :=

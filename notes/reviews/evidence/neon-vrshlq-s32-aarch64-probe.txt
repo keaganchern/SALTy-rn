@@ -1,0 +1,26 @@
+Neon vrshlq_s32 AArch64 value-semantics probe
+Audit date: 2026-08-30
+Host: arm64
+Compiler: Apple clang version 17.0.0 (clang-1700.0.13.3)
+Target: arm64-apple-darwin24.3.0
+
+Source:
+  notes/reviews/evidence/neon-vrshlq-s32-aarch64-probe.c
+
+Command (from repository root):
+  clang -O2 -Wall -Wextra -Werror \
+    notes/reviews/evidence/neon-vrshlq-s32-aarch64-probe.c \
+    -o /private/tmp/neon-vrshlq-s32-aarch64-probe
+  /private/tmp/neon-vrshlq-s32-aarch64-probe
+
+Output:
+  edge value=1 count=-64 result=00000000
+  edge value=-1 count=-65 result=00000000
+  PASS 75 AArch64 SRSHL cases
+
+The 75 cases cross values {0, 1, -1, INT32_MIN, INT32_MAX} with counts
+{-128, -65, -64, -63, -33, -32, -31, -1, 0, 1, 31, 32, 63, 64, 127}.
+Before the repair, the Lean 64-bit-temporary implementation returned -1 for
+the two printed edge cases because the rounding constant or addition wrapped.
+The current regression in SALT/Test/IntegerIntrinsics.lean crosses the same five
+values with every signed low-byte count from -128 through 127.

@@ -65,20 +65,20 @@ def test_configured_index_merges_equal_variants_and_preserves_provenance() -> No
 
 
 def test_configured_index_exposes_all_canonical_variants() -> None:
-    assert len(CANONICAL_INTRINSIC_INDEX.variants) == 189
+    assert len(CANONICAL_INTRINSIC_INDEX.variants) == 184
     assert (
         sum(len(variant.provenance) for variant in CANONICAL_INTRINSIC_INDEX.variants)
         == 255
     )
 
 
-def test_same_source_call_with_multiple_lowerings_is_ambiguous() -> None:
+def test_repaired_vector_source_call_has_one_lowering() -> None:
     spec = QS8_VADD_MINMAX_REGISTRY["vmaxq_s8"]
 
     result = CANONICAL_INTRINSIC_INDEX.classify_source_call(_source(spec))
 
-    assert result.status is IntrinsicMatchStatus.AMBIGUOUS
-    assert len(result.variants) == 2
+    assert result.status is IntrinsicMatchStatus.UNIQUE_CANDIDATE
+    assert len(result.variants) == 1
 
 
 def test_known_constants_filter_candidates_without_claiming_exact_semantics() -> None:
@@ -168,13 +168,13 @@ def test_known_constant_indices_must_be_sorted_and_unique() -> None:
         )
 
 
-def test_complete_record_can_be_exact_even_when_source_call_is_ambiguous() -> None:
+def test_complete_repaired_vector_record_is_exact_and_unambiguous() -> None:
     spec = QS8_VADD_MINMAX_REGISTRY["vmaxq_s8"]
 
     raw = CANONICAL_INTRINSIC_INDEX.classify_source_call(_source(spec))
     configured = CANONICAL_INTRINSIC_INDEX.classify_configured_spec(spec)
 
-    assert raw.status is IntrinsicMatchStatus.AMBIGUOUS
+    assert raw.status is IntrinsicMatchStatus.UNIQUE_CANDIDATE
     assert configured.status is IntrinsicMatchStatus.EXACT_CONFIGURED
     assert configured.configured_spec is spec
 
@@ -282,7 +282,7 @@ def test_integer_descriptor_digest_stays_stable_when_float_types_are_added() -> 
     spec = QS8_VADD_MINMAX_REGISTRY["vmaxq_s8"]
 
     assert canonical_spec_digest(spec) == (
-        "4e208d7011b7aac8c30dc62dd81f2d8af2084b9eef84a915e6079910a7e6e7e3"
+        "aa81c668394d0a69e614468e30793845b3d7c0cee1c4146a3f2a8016b5d63684"
     )
 
 

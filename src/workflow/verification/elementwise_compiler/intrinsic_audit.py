@@ -248,6 +248,62 @@ def _rvv_calls(root: Path) -> Mapping[str, tuple[dict[str, Any], ...]]:
     return {key: tuple(value) for key, value in result.items()}
 
 
+_RVV_NAMED_CONSTANTS = {
+    "__RISCV_VXRM_RNU": 0,
+    "__RISCV_VXRM_RNE": 1,
+    "__RISCV_VXRM_RDN": 2,
+    "__RISCV_VXRM_ROD": 3,
+}
+
+
+def _rvv_constant_argument(value: str) -> int | None:
+    """Decode constants that can make one official API-test call exact.
+
+    Unknown expressions are deliberately not guessed.  In particular, an API
+    test parameter such as ``rs1`` is compatible with a constrained program call
+    but is not evidence for that exact immediate value.
+    """
+
+    value = value.strip()
+    named = _RVV_NAMED_CONSTANTS.get(value)
+    if named is not None:
+        return named
+    matched = re.fullmatch(r"(0[xX][0-9A-Fa-f]+|[0-9]+)[uUlL]*", value)
+    return None if matched is None else int(matched.group(1), 0)
+
+
+def _rvv_api_test_immediate_match(
+    call: Mapping[str, Any], constraints: Sequence[Mapping[str, Any]]
+) -> str:
+    """Classify official-call evidence against one exact registry variant."""
+
+    dynamic = False
+    arguments = call["arguments"]
+    for constraint in constraints:
+        index = int(constraint["argument_index"])
+        if index >= len(arguments):
+            return "conflict"
+        actual = _rvv_constant_argument(str(arguments[index]))
+        if actual is None:
+            dynamic = True
+        elif actual not in {int(item) for item in constraint["allowed_values"]}:
+            return "conflict"
+    return "dynamic-compatible" if dynamic else "exact"
+
+
+def _select_rvv_api_test_call(
+    calls: Sequence[Mapping[str, Any]], constraints: Sequence[Mapping[str, Any]]
+) -> tuple[Mapping[str, Any] | None, str]:
+    """Prefer exact evidence, retain dynamic evidence, and reject contradictions."""
+
+    compatible = [
+        (call, _rvv_api_test_immediate_match(call, constraints)) for call in calls
+    ]
+    compatible = [item for item in compatible if item[1] != "conflict"]
+    compatible.sort(key=lambda item: item[1] != "exact")
+    return compatible[0] if compatible else (None, "absent")
+
+
 def _rvv_isa_selector(spelling: str) -> str:
     body = spelling.removeprefix("__riscv_")
     if body.startswith("vreinterpret_"):
@@ -285,14 +341,22 @@ def _architecture_conditions(spec: IntrinsicSpec) -> tuple[str, ...]:
                 "arm.fpcr.RMode=RN",
                 "arm.fpcr.FZ=0",
                 "arm.fpcr.DN=0",
+                "arm.fpcr.AH=0-or-FEAT_AFP-absent",
+                "arm.fpcr.IDE-IXE-UFE-OFE-DZE-IOE=0",
                 "arm.fpsr-outside-value-claim",
             )
         if spelling == "vcaltq_f32":
-            return ("arm.fpcr.FZ=0", "arm.fpsr-outside-value-claim")
+            return (
+                "arm.fpcr.FZ=0",
+                "arm.fpcr.IDE-IXE-UFE-OFE-DZE-IOE=0",
+                "arm.fpsr-outside-value-claim",
+            )
         if any(token in spelling for token in ("max", "min")):
             return (
                 "arm.fpcr.FZ=0",
                 "arm.fpcr.DN=0",
+                "arm.fpcr.AH=0-or-FEAT_AFP-absent",
+                "arm.fpcr.IDE-IXE-UFE-OFE-DZE-IOE=0",
                 "arm.fpsr-outside-value-claim",
             )
         return ()
@@ -356,6 +420,7 @@ def build_intrinsic_audit(
     graph = build_elementwise_graph(
         repository / "verification/elementwise-compiler",
         include_intrinsic_audit=False,
+        include_program_reviews=False,
     )
     if graph.get("schema_version") != 3 or graph.get("available") is not True:
         raise IntrinsicAuditError("schema-v3 elementwise graph is unavailable")
@@ -426,20 +491,39 @@ def build_intrinsic_audit(
                 )
             selected = matches[0]
             call_candidates = rvv_calls.get(str(capability["spelling"]), ())
-            call_matches = [
+            arity_matches = [
                 row
                 for row in call_candidates
                 if row["argument_count"] == capability["argument_count"]
             ]
-            if not call_matches:
+            if not arity_matches:
                 raise IntrinsicAuditError(
                     f"{capability['id']}: no exact-arity RVV official API test call"
                 )
-            selected_call = call_matches[0]
-            relative = f"auto-generated/api-testing/{selected_call['path']}"
-            rvv_hashes.setdefault(
-                relative, _require_pinned_file(rvv, RVV_REVISION, relative)
+            constraints = canonical_spec_record(spec)["immediate_constraints"]
+            selected_call, api_test_immediate_match = (
+                _select_rvv_api_test_call(arity_matches, constraints)
             )
+            if selected_call is not None:
+                relative = f"auto-generated/api-testing/{selected_call['path']}"
+                rvv_hashes.setdefault(
+                    relative, _require_pinned_file(rvv, RVV_REVISION, relative)
+                )
+                api_test_evidence = {
+                    "api_test_path": relative,
+                    "api_test_sha256": rvv_hashes[relative],
+                    "api_test_line": selected_call["line"],
+                    "api_test_arguments": selected_call["arguments"],
+                    "api_test_immediate_match": api_test_immediate_match,
+                }
+            else:
+                api_test_evidence = {
+                    "api_test_path": None,
+                    "api_test_sha256": None,
+                    "api_test_line": None,
+                    "api_test_arguments": None,
+                    "api_test_immediate_match": "absent",
+                }
             isa_selector = _rvv_isa_selector(str(capability["spelling"]))
             if isa_selector == "reinterpret-pseudo-intrinsic":
                 isa_path = "doc/rvv-intrinsic-spec.adoc"
@@ -466,10 +550,7 @@ def build_intrinsic_audit(
                 "line": selected["line"],
                 "prototype": selected["prototype"],
                 "function_type": selected["function_type"],
-                "api_test_path": relative,
-                "api_test_sha256": rvv_hashes[relative],
-                "api_test_line": selected_call["line"],
-                "api_test_arguments": selected_call["arguments"],
+                **api_test_evidence,
                 "spec_path": "doc/rvv-intrinsic-spec.adoc",
                 "spec_sha256": rvv_doc_sha256,
                 "isa_authority": "RISC-V Instruction Set Manual",

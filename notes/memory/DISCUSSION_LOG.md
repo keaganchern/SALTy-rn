@@ -771,3 +771,244 @@ RISC-V F/V NaN and minimumNumber/maximumNumber specifications.
 the five assert-only producer domains should become explicit API preconditions or
 upstream runtime checks; implement and review the generic producer bridge; and
 re-run all FP outcomes after architecture-specific arithmetic NaN semantics land.
+
+## 2026-08-30 — Reproduce and separate the four generated counterexamples
+
+**Question:** Do the `f32-vmax`, `f32-vmin`, `f32-vrndne`, and `s8-vclamp`
+counterexamples expose differences in the original C pair or mistakes in the Lean
+model, and are all four caused by NaNs?
+
+**Confirmed:** the answer is mixed. On AArch64 with `FPCR.DN=0`, the executable
+probe runs the source-side Neon operations and obtains `0x7FC00000` for both
+`vmaxq_f32(+0, qNaN)` and `vminq_f32(+0, qNaN)`. The ratified RVV
+maximumNumber/minimumNumber value oracle returns `+0`, exactly matching the checked
+Lean witnesses. These two are real source/target exact-bit gaps and their
+non-NaN branches reduce to the same ordered operation.
+
+**Confirmed model defect:** for signaling NaN `0x7FA00001`, actual Neon `vrndne`
+quietens and preserves the payload as `0x7FE00001`; the target C's explicit RVV
+fixup reconstructs that same result. Current Lean produces `0x7FC00000` on the
+Neon side because shared host `Float32.add/sub` canonicalizes the NaN. The checked
+`f32-vrndne` witness is therefore not a C-pair counterexample in the reviewed
+`DN=0` mode. `DN=1` remains a separate stateful case where the C pair can differ.
+
+**Confirmed non-NaN gap:** `s8-vclamp` uses max-then-min in its 64-lane phase and
+min-then-max in its 8/tail phase, while RVV always uses max-then-min. For `x=0`,
+`min=5`, `max=0`, the executable results are Neon main `0`, Neon tail `5`, RVV
+`0`. A staged Lean theorem with a one-byte input proves `Not
+completeValueEquivalenceClaim`; the published checker records only
+`neonPhaseFunctionsEqualClaim` because whole-program search returns early after a
+phase witness. The selected unary initializer and definition path do not enforce
+ordered bounds; the separately found legacy minmax initializer is not this path.
+
+**Conclusion:** the four cases are not all NaN-related. The two max/min gaps are
+real and NaN-specific; the rounding witness is NaN-related but model-induced under
+the stated mode; the clamp gap is a real integer order/contract issue. Detailed
+evidence and reproduction commands are in
+`notes/four-counterexample-semantic-audit.md` and
+`notes/demos/neon-rvv-semantic-gap-aarch64.c`.
+
+**Unresolved:** replace host floating arithmetic with architecture-conditioned NaN
+semantics and rerun every FP result; decide the intended upper-layer NaN
+observation; publish the complete S8 witness; and either establish `min <= max` in
+the selected caller contract or treat reversed-bound behavior as a translation
+defect.
+
+## 2026-08-30 — Narrow versus system-wide `f32-vrndne` repair scope
+
+**Question:** Does fixing the spurious `f32-vrndne` counterexample really require
+three to five days, or can the affected intrinsics simply be repaired?
+
+**Confirmed:** the immediate defect is small and is located in the intrinsic value
+layer. Neon `vaddq_f32` and `vsubq_f32` currently delegate to the same host
+`Float32.add/sub` functions used by RVV wrappers, so the modeled Arm path loses a
+signaling-NaN payload under `FPCR.DN=0`. A narrow correct repair can give those two
+Neon wrappers reviewed Arm `DN=0` NaN behavior while retaining the existing finite
+arithmetic path. It does not require a complete IEEE-754 implementation.
+
+**Confirmed scope:** these shared add/sub wrappers occur in five generated programs:
+`f32-vrndne`, `f32-vadd`, `f32-vsub`, `f32-f16-vcvt`, and
+`qs8-vmul-minmax-fp32`. They must be rechecked after the change. The larger design
+issue is that ordinary add/sub/mul/div/sqrt operations still share host primitives
+between architectures and do not represent Arm FPCR, RISC-V rounding/flag state,
+or complete architecture-specific exceptional-value behavior.
+
+**Estimate/Proposal:** budget about one day, conservatively one to two days, for the
+narrow `DN=0` value-semantics repair, focused NaN tests, and affected-program
+regression. The previous three-to-five-day estimate applies only to a reusable,
+reviewed cleanup of the wider shared FP layer plus full FP corpus regeneration and
+review; it is not necessary to remove this one false counterexample.
+
+## 2026-08-30 — Project synthesis, minimal public Spec, and 36-pair boundary
+
+**Question:** How did the project evolve through the eight-stage delivery, how
+should the positive, counterexample, and external-condition outcomes be understood,
+and does a minimal final `completeValueEquivalenceClaim` let the current method
+scale from twenty elementwise programs to all thirty-six nonempty pairs?
+
+**Confirmed:** the eight-stage parse/capability/model/spec/proof/check/dashboard
+chain is complete for the nineteen scalar-layout elementwise pairs. Its reviewed
+terminal outcome split is 8 verified value claims, 4 checked counterexamples, and
+7 missing external-condition bridges; grouped planar-complex `f32-vcmul` remains
+outside that scalar set. Assertions must remain partitioned into entry conditions,
+derived program-point invariants, and separately evidenced producer/caller
+conditions.
+
+**Confirmed design insight:** only the complete observable-value equality is
+logically required as the public generated Spec. Element, block, loop, and phase
+claims may remain internal proof decompositions supplied to the proof agent. This
+removes an unnecessary Spec-generation admission gate, but does not make model
+generation automatic for new memory and control-flow families.
+
+**Confirmed causal correction:** the CVC5 path compiles a generated C++ harness and
+executes embedded kernel bodies over symbolic values at each concrete batch/VLEN;
+the concrete control execution builds one finite term graph. It therefore reuses C
+execution more directly but does not quantify over arbitrary length. The Lean path
+instead statically recognizes a restricted schedule language. In the current
+nineteen programs, Neon schedules reduce to ten `4 + 2/1`, six `8 + 4/2/1`, and
+three multi-phase `8→4`, `16→8`, or `64→8` shapes; all RVV sides use positive
+strip-mined partitions.
+
+**Confirmed local-assert behavior:** a tail assertion is not silently deleted.
+For example, the `qs8-f32-vcvt` post-loop checks `1 <= batch <= 7`; the recognizer
+derives this from the eight-byte loop exit and nonzero tail branch and records a
+`fixed-tail-remainder` fact. Any unmatched local assertion fails closed. Separately,
+the elementwise scalar projection may replicate one scalar across a Neon block,
+but a proof must still establish that every arbitrary block equals a map/zipWith of
+that projection; replication alone is not a lane-independence proof.
+
+**Confirmed boundary:** the repository has 40 source files, 37 target paths, and
+36 nonempty pairs. The current flat-list elementwise compiler directly covers none
+of the sixteen additional non-elementwise pairs. At least thirteen require 2-D,
+gather, packed, strided, or pointer-table memory/layout; the remainder still need
+reduction or multi-output observation. Those pairs also add roughly 170 intrinsic
+spellings absent from the current canonical Lean registry. Thirty-six is therefore
+the scale-up target space, not the already supported count.
+
+**Proposal:** evolve the model generator toward a restricted typed kernel IR and
+add reusable layout, loop, reduction, and observation components in small vertical
+slices. Start with grouped `f32-vcmul`, then lower-complexity reduction/transpose
+cases, while retaining fail-closed parsing, independent models, frozen goals,
+checked counterexamples, and evidenced external conditions. A concise project
+narrative and verified Mermaid architecture diagram are recorded in
+`notes/PROJECT_PROGRESS_OVERVIEW.md` and `figures/saltyrn-project-pipeline.mmd`.
+
+## 2026-08-30 — Implement and close the `f32-vrndne` intrinsic repair
+
+**Question:** Can the modeling bug be repaired quickly, with a plan reviewed
+before implementation and the resulting corpus independently checked?
+
+**Confirmed:** the reviewer approved the plan after the scope was expanded from a
+two-wrapper patch to a coherent shared value-layer repair. Arm `DN=0/AH=0` and
+RISC-V NaN behavior are now separated for arithmetic, comparison, and max/min.
+The old `f32-vrndne` witness disappears and an axiom-free Lean proof establishes
+its complete value claim for every input.
+
+**Confirmed outcome change:** re-running all nineteen scalar programs yields
+2 `verified(value)`, 10 checked counterexamples, and 7 missing external
+conditions. Nine FP programs expose real Arm payload-preserving versus RISC-V
+canonical-NaN exact-bit gaps; `s8-vclamp` remains the non-NaN order gap. All 180
+used intrinsic reviews and all 19 program reviews were republished against current
+content hashes with reviewer verdicts `GO (180/180)` and `GO (19/19)`.
+
+**Evidence:** `notes/elementwise-compiler/F32_VRNDNE_REPAIR_PLAN.md`;
+`notes/reviews/elementwise-vrndne-final-review-2026-08-30.md`;
+`notes/reviews/elementwise-vrndne-program-outcomes-review-2026-08-30.md`;
+`src/verification_bw/lean/SALT/Intrinsics/FP32.lean`; and the generated
+`f32-vrndne/Proof.lean` and `Result.json` artifacts.
+
+**Unresolved:** decide the upper-layer NaN observation or translation policy for
+the nine real FP gaps; continue treating full FP state, C, compiler, and ISA
+correspondence as separate work.
+
+## 2026-08-30 — Residual risk of additional micro-modeling defects
+
+**Question:** After repairing the shared FP NaN semantics, could similar small
+modeling mistakes still be hidden in the current corpus?
+
+**Confirmed:** several boundaries are explicit rather than silently proved:
+non-default FP modes, FP/RVV exception state, C memory behavior, compiler lowering,
+and binary ISA correspondence are outside the current value theorem. The repaired
+FP layer still uses Lean `Float32` for normal arithmetic after handling NaNs and
+invalid exceptional cases explicitly.
+
+**Inference:** more micro-defects are plausible, concentrated in finite FP
+rounding/subnormal/signed-zero corners, conversions, and integer
+rounding/saturation/shift instructions. Plain fixed-width BitVec arithmetic is
+lower risk. This does not reclassify any current result: two claims remain proved
+relative to the Lean model, ten have checked witnesses, seven are blocked on
+external conditions, and one layout is unsupported.
+
+**Proposal:** prioritize independent differential oracles for the two positive
+claims and every shared arithmetic helper; exhaust 8/16-bit integer edge spaces,
+use adversarial binary32 bit patterns, and compare real Arm plus a conforming
+RISC-V implementation/simulator before upgrading a value theorem to C/ISA
+correctness.
+
+## 2026-08-30 — Begin an all-intrinsic semantic audit
+
+**Question:** Should every configured intrinsic receive a new CSV audit row, and
+should parallel reviewers compare real Neon/RVV calls, official operation
+semantics, and the exact Lean implementation?
+
+**Confirmed:** yes. The new audit uses exact capability IDs and keeps the existing
+180/180 used-variant review gate separate from semantic confidence. Three
+independent passes cover all 189 registry variants with no duplicate or missing
+ID. Round 1 yields 113 confirmed at the inspected pure-value scope, 43
+conditional, 30 needing deeper audit, two confirmed bug descriptors, and one
+suspected bug descriptor.
+
+**Confirmed evidence:** native arm64 execution and Lean evaluation disagree for
+the shared Neon `vrshlq_s32` helper at large negative counts; both its used and
+legacy descriptors are marked `confirmed_bug`. The current programs require an
+external `shift in 0..31` contract and are not among the two proved value claims.
+The unused RVV `vssra` helper lacks SEW shift masking and remains `suspected_bug`
+pending an independent RVV execution oracle. Review also found conditional
+`vxsat`, `vsetvl`, load/store, tail/state, and exact-immediate evidence gaps.
+
+**Artifacts:** `notes/audits/intrinsic-semantic-audit.csv`,
+`notes/audits/INTRINSIC_SEMANTIC_AUDIT_PLAN.md`,
+`notes/audits/INTRINSIC_SEMANTIC_AUDIT_ROUND1.md`, and
+`outputs/intrinsic-semantic-audit/intrinsic-semantic-audit.xlsx`.
+
+**Unresolved:** execute the L3 differential queue, repair the confirmed Neon
+helper, validate the unused RVV helper on Sail/hardware, and make official API-test
+matching verify exact immediate values rather than only argument count.
+
+## 2026-08-30 — Close the multi-stage exact-intrinsic audit
+
+**Question:** Can the system compare every exact Neon/RVV intrinsic with official
+and executable architecture behavior, repair modeling errors, remain traceable,
+and then rerun all nineteen scalar programs?
+
+**Confirmed:** yes at the explicitly recorded evidence levels. The canonical
+inventory is 184 rather than 189 because five repaired descriptors collapse onto
+existing faithful capabilities. The deterministic ledger classifies 131
+confirmed, 43 conditional, and 10 needing deeper memory/`vsetvl` audit; no current
+row remains a suspected or confirmed modeling bug.
+
+**Confirmed evidence:** native AArch64/Lean tests cover all signed-byte
+`vrshlq_s32` counts; LLVM RVV intrinsic plus Spike proves SEW masking for
+`vssra.vx`. The four differential audits pass 191/191 FP, 232/232 P1 integer, and
+378/378 plain-integer samples. Sixty-eight structural subjects pass trace and
+generator checks, explicitly without an ISA-correctness claim. Full Lean build and
+194 Lean-backend tests pass after faithful vector-vector max/min regeneration.
+
+**Confirmed program rerun:** `f32-f16-vcvt` and `f32-vrndne` verify; nine floating
+programs and `s8-vclamp` retain checked counterexamples; seven quantized programs
+remain blocked by missing external conditions.
+
+**Artifacts:** `verification/elementwise-compiler/SemanticAuditLedger.json`, four
+`*DifferentialAudit.json` files, `notes/audits/intrinsic-semantic-audit.csv`, and
+`notes/audits/INTRINSIC_SEMANTIC_AUDIT_ROUND1.md`.
+
+**Unresolved:** L4 correspondence to an independent formal ISA model, full
+register/memory/tail/exception-state semantics, the three broadcast-conditional
+I1 helpers, and the seven external program conditions remain separate future work.
+
+**Final independent review and regression:** the convergence reviewer issued
+`GO (180/180)` and `GO (19/19)` in
+`notes/reviews/intrinsic-semantic-audit-final-2026-08-30.md`. A full repository run
+reported 460 passed and 23 skipped plus one stale protected-Lean-project hash;
+after the required proof-policy rebind, the failed gate and all 14 proof-policy
+tests pass. Final loaders report 180 intrinsic and 19 program reviews.

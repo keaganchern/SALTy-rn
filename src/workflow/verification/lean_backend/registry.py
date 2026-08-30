@@ -187,8 +187,8 @@ QS8_VADD_MINMAX_NEON_SPECS: tuple[IntrinsicSpec, ...] = (
     _semantic(
         "vrshlq_s32", Architecture.NEON,
         _signature(I32X4, ("vector", I32X4), ("shift", I32X4)),
-        OperationShape.VECTOR_VECTOR, "SALT.Intrinsics.Neon.vrshlq_s32",
-        (_arg(0), _arg(1, OperandTransform.NEGATED_UNBROADCAST_TO_NAT)),
+        OperationShape.VECTOR_VECTOR, "SALT.Intrinsics.Neon.vrshlq_s32_vec",
+        (_arg(0), _arg(1)),
     ),
     _semantic(
         "vqmovn_s32", Architecture.NEON, _signature(I16X4, ("vector", I32X4)),
@@ -217,14 +217,14 @@ QS8_VADD_MINMAX_NEON_SPECS: tuple[IntrinsicSpec, ...] = (
     _semantic(
         "vmaxq_s8", Architecture.NEON,
         _signature(I8X16, ("left", I8X16), ("right", I8X16)),
-        OperationShape.VECTOR_VECTOR, "SALT.Intrinsics.Neon.vmax_s8",
-        (_arg(0), _arg(1, OperandTransform.UNBROADCAST)),
+        OperationShape.VECTOR_VECTOR, "SALT.Intrinsics.Neon.vmaxq_s8",
+        (_arg(0), _arg(1)),
     ),
     _semantic(
         "vminq_s8", Architecture.NEON,
         _signature(I8X16, ("left", I8X16), ("right", I8X16)),
-        OperationShape.VECTOR_VECTOR, "SALT.Intrinsics.Neon.vmin_s8",
-        (_arg(0), _arg(1, OperandTransform.UNBROADCAST)),
+        OperationShape.VECTOR_VECTOR, "SALT.Intrinsics.Neon.vminq_s8",
+        (_arg(0), _arg(1)),
     ),
     _structural(
         "vst1q_s8", Architecture.NEON,
@@ -234,14 +234,14 @@ QS8_VADD_MINMAX_NEON_SPECS: tuple[IntrinsicSpec, ...] = (
     _semantic(
         "vmax_s8", Architecture.NEON,
         _signature(I8X8, ("left", I8X8), ("right", I8X8)),
-        OperationShape.VECTOR_VECTOR, "SALT.Intrinsics.Neon.vmax_s8",
-        (_arg(0), _arg(1, OperandTransform.UNBROADCAST)),
+        OperationShape.VECTOR_VECTOR, "SALT.Intrinsics.Neon.vmax_s8_vec",
+        (_arg(0), _arg(1)),
     ),
     _semantic(
         "vmin_s8", Architecture.NEON,
         _signature(I8X8, ("left", I8X8), ("right", I8X8)),
-        OperationShape.VECTOR_VECTOR, "SALT.Intrinsics.Neon.vmin_s8",
-        (_arg(0), _arg(1, OperandTransform.UNBROADCAST)),
+        OperationShape.VECTOR_VECTOR, "SALT.Intrinsics.Neon.vmin_s8_vec",
+        (_arg(0), _arg(1)),
     ),
     _structural(
         "vst1_s8", Architecture.NEON,

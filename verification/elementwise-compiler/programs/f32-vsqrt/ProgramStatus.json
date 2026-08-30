@@ -12,7 +12,7 @@
     "unused_params"
   ],
   "layout_preflight": "scalar-lane",
-  "manifest_sha256": "47cc7dc63794da4741efa35b094011d985646254c0a26155c795fdec17511dda",
+  "manifest_sha256": "0f7eaccba0cc25483ab6a3fb9df2eb1e8df5578be59093ae02a2ea40885e87bf",
   "missing_intrinsics": [],
   "neon_function": "test_neon",
   "neon_intrinsics": [

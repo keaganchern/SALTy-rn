@@ -1,0 +1,16 @@
+{
+  "architecture": "neon",
+  "argument_count": 3,
+  "artifact_kind": "intrinsic-capability",
+  "capability_id": "intrinsic:neon:vext_s8:eb751dd988e480fd",
+  "capability_sha256": "874ee0efe80e55244919f2a3fcc07302ec799021fcf96269e9911ef4d1109f83",
+  "descriptor_sha256": "4a85b80953b1bb3adf2b9221cb3ec6020e8729d11488040911b2c339431b740c",
+  "function_type": "int8x8_t (int8x8_t, int8x8_t, int)",
+  "implementation_sha256": "631ae66353cd91b21c51c66d5d05ffa55c53f6f30eaaafff4f5c152a444b93c1",
+  "review_evidence_sha256": "ccfa00002228731444b96906a1c3c12d17b2f6abe458b4c8dca26a9772b9b532",
+  "role": "structural",
+  "schema_version": 1,
+  "semantic_symbol": null,
+  "spelling": "vext_s8",
+  "version": 1
+}

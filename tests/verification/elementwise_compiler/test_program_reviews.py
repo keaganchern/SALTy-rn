@@ -24,9 +24,9 @@ def test_program_review_plan_and_checks_cover_exact_live_outcomes() -> None:
     assert plan["counts"] == {
         "programs": 19,
         "outcomes": {
-            "counterexample": 4,
+            "counterexample": 10,
             "external-condition-missing": 7,
-            "verified(value)": 8,
+            "verified(value)": 2,
         },
     }
     assert len(plan["subjects"]) == 19

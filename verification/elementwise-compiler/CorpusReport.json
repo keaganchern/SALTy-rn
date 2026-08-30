@@ -1574,7 +1574,7 @@
   ],
   "intrinsic_registry": {
     "path": "IntrinsicRegistry.json",
-    "sha256": "c775350e70bd593682c600a7210c79686d5839fa0c3f569889828e4de58776a8"
+    "sha256": "64f144a6dd1480a89f25fd4434a6132a9e17fc541d16bb3855642521891682e2"
   },
   "programs": [
     {
@@ -1590,7 +1590,7 @@
         "input"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": "7647eaa746ee3c581018299115152e121cf5ed7eb0856befff124468a53ba739",
+      "manifest_sha256": "da78c27b7fb2d14327e69dac2ced832c9ed026bb5a8043e2ee37f343a661e22c",
       "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
@@ -1671,7 +1671,7 @@
         "input_b"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": "5fd1b1fc43a0b16f02436c76bca4bdb4fd2cb587224e1d3945b6239100b0779c",
+      "manifest_sha256": "9381c095170a4bbf6cd4b92b25eab007198270f01e89beaa3a457df4d97b7ba5",
       "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
@@ -1772,7 +1772,7 @@
         "input_b"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": "ff81cf6b72631883eab3deeb6b3f756cd68e221578396384b64f9d262c354c8f",
+      "manifest_sha256": "9f361b042b14e7fe6246ea5a7ea66f1741ad1a1f0c3dbe2ea22ea0ce335b49eb",
       "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
@@ -1815,7 +1815,7 @@
         "input"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": "f0cd3846919bbe075892244f682f9cd219a7dbc7992c6b23afba2f6819b8046b",
+      "manifest_sha256": "57049e63cf855a6842348437fc1e936a4dd832729d8b3b0ea9869f1ed0741673",
       "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
@@ -1867,7 +1867,7 @@
         "input_b"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": "ae6ed0c051aa93ddfaea5a3aab217f6b20fab06bfcf1fbbe1788d90dd6c3f342",
+      "manifest_sha256": "cf37284ee93f0195ce97e044aa651550043dd41aadf57368623a98e94099486d",
       "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
@@ -1911,7 +1911,7 @@
         "input_b"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": "426438134ca5cddf25175089e50527575606e8c21995d63fd94e694de00c56fb",
+      "manifest_sha256": "aef34a24be7416667f9c9f5fc44decd34e9587d8834e8795531f04fedc18cb84",
       "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
@@ -1955,7 +1955,7 @@
         "input_b"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": "1ac577b5760d14ce1291ff4d08dbd40c8d3e8113d07bd3d92bb28900379c9135",
+      "manifest_sha256": "9ab2e5d732875131b32767a755cbf8ce5f34b579fec692f6a5d095fd5088fdc5",
       "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
@@ -1999,7 +1999,7 @@
         "input_b"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": "fd84ac244fa3743f317724890e4756de513562faccc3ac7ee8261f13761af6ac",
+      "manifest_sha256": "1692d7ccfff9543490396d8b861901a344b5fdb174d0573c2cef6ca9ee71e0e2",
       "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
@@ -2043,7 +2043,7 @@
         "input"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": "1e400595e17fa95616bc24804e6b96d50e99231069a4c671d1085c64b2493054",
+      "manifest_sha256": "a05df807d0f8bf00ffe54a85ac3a0916d702228e319bb2025e10d94be14505e4",
       "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
@@ -2103,7 +2103,7 @@
         "unused_params"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": "47cc7dc63794da4741efa35b094011d985646254c0a26155c795fdec17511dda",
+      "manifest_sha256": "0f7eaccba0cc25483ab6a3fb9df2eb1e8df5578be59093ae02a2ea40885e87bf",
       "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
@@ -2147,7 +2147,7 @@
         "input_b"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": "a6e79d8cf6619afa70435e8c7849d91a64b9f84a8dd7dd00ca4a64ece6514a6c",
+      "manifest_sha256": "33fedafa4fc5a975f06882912670aeb2372a741568c69722524ecd0bb7243ede",
       "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
@@ -2190,7 +2190,7 @@
         "input"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": "fad98e59d6c37616e35b7043f1436904b79b012985b3e49e820cff16b96b693e",
+      "manifest_sha256": "c3d6e9ad61ad147462df3101a7deb1a27164ff4df412d3055dc85aa1aa19d32c",
       "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
@@ -2245,7 +2245,7 @@
         "input_b"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": "5c9c34531dd0b1c35a0357c309de450232b56baafa14a253d1db11a1680f7a15",
+      "manifest_sha256": "09f41192c875448eaeb536d1fb164455db2f122615f08f2689404e90e3fd4f54",
       "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
@@ -2320,7 +2320,7 @@
         "input"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": "324c3e333f902700513a6d926affa582facdf629b006a6d9eb61d7de3e314ac2",
+      "manifest_sha256": "e7ebafcc61b316ad165d7d8f7332e35fea184571d529b779f7e213cd7b2a2951",
       "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
@@ -2377,7 +2377,7 @@
         "input"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": "218f4fd8c2be9787847fad9a8ffc6ba8a1eb231b7e2318f0006060313f2758d6",
+      "manifest_sha256": "b51f4f2c10c6cd30c7a770b2e9ef971a22036261a96c2b078eb06cb6fe0447ea",
       "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
@@ -2440,7 +2440,7 @@
         "input_b"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": "fd6027af689c2ead27fe584c1a95bf084ad7bcb6c404f6c76d2e77960e3c3b08",
+      "manifest_sha256": "8c0d5a2e566d493dbabc0468dced9c4a3f18ace783db22538851c48c6f7ccb06",
       "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
@@ -2512,7 +2512,7 @@
         "input"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": "1b0539ede6d9d7a5fd3776903b22737ea87fc672e2d079dbf27b8717183e64dc",
+      "manifest_sha256": "ee3aa8d8c52c6c5a42fef0811d533a93e76b217f44bd7ff8f8da63c2deb68faa",
       "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
@@ -2570,7 +2570,7 @@
         "input_b"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": "10293dc7f1cc9d1b979c7cdfd272940e7aa589fccdc9959c1d3440d00c535a8e",
+      "manifest_sha256": "b1529c6d68043f47b699a389a2778f7c9f75af5ff78d6edf5e167091c7e18c85",
       "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
@@ -2645,7 +2645,7 @@
         },
         "path": "programs/s8-vclamp/Counterexample.json",
         "right_output": 5,
-        "sha256": "1c5ee3a0cdf3cec7539845503e1dc21783e38d81b26ec6f2281b5f24ada215d9"
+        "sha256": "14b64f4b45a90528cd415210cabf5015cef955f8853d04de7880c3b1d17573c6"
       },
       "cross_phase_status": "lean-checked-counterexample",
       "detail": "Lean checked a concrete disagreement between generated Neon phases",
@@ -2657,7 +2657,7 @@
         "input"
       ],
       "layout_preflight": "scalar-lane",
-      "manifest_sha256": "d0912012356304946539cc551e13f5de633b0b90c1c50bc5aa4d598226d2c04e",
+      "manifest_sha256": "f08e6d516d9a1fb2dee325e56a8c88264a020b98048f3fd1a2074dfb33746280",
       "missing_intrinsics": [],
       "neon_function": "test_neon",
       "neon_intrinsics": [
@@ -2698,7 +2698,7 @@
       "status_layer": "typed-generated"
     }
   ],
-  "report_sha256": "d07a1bfd6a4f83ef15d17eed7d309a423c954a92f4af5a6f9ae95f1f2ef3da6b",
+  "report_sha256": "45c2d458e35cad6bffe5038e5ab42cf6a5d5680ddba31251e49c81a333f41f2a",
   "scalar_layout_scope": 19,
   "schema_version": 2,
   "status_counts": {

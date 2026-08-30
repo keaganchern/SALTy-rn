@@ -540,3 +540,66 @@ checks before accepting records. A self-consistent but stale stored Plan/Checks
 pair is insufficient. The dashboard verifies IntrinsicAudit and
 IntrinsicReviewPlan before loading program approvals, so a missing external review
 policy in a copied corpus cannot hide a corrupted reusable intrinsic parent.
+
+## EC-044: Floating Value Semantics Are Architecture-Specific
+
+**Status:** Accepted and implemented after independent review, 2026-08-30.
+
+Arm Neon arithmetic is modeled for the explicitly audited `FPCR.DN=0/AH=0`
+value mode, including NaN selection, quieting, and payload preservation. RISC-V
+arithmetic separately returns the canonical NaN on NaN inputs and invalid
+operations. Host `Float32` exceptional bit patterns are not an architecture
+contract. Exception flags, traps, other FPCR modes, C abstract-machine behavior,
+and binary correspondence remain separate claim layers.
+
+All floating program outcomes must be regenerated after this shared semantic
+change. A newly exposed source/target exact-bit difference is retained as a
+checked counterexample; it may not be erased by inventing a no-NaN precondition
+or weakening observation without a separately accepted contract decision.
+
+## EC-045: Review Closure and Semantic Adequacy Are Separate Axes
+
+**Status:** Accepted and implemented as an audit ledger, 2026-08-30.
+
+The existing schema-v2 intrinsic review answers whether an exact descriptor,
+prototype, source binding, implementation hash, declared scope, Lean build, and
+review artifact are current. It does not by itself answer whether every edge of
+the Lean denotation matches the intended architecture operation.
+
+Semantic adequacy is therefore tracked independently per exact capability with an
+L0–L4 evidence ladder and explicit `confirmed`, `conditional`,
+`needs_deep_audit`, `suspected_bug`, and `confirmed_bug` verdicts. A spreadsheet
+status cannot promote a claim: L2 requires independent manual evidence, L3 an
+executable independent oracle, and L4 a correspondence theorem to an independent
+formal ISA model. Value, architectural state, C, compiler, and binary semantics
+remain separate scopes.
+
+## EC-046: Canonical Audit Inventory Collapses Semantically Identical Descriptors
+
+**Status:** Accepted and implemented, 2026-08-30.
+
+An exact capability is one distinct typed semantic operation, not every historical
+contextual lowering record. When a repaired descriptor becomes identical to an
+existing faithful descriptor, the global index and audit ledger must collapse the
+duplicate. Retaining both would falsely increase coverage and create two approval
+identities for one operation.
+
+This supersedes the current-count portion of EC-038: the initial 189 variants
+contained one duplicate `vrshlq_s32` and four scalarized Neon max/min descriptors.
+After faithful vector-vector repair they collapse to 184 semantically distinct
+variants, 180 used and four unused. No C behavior or supported call was removed.
+
+## EC-047: Shift Semantics and Broadcast Bridges Must Be Explicit
+
+**Status:** Accepted and implemented after executable differential evidence,
+2026-08-30.
+
+Neon signed variable shift counts come from the signed low byte and oversized
+rounding-right shifts must follow the architecture rather than BitVec temporary
+wraparound. RVV `vssra.vx` masks the scalar shift by SEW. The shared Lean helpers
+must encode those rules directly.
+
+When a real vector-vector intrinsic is used with a source broadcast, the registry
+retains faithful vector-vector identity lowering. A separate theorem may recover a
+scalar kernel helper only from explicit broadcast provenance and any required
+input bound. Generated proofs may not silently scalarize the intrinsic descriptor.

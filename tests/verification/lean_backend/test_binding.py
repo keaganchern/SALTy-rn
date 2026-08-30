@@ -205,6 +205,20 @@ class RegistryBindingTests(unittest.TestCase):
             with self.assertRaisesRegex(OperandProvenanceError, "source operations"):
                 bind_kernel(extraction, workspace_root=Path("/"))
 
+    def test_negated_structural_broadcast_is_preserved(self) -> None:
+        manifest = build_manifest(self.neon, self.rvv, workspace_root=ROOT)
+        broadcast = next(
+            call
+            for call in manifest["kernels"]["neon"]["calls"]
+            if call["node_id"] == "call_0004"
+        )
+
+        self.assertEqual(broadcast["spelling"], "vdupq_n_s32")
+        self.assertEqual(
+            broadcast["arguments"][0]["source_text"],
+            "-params->scalar.shift",
+        )
+
     def test_truncating_scalar_intrinsic_argument_is_not_erased(self) -> None:
         old = "__riscv_vmul_vx_i32m8(vxa32, a_multiplier, vl)"
         new = "__riscv_vmul_vx_i32m8(vxa32, (int16_t) a_multiplier, vl)"
@@ -267,7 +281,7 @@ class RegistryBindingTests(unittest.TestCase):
             with self.assertRaisesRegex(OperandProvenanceError, "not broadcast"):
                 bind_kernel(extraction, workspace_root=Path("/"))
 
-    def test_negated_unbroadcast_checks_broadcast_input_syntax(self) -> None:
+    def test_negated_structural_broadcast_checks_input_syntax(self) -> None:
         calls = []
         for call in self.neon.calls:
             if call.node_id != "call_0004":
@@ -279,7 +293,7 @@ class RegistryBindingTests(unittest.TestCase):
             calls.append(dataclasses.replace(call, arguments=(argument,)))
         mutated = dataclasses.replace(self.neon, calls=tuple(calls))
 
-        with self.assertRaisesRegex(OperandProvenanceError, "unary-negated"):
+        with self.assertRaisesRegex(OperandProvenanceError, "source operations"):
             bind_kernel(mutated, workspace_root=ROOT)
 
     def test_bidirectional_inventory_rejects_missing_registered_spelling(self) -> None:

@@ -4,13 +4,29 @@ Last updated: 2026-08-30 (Asia/Seoul)
 
 ## Active Milestone
 
-**Status: completed.** The shared compiler generates Manifest/Models/proof-free
+**Status: semantic-audit convergence completed and independently reviewed.** The shared compiler generates Manifest/Models/proof-free
 Spec for all nineteen scalar-layout programs. Widths, tails, multi-phase
 schedules, external audits, checked counterexamples, 180/180 used exact intrinsic
-reviews, eight frozen Lean proofs, and nineteen independent outcome reviews are
-published. The final outcomes are 8 `verified(value)`, 4 `counterexample`, and 7
+reviews, two frozen Lean proofs, and nineteen independent outcome reviews are
+published. The final outcomes are 2 `verified(value)`, 10 `counterexample`, and 7
 `external-condition-missing`. The grouped `f32-vcmul` and higher C/ISA claim
 layers remain explicit future work rather than hidden acceptance gaps.
+
+All 184 semantically distinct exact registry variants now have a deterministic
+semantic-audit row: 131 confirmed at the inspected scope, 43 conditional, and 10
+needing deeper memory/`vsetvl` audit. The former Neon `vrshlq_s32` and RVV `vssra`
+bugs are repaired; duplicate descriptors were collapsed without reducing behavior
+coverage. L3 sampled evidence passes 191 floating, 232 P1 integer, and 378 plain
+integer architecture/Lean vectors. The independent convergence reviewer returned
+`GO (180/180)` for used exact capabilities and `GO (19/19)` for program outcomes;
+reviews and the final 2/10/7 program split were republished against the final hashes.
+
+**Next scale-up proposal:** keep `completeValueEquivalenceClaim` as the only public
+acceptance target and treat element/block/loop/phase claims as internal proof
+decompositions. Generalize Models generation through a restricted typed kernel IR,
+starting with grouped planar-complex layout and then small reduction/transpose
+vertical slices. The 36 nonempty pairs define the existing-corpus target space;
+they are not current compiler coverage.
 
 ## Canonical Artifact Chain
 
@@ -240,19 +256,19 @@ layout for `f32-vcmul` stays deferred outside the nineteen-program target.
    witnesses, and M/E/D/S/A/C/T/R;
 3. **Completed and independently reviewed:** all nineteen scalar-layout programs
    generate Manifest/Models/Spec through the shared compiler; exact review identity
-   and schema-v3 dashboard accounting distinguish 178/186 spellings, 189 registry
+   and schema-v3 dashboard accounting distinguish 178/186 spellings, 184 registry
    variants, and 180 variants used by the current nineteen-program closure;
 4. **Completed and independently reviewed:** 180 used exact variants are partitioned
    into twelve semantic families, bound to official exact prototypes and explicit
    architecture conditions, machine-checked, and published as separate schema-v2
    records. Reviewer verdict: `GO (180/180)`;
-5. **Active:** generate proof tasks for the eleven condition-free programs,
-   delegate only `Proof.lean`, and publish an honest verified/failure/
-   counterexample outcome for every scalar program;
-6. independently review all nineteen program outcomes, including the seven
-   external-condition blockers and the existing S8 clamp counterexample;
-7. rerun the corpus and require the checked-in report/dashboard to change only
-   through the artifact graph;
+5. **Completed:** publish an honest proof/counterexample/external-condition outcome
+   and independent review for every scalar program;
+6. **Completed:** create the 184-row intrinsic semantic-audit ledger and run an
+   independent Neon FP, Neon integer, and RVV integer first pass;
+7. **Completed:** add independent L3 sampled differential tests for all 28 FP,
+   20 P1 integer (including the repaired legacy RVV regression), and 65 current
+   plain-integer subjects; retain structural evidence at its honest L2/L3 scope;
 8. keep grouped `f32-vcmul` deferred until a reviewed complex layout/view exists;
 9. use the new `counterexample` terminal state to explain false
    cross-phase/equivalence obligations;
@@ -263,6 +279,8 @@ layout for `f32-vcmul` stays deferred outside the nineteen-program target.
 11. keep all eight audited quantized-parameter programs in
     `required-missing` until their reusable initializer/caller postconditions are
     checked; generated Models/Spec alone are not proof ready.
+12. make RVV official API-test matching compare exact immediate values, including
+    `vxrm`, rather than accepting argument-count equality.
 
 ## Nineteen-Program Delivery and Review Plan
 
@@ -312,7 +330,7 @@ separate grouped-layout milestone.
    reviewed:** all nineteen scalar programs generate typed artifacts; FP32 value
    definitions, scalar broadcast, facade-width preservation, safe source
    conditionals, and remaining descriptors are present. Exact IDs and dashboard
-   rows distinguish all 189 registry variants and the 180 used by the current
+   rows distinguish all 184 registry variants and the 180 used by the current
    nineteen-program closure. Reviewer verdict changed from `NO-GO` to `GO` after
    the identity/dashboard correction.
 6. **Exact intrinsic audit and publication — completed and independently reviewed:**
@@ -321,11 +339,20 @@ separate grouped-layout milestone.
    records, and fail-closed dashboard parents. Reviewer verdict: `GO (180/180)`.
 7. **Program proof and outcome review — completed and independently reviewed:**
    all nineteen scalar-layout outcomes are generated without program-specific
-   framework edits; eight prove, four have named checked witnesses, and seven
+   framework edits; two prove, ten have named checked witnesses, and seven
    remain blocked without fabricated assumptions. Reviewer verdict: `GO (19/19)`.
 8. **Final audit — completed:** randomized held-out programs, deterministic
    regeneration, stale-parent/checker mutations, full 444-test regression,
    dashboard snapshot with 19 reviews, cache cleanup, and memory reconciliation.
+9. **Four-counterexample semantic audit — completed:** distinguish the real
+   `f32-vmax/vmin` NaN gaps, the `f32-vrndne` Lean-only witness under `FPCR.DN=0`,
+   and the non-NaN `s8-vclamp` order gap; retain an AArch64 executable probe and a
+   separately checked complete-claim S8 witness.
+10. **`f32-vrndne` intrinsic repair — completed and independently reviewed:**
+    repaired shared Arm/RVV FP value semantics, proved `f32-vrndne` for all inputs,
+    rechecked the complete FP corpus, retained nine newly exposed real FP
+    counterexamples, and republished the 180 intrinsic plus 19 program reviews.
+    Reviewer verdicts: `GO (180/180)` and `GO (19/19)`.
 
 ### Stage B — Intrinsic Puzzle Completion and Review
 

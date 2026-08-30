@@ -6,7 +6,7 @@ import SALT.Kernel.ElementwiseFamily
 
 namespace SALT.Corpus.s8vclamp
 
-def programManifestSha256 : String := "d0912012356304946539cc551e13f5de633b0b90c1c50bc5aa4d598226d2c04e"
+def programManifestSha256 : String := "f08e6d516d9a1fb2dee325e56a8c88264a020b98048f3fd1a2074dfb33746280"
 def consumedEffectsSha256 : String := "f07b94c87c7e15e283b898e9a0482fb2e409e22d12aa197b5043c127fe562dce"
 
 def neonSourceSha256 : String :=
@@ -20,7 +20,7 @@ def rvvPreprocessedSha256 : String :=
 def parseFacadeSha256 : String :=
   "4634c40f29c8b24bf6a032a0d91e273f050111ff2db230a2c24358ef0a101da0"
 def registrySha256 : String :=
-  "6445489f6d1877652a197a03a898dc0bd6a94000be4077962b9bd1839afa90d1"
+  "000164ea12ff7b2643406fc8e8b6e44993cff9abf51f8ab95650afba375aa662"
 
 structure s8vclampParams where
   max : BitVec 32

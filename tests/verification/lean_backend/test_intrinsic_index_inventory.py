@@ -33,11 +33,6 @@ from workflow.verification.lean_backend.schema import Architecture, IntrinsicSpe
 REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
 
 EXPECTED_CONFLICT_VARIANTS = {
-    (Architecture.NEON, "vmax_s8"): 2,
-    (Architecture.NEON, "vmaxq_s8"): 2,
-    (Architecture.NEON, "vmin_s8"): 2,
-    (Architecture.NEON, "vminq_s8"): 2,
-    (Architecture.NEON, "vrshlq_s32"): 2,
     (Architecture.RVV, "__riscv_vnclip_wx_i16m4"): 4,
     (Architecture.RVV, "__riscv_vnclip_wx_i8m2"): 2,
     (Architecture.RVV, "__riscv_vsll_vx_i32m8"): 2,
@@ -46,10 +41,10 @@ EXPECTED_CONFLICT_VARIANTS = {
 
 EXPECTED_SEQUENTIAL_ONBOARDING = {
     "qs8-vadd-minmax": (0, 0, 43),
-    "s8-vclamp": (11, 4, 6),
+    "s8-vclamp": (15, 0, 6),
     "qs8-vcvt": (15, 2, 8),
     "qs8-vlrelu": (22, 1, 7),
-    "qu8-vadd-minmax": (17, 4, 21),
+    "qu8-vadd-minmax": (18, 3, 21),
 }
 
 
@@ -78,7 +73,7 @@ def test_configured_inventory_counts_and_architecture_split_are_stable() -> None
 
     assert sum(len(variant.provenance) for variant in variants) == 255
     assert len(grouped) == 178
-    assert len(variants) == 189
+    assert len(variants) == 184
 
     assert Counter(
         origin.architecture
@@ -89,11 +84,11 @@ def test_configured_inventory_counts_and_architecture_split_are_stable() -> None
         {Architecture.NEON: 103, Architecture.RVV: 75}
     )
     assert Counter(variant.spec.architecture for variant in variants) == Counter(
-        {Architecture.NEON: 108, Architecture.RVV: 81}
+        {Architecture.NEON: 103, Architecture.RVV: 81}
     )
 
 
-def test_exactly_nine_architecture_scoped_keys_have_multiple_variants() -> None:
+def test_exactly_four_architecture_scoped_keys_have_multiple_variants() -> None:
     grouped = _variants_by_architecture_and_spelling()
     conflicts = {
         key: len(variants) for key, variants in grouped.items() if len(variants) > 1
@@ -108,7 +103,7 @@ def test_exact_variant_case_support_distribution_is_stable() -> None:
         for variant in CANONICAL_INTRINSIC_INDEX.variants
     )
 
-    assert support_counts == Counter({1: 153, 2: 21, 3: 3, 4: 10, 5: 1, 6: 1})
+    assert support_counts == Counter({1: 143, 2: 26, 3: 3, 4: 10, 5: 1, 6: 1})
 
 
 def test_shared_parse_facade_is_generated_from_the_typed_library() -> None:

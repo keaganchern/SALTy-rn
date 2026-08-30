@@ -55,6 +55,19 @@ def _load_bound(path: Path, digest_field: str) -> Mapping[str, Any]:
     return value
 
 
+def _successful_pytest_count(output: str) -> int | None:
+    summary = re.search(
+        r"(?m)^(\d+) passed(?P<rest>(?:, [^\n]+)?) in [0-9.]+s$",
+        output,
+    )
+    if summary is None:
+        return None
+    rest = summary.group("rest")
+    if "failed" in rest or "error" in rest:
+        return None
+    return int(summary.group(1))
+
+
 def _primary_evidence(row: Mapping[str, Any]) -> tuple[ReviewEvidence, ...]:
     evidence = row["primary_evidence"]
     if row["architecture"] == "neon":
@@ -113,17 +126,25 @@ def publish_intrinsic_reviews(
         raise IntrinsicReviewPublishError("review evidence parent is stale")
     reviewer_path = (root / reviewer_report).resolve()
     reviewer_text = reviewer_path.read_text(encoding="utf-8")
-    if "Verdict: GO (180/180)" not in reviewer_text:
-        raise IntrinsicReviewPublishError("reviewer report does not authorize 180 approvals")
+    if _validate_execution_evidence:
+        if "Verdict: GO (180/180)" not in reviewer_text:
+            raise IntrinsicReviewPublishError(
+                "reviewer report does not authorize final 180 approvals"
+            )
+    elif not any(
+        marker in reviewer_text
+        for marker in ("Implementation gate: GO", "Verdict: GO (180/180)")
+    ):
+        raise IntrinsicReviewPublishError(
+            "reviewer report does not authorize bootstrap publication"
+        )
 
     python_output = root / "notes/reviews/evidence/elementwise-m6-python-tests.txt"
     lean_output = root / "notes/reviews/evidence/elementwise-m6-lean-build.txt"
     lean_text = lean_output.read_text(encoding="utf-8")
     if _validate_execution_evidence:
-        passed = re.search(
-            r"(?m)^(\d+) passed(?:,|\s)", python_output.read_text(encoding="utf-8")
-        )
-        if passed is None or int(passed.group(1)) < 150:
+        passed = _successful_pytest_count(python_output.read_text(encoding="utf-8"))
+        if passed is None or passed < 150:
             raise IntrinsicReviewPublishError("focused Python evidence did not pass")
         if "Build completed successfully (46 jobs)." not in lean_text or (
             "Build completed successfully (7 jobs)." not in lean_text

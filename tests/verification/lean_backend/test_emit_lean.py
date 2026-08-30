@@ -155,6 +155,6 @@ def test_supported_semantic_mutation_changes_generated_neon_model(
 
     assert mutated.module_text != original.module_text
     assert (
-        "SALT.Intrinsics.Neon.vmin_s8 (vout0123456789ABCDEF_0) (p.output_min)"
+        "SALT.Intrinsics.Neon.vminq_s8 (vout0123456789ABCDEF_0) (voutput_min_0)"
         in mutated.module_text
     )

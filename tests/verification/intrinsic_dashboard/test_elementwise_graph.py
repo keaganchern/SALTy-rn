@@ -92,15 +92,15 @@ def test_graph_is_derived_from_the_twenty_discovered_programs(tmp_path: Path) ->
     }
     assert graph["summary"]["configured_intrinsic_spellings"] == 178
     assert graph["summary"]["intrinsic_spelling_dependencies"] == 186
-    assert graph["summary"]["registry_intrinsic_variants"] == 189
+    assert graph["summary"]["registry_intrinsic_variants"] == 184
     assert graph["summary"]["primary_source_audited_intrinsic_variants"] == 0
     assert graph["summary"]["conditioned_intrinsic_variants"] == 0
     assert graph["summary"]["used_intrinsic_variants"] == 180
     assert graph["summary"]["lean_checked_used_intrinsic_variants"] == 0
     assert graph["summary"]["reviewed_registry_intrinsic_variants"] == 0
     assert graph["summary"]["reviewed_used_intrinsic_variants"] == 0
-    assert len(graph["capabilities"]) == 189
-    assert len({item["id"] for item in graph["capabilities"]}) == 189
+    assert len(graph["capabilities"]) == 184
+    assert len({item["id"] for item in graph["capabilities"]}) == 184
     assert sum(item["used"] for item in graph["capabilities"]) == 180
     reviewed = {item["id"] for item in graph["capabilities"] if item["reviewed"]}
     assert reviewed == set()

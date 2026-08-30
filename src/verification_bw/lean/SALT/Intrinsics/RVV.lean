@@ -157,10 +157,11 @@ def vmacc_vx (dest : List (BitVec 32)) (scalar : BitVec 32) (src : List (BitVec 
 -- ============================================================================
 
 def rvvRoundingShiftRight (x : BitVec 32) (shift : Nat) : BitVec 32 :=
-  if shift = 0 then x
+  let effectiveShift := shift % 32
+  if effectiveShift = 0 then x
   else
-    let shifted : BitVec 32 := x.sshiftRight shift
-    let round_bit : Bool := x.getLsbD (shift - 1)
+    let shifted : BitVec 32 := x.sshiftRight effectiveShift
+    let round_bit : Bool := x.getLsbD (effectiveShift - 1)
     if round_bit then shifted + 1 else shifted
 
 def vssra_vx_rnu (a : List (BitVec 32)) (shift : Nat) : List (BitVec 32) :=

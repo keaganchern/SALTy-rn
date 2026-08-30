@@ -12,7 +12,7 @@
     "input_b"
   ],
   "layout_preflight": "scalar-lane",
-  "manifest_sha256": "fd6027af689c2ead27fe584c1a95bf084ad7bcb6c404f6c76d2e77960e3c3b08",
+  "manifest_sha256": "8c0d5a2e566d493dbabc0468dced9c4a3f18ace783db22538851c48c6f7ccb06",
   "missing_intrinsics": [],
   "neon_function": "test_neon",
   "neon_intrinsics": [

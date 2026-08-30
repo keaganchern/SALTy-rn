@@ -1,0 +1,16 @@
+{
+  "architecture": "neon",
+  "argument_count": 2,
+  "artifact_kind": "intrinsic-capability",
+  "capability_id": "intrinsic:neon:vorrq_u32:3c8b982be2e19a5b",
+  "capability_sha256": "3b106a3d0d5507776e5dc9c76c98895230e9e7f0296cd6fe3e034d85e7fdf7a5",
+  "descriptor_sha256": "34bc9d31d90413bc2f46a3c9ac60206ec0842664d6fe9a1b3bb44338b8388eb6",
+  "function_type": "uint32x4_t (uint32x4_t, uint32x4_t)",
+  "implementation_sha256": "1774a9df7a6e49105a8d7c3c689a05c43764ebc55bc3d9d58e3517f1caaa6c7f",
+  "review_evidence_sha256": "2291efae9a0d703e33ed945a2f5d08dccb5c834c9b6b11e1977e74cf390ae2a9",
+  "role": "semantic",
+  "schema_version": 1,
+  "semantic_symbol": "SALT.Intrinsics.Neon.vorrq_u32",
+  "spelling": "vorrq_u32",
+  "version": 1
+}

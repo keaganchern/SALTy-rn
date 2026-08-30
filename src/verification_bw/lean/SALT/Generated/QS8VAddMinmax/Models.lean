@@ -18,12 +18,15 @@ def rvvPreprocessedSha256 : String :=
 def parseFacadeSha256 : String :=
   "bf718e923d59d83073524c04af8881ded5413be50005bba97889f08cb154e8df"
 def registrySourceSha256 : String :=
-  "f5054a8b4b263af58ba71267db7b554cea04f08a2aef80094c0cad79960c35e5"
+  "92a4b7457449cc63e1a283dc321f23291b401981618121789bd9e9b48d44bb88"
 
 def neonBlock16FromIntrinsics (p : QS8AddMinmaxParams)
     (chunk_a chunk_b : List (BitVec 8)) : List (BitVec 8) :=
   let va_zero_point_0 := List.replicate 8 (p.a_zero_point)
   let vb_zero_point_0 := List.replicate 8 (p.b_zero_point)
+  let vright_shift_0 := List.replicate 4 (-p.shift)
+  let voutput_min_0 := List.replicate 16 (p.output_min)
+  let voutput_max_0 := List.replicate 16 (p.output_max)
   let va01234567_0 := (chunk_a).take 8
   let vb01234567_0 := (chunk_b).take 8
   let va89ABCDEF_0 := ((chunk_a).drop 8).take 8
@@ -56,10 +59,10 @@ def neonBlock16FromIntrinsics (p : QS8AddMinmaxParams)
   let call_0037 := (vxb89ABCDEF_0).drop 4
   let call_0038 := SALT.Intrinsics.Neon.vmovl_s16 (call_0037)
   let vaccCDEF_1 := SALT.Intrinsics.Neon.vmlaq_s32 (vaccCDEF_0) (call_0038) (p.b_multiplier)
-  let vacc0123_2 := SALT.Intrinsics.Neon.vrshlq_s32 (vacc0123_1) ((p.shift).toNat)
-  let vacc4567_2 := SALT.Intrinsics.Neon.vrshlq_s32 (vacc4567_1) ((p.shift).toNat)
-  let vacc89AB_2 := SALT.Intrinsics.Neon.vrshlq_s32 (vacc89AB_1) ((p.shift).toNat)
-  let vaccCDEF_2 := SALT.Intrinsics.Neon.vrshlq_s32 (vaccCDEF_1) ((p.shift).toNat)
+  let vacc0123_2 := SALT.Intrinsics.Neon.vrshlq_s32_vec (vacc0123_1) (vright_shift_0)
+  let vacc4567_2 := SALT.Intrinsics.Neon.vrshlq_s32_vec (vacc4567_1) (vright_shift_0)
+  let vacc89AB_2 := SALT.Intrinsics.Neon.vrshlq_s32_vec (vacc89AB_1) (vright_shift_0)
+  let vaccCDEF_2 := SALT.Intrinsics.Neon.vrshlq_s32_vec (vaccCDEF_1) (vright_shift_0)
   let call_0044 := SALT.Intrinsics.Neon.vqmovn_s32 (vacc0123_2)
   let call_0045 := SALT.Intrinsics.Neon.vqmovn_s32 (vacc4567_2)
   let call_0046 := call_0044 ++ call_0045
@@ -71,8 +74,8 @@ def neonBlock16FromIntrinsics (p : QS8AddMinmaxParams)
   let call_0052 := SALT.Intrinsics.Neon.vqmovn_s16 (vacc01234567_0)
   let call_0053 := SALT.Intrinsics.Neon.vqmovn_s16 (vacc89ABCDEF_0)
   let vout0123456789ABCDEF_0 := call_0052 ++ call_0053
-  let vout0123456789ABCDEF_1 := SALT.Intrinsics.Neon.vmax_s8 (vout0123456789ABCDEF_0) (p.output_min)
-  let vout0123456789ABCDEF_2 := SALT.Intrinsics.Neon.vmin_s8 (vout0123456789ABCDEF_1) (p.output_max)
+  let vout0123456789ABCDEF_1 := SALT.Intrinsics.Neon.vmaxq_s8 (vout0123456789ABCDEF_0) (voutput_min_0)
+  let vout0123456789ABCDEF_2 := SALT.Intrinsics.Neon.vminq_s8 (vout0123456789ABCDEF_1) (voutput_max_0)
   vout0123456789ABCDEF_2
 
 def rvvBlockFromIntrinsics (p : QS8AddMinmaxParams)

@@ -174,10 +174,12 @@ byte-identical.
 pairs: nineteen scalar-layout and one deferred grouped complex layout. All nineteen
 scalar programs pass the same profile-free parse/recognize/resolve/emit path and
 have content-addressed Manifest/Models/proof-free Spec artifacts. Their terminal
-outcomes are eight `verified(value)`, four Lean-checked `counterexample`, and seven
-`external-condition-missing`. The checked counterexamples are the `s8-vclamp`
-cross-phase ordering bug plus whole-program FP disagreements in `f32-vrndne`,
-`f32-vmax`, and `f32-vmin`. `f32-vcmul` remains `layout-unrecognized` outside the
+outcomes are two `verified(value)`, ten Lean-checked `counterexample`, and seven
+`external-condition-missing`. The proofs are `f32-f16-vcvt` and the repaired
+`f32-vrndne`. The checked counterexamples are the `s8-vclamp` cross-phase ordering
+bug plus nine whole-program FP disagreements in `f32-vadd`, `f32-vdiv`,
+`f32-vlrelu`, `f32-vmax`, `f32-vmin`, `f32-vmul`, `f32-vmulc`, `f32-vsqrt`, and
+`f32-vsub`. `f32-vcmul` remains `layout-unrecognized` outside the
 nineteen. There are no parser, contract, intrinsic, family, or generation failures
 in the scalar scope. The external-condition dimension remains twelve
 `not-required` and eight `required-missing` across all twenty discovered pairs.
@@ -203,17 +205,20 @@ status/trial count, concrete counterexample witnesses, and separate value/C/ISA
 claims. The retained legacy table is labeled historical and cannot affect the
 elementwise projection. The schema-v3 page distinguishes three counts that must
 not be conflated: 186 architecture/spelling dependencies, of which 178 are
-configured; 189 exact registry variants; and 180 exact variants actually used by
+configured; 184 semantically distinct exact registry variants; and 180 exact variants actually used by
 the nineteen-program artifact closure. Exact capability and review identities bind
 the descriptor hash, so different typed descriptors with one spelling cannot
-share approval. Each of the 189 variants has a distinct dashboard row.
+share approval. Each of the 184 variants has a distinct dashboard row. The earlier
+189 count included one duplicate `vrshlq_s32` descriptor and four duplicate
+context-normalized Neon max/min descriptors; their faithful replacements collapse
+onto already existing exact capabilities rather than removing behavior coverage.
 
 **Confirmed current review state:** all 180 exact variants used by the nineteen
 scalar programs now carry distinct schema-v2 independent review records. The
 records bind official exact C prototypes, descriptor and transitive implementation
 hashes, pure-value claim scope, 23 explicit architecture-conditioned subjects,
-machine checks, policy, and reviewer report. The complete 189-variant registry
-therefore reports 180 reviewed and nine unused/unreviewed variants. The older nine
+machine checks, policy, and reviewer report. The complete 184-variant registry
+therefore reports 180 reviewed and four unused/unreviewed variants. The older nine
 schema-v1 F32 records moved to a historical directory and cannot satisfy the live
 loader.
 
@@ -225,13 +230,22 @@ exist. The convergence review returned `GO (180/180)`.
 
 **Confirmed current validation:** the M6 review pack partitions 180 used exact
 subjects into twelve semantic families and machine-checks every subject. The
-default checked-in artifact root was regenerated with 19 scalar manifests, 189
+default checked-in artifact root was regenerated with 19 scalar manifests, 184
 unique exact variants, 180 used/reviewed/Lean-checked variants, 23 conditioned
 variants, and zero stale program nodes. A fresh owner-facing rerun on local HEAD
 passed 248 elementwise compiler/dashboard tests. After the final program-review loading-order
 correction, the complete repository suite passes 444 tests in 437.23 seconds.
 Tracked Lean build caches produced by legacy tests were restored and are not part
 of the delivery.
+
+**Confirmed final semantic-audit validation (2026-08-30):** the convergence
+reviewer returned `GO (180/180)` and `GO (19/19)`. The final full repository run
+reached 460 passed and 23 skipped with one expected stale proof-policy hash after
+the protected Lean source changed; after rebinding that hash, the failing gate and
+the complete 14-test proof-policy file pass. Full Lean build, 194 Lean-backend
+tests, 29 differential-audit tests, four audit freshness checks, generator
+freshness, 180 intrinsic-review loads, 19 program-review loads, and scoped
+diff/escape scans all pass on the final artifacts.
 
 **Confirmed rerun gap:** invoking `proof check` again on an already published
 verified program changes the closure/result hash because `ArtifactIndex.json`
@@ -245,7 +259,7 @@ audit, counterexample or ProofTask/Proof/Result, checker, and toolchain. The fir
 review found stale/anonymous counterexample and checker-closure gaps. After named
 witnesses, live checker recomputation, full regeneration, and fail-closed publisher
 and loader checks, the convergence reviewer returned `GO (19/19)`. The dashboard
-loads all nineteen reviews and reports the exact 8/4/7 split. C and ISA
+loads all nineteen reviews and reports the exact 2/10/7 split. C and ISA
 correspondence remain explicitly `not-established`.
 
 **Confirmed external-condition/counterexample implementation:** every compilation
@@ -270,17 +284,41 @@ element values, and XNNPACK's own binary microkernel tests explicitly skip NaN
 reference outputs because kernels are inconsistent. Thus the current call path
 does not justify a no-NaN theorem assumption. The `f32-vmax`/`f32-vmin` witnesses
 match the real FMAX versus RVV maximumNumber/minimumNumber distinction for a numeric
-operand paired with NaN. The `f32-vrndne` witness is instead a current Lean-model
-artifact under Arm `FPCR.DN=0`: its RVV C has an explicit payload-restoration fixup,
-while shared host `FP32.add/sub` incorrectly canonicalizes the modeled Neon path.
-Ordinary FP arithmetic still shares that host operation across Neon and RVV, so the
-eight current FP value proofs are not yet exact-NaN ISA claims.
+operand paired with NaN. The old `f32-vrndne` witness was a Lean-model artifact
+under Arm `FPCR.DN=0` and has been repaired in shared intrinsic semantics; its
+all-input value claim now typechecks. Explicit Arm payload-preserving and RVV
+canonical-NaN arithmetic then exposed nine real exact-bit source/target
+disagreements instead of hiding them behind host `Float32` behavior.
+
+**Confirmed residual modeling boundary / Inference on hidden micro-defects
+(2026-08-30):** the NaN repair removes the most concrete shared-FP false model.
+The follow-up L3 sampled audit exercised all 28 floating exact capabilities over
+191 architecture/Lean boundary vectors, including NaNs, signed zero, subnormals,
+conversion and operand order, with no mismatch. This is strong regression evidence,
+but it is not an exhaustive correspondence proof for every binary32 input.
+FPCR modes other than the audited RN/FZ=0/DN=0/AH=0 case, RVV `frm`, exception
+flags/traps, and integer `vxrm`/`vxsat` state remain outside or conditional in the
+current value claim. The integer audits likewise found no active-lane value
+mismatch in 232 P1 and 378 plain-integer architecture/Lean vectors. Architectural
+state and memory/tail semantics remain separate or conditional. This is a
+remaining proof boundary, not a newly discovered counterexample.
 
 The cross-phase checker distinguishes not-applicable, missing-condition,
 bounded-no-witness, and Lean-checked counterexample states. Its checked S8 clamp
 witness is `min = 5`, `max = 0`, `x = 0`, producing 0 and 5 in the two Neon phases.
 A bounded miss is diagnostic only; a bound counterexample is terminal and blocks
 proof delegation. See `../elementwise-compiler/EXTERNAL_INPUT_AUDIT.md`.
+
+**Confirmed executable counterexample audit (2026-08-30):** an AArch64 Neon probe
+reproduces `f32-vmax/vmin` as real NaN-related source/target value gaps and shows
+that the `f32-vrndne` witness is a host-`Float32` canonicalization artifact under
+`FPCR.DN=0`: real Neon, the RVV payload fixup, and repaired Lean all return
+`0x7FE00001`. The same probe reproduces the non-NaN S8 tail
+gap (`5` versus `0`). A separately staged Lean theorem confirms that the S8
+length-one execution also refutes `completeValueEquivalenceClaim`; the published
+artifact stops at the phase claim only because whole-program search short-circuits
+after a phase witness. See `../four-counterexample-semantic-audit.md` and
+`../demos/neon-rvv-semantic-gap-aarch64.c`.
 
 ## Completed Delivery and Next Boundary
 
@@ -304,13 +342,43 @@ dashboard.
 **Delivered target:** all nineteen scalar-layout programs have separate hash-bound
 outcome reviews, and all 180 exact intrinsic variants they use have separate
 hash-bound intrinsic reviews. This does not mean nineteen equivalence theorems:
-only eight direct value claims are proved, four are refuted by checked witnesses,
+only two direct value claims are proved, ten are refuted by checked witnesses,
 and seven are honestly blocked by missing external caller evidence.
+
+**Confirmed intrinsic semantic audit, 2026-08-30:** the content-addressed ledger
+covers all 184 semantically distinct exact registry variants and keeps review
+closure separate from semantic depth. After repairing Neon `vrshlq_s32`, RVV
+`vssra`, exact-immediate evidence matching, and duplicate contextual descriptors,
+the current ledger classifies 131 confirmed at the stated scope, 43 conditional,
+and 10 needing deeper memory/`vsetvl` audit, with no current suspected or confirmed
+modeling bug. Independent executable audits passed 191/191 floating, 232/232 P1
+integer, and 378/378 plain-integer vectors; 68 structural subjects have traceable
+lowering/generator evidence but explicitly no ISA-correctness claim. See
+`../audits/intrinsic-semantic-audit.csv` and
+`../audits/INTRINSIC_SEMANTIC_AUDIT_ROUND1.md`.
 
 **Next proposal, not part of this completed milestone:** establish the seven
 external caller conditions where true, decide the intended FP NaN semantics for
 the three false direct claims, and add one reusable grouped planar-complex layout
 for `f32-vcmul`. Full C-memory and ISA correspondence remain separate later layers.
+
+**Confirmed specification simplification:** the public generated specification
+only needs to expose the complete observable-value equivalence target. Per-element,
+block-to-map, loop-to-map, and cross-phase claims are reusable proof decompositions
+and agent hints; they are not logically required as public admission gates. The
+current generated Specs still expose these helpers, so separating the minimal
+public claim from internal proof hints is a future generator/UI cleanup rather than
+an already shipped format change.
+
+**Confirmed scale-up boundary:** the same frozen-artifact and proof-review protocol
+can be reused beyond elementwise kernels, but the current flat-list compiler cannot
+directly generate any of the sixteen additional nonempty pairs. At least thirteen
+need richer memory/layout models, and the remainder need reduction or multi-output
+observation; the extra set also introduces roughly 170 intrinsic spellings not in
+the current canonical Lean registry. Treat thirty-six as the existing-pair target
+space, not the present supported count. The proposed next architecture is a
+restricted typed kernel IR with reusable layout, loop, reduction, and observation
+components. See `../PROJECT_PROGRESS_OVERVIEW.md`.
 
 ## Independent Reviews
 
@@ -318,5 +386,5 @@ for `f32-vcmul`. Full C-memory and ISA correspondence remain separate later laye
 intrinsic batches, shared-scalar/exact-identity, and nineteen-program outcome
 milestones all received convergence `GO` after their initial findings were fixed.
 Detailed records are under `notes/reviews/` and `DISCUSSION_LOG.md`; the latest
-reviewer reproduced the 180/180 intrinsic closure, the 8/4/7 program split, and 19
+reviewer reproduced the 180/180 intrinsic closure, the 2/10/7 program split, and 19
 strictly loadable program reviews.

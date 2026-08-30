@@ -1,6 +1,6 @@
 {
   "artifact_kind": "elementwise-program-manifest",
-  "compiler_sha256": "2264847e0b829eda5f632f9fd421aec176000c2da88aa445f548ff83e31e9a42",
+  "compiler_sha256": "09e2e0d306eb9976666245191effc7477e3e85533b9ca87b277575e3d576938c",
   "consumed_effects_sha256": "192e065b57288e6dc09132d66b8f210e041e59f71d9f2f8b507affefbcbf2400",
   "contracts": {
     "neon": {
@@ -407,62 +407,62 @@
   "intrinsic_capabilities": [
     {
       "capability_id": "intrinsic:neon:vget_high_f32:ce38d747fe1b6927",
-      "sha256": "ed55492c95df8edc6dacbec18f3efb74cb212161cd429e0231f36f27b1e3a4fd",
+      "sha256": "844107b92a81747a710c16eb4d83bac23cfad9c9d9295ac3d605c544bf4cbbe8",
       "version": 1
     },
     {
       "capability_id": "intrinsic:neon:vget_low_f32:8a95cadbc4dbff95",
-      "sha256": "43467d64fb7351991d9f5a491ec9533eadc1291c58f9218f914b3764b15f3c7f",
+      "sha256": "ccbebfb2c738c60b830d411e947c41017862fa7fa1785b0cd371cb2919411c9a",
       "version": 1
     },
     {
       "capability_id": "intrinsic:neon:vld1q_dup_f32:6ed02bd5acdc88a3",
-      "sha256": "4a23f8f1ed72ff6dca8612c435ebef2b9089d48b5112ec177d47d36818350324",
+      "sha256": "2c1f27b31ff60bf3d99ce3218b4fe52325e99efcebe00509b9b9820da7869de0",
       "version": 1
     },
     {
       "capability_id": "intrinsic:neon:vld1q_f32:2cd0ee0c55f9163a",
-      "sha256": "7846b6edda9a3da608573225cb104b257164060957e432b80f1765df1d3e4916",
+      "sha256": "8e471cfe363feda5e43dd7cff9d5994dfe6d0be4c7dab55cd811d40a09f365c3",
       "version": 1
     },
     {
       "capability_id": "intrinsic:neon:vmulq_f32:dcf54b26c84f1dc6",
-      "sha256": "a6a444ef0ccb8c661e8eaf4144314750cee792046970fd42f821806d884555ea",
+      "sha256": "3f0899d3de2c1f7332adc2b0ce1caf135660fec4dee073b2a6d075fa8f7f9dad",
       "version": 1
     },
     {
       "capability_id": "intrinsic:neon:vst1_f32:ad0241ade4926fdb",
-      "sha256": "266d5f51a04d40b0aaa04d682c917a434810a2409342c82b3867ac62dad0c4f7",
+      "sha256": "1d2a0b82c1325d9a7878ae1112fd0203b2010529870d49a1e5b0a45f6bc2dfa1",
       "version": 1
     },
     {
       "capability_id": "intrinsic:neon:vst1_lane_f32:0d7385dd67f03980",
-      "sha256": "11bef00e352e54400f2f597a1069d7696c7de11735f068591968f3c38cb084d7",
+      "sha256": "cdc0c0aeec4a03d959fd7addeb9ee27b33c4248309774ff46f4886fc92abaedb",
       "version": 1
     },
     {
       "capability_id": "intrinsic:neon:vst1q_f32:22522d502967a1ae",
-      "sha256": "1ff238a238a66bd06182e9cfabfa81dfd869d4080a1dfa878f45ceb0c9894ae6",
+      "sha256": "0652e1585ce910fd7c0ec945fb03b02953b59b630af4f204d4b55da82dbead1f",
       "version": 1
     },
     {
       "capability_id": "intrinsic:rvv:__riscv_vfmul_vf_f32m8:ab30ef11484ca4d1",
-      "sha256": "f952570babc01b854879c36eece8e6d982eea829347f5bea8e44e656beaad670",
+      "sha256": "c74001f9855d4ed65f9f7280aac8ccb699d923a96c9185a9faca95b332a55503",
       "version": 1
     },
     {
       "capability_id": "intrinsic:rvv:__riscv_vle32_v_f32m8:18bc0ec588792246",
-      "sha256": "bf9de1e15909d2e9c7af3dff0e68c39834e914e51ed39eab010f9429f0296c27",
+      "sha256": "a5452f61d161e4ea42b5a349db063479b4a31c2db1691c64105499d9964b1d1b",
       "version": 1
     },
     {
       "capability_id": "intrinsic:rvv:__riscv_vse32_v_f32m8:53d23aae8d2de69e",
-      "sha256": "56a17a6f7700aa9d6111ab702b2a6981da5359a7c4e68838029c9bfff2ede09b",
+      "sha256": "0537c561357d9b8eb52c00706e0baba74206aa3135e5d08af998dc8b32f881db",
       "version": 1
     },
     {
       "capability_id": "intrinsic:rvv:__riscv_vsetvl_e32m8:8646d4d736c771fa",
-      "sha256": "308a48ad5394257759d24ef132e779a7b1239be12bb307061b5460553bae39da",
+      "sha256": "12879a7d6d475a7654abc0951452286227754b247ef7885cdbf71cc1ab2aa526",
       "version": 1
     }
   ],
@@ -497,7 +497,7 @@
     ]
   },
   "local_assertions": [],
-  "manifest_sha256": "fd84ac244fa3743f317724890e4756de513562faccc3ac7ee8261f13761af6ac",
+  "manifest_sha256": "1692d7ccfff9543490396d8b861901a344b5fdb174d0573c2cef6ca9ee71e0e2",
   "schedules": [
     {
       "architecture": "neon",

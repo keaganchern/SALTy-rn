@@ -670,6 +670,12 @@ def _validate_argument_operations(
         if record.get("transform")
         == OperandTransform.NEGATED_UNBROADCAST_TO_NAT.value
     }
+    reviewed_structural_negated_broadcasts = {
+        call.node_id
+        for call in extraction.calls
+        if isinstance(call_specs[call.node_id], StructuralIntrinsic)
+        and call_specs[call.node_id].operation is StructuralOp.BROADCAST
+    }
     reviewed_lane_store_pointer_casts = {
         "vst1_lane_u32": (
             "(void*)output",
@@ -695,9 +701,15 @@ def _validate_argument_operations(
                 )
                 if operations == reviewed_conversion:
                     continue
-            if call.node_id in allowed_negated_broadcasts:
-                if operations == ("unary:-",):
-                    continue
+            if operations == ("unary:-",) and (
+                call.node_id in allowed_negated_broadcasts
+                or (
+                    index == 0
+                    and call.node_id in reviewed_structural_negated_broadcasts
+                    and _is_unary_negated(argument.source_text)
+                )
+            ):
+                continue
             reviewed_pointer_cast = reviewed_lane_store_pointer_casts.get(call.spelling)
             if (
                 index == 0

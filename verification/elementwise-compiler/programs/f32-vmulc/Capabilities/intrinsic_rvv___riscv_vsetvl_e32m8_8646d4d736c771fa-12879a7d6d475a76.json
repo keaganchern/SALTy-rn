@@ -1,0 +1,16 @@
+{
+  "architecture": "rvv",
+  "argument_count": 1,
+  "artifact_kind": "intrinsic-capability",
+  "capability_id": "intrinsic:rvv:__riscv_vsetvl_e32m8:8646d4d736c771fa",
+  "capability_sha256": "12879a7d6d475a7654abc0951452286227754b247ef7885cdbf71cc1ab2aa526",
+  "descriptor_sha256": "b603b7763a13453deeab05e2364e916d4514ff15e4ad779c18a19b85f888659c",
+  "function_type": "size_t (size_t)",
+  "implementation_sha256": "a770fa3f9dbc4659e9e7bca907fc4fd49ac77d43903f2770c40fd2ff02f319e9",
+  "review_evidence_sha256": "e940201ae6bdecf2ebba08d7e4900897344a13935a0a44b96a24e30b4fb9ddf0",
+  "role": "schedule",
+  "schema_version": 1,
+  "semantic_symbol": null,
+  "spelling": "__riscv_vsetvl_e32m8",
+  "version": 1
+}
