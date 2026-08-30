@@ -428,15 +428,17 @@ updates into the relevant implementation commit.
 
 ## Deferred but Visible
 
+- extend the executable original-C counterexample harness beyond the completed
+  `f32-vmax(+0.0, qNaN)` native-AArch64/Spike reproducer when another independent
+  C/ISA witness is needed;
 - make repeated `proof check` byte-idempotent, or separate the mutable result edge
   from the protected pre-proof closure so a recheck does not stale published reviews;
 - add a generic checked producer-contract bridge: first close the two direct-copy
   dequantization initializers from tensor validation, then translate initializer
   `assert`s separately from caller-established guarantees for the remaining five
   quantized programs;
-- replace shared host-Float32 arithmetic with architecture-conditioned Neon/RVV NaN
-  semantics before treating the eight FP `verified(value)` results as exact-bit ISA
-  evidence; rerun `f32-vrndne`, `f32-vmin`, and `f32-vmax` afterward;
+- bridge the repaired architecture-conditioned FP value semantics to independent
+  formal ISA models before treating Lean value results as C/ISA theorems;
 - grouped/planar logical layouts such as `f32-vcmul`;
 - full byte-memory, alias/restrict, frame, and legal overread refinement;
 - real-header/compiler dependency closure;

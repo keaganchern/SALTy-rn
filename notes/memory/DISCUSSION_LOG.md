@@ -1012,3 +1012,22 @@ I1 helpers, and the seven external program conditions remain separate future wor
 reported 460 passed and 23 skipped plus one stale protected-Lean-project hash;
 after the required proof-policy rebind, the failed gate and all 14 proof-policy
 tests pass. Final loaders report 180 intrinsic and 19 program reviews.
+
+## 2026-08-31 — Reproduce a source/target difference from the original C files
+
+**Question:** Can one counterexample be executed at the original C-intrinsic level,
+rather than only in Lean or through a hand-written semantic oracle?
+
+**Confirmed:** yes. `notes/demos/f32-vmax-c-counterexample/` directly includes the
+repository's original `test_neon` and `test_rvv` definitions. On four lanes with
+bit patterns `0x00000000` (`+0.0`) and `0x7FC00000` (quiet NaN), native AArch64
+executes the source function and returns `0x7FC00000`. LLVM lowers the target function's RVV
+intrinsic to `vfmax.vv`; Spike executes that binary and returns `0x00000000`.
+
+**Conclusion:** this witness is a real original-C intrinsic-program gap caused by
+Arm `FMAX` versus RVV `maximumNumber` behavior. It is not caused by the Lean model,
+loop scheduling, missing XMLPack parameter constraints, or a portable RVV oracle.
+
+**Evidence:** `notes/demos/f32-vmax-c-counterexample/run.sh` rebuilds both sides,
+checks the RVV disassembly, inspects the Spike result, and prints the two bit-exact
+outputs. The run passed on 2026-08-31.

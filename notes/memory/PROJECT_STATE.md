@@ -320,6 +320,15 @@ artifact stops at the phase claim only because whole-program search short-circui
 after a phase witness. See `../four-counterexample-semantic-audit.md` and
 `../demos/neon-rvv-semantic-gap-aarch64.c`.
 
+**Confirmed original-C reproducer (2026-08-31):** the standalone `f32-vmax`
+reproducer directly includes the repository's unchanged
+`kernels/source/f32-vmax.c` and `kernels/target/f32-vmax.c`. Native AArch64 runs
+the former, while LLVM lowers the latter to `vfmax.vv` and Spike executes it. For
+four lanes of `(+0.0, qNaN)`, the original Neon C returns `0x7FC00000` and
+the original RVV C returns `0x00000000`. This establishes a concrete C-intrinsic
+program difference, not merely a Lean-model or portable-oracle difference. See
+`../demos/f32-vmax-c-counterexample/README.md`.
+
 ## Completed Delivery and Next Boundary
 
 The requested scalar elementwise delivery now implements this chain:
