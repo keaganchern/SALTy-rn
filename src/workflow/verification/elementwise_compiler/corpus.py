@@ -24,10 +24,10 @@ from workflow.verification.lean_backend.intrinsic_index import (
 from workflow.verification.lean_backend.schema import Architecture as BackendArchitecture
 
 from .compiler import CompilerError, CompilerRequest, compile_pair
+from .capability_registry import capability_registry_record
 from .counterexamples import CounterexampleError, find_cross_phase_counterexample
 from .emit import GenerationError
 from .intrinsics import IntrinsicResolutionError
-from .intrinsics import configured_intrinsic_capabilities
 from .external_conditions import (
     ExternalConditionError,
     audit_external_condition,
@@ -236,21 +236,16 @@ def _configured_spellings() -> dict[BackendArchitecture, frozenset[str]]:
     return {architecture: frozenset(values) for architecture, values in result.items()}
 
 
-def _write_intrinsic_registry(
+def _write_capability_registry(
     repository_root: Path, output: Path
 ) -> dict[str, Any]:
-    """Publish all exact configured variants from the semantic registry."""
+    """Publish the global intrinsic, layout, and schedule authority."""
 
-    entries = []
-    for capability in configured_intrinsic_capabilities(repository_root):
-        entries.append({"capability": capability.to_record()})
-    registry: dict[str, Any] = {
-        "artifact_kind": "elementwise-intrinsic-registry",
-        "schema_version": 1,
-        "variants": entries,
-    }
-    registry["registry_sha256"] = canonical_sha256(registry)
-    _atomic_write(output / "IntrinsicRegistry.json", canonical_json(registry, pretty=True))
+    registry = capability_registry_record(repository_root)
+    _atomic_write(
+        output / "CapabilityRegistry.json",
+        canonical_json(registry, pretty=True),
+    )
     return registry
 
 
@@ -281,7 +276,7 @@ def compile_corpus(
         )
     )
     configured = _configured_spellings()
-    intrinsic_registry = _write_intrinsic_registry(root, output)
+    capability_registry = _write_capability_registry(root, output)
     discovered = discover_candidates(root)
     records: list[dict[str, Any]] = []
     dependencies: dict[str, set[str]] = {}
@@ -494,9 +489,9 @@ def compile_corpus(
             )
         },
         "counterexample_count": sum(record["counterexample"] is not None for record in records),
-        "intrinsic_registry": {
-            "path": "IntrinsicRegistry.json",
-            "sha256": intrinsic_registry["registry_sha256"],
+        "capability_registry": {
+            "path": "CapabilityRegistry.json",
+            "sha256": capability_registry["registry_sha256"],
         },
         "programs": records,
         "intrinsic_dependencies": [

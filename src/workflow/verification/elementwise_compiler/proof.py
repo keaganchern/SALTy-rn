@@ -18,8 +18,10 @@ from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 from .lean_safety import FORBIDDEN_LEAN_IDENTIFIERS, strip_lean_comments_and_strings
+from .capability_registry import verify_capability_refs
 from .schema import (
     ArtifactKind,
+    CapabilityRef,
     CounterexampleWitness,
     CrossPhaseAudit,
     CrossPhaseAuditStatus,
@@ -94,7 +96,12 @@ def _json(path: Path) -> Mapping[str, Any]:
 
 
 def _checker_sha256() -> str:
-    files = (Path(__file__), Path(__file__).with_name("schema.py"))
+    files = (
+        Path(__file__),
+        Path(__file__).with_name("schema.py"),
+        Path(__file__).with_name("lean_safety.py"),
+        Path(__file__).with_name("capability_registry.py"),
+    )
     return canonical_sha256(
         {
             "files": [
@@ -251,6 +258,30 @@ def _verify_stack(
             raise ProofGateError("counterexample does not refute a generated claim")
     elif phase.status is CrossPhaseAuditStatus.COUNTEREXAMPLE:
         raise ProofGateError("cross-phase audit names a missing counterexample")
+    raw_capabilities = index.get("capabilities")
+    if not isinstance(raw_capabilities, list):
+        raise ProofGateError("ArtifactIndex capabilities must be an array")
+    try:
+        capability_refs = tuple(
+            CapabilityRef.from_record(item) for item in raw_capabilities
+        )
+        expected_refs = tuple(
+            sorted(
+                (
+                    *manifest.intrinsic_capabilities,
+                    manifest.layout.capability,
+                    *(schedule.capability for schedule in manifest.schedules),
+                ),
+                key=lambda item: (item.capability_id, item.version, item.sha256),
+            )
+        )
+        if capability_refs != expected_refs:
+            raise ProofGateError(
+                "ArtifactIndex capability references differ from the manifest"
+            )
+        verify_capability_refs(repository_root, capability_refs)
+    except (TypeError, ValueError) as error:
+        raise ProofGateError(f"global capability verification failed: {error}") from error
     return manifest, models, spec, namespace, target_claim, external, phase
 
 
@@ -308,15 +339,6 @@ def _closure_files(output: Path, index: Mapping[str, Any]) -> tuple[Path, ...]:
         output / "ProofTask.json",
         output / "CrossPhaseAudit.json",
     }
-    capabilities = index.get("capabilities")
-    if not isinstance(capabilities, list):
-        raise ProofGateError("ArtifactIndex capabilities must be an array")
-    for capability in capabilities:
-        if not isinstance(capability, Mapping) or not isinstance(
-            capability.get("path"), str
-        ):
-            raise ProofGateError("ArtifactIndex capability binding is malformed")
-        files.add(output / str(capability["path"]))
     external = index.get("external_condition")
     if external is not None:
         if not isinstance(external, Mapping) or not isinstance(external.get("path"), str):

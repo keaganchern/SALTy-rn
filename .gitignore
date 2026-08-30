@@ -43,10 +43,8 @@ build/verification/harnesses/verify_*.cpp
 # Generated elementwise working tree; curated results remain under verification/
 /build/verification/elementwise-compiler/
 
-# Local review and deferred differential-audit evidence
-/verification/elementwise-compiler/intrinsic-reviews/
-/verification/elementwise-compiler/program-reviews/
-/verification/elementwise-compiler/intrinsic-review-history/
+# Superseded full working/audit tree; curated results live in elementwise-results
+/verification/elementwise-compiler/
 
 # Dashboard and local approval tooling are intentionally outside this PR
 /src/workflow/verification/intrinsic_dashboard/

@@ -23,7 +23,7 @@ from workflow.verification.elementwise_compiler.schema import (
 
 
 ROOT = Path(__file__).resolve().parents[3]
-PROGRAMS = ROOT / "verification/elementwise-compiler/programs"
+PROGRAMS = ROOT / "verification/elementwise-results/programs"
 pytestmark = pytest.mark.skipif(
     shutil.which("lean") is None, reason="Lean is required"
 )

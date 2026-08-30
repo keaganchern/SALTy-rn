@@ -7,6 +7,7 @@ concrete negation of the generated ``completeValueEquivalenceClaim``.
 
 from __future__ import annotations
 
+import argparse
 import hashlib
 import itertools
 import json
@@ -519,3 +520,20 @@ def find_program_counterexample(
     (output / "Proof.lean").unlink(missing_ok=True)
     _write_index(output, index, witness, result)
     return witness
+
+
+def _main(argv: Sequence[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--repository-root", type=Path, required=True)
+    parser.add_argument("--output-directory", type=Path, required=True)
+    arguments = parser.parse_args(argv)
+    witness = find_program_counterexample(
+        arguments.repository_root,
+        arguments.output_directory,
+    )
+    print("none" if witness is None else canonical_json(witness.to_record()))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(_main())

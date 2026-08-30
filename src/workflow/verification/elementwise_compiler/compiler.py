@@ -24,7 +24,7 @@ from workflow.verification.lean_backend.intrinsic_index import (
 )
 from workflow.verification.lean_backend.schema import Architecture as BackendArchitecture
 
-from .capabilities import IntrinsicCapability
+from .capability_registry import verify_capability_refs
 from .emit import EmittedStack, emit_stack
 from .external_conditions import (
     ExternalConditionRequest,
@@ -239,51 +239,6 @@ def _atomic_write(path: Path, text: str) -> None:
         raise
 
 
-def _capability_filename(capability_id: str, sha256: str) -> str:
-    stem = re.sub(r"[^A-Za-z0-9_.-]+", "_", capability_id)
-    return f"{stem}-{sha256[:16]}.json"
-
-
-def _write_capabilities(
-    output: Path,
-    intrinsics: tuple[IntrinsicCapability, ...],
-    recognition: PairRecognition,
-) -> tuple[dict[str, str], ...]:
-    documents = [
-        *(capability.to_record() for capability in intrinsics),
-        recognition.layout_capability.to_record(),
-        *(capability.to_record() for capability in recognition.schedule_capabilities),
-    ]
-    output.mkdir(parents=True, exist_ok=True)
-    destination = output / "Capabilities"
-    staged = Path(tempfile.mkdtemp(prefix=".Capabilities.", dir=output))
-    records: list[dict[str, str]] = []
-    try:
-        for document in sorted(
-            documents, key=lambda item: str(item["capability_id"])
-        ):
-            digest = str(document["capability_sha256"])
-            filename = _capability_filename(str(document["capability_id"]), digest)
-            relative = Path("Capabilities") / filename
-            _atomic_write(staged / filename, canonical_json(document, pretty=True))
-            records.append(
-                {
-                    "capability_id": str(document["capability_id"]),
-                    "path": relative.as_posix(),
-                    "sha256": digest,
-                }
-            )
-        if destination.exists():
-            if not destination.is_dir():
-                raise CompilerError("Capabilities output is not a directory")
-            shutil.rmtree(destination)
-        staged.replace(destination)
-    finally:
-        if staged.exists():
-            shutil.rmtree(staged)
-    return tuple(records)
-
-
 def _parse(request: CompilerRequest) -> tuple[KernelExtraction, KernelExtraction]:
     neon = parse_kernel_explicit(
         request.neon_source,
@@ -386,7 +341,22 @@ def compile_pair(
         _sha256(spec_path),
         models.sha256,
     )
-    capabilities = _write_capabilities(output, intrinsics.capabilities, recognition)
+    capability_refs = tuple(
+        sorted(
+            (
+                *intrinsics.refs,
+                recognition.layout_capability.ref,
+                *(item.ref for item in recognition.schedule_capabilities),
+            ),
+            key=lambda item: (item.capability_id, item.version, item.sha256),
+        )
+    )
+    verify_capability_refs(root, capability_refs)
+    legacy_capabilities = output / "Capabilities"
+    if legacy_capabilities.exists():
+        if not legacy_capabilities.is_dir():
+            raise CompilerError("legacy Capabilities output is not a directory")
+        shutil.rmtree(legacy_capabilities)
     index = {
         "artifact_kind": "elementwise-generated-stack",
         "schema_version": 2,
@@ -398,7 +368,7 @@ def compile_pair(
         },
         "models": models.to_record(),
         "spec": spec.to_record(),
-        "capabilities": list(capabilities),
+        "capabilities": [item.to_record() for item in capability_refs],
     }
     index["external_condition"] = {
         "path": "ExternalCondition.json",

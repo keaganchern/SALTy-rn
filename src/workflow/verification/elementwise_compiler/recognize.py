@@ -279,6 +279,35 @@ def _capabilities(
     return layout, result
 
 
+def configured_layout_schedule_capabilities(
+    repository_root: str | Path,
+) -> tuple[
+    tuple[LayoutViewCapability, ...],
+    tuple[ScheduleFamilyCapability, ...],
+]:
+    """Return the complete reusable layout/schedule authority for this frontend."""
+
+    root = Path(repository_root).resolve()
+    scalar_layout, schedules = _capabilities(root, has_broadcast_input=False)
+    broadcast_layout, broadcast_schedules = _capabilities(
+        root, has_broadcast_input=True
+    )
+    if schedules != broadcast_schedules:
+        raise RecognitionError(
+            "family-unrecognized",
+            "layout selection changed the global schedule capabilities",
+        )
+    return (
+        tuple(sorted((scalar_layout, broadcast_layout), key=lambda item: item.capability_id)),
+        tuple(
+            sorted(
+                schedules.values(),
+                key=lambda item: (item.capability_id, item.version, item.sha256),
+            )
+        ),
+    )
+
+
 def _top_controls(extraction: KernelExtraction) -> tuple[object, ...]:
     return tuple(
         control for control in extraction.controls if control.parent_control is None

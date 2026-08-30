@@ -58,14 +58,25 @@ def test_corpus_report_is_deterministic_and_tracks_real_blockers(tmp_path: Path)
     }
     assert first["counterexample_count"] == 1
     assert first["schema_version"] == 2
-    registry_path = output / first["intrinsic_registry"]["path"]
+    registry_path = output / first["capability_registry"]["path"]
     registry = json.loads(registry_path.read_text(encoding="utf-8"))
     unsigned_registry = dict(registry)
     registry_sha256 = unsigned_registry.pop("registry_sha256")
     assert registry_sha256 == canonical_sha256(unsigned_registry)
-    assert first["intrinsic_registry"]["sha256"] == registry_sha256
-    assert len(registry["variants"]) == 184
-    assert all(set(item) == {"capability"} for item in registry["variants"])
+    assert first["capability_registry"]["sha256"] == registry_sha256
+    assert len(registry["capabilities"]) == 190
+    assert sum(
+        item["artifact_kind"] == "intrinsic-capability"
+        for item in registry["capabilities"]
+    ) == 184
+    assert sum(
+        item["artifact_kind"] == "layout-view-capability"
+        for item in registry["capabilities"]
+    ) == 2
+    assert sum(
+        item["artifact_kind"] == "schedule-family-capability"
+        for item in registry["capabilities"]
+    ) == 4
     assert all(
         program["entry_contract_preflight"] == "equal"
         for program in first["programs"]

@@ -142,21 +142,27 @@ def test_real_fixed_tail_pair_generates_complete_deterministic_stack(
     assert index["spec"]["parent_sha256"] == first.models.sha256
 
 
-def test_regeneration_replaces_stale_capability_files(tmp_path: Path) -> None:
+def test_regeneration_replaces_legacy_capability_copies_with_global_refs(
+    tmp_path: Path,
+) -> None:
     output = tmp_path / "out"
     compile_pair(_request("qs8-vcvt", output))
     stale = output / "Capabilities/stale-capability.json"
+    stale.parent.mkdir()
     stale.write_text("{}\n", encoding="utf-8")
 
-    compile_pair(_request("qs8-vcvt", output))
+    compilation = compile_pair(_request("qs8-vcvt", output))
     index = json.loads((output / "ArtifactIndex.json").read_text(encoding="utf-8"))
-    expected = {item["path"] for item in index["capabilities"]}
-    actual = {
-        path.relative_to(output).as_posix()
-        for path in (output / "Capabilities").glob("*.json")
+    expected = {
+        *compilation.manifest.intrinsic_capabilities,
+        compilation.manifest.layout.capability,
+        *(schedule.capability for schedule in compilation.manifest.schedules),
     }
-    assert stale.is_file() is False
-    assert actual == expected
+    assert not (output / "Capabilities").exists()
+    assert {
+        (item["capability_id"], item["version"], item["sha256"])
+        for item in index["capabilities"]
+    } == {(item.capability_id, item.version, item.sha256) for item in expected}
 
 
 def test_normalized_fixed_no_tail_pair_uses_same_generic_compiler(

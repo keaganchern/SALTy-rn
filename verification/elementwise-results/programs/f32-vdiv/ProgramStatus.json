@@ -1,0 +1,54 @@
+{
+  "artifact_index": "programs/f32-vdiv/ArtifactIndex.json",
+  "counterexample": {
+    "claim": "SALT.Corpus.f32vdiv.completeValueEquivalenceClaim",
+    "inputs": [
+      0,
+      2141192193
+    ],
+    "left_output": 2145386497,
+    "parameters": {},
+    "path": "programs/f32-vdiv/Counterexample.json",
+    "right_output": 2143289344,
+    "sha256": "2c6889edc81f1079a53bf23552754972078cde97fd5cb224e71a35296e2c10f8"
+  },
+  "cross_phase_status": "not-multi-phase",
+  "detail": "Lean checked a concrete Neon/RVV complete value-claim disagreement",
+  "entry_contract_preflight": "equal",
+  "external_condition_detail": "local kernels do not read semantic parameter fields",
+  "external_condition_sha256": "13d80166539646531d2a3898a426b7b85c1ce509cec0fa07cb5a204972aeded5",
+  "external_condition_status": "not-required",
+  "input_streams": [
+    "input_a",
+    "input_b"
+  ],
+  "layout_preflight": "scalar-lane",
+  "manifest_sha256": "294bfa78bbf0569c2b05ac71d0bef075d0ab516af0de143ee6592fc9edda1cbe",
+  "missing_intrinsics": [],
+  "neon_function": "test_neon",
+  "neon_intrinsics": [
+    "vdivq_f32",
+    "vget_high_f32",
+    "vget_low_f32",
+    "vld1q_f32",
+    "vst1_f32",
+    "vst1_lane_f32",
+    "vst1q_f32"
+  ],
+  "neon_source": "kernels/source/f32-vdiv.c",
+  "output_streams": [
+    "output"
+  ],
+  "program_id": "f32-vdiv",
+  "rvv_function": "test_rvv",
+  "rvv_intrinsics": [
+    "__riscv_vfdiv_vv_f32m8",
+    "__riscv_vle32_v_f32m8",
+    "__riscv_vse32_v_f32m8",
+    "__riscv_vsetvl_e32m8"
+  ],
+  "rvv_source": "kernels/target/f32-vdiv.c",
+  "schedule_preflight": "fixed-tail",
+  "status": "counterexample",
+  "status_layer": "lean-checked-terminal"
+}

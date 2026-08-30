@@ -1,0 +1,58 @@
+{
+  "artifact_index": "programs/f32-vrndne/ArtifactIndex.json",
+  "counterexample": null,
+  "cross_phase_status": "not-multi-phase",
+  "detail": "Lean accepted the frozen value claim and proof policy",
+  "entry_contract_preflight": "equal",
+  "external_condition_detail": "local kernels do not read semantic parameter fields",
+  "external_condition_sha256": "5c4dbfecbb524d96b7ae9d4a00523e8af4caa41c5e8b146d6962cf4ab83a59a2",
+  "external_condition_status": "not-required",
+  "input_streams": [
+    "input"
+  ],
+  "layout_preflight": "scalar-lane",
+  "manifest_sha256": "2c33b8521de83e8c732a4b39165bc657a2295431fe098fc8d1005ff249d1ee8d",
+  "missing_intrinsics": [],
+  "neon_function": "test_neon",
+  "neon_intrinsics": [
+    "vabsq_f32",
+    "vaddq_f32",
+    "vbslq_f32",
+    "vcaltq_f32",
+    "vget_high_f32",
+    "vget_low_f32",
+    "vld1q_f32",
+    "vmovq_n_u32",
+    "vorrq_u32",
+    "vreinterpretq_f32_u32",
+    "vst1_f32",
+    "vst1_lane_f32",
+    "vst1q_f32",
+    "vsubq_f32"
+  ],
+  "neon_source": "kernels/source/f32-vrndne.c",
+  "output_streams": [
+    "output"
+  ],
+  "program_id": "f32-vrndne",
+  "rvv_function": "test_rvv",
+  "rvv_intrinsics": [
+    "__riscv_vfabs_v_f32m8",
+    "__riscv_vfadd_vf_f32m8",
+    "__riscv_vfsgnj_vv_f32m8",
+    "__riscv_vfsub_vf_f32m8",
+    "__riscv_vle32_v_f32m8",
+    "__riscv_vmerge_vvm_f32m8",
+    "__riscv_vmfgt_vf_f32m8_b4",
+    "__riscv_vmfne_vv_f32m8_b4",
+    "__riscv_vor_vx_u32m8",
+    "__riscv_vreinterpret_v_f32m8_u32m8",
+    "__riscv_vreinterpret_v_u32m8_f32m8",
+    "__riscv_vse32_v_f32m8",
+    "__riscv_vsetvl_e32m8"
+  ],
+  "rvv_source": "kernels/target/f32-vrndne.c",
+  "schedule_preflight": "fixed-tail",
+  "status": "verified(value)",
+  "status_layer": "lean-checked-terminal"
+}

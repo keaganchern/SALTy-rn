@@ -1,0 +1,56 @@
+{
+  "artifact_index": "programs/f32-vmulc/ArtifactIndex.json",
+  "counterexample": {
+    "claim": "SALT.Corpus.f32vmulc.completeValueEquivalenceClaim",
+    "inputs": [
+      2141192193
+    ],
+    "left_output": 2145386497,
+    "parameters": {
+      "broadcast_input_b": 0
+    },
+    "path": "programs/f32-vmulc/Counterexample.json",
+    "right_output": 2143289344,
+    "sha256": "2492c25ebce6699bf78446babe8a0624723124b088cd99460c4645117036c1d2"
+  },
+  "cross_phase_status": "not-multi-phase",
+  "detail": "Lean checked a concrete Neon/RVV complete value-claim disagreement",
+  "entry_contract_preflight": "equal",
+  "external_condition_detail": "local kernels do not read semantic parameter fields",
+  "external_condition_sha256": "4eaecb4fa7df033b16f50b264c1c1f57a830012cf0bfdd93f043662977253f1b",
+  "external_condition_status": "not-required",
+  "input_streams": [
+    "input_a",
+    "input_b"
+  ],
+  "layout_preflight": "scalar-lane",
+  "manifest_sha256": "761c82374bb32238f882873284917dee09afa2ded65997acdfb1a5dab01fd22e",
+  "missing_intrinsics": [],
+  "neon_function": "test_neon",
+  "neon_intrinsics": [
+    "vget_high_f32",
+    "vget_low_f32",
+    "vld1q_dup_f32",
+    "vld1q_f32",
+    "vmulq_f32",
+    "vst1_f32",
+    "vst1_lane_f32",
+    "vst1q_f32"
+  ],
+  "neon_source": "kernels/source/f32-vmulc.c",
+  "output_streams": [
+    "output"
+  ],
+  "program_id": "f32-vmulc",
+  "rvv_function": "test_rvv",
+  "rvv_intrinsics": [
+    "__riscv_vfmul_vf_f32m8",
+    "__riscv_vle32_v_f32m8",
+    "__riscv_vse32_v_f32m8",
+    "__riscv_vsetvl_e32m8"
+  ],
+  "rvv_source": "kernels/target/f32-vmulc.c",
+  "schedule_preflight": "fixed-tail",
+  "status": "counterexample",
+  "status_layer": "lean-checked-terminal"
+}

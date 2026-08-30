@@ -1,0 +1,16 @@
+{
+  "artifact_kind": "elementwise-cross-phase-audit",
+  "checker_sha256": "e5471bdc5c4a2c700dbc31e4bf37c53873e96a6979895768d6295490d98f10f2",
+  "claim": "SALT.Corpus.f32f16vcvt.neonPhaseFunctionsEqualClaim",
+  "counterexample_sha256": null,
+  "cross_phase_audit_sha256": "0e51cd731e2b9699c1458418555b7293b622ecf113566b098982de79812308f9",
+  "detail": "bounded Lean evaluation found no concrete phase disagreement; this is not a proof",
+  "external_condition_sha256": "c624f5287400e640868dadfd20c12949be2ee73b5c2bbeb325b8a4138a783593",
+  "manifest_sha256": "c1512c08cb2802eb4f0fe12fd4c8d18c8f8f36ec20d35b3f85e78e4de0599a6c",
+  "models_sha256": "db8e6d7e38497e50cf62bea1a332bc1eddce3401c8e6d34ba43f05ec2aabbace",
+  "schema_version": 1,
+  "spec_sha256": "b926ab50efbeb3253c54b50dd339847e4ed975a0e8ba517a9a5f758508f287bd",
+  "status": "no-counterexample-bounded",
+  "toolchain_sha256": "1ce7d3879378e751ecae7bb5fd76c57bde9e4957e69b20b4693d759eb34a8c6d",
+  "trial_count": 6
+}

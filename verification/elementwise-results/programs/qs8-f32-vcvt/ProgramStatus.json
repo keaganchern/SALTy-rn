@@ -1,0 +1,53 @@
+{
+  "artifact_index": "programs/qs8-f32-vcvt/ArtifactIndex.json",
+  "counterexample": null,
+  "cross_phase_status": "not-multi-phase",
+  "detail": "initializer transforms or validates semantic parameters, but no complete caller-to-kernel guarantee has been established",
+  "entry_contract_preflight": "equal",
+  "external_condition_detail": "initializer transforms or validates semantic parameters, but no complete caller-to-kernel guarantee has been established",
+  "external_condition_sha256": "526562299432b1b907b0aa39cf63eeb09a156e4c1fdee4c72686bee85eb15256",
+  "external_condition_status": "required-missing",
+  "input_streams": [
+    "input"
+  ],
+  "layout_preflight": "scalar-lane",
+  "manifest_sha256": "2ac3c160b9e294dbc642ff502c5114134768e23be42f7bd5512c5d48652288ee",
+  "missing_intrinsics": [],
+  "neon_function": "test_neon",
+  "neon_intrinsics": [
+    "vaddw_s8",
+    "vcvtq_f32_s32",
+    "vdupq_n_f32",
+    "vdupq_n_s16",
+    "vget_high_f32",
+    "vget_high_s16",
+    "vget_low_f32",
+    "vget_low_s16",
+    "vld1_s8",
+    "vmovl_s16",
+    "vmulq_f32",
+    "vst1_f32",
+    "vst1_lane_f32",
+    "vst1q_f32"
+  ],
+  "neon_source": "kernels/source/qs8-f32-vcvt.c",
+  "output_streams": [
+    "output"
+  ],
+  "program_id": "qs8-f32-vcvt",
+  "rvv_function": "test_rvv",
+  "rvv_intrinsics": [
+    "__riscv_vfcvt_f_x_v_f32m8",
+    "__riscv_vfmul_vf_f32m8",
+    "__riscv_vle8_v_i8m2",
+    "__riscv_vse32_v_f32m8",
+    "__riscv_vsetvl_e8m2",
+    "__riscv_vsext_vf2_i16m4",
+    "__riscv_vsext_vf2_i32m8",
+    "__riscv_vsub_vx_i16m4"
+  ],
+  "rvv_source": "kernels/target/qs8-f32-vcvt.c",
+  "schedule_preflight": "fixed-tail",
+  "status": "external-condition-missing",
+  "status_layer": "typed-generated"
+}
