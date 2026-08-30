@@ -17,11 +17,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
-from workflow.verification.intrinsic_dashboard.proof_policy import (
-    FORBIDDEN_LEAN_IDENTIFIERS,
-    _strip_lean_comments_and_strings,
-)
-
+from .lean_safety import FORBIDDEN_LEAN_IDENTIFIERS, strip_lean_comments_and_strings
 from .schema import (
     ArtifactKind,
     CounterexampleWitness,
@@ -402,7 +398,7 @@ def prepare_proof_task(
 
 def _proof_tokens_are_safe(path: Path) -> bool:
     try:
-        stripped = _strip_lean_comments_and_strings(path.read_text(encoding="utf-8"))
+        stripped = strip_lean_comments_and_strings(path.read_text(encoding="utf-8"))
     except (OSError, UnicodeError, ValueError):
         return False
     return not (set(_IDENTIFIER_RE.findall(stripped)) & FORBIDDEN_LEAN_IDENTIFIERS)

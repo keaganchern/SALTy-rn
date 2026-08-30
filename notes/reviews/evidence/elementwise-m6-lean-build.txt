@@ -1,7 +1,0 @@
-Command: lake build
-Result: all library targets rebuilt or replayed successfully.
-Build completed successfully (46 jobs).
-
-Command: lake build SALT.Test.FP32 SALT.Test.IntegerIntrinsics
-Result: all 30 focused FP32 evaluations printed true; IntegerIntrinsics built successfully.
-Build completed successfully (7 jobs).

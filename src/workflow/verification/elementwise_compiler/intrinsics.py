@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import re
 from collections import defaultdict
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, Mapping
 
@@ -27,7 +27,6 @@ from workflow.verification.lean_backend.schema import (
 )
 
 from .capabilities import IntrinsicCapability, IntrinsicRole
-from .reviews import IntrinsicReview, load_intrinsic_reviews
 from .schema import (
     Architecture,
     CapabilityRef,
@@ -208,7 +207,6 @@ def _capability(
     repository_root: Path,
     source: SourceIntrinsicDescriptor,
     variant: CanonicalIntrinsicVariant,
-    reviews: Mapping[tuple[object, ...], IntrinsicReview],
 ) -> IntrinsicCapability:
     spec = variant.spec
     capability = IntrinsicCapability(
@@ -221,23 +219,7 @@ def _capability(
         implementation_sha256=_implementation_digest(repository_root, spec),
         semantic_symbol=spec.lean_name if isinstance(spec, SemanticIntrinsic) else None,
     )
-    review = reviews.get(
-        (
-            capability.architecture,
-            capability.spelling,
-            capability.function_type,
-            capability.argument_count,
-            capability.descriptor_sha256,
-            capability.implementation_sha256,
-        )
-    )
-    if review is not None and review.schema_version != 2:
-        review = None
-    return (
-        capability
-        if review is None
-        else replace(capability, review_evidence_sha256=review.sha256)
-    )
+    return capability
 
 
 def configured_intrinsic_capabilities(
@@ -245,10 +227,9 @@ def configured_intrinsic_capabilities(
     *,
     index: CanonicalIntrinsicIndex = CANONICAL_INTRINSIC_INDEX,
 ) -> tuple[IntrinsicCapability, ...]:
-    """Materialize every configured exact variant with any approved review binding."""
+    """Materialize every configured exact variant from the semantic registry."""
 
     root = Path(repository_root).resolve()
-    reviews = load_intrinsic_reviews(root)
     return tuple(
         sorted(
             (
@@ -256,7 +237,6 @@ def configured_intrinsic_capabilities(
                     root,
                     SourceIntrinsicDescriptor.from_spec(variant.spec),
                     variant,
-                    reviews,
                 )
                 for variant in index.variants
             ),
@@ -275,7 +255,6 @@ def resolve_intrinsics(
     """Resolve every extracted call group and return exact global registries."""
 
     root = Path(repository_root).resolve()
-    reviews = load_intrinsic_reviews(root)
     capabilities: dict[str, IntrinsicCapability] = {}
     registries: dict[BackendArchitecture, dict[str, IntrinsicSpec]] = {
         BackendArchitecture.NEON: {},
@@ -303,7 +282,7 @@ def resolve_intrinsics(
                 classification.status,
                 classification.variants,
             )
-            capability = _capability(root, group[0], variant, reviews)
+            capability = _capability(root, group[0], variant)
             previous = capabilities.setdefault(capability.capability_id, capability)
             if previous != capability:
                 raise IntrinsicResolutionError(

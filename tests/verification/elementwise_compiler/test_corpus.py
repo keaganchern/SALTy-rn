@@ -65,7 +65,7 @@ def test_corpus_report_is_deterministic_and_tracks_real_blockers(tmp_path: Path)
     assert registry_sha256 == canonical_sha256(unsigned_registry)
     assert first["intrinsic_registry"]["sha256"] == registry_sha256
     assert len(registry["variants"]) == 184
-    assert sum(item["review"] is not None for item in registry["variants"]) == 180
+    assert all(set(item) == {"capability"} for item in registry["variants"])
     assert all(
         program["entry_contract_preflight"] == "equal"
         for program in first["programs"]

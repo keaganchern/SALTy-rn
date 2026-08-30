@@ -28,7 +28,6 @@ from .counterexamples import CounterexampleError, find_cross_phase_counterexampl
 from .emit import GenerationError
 from .intrinsics import IntrinsicResolutionError
 from .intrinsics import configured_intrinsic_capabilities
-from .reviews import load_intrinsic_reviews
 from .external_conditions import (
     ExternalConditionError,
     audit_external_condition,
@@ -240,23 +239,11 @@ def _configured_spellings() -> dict[BackendArchitecture, frozenset[str]]:
 def _write_intrinsic_registry(
     repository_root: Path, output: Path
 ) -> dict[str, Any]:
-    """Publish all exact configured variants and their independently bound reviews."""
+    """Publish all exact configured variants from the semantic registry."""
 
-    reviews = load_intrinsic_reviews(repository_root)
-    reviews_by_sha = {review.sha256: review for review in reviews.values()}
     entries = []
     for capability in configured_intrinsic_capabilities(repository_root):
-        review = (
-            None
-            if capability.review_evidence_sha256 is None
-            else reviews_by_sha[capability.review_evidence_sha256]
-        )
-        entries.append(
-            {
-                "capability": capability.to_record(),
-                "review": None if review is None else review.to_record(),
-            }
-        )
+        entries.append({"capability": capability.to_record()})
     registry: dict[str, Any] = {
         "artifact_kind": "elementwise-intrinsic-registry",
         "schema_version": 1,
