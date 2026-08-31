@@ -9,7 +9,7 @@ supported:
 
 ```text
 C pair -> one command -> generated implementation/specification stack
-       -> proof agent -> Lean-checked result -> dashboard update
+       -> proof agent -> Lean-checked result
 ```
 
 No program-specific Python or Lean source is added.
@@ -27,7 +27,7 @@ ScheduleFamilyCapability ┘                                      │
                                                          Lean Result
 ```
 
-The dashboard renders this graph. It does not own a parallel support database.
+`CapabilityRegistry.json` and each `ProgramManifest.json` record this graph.
 
 ## Artifact Ownership
 
@@ -59,7 +59,8 @@ The manifest contains facts derived from the two C bodies:
 - recognized source and target execution families;
 - every consumed statement/effect and any rejection reason.
 
-It is the parser's “程序结构清单”, not a handwritten intermediate language.
+It is the parser's structural inventory of the program, not a handwritten
+intermediate language.
 
 ## Logical Element Layout/View
 
@@ -96,7 +97,7 @@ A family capability supplies:
 3. legality predicates derived from source/program structure;
 4. an observation appropriate to the claim layer;
 5. reusable Lean refinement theorems;
-6. dashboard capability identity and version/hash.
+6. capability identity and version/hash.
 
 Initial value families:
 

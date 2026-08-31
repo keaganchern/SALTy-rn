@@ -14,7 +14,6 @@ approval mechanism.
 
 from __future__ import annotations
 
-import json
 from collections import Counter, defaultdict
 from dataclasses import replace
 from pathlib import Path
@@ -29,8 +28,6 @@ from workflow.verification.lean_backend.registry import QS8_VADD_MINMAX_SPECS
 from workflow.verification.lean_backend.scaleup_catalog import SCALEUP_CATALOGS
 from workflow.verification.lean_backend.schema import Architecture, IntrinsicSpec
 
-
-REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
 
 EXPECTED_CONFLICT_VARIANTS = {
     (Architecture.RVV, "__riscv_vnclip_wx_i16m4"): 4,
@@ -168,14 +165,3 @@ def test_exact_configured_descriptor_is_not_a_semantic_review() -> None:
     assert variant.provenance
     assert not hasattr(variant, "reviewed")
     assert not hasattr(variant, "approved")
-
-    review_ledger = json.loads(
-        (REPOSITORY_ROOT / "verification/intrinsic-dashboard/reviews.json").read_text(
-            encoding="utf-8"
-        )
-    )
-    assert review_ledger == {
-        "intrinsics": [],
-        "kernel_files": [],
-        "schema_version": 2,
-    }

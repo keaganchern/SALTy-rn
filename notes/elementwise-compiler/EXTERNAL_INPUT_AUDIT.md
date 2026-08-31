@@ -2,8 +2,8 @@
 
 Audit date: 2026-08-29 (Asia/Seoul)
 
-Repository scope: `feat/elementwise-compiler`, twenty programs in
-`verification/elementwise-compiler/CorpusReport.json`.
+Repository scope: `feat/elementwise-verification`, twenty programs in
+`verification/elementwise-results/CorpusReport.json`.
 
 Upstream evidence scope: pinned Google XNNPACK commit
 `867d5a344790802ee067be62f572c2e2722bf6fb`, audited on 2026-08-29. This
@@ -68,7 +68,7 @@ compiler records signed `params.min <= params.max` only as a candidate and keeps
 `s8-vclamp` in `required-missing`.
 
 - Local twenty-program list:
-  `verification/elementwise-compiler/CorpusReport.json`.
+  `verification/elementwise-results/CorpusReport.json`.
 - Local kernel entry assertions and parameter reads: `kernels/source/*.c` and
   `kernels/target/*.c`.
 - Legacy corroboration: `src/workflow/verification/param_configs.py`.

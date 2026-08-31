@@ -173,8 +173,8 @@ def _local_imports(source_root: Path, path: Path) -> set[Path]:
 def _compiler_dependencies(root: Path) -> tuple[Path, ...]:
     """Compute the exact static Python closure that can generate the stack.
 
-    Proof search, counterexample search, reviews, corpus orchestration, and the
-    dashboard are deliberately outside this closure.  Editing those consumers
+    Proof search, counterexample search, corpus orchestration, and result
+    publication are deliberately outside this closure. Editing those consumers
     must not invalidate a generated ProgramManifest.
     """
 

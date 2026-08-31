@@ -13,9 +13,6 @@ Capabilities + mandatory ExternalCondition.json
              -> ProofTask.json -> Proof.lean -> Result.json
 
 Models.lean + Spec.lean -> optional Counterexample.lean/json -> Result.json
-
-ProgramReviewPlan.json + ProgramReviewChecks.json + independent reviewer report
-             -> program-reviews/<program>.json
 ```
 
 `Models.lean` and `Spec.lean` are generated parents. `Spec.lean` is proof-free.
@@ -44,15 +41,11 @@ Before proof delegation, a second generic bounded search compares the generated
 `fNeon` and `fRvv` functions on a deterministic scalar edge corpus. A hit is
 lifted to a concrete negation of `completeValueEquivalenceClaim`, checked with the
 exact Lean toolchain, and published as a terminal counterexample. This search
-currently exposes the NaN disagreements in `f32-vrndne`, `f32-vmax`, and
-`f32-vmin`. A miss remains only diagnostic and never becomes a proof.
+currently exposes NaN-related disagreements in nine floating-point programs. A
+miss remains only diagnostic and never becomes a proof.
 
-After every program has an honest outcome, the program-review plan binds the
-source pair, Manifest, Models, Spec, conditions, phase audit, ProofTask, Proof,
-Result, checker, and toolchain. The machine check pack also requires the complete
-180/180 reviewed intrinsic closure. An independent reviewer approves the recorded
-outcome of every scalar program; approval of a counterexample or blocker does not
-approve an equivalence theorem.
+After every program has an honest outcome, the result publisher validates the
+artifact chain and copies the curated results into the checked-in result tree.
 
 ## Corpus refresh
 
@@ -61,7 +54,7 @@ From the repository root:
 ```sh
 PYTHONPATH=src python3 -m workflow.verification.elementwise_compiler.corpus \
   --repository-root . \
-  --output-directory verification/elementwise-compiler
+  --output-directory build/verification/elementwise-compiler
 ```
 
 The scanner discovers paired elementwise-shaped C functions structurally. The
@@ -74,28 +67,24 @@ the current pinned XNNPACK revision, twelve programs need no external parameter
 condition of this kind and eight quantized programs are `required-missing`.
 `s8-vclamp` additionally has a Lean-checked direct cross-phase counterexample.
 
-The current nineteen-program outcome set is eight `verified(value)`, four checked
-counterexamples, and seven `external-condition-missing`. The four counterexamples
-are the three floating-point NaN cases above plus the `s8-vclamp` phase-order
-witness. These counts are derived from artifacts rather than a program allowlist.
+The current nineteen-program outcome set is two `verified(value)`, ten checked
+counterexamples, and seven `external-condition-missing`. Nine counterexamples are
+NaN-related floating-point disagreements. The remaining counterexample is the
+`s8-vclamp` phase-order witness. These counts are derived from artifacts rather
+than a program allowlist.
 
-## Program review refresh
+## Result publication
 
-After proof and counterexample results are final:
+After proof and counterexample results are final, publish the curated result set:
 
 ```sh
-PYTHONPATH=src python3 -m workflow.verification.elementwise_compiler.program_reviews \
-  --repository-root . plan
-PYTHONPATH=src python3 -m workflow.verification.elementwise_compiler.program_reviews \
-  --repository-root . checks
-PYTHONPATH=src python3 -m workflow.verification.elementwise_compiler.program_reviews \
-  --repository-root . publish \
-  --reviewer agent:<independent-reviewer> \
-  --reviewer-report notes/reviews/<report>.md
+PYTHONPATH=src python3 -m workflow.verification.elementwise_compiler.publish_results \
+  --build-root build/verification/elementwise-compiler \
+  --destination-root verification/elementwise-results
 ```
 
-Any changed parent makes the plan or published reviews stale and the dashboard
-fails closed.
+The publisher rejects incomplete, stale, missing, or extra artifacts and checks
+the expected result counts and content hashes.
 
 ## Claim boundary
 
@@ -103,4 +92,4 @@ The current compiler targets arbitrary-length logical **value equality** relativ
 to the checked Lean intrinsic definitions. Scalar-lane layouts may have different
 C types on different streams. The compiler does not yet establish complete C
 memory behavior, legal overreads, aliasing, Arm/RISC-V ISA correspondence, or
-compiled-binary correctness. The dashboard displays those layers separately.
+compiled-binary correctness.

@@ -101,7 +101,7 @@ def test_compiler_digest_tracks_only_reachable_generation_code(tmp_path: Path) -
     assert "src/workflow/verification/lean_backend/intrinsic_library.py" in dependencies
     assert "src/workflow/verification/elementwise_compiler/proof.py" not in dependencies
     assert (
-        "src/workflow/verification/elementwise_compiler/program_reviews.py"
+        "src/workflow/verification/elementwise_compiler/publish_results.py"
         not in dependencies
     )
 

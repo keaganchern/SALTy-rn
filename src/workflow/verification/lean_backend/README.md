@@ -69,8 +69,8 @@ qu8-vadd-minmax  unsigned binary arithmetic and a reviewed signed-shift branch
 
 ## Intrinsic Candidate Discovery
 
-`descriptor.py` defines the canonical, complete descriptor identity shared by
-registry binding and the dashboard. `intrinsic_index.py` preserves every
+`descriptor.py` defines the canonical, complete descriptor identity used by
+registry binding. `intrinsic_index.py` preserves every
 case-scoped occurrence and groups only descriptors whose architecture, signature,
 immediate contract, operation, Lean target, and operand transforms are identical.
 The current five catalogs contain 161 occurrences, 85 architecture/spelling keys,
@@ -158,20 +158,3 @@ Therefore these are generated Lean value-model equivalence results; only the
 `s8-vclamp`, `qs8-vcvt`, and `qs8-vlrelu` results currently quantify over
 arbitrary input lengths. They are not yet C-source observational-equivalence,
 intrinsic-to-ISA adequacy, or compiled-binary theorems.
-
-A smaller Chinese teaching example is available at
-`examples/s8-vmax-to-lean/README.zh-CN.md`. Its synthetic Neon/RVV C pair goes
-through this actual frontend and emitter and produces a checked local-block Lean
-model and proof; it is kept outside the five real-kernel generation set.
-
-## Intrinsic Coverage Dashboard
-
-`kernels/xnnpack-kernel-families.csv` is the fixed 107-family catalog shared by
-Keagan. It deliberately contains no generated or review status: kernel families,
-concrete C programs, intrinsic spellings, Lean mappings, and review attestations
-are different records.
-
-The local dashboard in `src/workflow/verification/intrinsic_dashboard/` inventories
-only the 40 local SALTyRN programs, projects the current restricted Lean registry,
-and reports hash-bound independent reviews. Registry presence or a checked Lean
-theorem is never presented as intrinsic semantic approval or C/ISA equivalence.
