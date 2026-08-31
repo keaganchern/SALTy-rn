@@ -1,0 +1,3110 @@
+"""Lean emission for reviewed scale-up profiles.
+
+The generic path consumes one selected Neon fixed-width loop body and one RVV
+strip-mined body. Reviewed schedule adapters may extend that boundary only after
+validating the complete source shape. The adapters cover fixed tails and both
+separate-loop and nested two-phase tails without selecting on program identity.
+"""
+
+from __future__ import annotations
+
+import re
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Mapping
+
+from .emit_lean import (
+    EmittedPair,
+    LeanEmissionError,
+    _BlockEmitter,
+    _lean_identifier,
+    _lean_string_definition,
+    _single_dependency,
+)
+from .frontend import (
+    ArgumentFact,
+    ControlFact,
+    DefinitionFact,
+    IntrinsicCall,
+    KernelExtraction,
+)
+from .model_profiles import ModelProfile
+from .schema import (
+    Architecture,
+    IntrinsicSpec,
+    PointerType,
+    ScheduleIntrinsic,
+    SemanticIntrinsic,
+    StructuralIntrinsic,
+    StructuralOp,
+    VectorType,
+)
+
+
+class CaseEmissionError(LeanEmissionError):
+    """A reviewed case does not match the generic block adapter."""
+
+
+@dataclass(frozen=True, slots=True)
+class CaseEmission:
+    emitted: EmittedPair
+    neon_consumed_calls: tuple[str, ...]
+    rvv_consumed_calls: tuple[str, ...]
+
+
+_C_INTEGER_WIDTHS = {
+    "signed char": 8,
+    "unsigned char": 8,
+    "char": 8,
+    "short": 16,
+    "unsigned short": 16,
+    "int": 32,
+    "unsigned int": 32,
+    "long": 64,
+    "unsigned long": 64,
+    "int8_t": 8,
+    "uint8_t": 8,
+    "int16_t": 16,
+    "uint16_t": 16,
+    "int32_t": 32,
+    "uint32_t": 32,
+    "int64_t": 64,
+    "uint64_t": 64,
+    "float": 32,
+    "double": 64,
+}
+
+_REVIEWED_CASTS_BY_DESTINATION = {
+    "signed char": frozenset({"int8_t", "signed char"}),
+    "unsigned char": frozenset({"uint8_t", "unsigned char"}),
+    "short": frozenset({"int16_t", "short"}),
+    "unsigned short": frozenset({"uint16_t", "unsigned short"}),
+    "int": frozenset({"int32_t", "int"}),
+    "unsigned int": frozenset({"uint32_t", "unsigned int"}),
+    "long": frozenset({"int64_t", "long"}),
+    "unsigned long": frozenset({"uint64_t", "unsigned long"}),
+}
+
+
+def _integer_width(type_spelling: str) -> int:
+    normalized = _normalized_integer_type(type_spelling)
+    try:
+        return _C_INTEGER_WIDTHS[normalized]
+    except KeyError as error:
+        raise CaseEmissionError(
+            f"unsupported scalar conversion type {type_spelling!r}"
+        ) from error
+
+
+def _normalized_integer_type(type_spelling: str) -> str:
+    normalized = re.sub(r"\b(const|volatile|restrict)\b", "", type_spelling)
+    return " ".join(normalized.split())
+
+
+def _field_name(dependency: str) -> str:
+    prefix = "field:params@0.scalar."
+    if not dependency.startswith(prefix):
+        raise CaseEmissionError(f"unsupported parameter dependency {dependency!r}")
+    field = dependency.removeprefix(prefix)
+    if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", field) is None:
+        raise CaseEmissionError(f"malformed parameter field {field!r}")
+    return field
+
+
+def _converted_field(
+    field: str,
+    width: int,
+    *,
+    source_c_type: str,
+    negated: bool = False,
+) -> str:
+    source_width = _integer_width(source_c_type)
+    source = f"p.{field}"
+    if negated:
+        source = f"(-{source})"
+    if width == source_width:
+        # Keep field-to-intrinsic conversion explicit even when it is an
+        # identity.  Besides making the generated term self-describing, this
+        # preserves the normal form consumed by generic scalar proofs.
+        return f"({source}).truncate {width}"
+    return _converted_scalar(source, source_c_type=source_c_type, width=width)
+
+
+def _converted_scalar(source: str, *, source_c_type: str, width: int) -> str:
+    source_width = _integer_width(source_c_type)
+    if width < source_width:
+        return f"({source}).truncate {width}"
+    if width > source_width:
+        normalized = _normalized_integer_type(source_c_type)
+        extension = (
+            "zeroExtend"
+            if normalized.startswith("u")
+            or normalized.startswith("unsigned")
+            or normalized in {"float", "double"}
+            else "signExtend"
+        )
+        return f"({source}).{extension} {width}"
+    return source
+
+
+def _reviewed_field_argument(
+    argument: ArgumentFact, *, source_c_type: str
+) -> tuple[str, bool]:
+    field = _field_name(_single_dependency(argument))
+    expected = f"params->scalar.{field}"
+    compact = re.sub(r"\s+", "", argument.source_text)
+    if compact == expected:
+        negated = False
+    elif compact == f"-{expected}":
+        negated = True
+    else:
+        raise CaseEmissionError(
+            f"unsupported parameter expression {argument.source_text!r}"
+        )
+    implicit_cast = f"implicit-cast:IntegralCast:{argument.type_spelling}"
+    accepted_operations = (
+        {(), (implicit_cast,)}
+        if not negated
+        else {("unary:-",), ("unary:-", implicit_cast)}
+    )
+    if argument.semantic_operations not in accepted_operations:
+        raise CaseEmissionError(
+            f"unsupported parameter conversion chain {argument.semantic_operations!r}"
+        )
+    # Keep the sign operation separate.  The base emitter uses the Boolean to
+    # distinguish a negated broadcast from a plain one and applies the negation
+    # exactly once when materializing the vector value.
+    return (
+        _converted_field(
+            field,
+            _integer_width(argument.type_spelling),
+            source_c_type=source_c_type,
+        ),
+        negated,
+    )
+
+
+def _reviewed_constant_minus_field_argument(
+    extraction: KernelExtraction, argument: ArgumentFact
+) -> str:
+    fields = tuple(
+        dependency
+        for dependency in argument.dependencies
+        if dependency.startswith("field:params@0.scalar.")
+    )
+    constants = tuple(
+        dependency
+        for dependency in argument.dependencies
+        if dependency.startswith("constant:")
+    )
+    if len(fields) != 1 or len(constants) != 1 or len(argument.dependencies) != 2:
+        raise CaseEmissionError(
+            f"unsupported broadcast scalar dependencies {argument.dependencies!r}"
+        )
+    constant_match = re.fullmatch(r"constant:(-?[0-9]+):int", constants[0])
+    field = _field_name(fields[0])
+    expected = f"params->scalar.{field}"
+    source = re.sub(r"\s+", "", argument.source_text)
+    if (
+        constant_match is None
+        or re.fullmatch(
+            rf"(?:INT32_C\()?0[xX][0-9A-Fa-f]+\)?-\(int32_t\)"
+            rf"{re.escape(expected)}",
+            source,
+        )
+        is None
+        or argument.semantic_operations
+        != ("explicit-cast:IntegralCast:int", "binary:-")
+        or _normalized_integer_type(argument.type_spelling) not in {"int", "int32_t"}
+    ):
+        raise CaseEmissionError(
+            f"unsupported constant-minus-field expression {argument.source_text!r}"
+        )
+    field_value = _converted_field(
+        field,
+        32,
+        source_c_type=_facade_scalar_field_type(extraction, field),
+    )
+    return f"(BitVec.ofNat 32 {int(constant_match.group(1))}) - ({field_value})"
+
+
+def _facade_scalar_field_type(extraction: KernelExtraction, field: str) -> str:
+    """Read the exact scalar field declaration from the hash-bound parse facade."""
+
+    try:
+        source = Path(extraction.facade_path).read_text(encoding="utf-8")
+    except (OSError, UnicodeError) as error:
+        raise CaseEmissionError("cannot read the hash-bound parse facade") from error
+    params = next(
+        (parameter for parameter in extraction.parameters if parameter.name == "params"),
+        None,
+    )
+    aggregate = (
+        None
+        if params is None
+        else re.search(r"\b(?:struct|union)\s+([A-Za-z_][A-Za-z0-9_]*)", params.type_spelling)
+    )
+    if aggregate is None:
+        raise CaseEmissionError("cannot resolve the facade parameter aggregate")
+    scalar_match = re.search(
+        rf"\b(?:struct|union)\s+{re.escape(aggregate.group(1))}\s*\{{\s*"
+        r"struct\s*\{(?P<body>[^{}]*)\}\s*scalar\s*;",
+        source,
+        re.DOTALL,
+    )
+    if scalar_match is None:
+        raise CaseEmissionError(
+            f"cannot resolve facade scalar aggregate {aggregate.group(1)!r}"
+        )
+    matches = re.findall(
+        rf"\b((?:u?int(?:8|16|32|64)_t)|(?:signed|unsigned)\s+(?:char|short|int|long)|(?:char|short|int|long|float|double))\s+{re.escape(field)}\s*;",
+        scalar_match.group("body"),
+    )
+    if len(matches) != 1:
+        raise CaseEmissionError(
+            f"cannot resolve one facade scalar type for field {field!r}"
+        )
+    return " ".join(matches[0].split())
+
+
+def _reviewed_scalar_definition(
+    definition: DefinitionFact,
+    *,
+    source_c_type: str,
+) -> str:
+    field_dependencies = tuple(
+        dependency
+        for dependency in definition.dependencies
+        if dependency.startswith("field:params@0.scalar.")
+    )
+    if len(field_dependencies) != 1:
+        raise CaseEmissionError(
+            f"definition {definition.value} needs one parameter field dependency"
+        )
+    field = _field_name(field_dependencies[0])
+    if "=" not in definition.expression_text:
+        raise CaseEmissionError(
+            f"definition {definition.value} has no initializer: "
+            f"{definition.expression_text!r}"
+        )
+    initializer = definition.expression_text.split("=", 1)[1].strip()
+    expected = f"params->scalar.{field}"
+    constant_minus_field = re.fullmatch(
+        rf"INT32_C\((?P<constant>0[xX][0-9A-Fa-f]+|[0-9]+)\)-"
+        rf"\(int32_t\){re.escape(expected)}",
+        re.sub(r"\s+", "", initializer),
+    )
+    if constant_minus_field is not None:
+        if _normalized_integer_type(definition.type_spelling) not in {"int", "int32_t"}:
+            raise CaseEmissionError(
+                f"definition {definition.value} has a non-i32 constant subtraction"
+            )
+        field_value = _converted_field(
+            field,
+            32,
+            source_c_type=source_c_type,
+        )
+        constant = int(constant_minus_field.group("constant"), 0)
+        return f"(BitVec.ofNat 32 {constant}) - ({field_value})"
+    modular_negation = re.fullmatch(
+        rf"\((?P<outer>[A-Za-z_][A-Za-z0-9_ ]*)\)\s*\(\s*-\s*"
+        rf"\((?P<inner>[A-Za-z_][A-Za-z0-9_ ]*)\)\s*{re.escape(expected)}\s*\)",
+        initializer,
+    )
+    if modular_negation is not None:
+        destination = _normalized_integer_type(definition.type_spelling)
+        outer = _normalized_integer_type(modular_negation.group("outer"))
+        inner = _normalized_integer_type(modular_negation.group("inner"))
+        if (
+            outer not in _REVIEWED_CASTS_BY_DESTINATION.get(destination, frozenset())
+            or _integer_width(inner) != _integer_width(source_c_type)
+            or not (inner.startswith("u") or inner.startswith("unsigned"))
+        ):
+            raise CaseEmissionError(
+                f"definition {definition.value} has an unreviewed modular negation"
+            )
+        inner_width = _integer_width(inner)
+        inner_value = _converted_field(
+            field,
+            inner_width,
+            source_c_type=source_c_type,
+        )
+        return f"(-({inner_value})).truncate {_integer_width(definition.type_spelling)}"
+    match = re.fullmatch(
+        rf"(?:\((?P<cast>[A-Za-z_][A-Za-z0-9_ ]*)\)\s*)?"
+        rf"(?P<negated>-?)\s*{re.escape(expected)}",
+        initializer,
+    )
+    if match is None:
+        raise CaseEmissionError(
+            f"definition {definition.value} is not a reviewed parameter conversion: "
+            f"{definition.expression_text!r}"
+        )
+    cast = match.group("cast")
+    destination = _normalized_integer_type(definition.type_spelling)
+    if cast is not None:
+        reviewed = _REVIEWED_CASTS_BY_DESTINATION.get(destination, frozenset())
+        if cast == "size_t" and destination == "unsigned long":
+            source_width = _integer_width(source_c_type)
+            source = f"p.{field}"
+            signed = not source_c_type.startswith("u") and not source_c_type.startswith(
+                "unsigned"
+            )
+            extension = "signExtend" if signed else "zeroExtend"
+            return f"({source}).{extension} 64" if source_width < 64 else source
+        if cast not in reviewed:
+            raise CaseEmissionError(
+                f"definition {definition.value} uses unreviewed cast {cast!r} "
+                f"for destination {destination!r}"
+            )
+    negated = match.group("negated") == "-"
+    return _converted_field(
+        field,
+        _integer_width(definition.type_spelling),
+        source_c_type=source_c_type,
+        negated=negated,
+    )
+
+
+def _is_exact_local_argument(
+    argument: ArgumentFact,
+    *,
+    dependency: str,
+    source_text: str,
+    type_spelling: str,
+) -> bool:
+    return (
+        argument.dependencies == (dependency,)
+        and argument.source_text.strip() == source_text
+        and not argument.semantic_operations
+        and argument.constant_value is None
+        and _normalized_integer_type(argument.type_spelling) == type_spelling
+    )
+
+
+class _CaseBlockEmitter(_BlockEmitter):
+    def __init__(
+        self,
+        extraction: KernelExtraction,
+        architecture: Architecture,
+        registry: Mapping[str, IntrinsicSpec],
+        *,
+        active_length: str | None = None,
+        broadcast_inputs: tuple[str, ...] = (),
+    ) -> None:
+        super().__init__(
+            extraction,
+            architecture,
+            registry=registry,
+            active_length=active_length,
+        )
+        for name in broadcast_inputs:
+            dependency = f"{name}@0"
+            scalar = f"p.broadcast_{name}"
+            self.environment[dependency] = scalar
+            parameter = next(
+                (item for item in extraction.parameters if item.name == name),
+                None,
+            )
+            if parameter is None or "*" not in parameter.type_spelling:
+                raise CaseEmissionError(
+                    f"broadcast input {name!r} is not a pointer parameter"
+                )
+            scalar_definitions = [
+                definition
+                for definition in extraction.definitions
+                if definition.parent_control is None
+                and definition.definition_kind == "declaration"
+                and definition.value_call is None
+                and definition.dependencies == (dependency,)
+                and re.fullmatch(
+                    rf".*{re.escape(definition.variable)}=\*{re.escape(name)}",
+                    _compact_source(definition.expression_text),
+                )
+            ]
+            if architecture is Architecture.RVV:
+                if len(scalar_definitions) != 1:
+                    raise CaseEmissionError(
+                        f"RVV broadcast input {name!r} needs one scalar dereference"
+                    )
+                self.environment[scalar_definitions[0].value] = scalar
+        for definition in extraction.definitions:
+            field_dependencies = tuple(
+                dependency
+                for dependency in definition.dependencies
+                if dependency.startswith("field:params@0.scalar.")
+            )
+            if (
+                definition.value_call is None
+                and len(field_dependencies) == 1
+                and all(
+                    dependency == field_dependencies[0]
+                    or dependency.startswith("constant:")
+                    for dependency in definition.dependencies
+                )
+                and definition.definition_kind != "parameter"
+                and definition.parent_control is None
+            ):
+                field = _field_name(field_dependencies[0])
+                self.environment[definition.value] = _reviewed_scalar_definition(
+                    definition,
+                    source_c_type=_facade_scalar_field_type(
+                        extraction, field
+                    ),
+                )
+
+    def _checked_field_source(self, argument: ArgumentFact) -> tuple[str, bool]:
+        field = _field_name(_single_dependency(argument))
+        return _reviewed_field_argument(
+            argument,
+            source_c_type=_facade_scalar_field_type(self.extraction, field),
+        )
+
+    def _resolve(self, argument: ArgumentFact) -> str:
+        if (
+            argument.constant_value == 0
+            and len(argument.semantic_operations) == 1
+            and argument.semantic_operations[0].startswith(
+                "explicit-cast:IntegralCast:"
+            )
+        ):
+            return "0"
+        if len(argument.dependencies) == 1:
+            dependency = argument.dependencies[0]
+            definition = self.definitions.get(dependency)
+            expected_casts = {
+                (f"explicit-cast:IntegralCast:{argument.type_spelling}",),
+                (f"implicit-cast:IntegralCast:{argument.type_spelling}",),
+            }
+            if (
+                dependency in self.environment
+                and definition is not None
+                and argument.semantic_operations in expected_casts
+            ):
+                return _converted_scalar(
+                    self.environment[dependency],
+                    source_c_type=definition.type_spelling,
+                    width=_integer_width(argument.type_spelling),
+                )
+        return super()._resolve(argument)
+
+    def _structural_expression(
+        self, call: IntrinsicCall, spec: StructuralIntrinsic
+    ) -> str:
+        if spec.operation is StructuralOp.BROADCAST:
+            result = spec.signature.result
+            if not isinstance(result, VectorType):
+                raise CaseEmissionError(
+                    f"{call.spelling} has a non-vector broadcast result"
+                )
+            lanes = result.fixed_lanes
+            if lanes is None and self.active_length is None:
+                raise CaseEmissionError(
+                    f"scalable broadcast {call.spelling} has no active-length binding"
+                )
+            argument = call.arguments[0]
+            if argument.constant_value is not None:
+                scalar = self._resolve(argument)
+            elif (
+                len(argument.dependencies) == 1
+                and not argument.semantic_operations
+                and argument.dependencies[0] in self.environment
+            ):
+                scalar = self.environment[argument.dependencies[0]]
+            elif len(argument.dependencies) == 2:
+                scalar = _reviewed_constant_minus_field_argument(
+                    self.extraction, argument
+                )
+            else:
+                scalar, is_negated = self._checked_field_source(argument)
+                if is_negated:
+                    scalar = f"-{scalar}"
+            length = str(lanes) if lanes is not None else self.active_length
+            return f"List.replicate {length} ({scalar})"
+        if spec.operation is StructuralOp.LOAD_BROADCAST:
+            result = spec.signature.result
+            if not isinstance(result, VectorType) or result.fixed_lanes is None:
+                raise CaseEmissionError(
+                    f"{call.spelling} needs a fixed-width broadcast result"
+                )
+            argument = call.arguments[0]
+            dependency = _single_dependency(argument)
+            base = dependency.split("@", 1)[0]
+            if (
+                dependency not in self.environment
+                or argument.source_text.strip() != base
+                or argument.semantic_operations
+            ):
+                raise CaseEmissionError(
+                    f"{call.spelling} has an unsupported scalar-load base"
+                )
+            return (
+                f"List.replicate {result.fixed_lanes} "
+                f"({self.environment[dependency]})"
+            )
+        return super()._structural_expression(call, spec)
+
+
+def _selected_neon_loop(extraction: KernelExtraction, profile: ModelProfile):
+    matches = [
+        control
+        for control in extraction.controls
+        if control.kind == "ForStmt"
+        and control.parent_control is None
+        and control.condition_text == profile.neon_loop_condition
+        and control.update_text == profile.neon_loop_update
+    ]
+    if len(matches) != 1:
+        raise CaseEmissionError(
+            f"{profile.case_id}: expected one reviewed Neon block loop, got {len(matches)}"
+        )
+    return matches[0]
+
+
+def _output_pointer_base(extraction: KernelExtraction) -> tuple[str, str]:
+    """Return the output cursor name and its initial SSA dependency."""
+
+    aliases = [
+        definition
+        for definition in extraction.definitions
+        if definition.parent_control is None
+        and definition.definition_kind == "declaration"
+        and definition.value_call is None
+        and definition.dependencies == ("output@0",)
+        and "*" in definition.type_spelling
+        and re.fullmatch(
+            rf".*\b{re.escape(definition.variable)}\s*=\s*output",
+            _compact_source(definition.expression_text),
+        )
+    ]
+    if len(aliases) > 1:
+        raise CaseEmissionError("multiple output pointer aliases are unsupported")
+    if not aliases:
+        return "output", "output@0"
+    return aliases[0].variable, aliases[0].value
+
+
+def _normalized_control_shape(
+    controls: tuple[ControlFact, ...],
+) -> tuple[tuple[str, int | None, str, tuple[str, ...], str], ...]:
+    positions = {control.node_id: index for index, control in enumerate(controls)}
+    return tuple(
+        (
+            control.kind,
+            (
+                None
+                if control.parent_control is None
+                else positions.get(control.parent_control, -1)
+            ),
+            control.condition_text,
+            control.condition_dependencies,
+            control.update_text,
+        )
+        for control in controls
+    )
+
+
+def _byte_tail_control_shape(
+    loop: ControlFact,
+    element_type: str,
+    store_widths: tuple[int, ...],
+) -> tuple[tuple[str, int | None, str, tuple[str, ...], str], ...]:
+    return (
+        (
+            loop.kind,
+            None,
+            loop.condition_text,
+            loop.condition_dependencies,
+            loop.update_text,
+        ),
+        ("IfStmt", None, "batch != 0", ("batch@1", "constant:0:int"), ""),
+        *tuple(
+            (
+                "IfStmt",
+                1,
+                f"batch & ({width} * sizeof({element_type}))",
+                ("batch@1", f"constant:{width}:int", f"sizeof:{element_type}"),
+                "",
+            )
+            for width in store_widths
+        ),
+    )
+
+
+def _validate_neon_control_shape(
+    extraction: KernelExtraction, profile: ModelProfile, loop: ControlFact
+) -> None:
+    if profile.multiphase_widths:
+        config = profile.prefix_tail
+        if len(profile.multiphase_widths) != 2:
+            raise CaseEmissionError("two-phase control needs exactly two widths")
+        large, small = profile.multiphase_widths
+        store_widths = (
+            config.store_widths
+            if config is not None
+            else tuple(
+                width
+                for width in (
+                    1 << bit for bit in reversed(range((small - 1).bit_length()))
+                )
+                if width < small
+            )
+        )
+        controls = extraction.controls
+        top_loops = [
+            control
+            for control in controls
+            if control.kind == "ForStmt" and control.parent_control is None
+        ]
+        nested_do = [control for control in controls if control.kind == "DoStmt"]
+        if len(top_loops) == 2 and not nested_do:
+            roots = [
+                control
+                for control in controls
+                if control.kind == "IfStmt" and control.parent_control is None
+            ]
+            if len(roots) != 1:
+                raise CaseEmissionError(
+                    "separate-loop two-phase control needs one tail guard"
+                )
+            root = roots[0]
+            children = [
+                control
+                for control in controls
+                if control.parent_control == root.node_id
+            ]
+            byte_scaled = [
+                f"sizeof({profile.element_c_type})" in control.condition_text
+                for control in top_loops
+            ]
+            if len(set(byte_scaled)) != 1:
+                raise CaseEmissionError(
+                    "two-phase loops disagree on byte-versus-element counting"
+                )
+
+            def phase(width: int, version: int) -> tuple[str, tuple[str, ...], str]:
+                if byte_scaled[0]:
+                    return (
+                        f"batch >= {width} * sizeof({profile.element_c_type})",
+                        (
+                            f"batch@{version}",
+                            f"constant:{width}:int",
+                            f"sizeof:{profile.element_c_type}",
+                        ),
+                        f"batch -= {width} * sizeof({profile.element_c_type})",
+                    )
+                return (
+                    f"batch >= {width}",
+                    (f"batch@{version}", f"constant:{width}:int"),
+                    f"batch -= {width}",
+                )
+
+            large_condition, large_dependencies, large_update = phase(large, 0)
+            small_condition, small_dependencies, small_update = phase(small, 1)
+            expected = (
+                (
+                    "ForStmt",
+                    None,
+                    large_condition,
+                    large_dependencies,
+                    large_update,
+                ),
+                (
+                    "ForStmt",
+                    None,
+                    small_condition,
+                    small_dependencies,
+                    small_update,
+                ),
+                ("IfStmt", None, "batch != 0", ("batch@2", "constant:0:int"), ""),
+                *tuple(
+                    (
+                        "IfStmt",
+                        2,
+                        (
+                            f"batch & ({width} * sizeof({profile.element_c_type}))"
+                            if byte_scaled[0]
+                            else f"batch & {width}"
+                        ),
+                        (
+                            (
+                                "batch@2",
+                                f"constant:{width}:int",
+                                f"sizeof:{profile.element_c_type}",
+                            )
+                            if byte_scaled[0]
+                            else ("batch@2", f"constant:{width}:int")
+                        ),
+                        "",
+                    )
+                    for width in store_widths
+                ),
+            )
+            if len(children) != len(store_widths):
+                raise CaseEmissionError("two-phase tail store control count changed")
+        elif len(top_loops) == 1 and len(nested_do) == 1:
+            if config is None:
+                raise CaseEmissionError("nested two-phase control needs a tail profile")
+            outer = [
+                control
+                for control in controls
+                if control.kind == "IfStmt" and control.parent_control is None
+            ]
+            do = nested_do[0]
+            full = [
+                control
+                for control in controls
+                if control.kind == "IfStmt" and control.parent_control == do.node_id
+            ]
+            if (
+                len(outer) != 1
+                or do.parent_control != outer[0].node_id
+                or len(full) != 1
+            ):
+                raise CaseEmissionError(
+                    "nested two-phase guard/do/full-block shape changed"
+                )
+            tail_children = [
+                control
+                for control in controls
+                if control.parent_control == full[0].node_id
+            ]
+            compact = _compact_source
+            if (
+                compact(outer[0].condition_text) != "batch!=0"
+                or compact(do.condition_text) != "batch!=0"
+                or compact(full[0].condition_text)
+                != f"batch>=({small}*sizeof({config.element_c_type}))"
+                or [compact(item.condition_text) for item in tail_children]
+                != [
+                    f"batch&({width}*sizeof({config.element_c_type}))"
+                    for width in config.store_widths
+                ]
+            ):
+                raise CaseEmissionError(
+                    "nested two-phase widths or tail store order changed"
+                )
+            expected = _normalized_control_shape(controls)
+        else:
+            raise CaseEmissionError("unsupported two-phase control encoding")
+    elif profile.prefix_tail is not None:
+        expected = _byte_tail_control_shape(
+            loop,
+            profile.prefix_tail.element_c_type,
+            profile.prefix_tail.store_widths,
+        )
+    else:
+        expected = (
+            (
+                loop.kind,
+                None,
+                loop.condition_text,
+                loop.condition_dependencies,
+                loop.update_text,
+            ),
+        )
+    actual = _normalized_control_shape(extraction.controls)
+    if actual != expected:
+        raise CaseEmissionError(
+            f"{profile.case_id}: Neon control shape changed: {actual!r}"
+        )
+
+
+def _emit_neon_case(
+    extraction: KernelExtraction,
+    profile: ModelProfile,
+    registry: Mapping[str, IntrinsicSpec],
+) -> tuple[list[str], str, tuple[str, ...]]:
+    loop = _selected_neon_loop(extraction, profile)
+    child_controls = [
+        control
+        for control in extraction.controls
+        if control.parent_control == loop.node_id
+    ]
+    if child_controls:
+        raise CaseEmissionError(
+            f"{profile.case_id}: nested Neon block control is unsupported"
+        )
+    _validate_neon_control_shape(extraction, profile, loop)
+    emitter = _CaseBlockEmitter(
+        extraction,
+        Architecture.NEON,
+        registry,
+        broadcast_inputs=profile.broadcast_inputs,
+    )
+    output_base, output_initial = _output_pointer_base(extraction)
+    if output_base != "output":
+        emitter.environment[output_initial] = "output"
+
+    selected_calls = [
+        call for call in extraction.calls if call.parent_control in {None, loop.node_id}
+    ]
+    for call in selected_calls:
+        if call.parent_control is None:
+            spec = emitter._lookup_intrinsic(call.spelling)
+            if isinstance(spec, ScheduleIntrinsic) or (
+                isinstance(spec, StructuralIntrinsic)
+                and spec.operation
+                in {StructuralOp.LOAD, StructuralOp.STORE, StructuralOp.LANE_STORE}
+            ):
+                raise CaseEmissionError(
+                    f"{profile.case_id}: unsupported top-level Neon call {call.spelling}"
+                )
+            emitter.emit_registered_call(call)
+
+    load_offsets = {name: 0 for name in profile.inputs}
+    load_versions = {name: 0 for name in profile.inputs}
+    stored_lanes = 0
+    store_version = 0
+    input_update_widths = {name: [] for name in profile.inputs}
+    output_update_widths: list[int] = []
+    pointer_updates: list[tuple[str, str]] = []
+    stores: list[str] = []
+    for call in selected_calls:
+        if call.parent_control != loop.node_id:
+            continue
+        spec = emitter._lookup_intrinsic(call.spelling)
+        if (
+            isinstance(spec, StructuralIntrinsic)
+            and spec.operation is StructuralOp.LOAD
+        ):
+            base_argument = call.arguments[0]
+            dependency = _single_dependency(base_argument)
+            match = re.fullmatch(r"([A-Za-z_][A-Za-z0-9_]*)@(\d+)", dependency)
+            if match is None or match.group(1) not in load_offsets:
+                raise CaseEmissionError(
+                    f"{profile.case_id}: unsupported Neon load base {dependency!r}"
+                )
+            base, version_text = match.groups()
+            if (
+                base_argument.source_text.strip() != base
+                or base_argument.semantic_operations
+            ):
+                raise CaseEmissionError(
+                    f"{profile.case_id}: unsupported Neon load expression "
+                    f"{base_argument.source_text!r}"
+                )
+            if int(version_text) != load_versions[base]:
+                raise CaseEmissionError(
+                    f"{profile.case_id}: non-contiguous pointer version for {base}"
+                )
+            result = spec.signature.result
+            if not isinstance(result, VectorType) or result.fixed_lanes is None:
+                raise CaseEmissionError(f"{call.spelling} needs a fixed-width result")
+            offset = load_offsets[base]
+            width = result.fixed_lanes
+            expression = (
+                f"({base}).take {width}"
+                if offset == 0
+                else f"(({base}).drop {offset}).take {width}"
+            )
+            load_offsets[base] += width
+            load_versions[base] += 1
+            input_update_widths[base].append(width)
+            pointer_updates.append(
+                (f"{base}@{load_versions[base]}", f"{base} += {width}")
+            )
+            emitter._bind_call(call, expression)
+            continue
+        if (
+            isinstance(spec, StructuralIntrinsic)
+            and spec.operation is StructuralOp.STORE
+        ):
+            store_base = call.arguments[0]
+            if (
+                store_base.dependencies != (f"{output_base}@{store_version}",)
+                or store_base.source_text.strip() != output_base
+                or store_base.semantic_operations
+            ):
+                raise CaseEmissionError(
+                    f"{profile.case_id}: Neon store base changed at store {store_version}"
+                )
+        result = emitter.emit_registered_call(call)
+        if (
+            isinstance(spec, StructuralIntrinsic)
+            and spec.operation is StructuralOp.STORE
+        ):
+            if result is None:
+                raise CaseEmissionError(f"{call.spelling} produced no stored value")
+            vector = spec.signature.parameters[1].type
+            if not isinstance(vector, VectorType) or vector.fixed_lanes is None:
+                raise CaseEmissionError(
+                    f"{call.spelling} needs a fixed-width stored value"
+                )
+            stored_lanes += vector.fixed_lanes
+            output_update_widths.append(vector.fixed_lanes)
+            store_version += 1
+            pointer_updates.append(
+                (
+                    f"{output_base}@{store_version}",
+                    f"{output_base} += {vector.fixed_lanes}",
+                )
+            )
+            stores.append(result)
+
+    expected = {call.node_id for call in selected_calls}
+    if emitter.consumed != expected:
+        raise CaseEmissionError(
+            f"{profile.case_id}: Neon selected-call coverage mismatch: "
+            f"missing={sorted(expected - emitter.consumed)!r}, "
+            f"extra={sorted(emitter.consumed - expected)!r}"
+        )
+    expected_loads = {name: profile.neon_block_lanes for name in profile.inputs}
+    if load_offsets != expected_loads or stored_lanes != profile.neon_block_lanes:
+        raise CaseEmissionError(
+            f"{profile.case_id}: Neon block footprint changed: "
+            f"loads={load_offsets!r}, stored={stored_lanes}"
+        )
+    if not stores:
+        raise CaseEmissionError(f"{profile.case_id}: Neon block has no store")
+
+    expected_updates = pointer_updates
+    expected_updates.append(("batch@1", profile.neon_loop_update))
+    actual_updates = [
+        (definition.value, definition.expression_text.strip())
+        for definition in extraction.definitions
+        if definition.parent_control == loop.node_id
+        and definition.definition_kind.startswith("compound-")
+    ]
+    if actual_updates != expected_updates:
+        raise CaseEmissionError(
+            f"{profile.case_id}: Neon pointer/count updates changed: "
+            f"{actual_updates!r}"
+        )
+    untranslated = [
+        definition.value
+        for definition in extraction.definitions
+        if definition.parent_control == loop.node_id
+        and definition.value_call is None
+        and not definition.definition_kind.startswith("compound-")
+    ]
+    if untranslated:
+        raise CaseEmissionError(
+            f"{profile.case_id}: untranslated Neon block definitions {untranslated!r}"
+        )
+    _validate_external_definitions(extraction, emitter)
+    return (
+        emitter.lines,
+        " ++ ".join(f"({value})" for value in stores),
+        tuple(sorted(expected)),
+    )
+
+
+def _compact_source(text: str) -> str:
+    return re.sub(r"\s+", "", text)
+
+
+def _consume_little_endian_lane_store(
+    emitter: _CaseBlockEmitter,
+    call: IntrinsicCall,
+    *,
+    width: int,
+    bit: int,
+    name: str,
+) -> str:
+    spec = emitter._lookup_intrinsic(call.spelling)
+    if not (
+        isinstance(spec, StructuralIntrinsic)
+        and spec.operation is StructuralOp.LANE_STORE
+    ):
+        raise CaseEmissionError(f"{call.spelling}: expected a reviewed lane store")
+    emitter._validate_immediates(call, spec)
+    lane = call.arguments[2].constant_value
+    if not isinstance(lane, int):
+        raise CaseEmissionError(f"{call.spelling}: lane must be an integer constant")
+    value = emitter._resolve(call.arguments[1])
+    offset = lane * width
+    selected = (
+        f"({value}).take {width}"
+        if offset == 0
+        else f"(({value}).drop {offset}).take {width}"
+    )
+    emitter.consumed.add(call.node_id)
+    emitter.lines.append(
+        f"  let {name} := if live.testBit {bit} then {selected} else []"
+    )
+    return name
+
+
+def _emit_separate_two_phase_tail_value_models(
+    extraction: KernelExtraction,
+    profile: ModelProfile,
+    registry: Mapping[str, IntrinsicSpec],
+    already_consumed: tuple[str, ...],
+) -> tuple[list[str], tuple[str, ...]]:
+    """Emit two top-level fixed loops followed by a live-prefix tail.
+
+    This adapter is selected from the extracted control tree and derives all
+    calls, pointer versions, and widths from that tree. It deliberately has no
+    program id, function name, source path, or call-number table.
+    """
+
+    config = profile.prefix_tail
+    if config is None or len(profile.multiphase_widths) != 2:
+        raise CaseEmissionError(
+            "separate two-phase value model needs two widths and a tail"
+        )
+    if len(profile.inputs) not in {1, 2}:
+        raise CaseEmissionError(
+            "separate two-phase value model supports one or two inputs"
+        )
+    large, small = profile.multiphase_widths
+    if config.load_lanes != small:
+        raise CaseEmissionError("small phase width must match its physical load width")
+
+    loops = [
+        control
+        for control in extraction.controls
+        if control.kind == "ForStmt" and control.parent_control is None
+    ]
+    byte_scaled = all(
+        f"sizeof({config.element_c_type})" in control.condition_text
+        for control in loops
+    )
+    if any(
+        (f"sizeof({config.element_c_type})" in control.condition_text)
+        != byte_scaled
+        for control in loops
+    ):
+        raise CaseEmissionError(
+            "separate two-phase loops disagree on byte-versus-element counting"
+        )
+    small_condition = (
+        f"batch>={small}*sizeof({config.element_c_type})"
+        if byte_scaled
+        else f"batch>={small}"
+    )
+    small_update = (
+        f"batch-={small}*sizeof({config.element_c_type})"
+        if byte_scaled
+        else f"batch-={small}"
+    )
+    small_loops = [
+        control
+        for control in loops
+        if _compact_source(control.condition_text) == small_condition
+        and _compact_source(control.update_text) == small_update
+    ]
+    roots = [
+        control
+        for control in extraction.controls
+        if control.kind == "IfStmt" and control.parent_control is None
+    ]
+    if len(loops) != 2 or len(small_loops) != 1 or len(roots) != 1:
+        raise CaseEmissionError(
+            "separate two-phase control has no unique small loop/tail"
+        )
+    small_loop, root = small_loops[0], roots[0]
+    children = [
+        control
+        for control in extraction.controls
+        if control.parent_control == root.node_id
+    ]
+    expected_tail_conditions = [
+        (
+            f"batch&({width}*sizeof({config.element_c_type}))"
+            if byte_scaled
+            else f"batch&{width}"
+        )
+        for width in config.store_widths
+    ]
+    if [
+        _compact_source(control.condition_text) for control in children
+    ] != expected_tail_conditions:
+        raise CaseEmissionError("separate two-phase live-prefix branch order changed")
+
+    consumed_before = set(already_consumed)
+    tail_calls = [
+        call for call in extraction.calls if call.node_id not in consumed_before
+    ]
+    tail_controls = {
+        small_loop.node_id,
+        root.node_id,
+        *(item.node_id for item in children),
+    }
+    if not tail_calls or any(
+        call.parent_control not in tail_controls for call in tail_calls
+    ):
+        raise CaseEmissionError("calls remain outside the separate two-phase regions")
+
+    prologue_calls = [call for call in extraction.calls if call.parent_control is None]
+    output_base, output_initial = _output_pointer_base(extraction)
+
+    def new_emitter() -> _CaseBlockEmitter:
+        emitter = _CaseBlockEmitter(
+            extraction,
+            Architecture.NEON,
+            registry,
+            broadcast_inputs=profile.broadcast_inputs,
+        )
+        if output_base != "output":
+            emitter.environment[output_initial] = "output"
+        _emit_pure_neon_prologue(
+            emitter,
+            prologue_calls,
+            context="separate two-phase prologue",
+        )
+        return emitter
+
+    compound = [
+        definition
+        for definition in extraction.definitions
+        if definition.parent_control in tail_controls
+        and definition.definition_kind.startswith("compound-")
+    ]
+    expected_update_expressions = sorted(
+        [
+            *(f"{name}+={small}" for name in profile.inputs),
+            f"{output_base}+={small}",
+            small_update,
+            *(
+                (f"{name}+={small}" for name in profile.inputs)
+                if config.input_advances_after_load
+                else ()
+            ),
+            *(f"{output_base}+={width}" for width in config.store_widths[:-1]),
+        ]
+    )
+    if (
+        sorted(_compact_source(item.expression_text) for item in compound)
+        != expected_update_expressions
+    ):
+        raise CaseEmissionError("separate two-phase pointer or count updates changed")
+
+    def unique_update(parent: str, expression: str) -> DefinitionFact:
+        matches = [
+            item
+            for item in compound
+            if item.parent_control == parent
+            and _compact_source(item.expression_text) == expression
+        ]
+        if len(matches) != 1:
+            raise CaseEmissionError(
+                "separate two-phase pointer or count updates changed"
+            )
+        return matches[0]
+
+    input_loop_updates = {
+        name: unique_update(small_loop.node_id, f"{name}+={small}")
+        for name in profile.inputs
+    }
+    output_loop_update = unique_update(
+        small_loop.node_id, f"{output_base}+={small}"
+    )
+    unique_update(small_loop.node_id, small_update)
+    input_tail_updates = (
+        {
+            name: unique_update(root.node_id, f"{name}+={small}")
+            for name in profile.inputs
+        }
+        if config.input_advances_after_load
+        else {}
+    )
+
+    loaded_names = _loaded_argument_names(profile.inputs)
+    block_calls = [
+        call for call in tail_calls if call.parent_control == small_loop.node_id
+    ]
+    if len(block_calls) <= len(profile.inputs) + 1 or any(
+        call.control_path for call in block_calls
+    ):
+        raise CaseEmissionError("separate two-phase small block call shape changed")
+    block = new_emitter()
+    block_loads = block_calls[: len(profile.inputs)]
+    for load, input_name, loaded_name in zip(block_loads, profile.inputs, loaded_names):
+        spec = block._lookup_intrinsic(load.spelling)
+        update = input_loop_updates[input_name]
+        if not (
+            isinstance(spec, StructuralIntrinsic)
+            and spec.operation is StructuralOp.LOAD
+            and isinstance(spec.signature.result, VectorType)
+            and spec.signature.result.fixed_lanes == small
+            and load.arguments[0].dependencies == (update.dependencies[0],)
+            and load.arguments[0].source_text.strip() == input_name
+            and not load.arguments[0].semantic_operations
+        ):
+            raise CaseEmissionError(
+                f"separate small-phase load changed for {input_name}"
+            )
+        block._bind_call(load, f"({loaded_name}).take {small}")
+
+    block_store = block_calls[-1]
+    block_store_spec = block._lookup_intrinsic(block_store.spelling)
+    block_value_type = (
+        block_store_spec.signature.parameters[1].type
+        if isinstance(block_store_spec, StructuralIntrinsic)
+        and block_store_spec.operation is StructuralOp.STORE
+        else None
+    )
+    if not (
+        isinstance(block_value_type, VectorType)
+        and block_value_type.fixed_lanes == small
+        and block_store.arguments[0].dependencies
+        == (output_loop_update.dependencies[0],)
+    ):
+        raise CaseEmissionError("separate small-phase store shape changed")
+    block_pipeline = block_calls[len(profile.inputs) : -1]
+    if not block_pipeline:
+        raise CaseEmissionError("separate small phase has no value pipeline")
+    for index, call in enumerate(block_pipeline):
+        spec = block._lookup_intrinsic(call.spelling)
+        if isinstance(spec, StructuralIntrinsic) and spec.operation in {
+            StructuralOp.LOAD,
+            StructuralOp.STORE,
+            StructuralOp.LANE_STORE,
+        }:
+            raise CaseEmissionError(
+                "load/store appeared inside the small-phase value pipeline"
+            )
+        value = block.emit_registered_call(call)
+        if value is None:
+            raise CaseEmissionError("small-phase value call produced no value")
+        dependency = call.assigned_to or f"call:{call.node_id}"
+        later = [*block_pipeline[index + 1 :], block_store]
+        if not any(dependency in later_call.dependencies for later_call in later):
+            raise CaseEmissionError("small-phase value call is not consumed")
+    block_output = block.emit_registered_call(block_store)
+    if block_output is None:
+        raise CaseEmissionError("separate small-phase store produced no value")
+
+    root_calls = [call for call in tail_calls if call.parent_control == root.node_id]
+    if len(root_calls) <= len(profile.inputs):
+        raise CaseEmissionError("separate live-prefix tail has no value pipeline")
+    partial = new_emitter()
+    root_loads = root_calls[: len(profile.inputs)]
+    for load, input_name, loaded_name in zip(root_loads, profile.inputs, loaded_names):
+        spec = partial._lookup_intrinsic(load.spelling)
+        loop_update = input_loop_updates[input_name]
+        tail_update = input_tail_updates.get(input_name)
+        if not (
+            isinstance(spec, StructuralIntrinsic)
+            and spec.operation is StructuralOp.LOAD
+            and isinstance(spec.signature.result, VectorType)
+            and spec.signature.result.fixed_lanes == small
+            and load.arguments[0].dependencies == (loop_update.value,)
+            and (
+                tail_update is None
+                or tail_update.dependencies
+                == (loop_update.value, f"constant:{small}:int")
+            )
+            and load.arguments[0].source_text.strip() == input_name
+            and not load.arguments[0].semantic_operations
+        ):
+            raise CaseEmissionError(
+                f"separate live-prefix load changed for {input_name}"
+            )
+        partial._bind_call(load, f"({loaded_name}).take {small}")
+
+    child_ids = {item.node_id for item in children}
+    child_calls = [call for call in tail_calls if call.parent_control in child_ids]
+    partial_pipeline = root_calls[len(profile.inputs) :]
+    tail_value: str | None = None
+    tail_dependency: str | None = None
+    for index, call in enumerate(partial_pipeline):
+        spec = partial._lookup_intrinsic(call.spelling)
+        if isinstance(spec, StructuralIntrinsic) and spec.operation in {
+            StructuralOp.LOAD,
+            StructuralOp.STORE,
+            StructuralOp.LANE_STORE,
+        }:
+            raise CaseEmissionError(
+                "load/store appeared inside the live-prefix value pipeline"
+            )
+        value = partial.emit_registered_call(call)
+        if value is None:
+            raise CaseEmissionError("live-prefix value call produced no value")
+        dependency = call.assigned_to or f"call:{call.node_id}"
+        later = [*partial_pipeline[index + 1 :], *child_calls]
+        if not any(dependency in later_call.dependencies for later_call in later):
+            raise CaseEmissionError("live-prefix value call is not consumed")
+        if call.assigned_to is not None:
+            tail_value = value
+            tail_dependency = call.assigned_to
+    if tail_value is None or tail_dependency is None:
+        raise CaseEmissionError("separate live-prefix tail has no final value")
+    partial_pipeline_lines = list(partial.lines)
+
+    stored_values: list[str] = []
+    current_dependency = tail_dependency
+    current_output_dependency = output_loop_update.value
+    for index, (child, width) in enumerate(zip(children, config.store_widths)):
+        calls = [call for call in tail_calls if call.parent_control == child.node_id]
+        expected_path = _tail_control_path(root, child)
+        if any(call.control_path != expected_path for call in calls):
+            raise CaseEmissionError(f"width-{width} separate tail path changed")
+        expected_count = 1 if index == len(children) - 1 else 3
+        if len(calls) != expected_count:
+            raise CaseEmissionError(
+                f"width-{width} separate tail branch has {len(calls)} calls; expected {expected_count}"
+            )
+        stored_dependency = current_dependency
+        lane_index = 0
+        if expected_count == 3:
+            bitcast = calls[0]
+            bitcast_spec = partial._lookup_intrinsic(bitcast.spelling)
+            if not (
+                isinstance(bitcast_spec, StructuralIntrinsic)
+                and bitcast_spec.operation is StructuralOp.BITCAST
+                and bitcast.arguments[0].dependencies == (current_dependency,)
+            ):
+                raise CaseEmissionError(f"width-{width} separate tail bitcast changed")
+            partial.emit_registered_call(bitcast)
+            stored_dependency = f"call:{bitcast.node_id}"
+            lane_index = 1
+        lane = calls[lane_index]
+        lane_spec = partial._lookup_intrinsic(lane.spelling)
+        pointer_type = (
+            lane_spec.signature.parameters[0].type
+            if isinstance(lane_spec, StructuralIntrinsic)
+            and lane_spec.operation is StructuralOp.LANE_STORE
+            else None
+        )
+        if not (
+            isinstance(pointer_type, PointerType)
+            and pointer_type.pointee.bit_width == width * profile.output_width
+            and lane.arguments[0].dependencies == (current_output_dependency,)
+            and lane.arguments[1].dependencies == (stored_dependency,)
+            and lane.arguments[-1].constant_value == 0
+        ):
+            raise CaseEmissionError(f"width-{width} separate lane-store shape changed")
+        stored_values.append(
+            _consume_little_endian_lane_store(
+                partial,
+                lane,
+                width=width,
+                bit=width.bit_length() - 1,
+                name=f"stored{width}",
+            )
+        )
+        if expected_count == 1:
+            continue
+        slide = calls[-1]
+        slide_spec = partial._lookup_intrinsic(slide.spelling)
+        if not (
+            isinstance(slide_spec, StructuralIntrinsic)
+            and slide_spec.operation is StructuralOp.EXTRACT_FROM_CONCAT
+            and slide.assigned_to is not None
+            and slide.arguments[0].dependencies == (current_dependency,)
+            and slide.arguments[1].dependencies == (current_dependency,)
+            and slide.arguments[2].constant_value == width
+        ):
+            raise CaseEmissionError(f"width-{width} separate conditional slide changed")
+        shifted = partial.emit_registered_call(slide)
+        if shifted is None:
+            raise CaseEmissionError(f"width-{width} separate slide produced no value")
+        joined = f"after{width}"
+        partial.lines.append(
+            f"  let {joined} := if live.testBit {width.bit_length() - 1} "
+            f"then {shifted} else {tail_value}"
+        )
+        partial.environment[slide.assigned_to] = joined
+        current_dependency = slide.assigned_to
+        tail_value = joined
+        output_update = unique_update(child.node_id, f"{output_base}+={width}")
+        if output_update.dependencies != (
+            current_output_dependency,
+            f"constant:{width}:int",
+        ):
+            raise CaseEmissionError(
+                "separate two-phase pointer or count updates changed"
+            )
+        current_output_dependency = output_update.value
+
+    expected_tail = {call.node_id for call in tail_calls}
+    consumed_tail = (block.consumed | partial.consumed) - {
+        call.node_id for call in prologue_calls
+    }
+    if consumed_tail != expected_tail:
+        raise CaseEmissionError(
+            "separate two-phase call coverage mismatch: "
+            f"missing={sorted(expected_tail - consumed_tail)!r}, "
+            f"extra={sorted(consumed_tail - expected_tail)!r}"
+        )
+    untranslated = [
+        definition
+        for definition in extraction.definitions
+        if definition.parent_control in tail_controls
+        and definition.value_call is None
+        and not definition.definition_kind.startswith("compound-")
+    ]
+    if untranslated:
+        raise CaseEmissionError("separate two-phase non-call definitions changed")
+
+    overread_names = _overread_argument_names(profile.inputs)
+    loaded_parameters = " ".join(loaded_names)
+    if len(profile.inputs) == 1:
+        input_name = profile.inputs[0]
+        overread = overread_names[0]
+        value_parameters = [
+            f"    ({input_name} {overread} : {_input_list_type(profile)}) : {_output_list_type(profile)} :=",
+        ]
+        tail_body = [
+            f"      let {loaded_names[0]} := (tail ++ {overread}).take {small}",
+            f"      neonPartialTailLivePrefixFromIntrinsics p {loaded_names[0]} tail.length)",
+            f"    {input_name}",
+        ]
+        compatibility_parameters = [
+            f"    ({input_name} : {_input_list_type(profile)}) : {_output_list_type(profile)} :=",
+        ]
+        compatibility_arguments = [
+            f"  neonValueLoopWithOverreadFromIntrinsics p {input_name}",
+            f"    (List.replicate {small - 1} (0 : {_input_value_type(profile)}))",
+        ]
+        schedule = [
+            f"  SALT.Kernel.Schedule.runTwoPhaseTail {large} {small} (by decide) (by decide)",
+            f"    ({profile.neon_function} p) (neonBlock{small}FromIntrinsics p)",
+            "    (fun tail =>",
+            *tail_body,
+        ]
+    else:
+        input_a, input_b = profile.inputs
+        loaded_a, loaded_b = loaded_names
+        overread_a, overread_b = overread_names
+        value_parameters = [
+            f"    ({input_a} {input_b} {overread_a} {overread_b} : {_input_list_type(profile)})",
+            f"    (sameLength : {input_a}.length = {input_b}.length) : {_output_list_type(profile)} :=",
+        ]
+        tail_body = [
+            f"      let {loaded_a} := (tailA ++ {overread_a}).take {small}",
+            f"      let {loaded_b} := (tailB ++ {overread_b}).take {small}",
+            f"      neonPartialTailLivePrefixFromIntrinsics p {loaded_a} {loaded_b} tailA.length)",
+            f"    {input_a} {input_b} sameLength",
+        ]
+        compatibility_parameters = [
+            f"    ({input_a} {input_b} : {_input_list_type(profile)})",
+            f"    (sameLength : {input_a}.length = {input_b}.length) : {_output_list_type(profile)} :=",
+        ]
+        compatibility_arguments = [
+            f"  neonValueLoopWithOverreadFromIntrinsics p {input_a} {input_b}",
+            f"    (List.replicate {small - 1} (0 : {_input_value_type(profile)}))",
+            f"    (List.replicate {small - 1} (0 : {_input_value_type(profile)})) sameLength",
+        ]
+        schedule = [
+            f"  SALT.Kernel.Schedule.runTwoPhaseTail2 {large} {small} (by decide) (by decide)",
+            f"    ({profile.neon_function} p) (neonBlock{small}FromIntrinsics p)",
+            "    (fun tailA tailB =>",
+            *tail_body,
+        ]
+
+    lines = [
+        "",
+        f"/-- Generated {small}-lane secondary block from the extracted call graph. -/",
+        f"def neonBlock{small}FromIntrinsics (p : {profile.parameter_type})",
+        f"    ({loaded_parameters} : {_input_list_type(profile)}) : {_output_list_type(profile)} :=",
+        *block.lines,
+        f"  {block_output}",
+        "",
+        f"/-- Generated little-endian live-prefix abstraction of the {'/'.join(map(str, config.store_widths))} stores. -/",
+        f"def neonPartialTailLivePrefixFromIntrinsics (p : {profile.parameter_type})",
+        f"    ({loaded_parameters} : {_input_list_type(profile)}) (live : Nat) : {_output_list_type(profile)} :=",
+        *partial_pipeline_lines,
+        *partial.lines[len(partial_pipeline_lines) :],
+        "  " + " ++ ".join(f"({value})" for value in stored_values),
+        "",
+        f"/-- Generated value-only lifting of the validated {large}/{small}/"
+        f"{'/'.join(map(str, config.store_widths))} control shape.",
+        "",
+        "The overread lists model physically loaded bytes beyond a nonempty short tail.",
+        "This definition does not establish C memory, alignment, aliasing, or endian adequacy.",
+        "-/",
+        f"def neonValueLoopWithOverreadFromIntrinsics (p : {profile.parameter_type})",
+        *value_parameters,
+        *schedule,
+        "",
+        "/-- Zero-filled compatibility specialization of the explicit-overread model. -/",
+        f"def neonValueLoopFromIntrinsics (p : {profile.parameter_type})",
+        *compatibility_parameters,
+        *compatibility_arguments,
+    ]
+    return lines, tuple(sorted(expected_tail))
+
+
+def _tail_control_path(
+    root: ControlFact, child: ControlFact | None = None
+) -> tuple[str, ...]:
+    path = (f"{root.node_id}:then",)
+    if child is not None:
+        path += (f"{child.node_id}:then",)
+    return path
+
+
+def _role_argument_names(prefix: str, inputs: tuple[str, ...]) -> tuple[str, ...]:
+    if len(inputs) == 1:
+        return (prefix,)
+    names: list[str] = []
+    for input_name in inputs:
+        role = input_name.removeprefix("input_")
+        parts = role.split("_")
+        if not role or any(
+            re.fullmatch(r"[A-Za-z][A-Za-z0-9]*", part) is None for part in parts
+        ):
+            raise CaseEmissionError(
+                f"cannot derive a Lean tail role from input {input_name!r}"
+            )
+        suffix = "".join(part[0].upper() + part[1:] for part in parts)
+        names.append(f"{prefix}{suffix}")
+    if len(set(names)) != len(names):
+        raise CaseEmissionError(f"duplicate generated tail arguments {names!r}")
+    return tuple(names)
+
+
+def _loaded_argument_names(inputs: tuple[str, ...]) -> tuple[str, ...]:
+    return _role_argument_names("loaded", inputs)
+
+
+def _overread_argument_names(inputs: tuple[str, ...]) -> tuple[str, ...]:
+    return _role_argument_names("overread", inputs)
+
+
+def _input_value_type(profile: ModelProfile) -> str:
+    return f"BitVec {profile.input_width}"
+
+
+def _output_value_type(profile: ModelProfile) -> str:
+    return f"BitVec {profile.output_width}"
+
+
+def _input_list_type(profile: ModelProfile) -> str:
+    return f"List ({_input_value_type(profile)})"
+
+
+def _output_list_type(profile: ModelProfile) -> str:
+    return f"List ({_output_value_type(profile)})"
+
+
+def _emit_pure_neon_prologue(
+    emitter: _CaseBlockEmitter,
+    calls: list[IntrinsicCall],
+    *,
+    context: str,
+) -> None:
+    """Emit an extracted, dependency-ordered vector-constant expression DAG."""
+
+    for call in calls:
+        spec = emitter._lookup_intrinsic(call.spelling)
+        if isinstance(spec, ScheduleIntrinsic) or (
+            isinstance(spec, StructuralIntrinsic)
+            and spec.operation
+            in {StructuralOp.LOAD, StructuralOp.STORE, StructuralOp.LANE_STORE}
+        ):
+            raise CaseEmissionError(
+                f"{context} contains an impure top-level Neon call {call.spelling}"
+            )
+        emitter.emit_registered_call(call)
+
+
+def _emit_prefix_tail_value_models(
+    extraction: KernelExtraction,
+    profile: ModelProfile,
+    registry: Mapping[str, IntrinsicSpec],
+    already_consumed: tuple[str, ...],
+) -> tuple[list[str], tuple[str, ...]]:
+    """Emit one reviewed fixed-block plus little-endian prefix-tail schedule."""
+
+    config = profile.prefix_tail
+    if config is None:
+        raise CaseEmissionError(f"{profile.case_id}: no prefix-tail profile")
+    if len(profile.inputs) not in {1, 2}:
+        raise CaseEmissionError(
+            f"{profile.case_id}: prefix-tail value loops support one or two inputs"
+        )
+    input_names = profile.inputs
+    main = _selected_neon_loop(extraction, profile)
+    roots = [
+        control
+        for control in extraction.controls
+        if control.kind == "IfStmt"
+        and control.parent_control is None
+        and control.condition_text == "batch != 0"
+    ]
+    if len(roots) != 1:
+        raise CaseEmissionError(
+            f"{profile.case_id}: expected one nonempty prefix-tail guard"
+        )
+    root = roots[0]
+    children = [
+        control
+        for control in extraction.controls
+        if control.parent_control == root.node_id
+    ]
+    expected_conditions = [
+        f"batch & ({width} * sizeof({config.element_c_type}))"
+        for width in config.store_widths
+    ]
+    if [control.condition_text for control in children] != expected_conditions:
+        raise CaseEmissionError(
+            f"{profile.case_id}: prefix-tail branch order or widths changed"
+        )
+
+    consumed_before = set(already_consumed)
+    tail_controls = {root.node_id, *(control.node_id for control in children)}
+    tail_calls = [
+        call for call in extraction.calls if call.node_id not in consumed_before
+    ]
+    if not tail_calls or any(
+        call.parent_control not in tail_controls for call in tail_calls
+    ):
+        raise CaseEmissionError(
+            f"{profile.case_id}: calls outside the reviewed prefix-tail remain"
+        )
+
+    emitter = _CaseBlockEmitter(
+        extraction,
+        Architecture.NEON,
+        registry,
+        broadcast_inputs=profile.broadcast_inputs,
+    )
+    prologue_calls = [call for call in extraction.calls if call.parent_control is None]
+    _emit_pure_neon_prologue(
+        emitter,
+        prologue_calls,
+        context=f"{profile.case_id}: prefix-tail prologue",
+    )
+
+    root_calls = [call for call in tail_calls if call.parent_control == root.node_id]
+    if not root_calls:
+        raise CaseEmissionError(f"{profile.case_id}: prefix tail has no value pipeline")
+    if any(call.control_path != _tail_control_path(root) for call in root_calls):
+        raise CaseEmissionError(f"{profile.case_id}: prefix-tail root path changed")
+    if len(root_calls) <= len(input_names):
+        raise CaseEmissionError(f"{profile.case_id}: prefix-tail pipeline is empty")
+    loaded_names = _loaded_argument_names(input_names)
+    for load, input_name, loaded_name in zip(
+        root_calls[: len(input_names)], input_names, loaded_names
+    ):
+        load_spec = emitter._lookup_intrinsic(load.spelling)
+        if not (
+            isinstance(load_spec, StructuralIntrinsic)
+            and load_spec.operation is StructuralOp.LOAD
+            and isinstance(load_spec.signature.result, VectorType)
+            and load_spec.signature.result.fixed_lanes == config.load_lanes
+        ):
+            raise CaseEmissionError(
+                f"{profile.case_id}: prefix tail must begin with one "
+                f"{config.load_lanes}-lane load per input"
+            )
+        load_base = load.arguments[0]
+        if (
+            load_base.dependencies != (f"{input_name}@1",)
+            or load_base.source_text.strip() != input_name
+            or load_base.semantic_operations
+        ):
+            raise CaseEmissionError(
+                f"{profile.case_id}: prefix-tail load base changed for {input_name}"
+            )
+        emitter._bind_call(load, f"({loaded_name}).take {config.load_lanes}")
+
+    tail_value: str | None = None
+    tail_dependency: str | None = None
+    value_calls = root_calls[len(input_names) :]
+    tail_source_dependency: str | None = None
+    call_positions = {
+        call.node_id: index for index, call in enumerate(extraction.calls)
+    }
+    pending_value_calls = list(value_calls)
+
+    def emit_root_pipeline(calls: list[IntrinsicCall]) -> None:
+        nonlocal tail_value, tail_dependency, tail_source_dependency
+        for call in calls:
+            spec = emitter._lookup_intrinsic(call.spelling)
+            if isinstance(spec, ScheduleIntrinsic) or (
+                isinstance(spec, StructuralIntrinsic)
+                and spec.operation
+                in {StructuralOp.LOAD, StructuralOp.STORE, StructuralOp.LANE_STORE}
+            ):
+                raise CaseEmissionError(
+                    f"{profile.case_id}: impure call appeared inside the tail value pipeline"
+                )
+            emitted_value = emitter.emit_registered_call(call)
+            if emitted_value is None:
+                raise CaseEmissionError(
+                    f"{profile.case_id}: tail value pipeline call produced no value"
+                )
+            if call.assigned_to is None:
+                dependency = f"call:{call.node_id}"
+                if not any(
+                    call_positions[later.node_id] > call_positions[call.node_id]
+                    and dependency in later.dependencies
+                    for later in tail_calls
+                ):
+                    raise CaseEmissionError(
+                        f"{profile.case_id}: expression-only tail call {call.spelling} "
+                        "is not consumed by a later call"
+                    )
+                continue
+            tail_value = emitted_value
+            tail_dependency = call.assigned_to
+            tail_source_dependency = None
+            if (
+                isinstance(spec, StructuralIntrinsic)
+                and spec.operation is StructuralOp.TAKE_LOW
+                and len(call.arguments) == 1
+                and len(call.arguments[0].dependencies) == 1
+            ):
+                tail_source_dependency = call.arguments[0].dependencies[0]
+
+    main_store_count = sum(
+        1
+        for call in extraction.calls
+        if call.parent_control == main.node_id
+        and isinstance(emitter._lookup_intrinsic(call.spelling), StructuralIntrinsic)
+        and emitter._lookup_intrinsic(call.spelling).operation is StructuralOp.STORE
+    )
+    output_version = main_store_count
+    stored_values: list[str] = []
+    expected_updates: list[tuple[str, str, tuple[str, ...], str, tuple[str, ...]]] = []
+
+    for index, (child, width) in enumerate(zip(children, config.store_widths)):
+        branch_calls = [
+            call for call in tail_calls if call.parent_control == child.node_id
+        ]
+        if any(
+            call.control_path != _tail_control_path(root, child)
+            for call in branch_calls
+        ):
+            raise CaseEmissionError(
+                f"{profile.case_id}: prefix-tail branch path changed for width {width}"
+            )
+        if not branch_calls:
+            raise CaseEmissionError(
+                f"{profile.case_id}: width-{width} branch has no store"
+            )
+        branch_position = call_positions[branch_calls[0].node_id]
+        ready = [
+            call
+            for call in pending_value_calls
+            if call_positions[call.node_id] < branch_position
+        ]
+        emit_root_pipeline(ready)
+        pending_value_calls = [
+            call for call in pending_value_calls if call not in ready
+        ]
+        if tail_value is None or tail_dependency is None:
+            raise CaseEmissionError(
+                f"{profile.case_id}: prefix-tail store precedes its value pipeline"
+            )
+        first_spec = emitter._lookup_intrinsic(branch_calls[0].spelling)
+        full_store = (
+            isinstance(first_spec, StructuralIntrinsic)
+            and first_spec.operation is StructuralOp.STORE
+        )
+        advance: IntrinsicCall | None = None
+        shifted: str | None = None
+        if full_store:
+            if index == len(children) - 1 or len(branch_calls) < 2:
+                raise CaseEmissionError(
+                    f"{profile.case_id}: width-{width} full-store branch needs a following pure value pipeline"
+                )
+            store = branch_calls[0]
+            pointer_type = first_spec.signature.parameters[0].type
+            value_type = first_spec.signature.parameters[1].type
+            if not (
+                isinstance(pointer_type, PointerType)
+                and pointer_type.pointee.bit_width == profile.output_width
+                and isinstance(value_type, VectorType)
+                and value_type.fixed_lanes == width
+                and store.arguments[0].dependencies == (f"output@{output_version}",)
+                and _compact_source(store.arguments[0].source_text) == "output"
+                and not store.arguments[0].semantic_operations
+                and store.arguments[1].dependencies == (tail_dependency,)
+                and not store.arguments[1].semantic_operations
+            ):
+                raise CaseEmissionError(
+                    f"{profile.case_id}: width-{width} full-store shape changed"
+                )
+            stored = emitter.emit_registered_call(store)
+            if stored is None:
+                raise CaseEmissionError(
+                    f"{profile.case_id}: width-{width} full store produced no value"
+                )
+            stored_name = f"stored{width}"
+            emitter.lines.append(
+                f"  let {stored_name} := if live.testBit {width.bit_length() - 1} "
+                f"then ({stored}).take {width} else []"
+            )
+            stored_values.append(stored_name)
+            suffix = branch_calls[1:]
+            for suffix_call in suffix:
+                suffix_spec = emitter._lookup_intrinsic(suffix_call.spelling)
+                if isinstance(suffix_spec, ScheduleIntrinsic) or (
+                    isinstance(suffix_spec, StructuralIntrinsic)
+                    and suffix_spec.operation
+                    in {StructuralOp.LOAD, StructuralOp.STORE, StructuralOp.LANE_STORE}
+                ):
+                    raise CaseEmissionError(
+                        f"{profile.case_id}: width-{width} advance pipeline is impure"
+                    )
+                shifted = emitter.emit_registered_call(suffix_call)
+                if shifted is None:
+                    raise CaseEmissionError(
+                        f"{profile.case_id}: width-{width} advance produced no value"
+                    )
+            advance = suffix[-1]
+            advance_spec = emitter._lookup_intrinsic(advance.spelling)
+            advance_definition = (
+                None
+                if advance.assigned_to is None
+                else emitter.definitions.get(advance.assigned_to)
+            )
+            if not (
+                isinstance(advance_spec.signature.result, VectorType)
+                and advance_spec.signature.result.fixed_lanes == width
+                and advance.assigned_to is not None
+                and advance_definition is not None
+                and advance_definition.definition_kind == "assignment"
+                and advance_definition.value_call == advance.node_id
+            ):
+                raise CaseEmissionError(
+                    f"{profile.case_id}: width-{width} advance pipeline result changed"
+                )
+            if (
+                isinstance(advance_spec, StructuralIntrinsic)
+                and advance_spec.operation is StructuralOp.TAKE_HIGH
+                and (
+                    tail_source_dependency is None
+                    or advance.arguments[0].dependencies != (tail_source_dependency,)
+                )
+            ):
+                raise CaseEmissionError(
+                    f"{profile.case_id}: width-{width} high-half extraction changed"
+                )
+        else:
+            expected_counts = {1} if index == len(children) - 1 else {2, 3}
+            if len(branch_calls) not in expected_counts:
+                raise CaseEmissionError(
+                    f"{profile.case_id}: width-{width} lane-store branch has "
+                    f"{len(branch_calls)} calls; expected {sorted(expected_counts)!r}"
+                )
+
+            lane_store_index = 0
+            stored_dependency = tail_dependency
+            if len(branch_calls) == 3:
+                bitcast = branch_calls[0]
+                bitcast_spec = emitter._lookup_intrinsic(bitcast.spelling)
+                if not (
+                    isinstance(bitcast_spec, StructuralIntrinsic)
+                    and bitcast_spec.operation is StructuralOp.BITCAST
+                    and bitcast.arguments[0].dependencies == (tail_dependency,)
+                ):
+                    raise CaseEmissionError(
+                        f"{profile.case_id}: width-{width} branch needs a current-value bitcast"
+                    )
+                emitter.emit_registered_call(bitcast)
+                stored_dependency = f"call:{bitcast.node_id}"
+                lane_store_index = 1
+
+            lane_store = branch_calls[lane_store_index]
+            lane_spec = emitter._lookup_intrinsic(lane_store.spelling)
+            pointer_type = lane_spec.signature.parameters[0].type
+            pointer_argument = lane_store.arguments[0]
+            value_argument = lane_store.arguments[1]
+            expected_pointer_source = "output" if width == 1 else "(void*)output"
+            expected_pointer_operations = (
+                ()
+                if width == 1
+                else (
+                    "explicit-cast:BitCast:void *",
+                    f"implicit-cast:BitCast:uint{width * profile.output_width}_t *",
+                )
+            )
+            if not (
+                isinstance(lane_spec, StructuralIntrinsic)
+                and lane_spec.operation is StructuralOp.LANE_STORE
+                and isinstance(pointer_type, PointerType)
+                and pointer_type.pointee.bit_width == width * profile.output_width
+                and pointer_argument.dependencies == (f"output@{output_version}",)
+                and _compact_source(pointer_argument.source_text) == expected_pointer_source
+                and pointer_argument.semantic_operations == expected_pointer_operations
+                and value_argument.dependencies == (stored_dependency,)
+                and not value_argument.semantic_operations
+            ):
+                raise CaseEmissionError(
+                    f"{profile.case_id}: width-{width} lane-store shape changed"
+                )
+            stored_values.append(
+                _consume_little_endian_lane_store(
+                    emitter,
+                    lane_store,
+                    width=width,
+                    bit=width.bit_length() - 1,
+                    name=f"stored{width}",
+                )
+            )
+            if index != len(children) - 1:
+                advance = branch_calls[-1]
+                advance_spec = emitter._lookup_intrinsic(advance.spelling)
+                advance_definition = (
+                    None
+                    if advance.assigned_to is None
+                    else emitter.definitions.get(advance.assigned_to)
+                )
+                if not (
+                    isinstance(advance_spec, StructuralIntrinsic)
+                    and advance_spec.operation is StructuralOp.EXTRACT_FROM_CONCAT
+                    and advance.assigned_to is not None
+                    and advance_definition is not None
+                    and advance_definition.definition_kind == "assignment"
+                    and advance_definition.value_call == advance.node_id
+                    and advance.arguments[0].dependencies == (tail_dependency,)
+                    and advance.arguments[1].dependencies == (tail_dependency,)
+                    and advance.arguments[2].constant_value == width
+                ):
+                    raise CaseEmissionError(
+                        f"{profile.case_id}: width-{width} conditional slide changed"
+                    )
+
+        if index == len(children) - 1:
+            continue
+        if advance is None:  # pragma: no cover - guarded by the branch validators
+            raise AssertionError("non-final tail store lost its advance operation")
+        if shifted is None:
+            shifted = emitter.emit_registered_call(advance)
+        if shifted is None or advance.assigned_to is None:
+            raise CaseEmissionError(
+                f"{profile.case_id}: width-{width} advance produced no value"
+            )
+        joined = f"after{width}"
+        emitter.lines.append(
+            f"  let {joined} := if live.testBit {width.bit_length() - 1} "
+            f"then {shifted} else {tail_value}"
+        )
+        emitter.environment[advance.assigned_to] = joined
+        tail_dependency = advance.assigned_to
+        tail_value = joined
+
+        next_version = output_version + 1
+        expected_updates.append(
+            (
+                f"output@{next_version}",
+                child.node_id,
+                _tail_control_path(root, child),
+                f"output+={width}",
+                (f"output@{output_version}", f"constant:{width}:int"),
+            )
+        )
+        output_version = next_version
+
+    if pending_value_calls:
+        raise CaseEmissionError(
+            f"{profile.case_id}: tail value calls remain after the final store: "
+            f"{[call.spelling for call in pending_value_calls]!r}"
+        )
+
+    if config.input_advances_after_load:
+        expected_updates[0:0] = [
+            (
+                f"{input_name}@2",
+                root.node_id,
+                _tail_control_path(root),
+                f"{input_name}+={config.load_lanes}",
+                (f"{input_name}@1", f"constant:{config.load_lanes}:int"),
+            )
+            for input_name in input_names
+        ]
+    actual_updates = [
+        (
+            definition.value,
+            definition.parent_control,
+            definition.control_path,
+            _compact_source(definition.expression_text),
+            definition.dependencies,
+        )
+        for definition in extraction.definitions
+        if definition.parent_control in tail_controls
+        and definition.definition_kind.startswith("compound-")
+    ]
+    if actual_updates != expected_updates:
+        raise CaseEmissionError(
+            f"{profile.case_id}: prefix-tail pointer updates changed: "
+            f"{actual_updates!r}"
+        )
+    untranslated = [
+        definition.value
+        for definition in extraction.definitions
+        if definition.parent_control in tail_controls
+        and definition.value_call is None
+        and not definition.definition_kind.startswith("compound-")
+    ]
+    if untranslated:
+        raise CaseEmissionError(
+            f"{profile.case_id}: untranslated prefix-tail definitions {untranslated!r}"
+        )
+
+    expected_tail = {call.node_id for call in tail_calls}
+    consumed_tail = emitter.consumed - {call.node_id for call in prologue_calls}
+    if consumed_tail != expected_tail:
+        raise CaseEmissionError(
+            f"{profile.case_id}: prefix-tail call coverage mismatch: "
+            f"missing={sorted(expected_tail - consumed_tail)!r}, "
+            f"extra={sorted(consumed_tail - expected_tail)!r}"
+        )
+
+    width = profile.neon_block_lanes
+    padding = config.load_lanes - 1
+    loaded_parameters = " ".join(loaded_names)
+    partial_application = " ".join(loaded_names)
+    overread_description = (
+        "`overread` supplies the bytes physically loaded beyond a nonempty short tail."
+        if len(input_names) == 1
+        else "`overreadA` and `overreadB` supply the bytes physically loaded beyond "
+        "a nonempty short tail."
+    )
+    if len(input_names) == 1:
+        input_name = input_names[0]
+        value_loop_parameters = [
+            f"    ({input_name} overread : {_input_list_type(profile)}) : {_output_list_type(profile)} :=",
+        ]
+        tail_loader_lines = [
+            f"      let {loaded_names[0]} := (tail ++ overread).take {config.load_lanes}",
+            f"      neonPartialTailLivePrefixFromIntrinsics p {partial_application} tail.length)",
+        ]
+        schedule_lines = [
+            f"  SALT.Kernel.Schedule.runFixedChunkTail {width} (by decide)",
+            f"    ({profile.neon_function} p)",
+            "    (fun tail =>",
+            *tail_loader_lines,
+            f"    {input_name}",
+        ]
+        compatibility_parameters = [
+            f"    ({input_name} : {_input_list_type(profile)}) : {_output_list_type(profile)} :=",
+        ]
+        compatibility_arguments = [
+            f"  neonValueLoopWithOverreadFromIntrinsics p {input_name}",
+            f"    (List.replicate {padding} (0 : {_input_value_type(profile)}))",
+        ]
+    else:
+        input_a, input_b = input_names
+        overread_names = _overread_argument_names(input_names)
+        overread_a, overread_b = overread_names
+        loaded_a, loaded_b = loaded_names
+        value_loop_parameters = [
+            f"    ({input_a} {input_b} {overread_a} {overread_b} : {_input_list_type(profile)})",
+            f"    (sameLength : {input_a}.length = {input_b}.length) : {_output_list_type(profile)} :=",
+        ]
+        schedule_lines = [
+            f"  SALT.Kernel.Schedule.runFixedChunkTail2 {width} (by decide)",
+            f"    ({profile.neon_function} p)",
+            "    (fun tailA tailB =>",
+            f"      let {loaded_a} := (tailA ++ {overread_a}).take {config.load_lanes}",
+            f"      let {loaded_b} := (tailB ++ {overread_b}).take {config.load_lanes}",
+            f"      neonPartialTailLivePrefixFromIntrinsics p {partial_application} tailA.length)",
+            f"    {input_a} {input_b} sameLength",
+        ]
+        compatibility_parameters = [
+            f"    ({input_a} {input_b} : {_input_list_type(profile)})",
+            f"    (sameLength : {input_a}.length = {input_b}.length) : {_output_list_type(profile)} :=",
+        ]
+        compatibility_arguments = [
+            f"  neonValueLoopWithOverreadFromIntrinsics p {input_a} {input_b}",
+            f"    (List.replicate {padding} (0 : {_input_value_type(profile)}))",
+            f"    (List.replicate {padding} (0 : {_input_value_type(profile)})) sameLength",
+        ]
+
+    lines = [
+        "",
+        "/-- Generated little-endian live-prefix value abstraction for the reviewed tail stores.",
+        "",
+        "This definition does not establish C memory, alignment, aliasing, or endian adequacy.",
+        "-/",
+        f"def neonPartialTailLivePrefixFromIntrinsics (p : {profile.parameter_type})",
+        f"    ({loaded_parameters} : {_input_list_type(profile)}) (live : Nat) : {_output_list_type(profile)} :=",
+        *emitter.lines,
+        "  " + " ++ ".join(f"({value})" for value in stored_values),
+        "",
+        f"/-- Generated value-only lifting of the validated {width}/{'/'.join(map(str, config.store_widths))} control shape.",
+        "",
+        overread_description,
+        "This definition does not establish that those bytes are legally readable.",
+        "-/",
+        f"def neonValueLoopWithOverreadFromIntrinsics (p : {profile.parameter_type})",
+        *value_loop_parameters,
+        *schedule_lines,
+        "",
+        "/-- Zero-filled compatibility specialization of the explicit-overread model. -/",
+        f"def neonValueLoopFromIntrinsics (p : {profile.parameter_type})",
+        *compatibility_parameters,
+        *compatibility_arguments,
+    ]
+    return lines, tuple(sorted(expected_tail))
+
+
+def _emit_nested_two_phase_tail_value_models(
+    extraction: KernelExtraction,
+    profile: ModelProfile,
+    registry: Mapping[str, IntrinsicSpec],
+    already_consumed: tuple[str, ...],
+) -> tuple[list[str], tuple[str, ...]]:
+    """Emit a structurally recognized do-while small phase and prefix tail.
+
+    The adapter is parameterized by the two phase widths, input arity, intrinsic
+    registry, and extracted dependency graph.  It does not inspect a case id or
+    function/path name.  Lane stores are a value-only little-endian prefix model;
+    C memory legality remains outside the resulting claim.
+    """
+
+    config = profile.prefix_tail
+    if config is None or len(profile.multiphase_widths) != 2:
+        raise CaseEmissionError(
+            "nested two-phase value model needs two widths and a tail"
+        )
+    if len(profile.inputs) not in {1, 2}:
+        raise CaseEmissionError(
+            "nested two-phase value model supports one or two inputs"
+        )
+    large, small = profile.multiphase_widths
+    if config.load_lanes != small:
+        raise CaseEmissionError("small phase width must match its physical load width")
+
+    outer = [
+        control
+        for control in extraction.controls
+        if control.kind == "IfStmt" and control.parent_control is None
+    ]
+    do_controls = [
+        control for control in extraction.controls if control.kind == "DoStmt"
+    ]
+    if (
+        len(outer) != 1
+        or len(do_controls) != 1
+        or do_controls[0].parent_control != outer[0].node_id
+    ):
+        raise CaseEmissionError("nested two-phase control has no unique outer/do pair")
+    root, do = outer[0], do_controls[0]
+    full_controls = [
+        control
+        for control in extraction.controls
+        if control.kind == "IfStmt" and control.parent_control == do.node_id
+    ]
+    if len(full_controls) != 1:
+        raise CaseEmissionError(
+            "nested two-phase control has no unique full-block branch"
+        )
+    full = full_controls[0]
+    children = [
+        control
+        for control in extraction.controls
+        if control.parent_control == full.node_id
+    ]
+    if [_compact_source(control.condition_text) for control in children] != [
+        f"batch&({width}*sizeof({config.element_c_type}))"
+        for width in config.store_widths
+    ]:
+        raise CaseEmissionError("nested two-phase live-prefix branch order changed")
+
+    consumed_before = set(already_consumed)
+    tail_calls = [
+        call for call in extraction.calls if call.node_id not in consumed_before
+    ]
+    allowed_controls = {
+        do.node_id,
+        full.node_id,
+        *(control.node_id for control in children),
+    }
+    if not tail_calls or any(
+        call.parent_control not in allowed_controls for call in tail_calls
+    ):
+        raise CaseEmissionError("calls remain outside the nested two-phase regions")
+
+    emitter = _CaseBlockEmitter(
+        extraction,
+        Architecture.NEON,
+        registry,
+        broadcast_inputs=profile.broadcast_inputs,
+    )
+    prologue_calls = [call for call in extraction.calls if call.parent_control is None]
+    _emit_pure_neon_prologue(
+        emitter,
+        prologue_calls,
+        context="nested two-phase prologue",
+    )
+
+    do_calls = [call for call in tail_calls if call.parent_control == do.node_id]
+    if len(do_calls) <= len(profile.inputs):
+        raise CaseEmissionError("nested small phase has no value pipeline")
+    loaded_names = _loaded_argument_names(profile.inputs)
+    loads = do_calls[: len(profile.inputs)]
+    for load, input_name, loaded_name in zip(loads, profile.inputs, loaded_names):
+        spec = emitter._lookup_intrinsic(load.spelling)
+        dependency = _single_dependency(load.arguments[0])
+        match = re.fullmatch(rf"{re.escape(input_name)}@(\d+)", dependency)
+        if not (
+            isinstance(spec, StructuralIntrinsic)
+            and spec.operation is StructuralOp.LOAD
+            and isinstance(spec.signature.result, VectorType)
+            and spec.signature.result.fixed_lanes == small
+            and match is not None
+            and load.arguments[0].source_text.strip() == input_name
+            and not load.arguments[0].semantic_operations
+        ):
+            raise CaseEmissionError(f"nested small phase load changed for {input_name}")
+        emitter._bind_call(load, f"({loaded_name}).take {small}")
+
+    small_value: str | None = None
+    small_dependency: str | None = None
+    for index, call in enumerate(do_calls[len(profile.inputs) :]):
+        spec = emitter._lookup_intrinsic(call.spelling)
+        if isinstance(spec, StructuralIntrinsic) and spec.operation in {
+            StructuralOp.LOAD,
+            StructuralOp.STORE,
+            StructuralOp.LANE_STORE,
+        }:
+            raise CaseEmissionError(
+                "load/store appeared inside the small-phase value pipeline"
+            )
+        value = emitter.emit_registered_call(call)
+        if value is None:
+            raise CaseEmissionError("small-phase value call produced no value")
+        if call.assigned_to is None:
+            dependency = f"call:{call.node_id}"
+            later_calls = do_calls[len(profile.inputs) + index + 1 :]
+            if not any(dependency in later.dependencies for later in later_calls):
+                raise CaseEmissionError("unconsumed expression-only small-phase call")
+            continue
+        small_value = value
+        small_dependency = call.assigned_to
+    if small_value is None or small_dependency is None:
+        raise CaseEmissionError("nested small phase has no final value")
+    pipeline_lines = list(emitter.lines)
+
+    full_calls = [call for call in tail_calls if call.parent_control == full.node_id]
+    if len(full_calls) != 1:
+        raise CaseEmissionError(
+            "full small-phase branch must contain exactly one store"
+        )
+    full_store = full_calls[0]
+    full_spec = emitter._lookup_intrinsic(full_store.spelling)
+    full_value_type = (
+        full_spec.signature.parameters[1].type
+        if isinstance(full_spec, StructuralIntrinsic)
+        and full_spec.operation is StructuralOp.STORE
+        else None
+    )
+    if not (
+        isinstance(full_value_type, VectorType)
+        and full_value_type.fixed_lanes == small
+        and full_store.arguments[1].dependencies == (small_dependency,)
+    ):
+        raise CaseEmissionError("full small-phase store shape changed")
+    stored_full = emitter.emit_registered_call(full_store)
+    if stored_full is None:
+        raise CaseEmissionError("full small-phase store produced no value")
+
+    stored_values: list[str] = []
+    current_dependency = small_dependency
+    for index, (child, width) in enumerate(zip(children, config.store_widths)):
+        calls = [call for call in tail_calls if call.parent_control == child.node_id]
+        expected_count = 1 if index == len(children) - 1 else 3
+        if len(calls) != expected_count:
+            raise CaseEmissionError(
+                f"width-{width} nested tail branch has {len(calls)} calls; expected {expected_count}"
+            )
+        lane_index = 0
+        stored_dependency = current_dependency
+        if expected_count == 3:
+            bitcast = calls[0]
+            bitcast_spec = emitter._lookup_intrinsic(bitcast.spelling)
+            if not (
+                isinstance(bitcast_spec, StructuralIntrinsic)
+                and bitcast_spec.operation is StructuralOp.BITCAST
+                and bitcast.arguments[0].dependencies == (current_dependency,)
+            ):
+                raise CaseEmissionError(f"width-{width} nested tail bitcast changed")
+            emitter.emit_registered_call(bitcast)
+            stored_dependency = f"call:{bitcast.node_id}"
+            lane_index = 1
+        lane = calls[lane_index]
+        lane_spec = emitter._lookup_intrinsic(lane.spelling)
+        pointer_type = (
+            lane_spec.signature.parameters[0].type
+            if isinstance(lane_spec, StructuralIntrinsic)
+            and lane_spec.operation is StructuralOp.LANE_STORE
+            else None
+        )
+        if not (
+            isinstance(pointer_type, PointerType)
+            and pointer_type.pointee.bit_width == width * profile.output_width
+            and lane.arguments[1].dependencies == (stored_dependency,)
+            and lane.arguments[-1].constant_value == 0
+        ):
+            raise CaseEmissionError(f"width-{width} nested lane-store shape changed")
+        stored_values.append(
+            _consume_little_endian_lane_store(
+                emitter,
+                lane,
+                width=width,
+                bit=width.bit_length() - 1,
+                name=f"stored{width}",
+            )
+        )
+        if expected_count == 1:
+            continue
+        slide = calls[-1]
+        slide_spec = emitter._lookup_intrinsic(slide.spelling)
+        if not (
+            isinstance(slide_spec, StructuralIntrinsic)
+            and slide_spec.operation is StructuralOp.EXTRACT_FROM_CONCAT
+            and slide.assigned_to is not None
+            and slide.arguments[0].dependencies == (current_dependency,)
+            and slide.arguments[1].dependencies == (current_dependency,)
+            and slide.arguments[2].constant_value == width
+        ):
+            raise CaseEmissionError(f"width-{width} nested conditional slide changed")
+        shifted = emitter.emit_registered_call(slide)
+        if shifted is None:
+            raise CaseEmissionError(f"width-{width} nested slide produced no value")
+        joined = f"after{width}"
+        emitter.lines.append(
+            f"  let {joined} := if live.testBit {width.bit_length() - 1} "
+            f"then {shifted} else {small_value}"
+        )
+        emitter.environment[slide.assigned_to] = joined
+        current_dependency = slide.assigned_to
+        small_value = joined
+
+    expected_tail = {call.node_id for call in tail_calls}
+    consumed_tail = emitter.consumed - {call.node_id for call in prologue_calls}
+    if consumed_tail != expected_tail:
+        raise CaseEmissionError(
+            "nested two-phase call coverage mismatch: "
+            f"missing={sorted(expected_tail - consumed_tail)!r}, "
+            f"extra={sorted(consumed_tail - expected_tail)!r}"
+        )
+
+    tail_controls = allowed_controls
+    untranslated = [
+        definition
+        for definition in extraction.definitions
+        if definition.parent_control in tail_controls
+        and definition.value_call is None
+        and not definition.definition_kind.startswith("compound-")
+    ]
+    if len(untranslated) != 1 or not (
+        untranslated[0].definition_kind == "assignment"
+        and _compact_source(untranslated[0].expression_text) == "batch=0"
+        and untranslated[0].dependencies == ("constant:0:int",)
+    ):
+        raise CaseEmissionError("nested two-phase non-call definitions changed")
+    compound = [
+        definition
+        for definition in extraction.definitions
+        if definition.parent_control in tail_controls
+        and definition.definition_kind.startswith("compound-")
+    ]
+    expected_advances = {
+        *(f"{name}+={small}" for name in profile.inputs),
+        f"output+={small}",
+        f"batch-={small}*sizeof({config.element_c_type})",
+        *(f"output+={width}" for width in config.store_widths[:-1]),
+    }
+    if {
+        _compact_source(item.expression_text) for item in compound
+    } != expected_advances:
+        raise CaseEmissionError("nested two-phase pointer/count updates changed")
+
+    loaded_parameters = " ".join(loaded_names)
+    partial_lines = emitter.lines[len(pipeline_lines) :]
+    overread_names = _overread_argument_names(profile.inputs)
+    if len(profile.inputs) == 1:
+        input_name = profile.inputs[0]
+        overread = overread_names[0]
+        value_parameters = [
+            f"    ({input_name} {overread} : {_input_list_type(profile)}) : {_output_list_type(profile)} :=",
+        ]
+        tail_body = [
+            f"      let {loaded_names[0]} := (tail ++ {overread}).take {small}",
+            f"      neonPartialTailLivePrefixFromIntrinsics p {loaded_names[0]} tail.length)",
+            f"    {input_name}",
+        ]
+        compatibility_parameters = [
+            f"    ({input_name} : {_input_list_type(profile)}) : {_output_list_type(profile)} :="
+        ]
+        compatibility_arguments = [
+            f"  neonValueLoopWithOverreadFromIntrinsics p {input_name}",
+            f"    (List.replicate {small - 1} (0 : {_input_value_type(profile)}))",
+        ]
+    else:
+        input_a, input_b = profile.inputs
+        loaded_a, loaded_b = loaded_names
+        overread_a, overread_b = overread_names
+        value_parameters = [
+            f"    ({input_a} {input_b} {overread_a} {overread_b} : {_input_list_type(profile)})",
+            f"    (sameLength : {input_a}.length = {input_b}.length) : {_output_list_type(profile)} :=",
+        ]
+        tail_body = [
+            f"      let {loaded_a} := (tailA ++ {overread_a}).take {small}",
+            f"      let {loaded_b} := (tailB ++ {overread_b}).take {small}",
+            f"      neonPartialTailLivePrefixFromIntrinsics p {loaded_a} {loaded_b} tailA.length)",
+            f"    {input_a} {input_b} sameLength",
+        ]
+        compatibility_parameters = [
+            f"    ({input_a} {input_b} : {_input_list_type(profile)})",
+            f"    (sameLength : {input_a}.length = {input_b}.length) : {_output_list_type(profile)} :=",
+        ]
+        compatibility_arguments = [
+            f"  neonValueLoopWithOverreadFromIntrinsics p {input_a} {input_b}",
+            f"    (List.replicate {small - 1} (0 : {_input_value_type(profile)}))",
+            f"    (List.replicate {small - 1} (0 : {_input_value_type(profile)})) sameLength",
+        ]
+
+    small_application = " ".join(loaded_names)
+    if len(profile.inputs) == 1:
+        schedule = [
+            f"  SALT.Kernel.Schedule.runTwoPhaseTail {large} {small} (by decide) (by decide)",
+            f"    ({profile.neon_function} p) (neonBlock{small}FromIntrinsics p)",
+            "    (fun tail =>",
+            *tail_body,
+        ]
+    else:
+        schedule = [
+            f"  SALT.Kernel.Schedule.runTwoPhaseTail2 {large} {small} (by decide) (by decide)",
+            f"    ({profile.neon_function} p) (neonBlock{small}FromIntrinsics p)",
+            "    (fun tailA tailB =>",
+            *tail_body,
+        ]
+    lines = [
+        "",
+        f"/-- Generated {small}-lane secondary block from the extracted call graph. -/",
+        f"def neonBlock{small}FromIntrinsics (p : {profile.parameter_type})",
+        f"    ({loaded_parameters} : {_input_list_type(profile)}) : {_output_list_type(profile)} :=",
+        *pipeline_lines,
+        f"  {stored_full}",
+        "",
+        f"/-- Generated little-endian live-prefix abstraction of the {'/'.join(map(str, config.store_widths))} stores. -/",
+        f"def neonPartialTailLivePrefixFromIntrinsics (p : {profile.parameter_type})",
+        f"    ({loaded_parameters} : {_input_list_type(profile)}) (live : Nat) : {_output_list_type(profile)} :=",
+        *pipeline_lines,
+        *partial_lines,
+        "  " + " ++ ".join(f"({value})" for value in stored_values),
+        "",
+        "/-- Generated value-only lifting of the validated two-phase control shape. -/",
+        f"def neonValueLoopWithOverreadFromIntrinsics (p : {profile.parameter_type})",
+        *value_parameters,
+        *schedule,
+        "",
+        "/-- Zero-filled compatibility specialization of the explicit-overread model. -/",
+        f"def neonValueLoopFromIntrinsics (p : {profile.parameter_type})",
+        *compatibility_parameters,
+        *compatibility_arguments,
+    ]
+    return lines, tuple(sorted(expected_tail))
+
+
+def _selected_rvv_loop(extraction: KernelExtraction, profile: ModelProfile):
+    matches = [
+        control
+        for control in extraction.controls
+        if control.kind in {"WhileStmt", "ForStmt"}
+        and control.parent_control is None
+        and control.condition_text == f"{profile.rvv_count_variable} > 0"
+    ]
+    if len(matches) != 1:
+        raise CaseEmissionError(
+            f"{profile.case_id}: expected one reviewed RVV loop, got {len(matches)}"
+        )
+    return matches[0]
+
+
+def _bind_rvv_count_definition(
+    extraction: KernelExtraction,
+    profile: ModelProfile,
+    emitter: _CaseBlockEmitter,
+    active_length: str,
+) -> None:
+    count = profile.rvv_count_variable
+    if count == "batch":
+        if profile.input_width != 8:
+            raise CaseEmissionError(
+                f"{profile.case_id}: a {profile.input_width}-bit stream cannot use "
+                "the byte count directly as the RVV element count"
+            )
+        return
+    candidates = [
+        definition
+        for definition in extraction.definitions
+        if definition.value == f"{count}@0"
+        and definition.parent_control is None
+        and definition.definition_kind == "declaration"
+        and definition.value_call is None
+    ]
+    expected_expression = f"{count}=batch/sizeof({profile.element_c_type})"
+    if (
+        len(candidates) != 1
+        or candidates[0].dependencies
+        != ("batch@0", f"sizeof:{profile.element_c_type}")
+        or not _compact_source(candidates[0].expression_text).endswith(expected_expression)
+    ):
+        raise CaseEmissionError(
+            f"{profile.case_id}: RVV element count must be initialized as "
+            f"batch / sizeof({profile.element_c_type})"
+        )
+    emitter.environment[candidates[0].value] = active_length
+
+
+def _validate_rvv_scalar_types(
+    extraction: KernelExtraction, profile: ModelProfile
+) -> None:
+    actual: dict[str, str] = {}
+    for definition in extraction.definitions:
+        if (
+            definition.parent_control is not None
+            or definition.definition_kind == "parameter"
+            or definition.value_call is not None
+            or len(definition.dependencies) != 1
+            or not definition.dependencies[0].startswith("field:params@0.scalar.")
+        ):
+            continue
+        field = _field_name(definition.dependencies[0])
+        if field in actual:
+            raise CaseEmissionError(f"duplicate RVV scalar local for field {field!r}")
+        actual[field] = _normalized_integer_type(definition.type_spelling)
+    expected = dict(profile.rvv_scalar_types)
+    if actual != expected:
+        raise CaseEmissionError(
+            f"{profile.case_id}: RVV scalar local types changed: {actual!r}"
+        )
+
+
+def _validate_external_definitions(
+    extraction: KernelExtraction, emitter: _CaseBlockEmitter
+) -> None:
+    rejected: list[str] = []
+    for definition in extraction.definitions:
+        if (
+            definition.parent_control is not None
+            or definition.definition_kind == "parameter"
+        ):
+            continue
+        if definition.value_call is not None:
+            continue
+        if definition.value not in emitter.environment:
+            rejected.append(definition.value)
+    if rejected:
+        raise CaseEmissionError(
+            f"untranslated definitions outside the selected block: {rejected!r}"
+        )
+
+
+def _reviewed_signed_shift_branch(
+    emitter: _CaseBlockEmitter,
+    branch: ControlFact,
+    calls: list[IntrinsicCall],
+) -> None:
+    """Emit the exact signed-shift branch in current ``qu8-vadd-minmax``.
+
+    The frontend records syntactic variable versions rather than CFG phi nodes,
+    so the else assignment appears to consume the then assignment.  This adapter
+    validates the complete two-call branch and constructs the actual join value.
+    """
+
+    if (
+        branch.kind != "IfStmt"
+        or branch.condition_text != "shift >= 0"
+        or branch.condition_dependencies != ("shift@0", "constant:0:int")
+    ):
+        raise CaseEmissionError("unsupported RVV signed-shift branch condition")
+    if [call.spelling for call in calls] != [
+        "__riscv_vssra_vx_i32m8",
+        "__riscv_vsll_vx_i32m8",
+    ]:
+        raise CaseEmissionError(
+            "RVV signed-shift branch must contain exactly vssra then vsll"
+        )
+
+    right, left = calls
+    right_spec = emitter._lookup_intrinsic(right.spelling)
+    left_spec = emitter._lookup_intrinsic(left.spelling)
+    if not isinstance(right_spec, SemanticIntrinsic) or not isinstance(
+        left_spec, SemanticIntrinsic
+    ):
+        raise CaseEmissionError("RVV signed-shift branch calls must be semantic")
+    emitter._validate_immediates(right, right_spec)
+    emitter._validate_immediates(left, left_spec)
+
+    accumulator_dependencies = right.arguments[0].dependencies
+    accumulator_dependency = (
+        accumulator_dependencies[0] if len(accumulator_dependencies) == 1 else ""
+    )
+    accumulator_match = re.fullmatch(
+        r"([A-Za-z_][A-Za-z0-9_]*)@(\d+)", accumulator_dependency
+    )
+    right_match = (
+        None
+        if right.assigned_to is None
+        else re.fullmatch(r"([A-Za-z_][A-Za-z0-9_]*)@(\d+)", right.assigned_to)
+    )
+    left_match = (
+        None
+        if left.assigned_to is None
+        else re.fullmatch(r"([A-Za-z_][A-Za-z0-9_]*)@(\d+)", left.assigned_to)
+    )
+    right_definition = (
+        None
+        if right.assigned_to is None
+        else emitter.definitions.get(right.assigned_to)
+    )
+    left_definition = (
+        None if left.assigned_to is None else emitter.definitions.get(left.assigned_to)
+    )
+    call_positions = {
+        call.node_id: index for index, call in enumerate(emitter.extraction.calls)
+    }
+    left_position = call_positions[left.node_id]
+    later_calls = emitter.extraction.calls[left_position + 1 :]
+    first_consumer = later_calls[0] if later_calls else None
+
+    if (
+        right.assigned_to is None
+        or left.assigned_to is None
+        or accumulator_match is None
+        or right_match is None
+        or left_match is None
+        or accumulator_match.group(1) != right_match.group(1)
+        or right_match.group(1) != left_match.group(1)
+        or int(right_match.group(2)) != int(accumulator_match.group(2)) + 1
+        or int(left_match.group(2)) != int(right_match.group(2)) + 1
+        or right_definition is None
+        or left_definition is None
+        or right_definition.definition_kind != "assignment"
+        or left_definition.definition_kind != "assignment"
+        or right_definition.value_call != right.node_id
+        or left_definition.value_call != left.node_id
+        or first_consumer is None
+        or not first_consumer.arguments
+        or first_consumer.arguments[0].dependencies != (left.assigned_to,)
+        or right.arguments[0].dependencies != ("vacc@1",)
+        or left.arguments[0].dependencies != (right.assigned_to,)
+        or left.arguments[0].source_text.strip() != "vacc"
+        or left.arguments[0].semantic_operations
+        or right.arguments[1].dependencies != ("shift@0",)
+        or left.arguments[1].dependencies != ("shift@0",)
+        or re.sub(r"\s+", "", right.arguments[1].source_text) != "(size_t)shift"
+        or re.sub(r"\s+", "", left.arguments[1].source_text) != "(size_t)(-shift)"
+        or right.arguments[1].semantic_operations
+        != ("explicit-cast:IntegralCast:unsigned long",)
+        or left.arguments[1].semantic_operations
+        != ("unary:-", "explicit-cast:IntegralCast:unsigned long")
+        or right.arguments[2].constant_value != 0
+        or not _is_exact_local_argument(
+            right.arguments[3],
+            dependency="vl@0",
+            source_text="vl",
+            type_spelling="unsigned long",
+        )
+        or not _is_exact_local_argument(
+            left.arguments[2],
+            dependency="vl@0",
+            source_text="vl",
+            type_spelling="unsigned long",
+        )
+        or right.control_path != (f"{branch.node_id}:then",)
+        or left.control_path != (f"{branch.node_id}:else",)
+    ):
+        raise CaseEmissionError("RVV signed-shift branch dataflow changed")
+
+    accumulator = emitter._resolve(right.arguments[0])
+    try:
+        shift = emitter.environment["shift@0"]
+    except KeyError as error:
+        raise CaseEmissionError(
+            "RVV signed-shift branch has no reviewed shift"
+        ) from error
+    mode = emitter._resolve(right.arguments[2])
+    right_name = emitter._bind_call(
+        right,
+        f"{right_spec.lean_name} ({accumulator}) (({shift}).toNat) ({mode})",
+    )
+    left_name = emitter._bind_call(
+        left,
+        f"{left_spec.lean_name} ({accumulator}) ((-({shift}).toInt).toNat)",
+    )
+    join_name = _lean_identifier(f"{left.assigned_to}_join")
+    emitter.lines.append(
+        f"  let {join_name} := if ({shift}).toInt >= 0 "
+        f"then {right_name} else {left_name}"
+    )
+    emitter.environment[left.assigned_to] = join_name
+
+
+def _emit_rvv_case(
+    extraction: KernelExtraction,
+    profile: ModelProfile,
+    registry: Mapping[str, IntrinsicSpec],
+) -> tuple[list[str], str, tuple[str, ...]]:
+    loop = _selected_rvv_loop(extraction, profile)
+    _validate_rvv_scalar_types(extraction, profile)
+    active_length = f"{profile.inputs[0]}.length"
+    emitter = _CaseBlockEmitter(
+        extraction,
+        Architecture.RVV,
+        registry,
+        active_length=active_length,
+        broadcast_inputs=profile.broadcast_inputs,
+    )
+    output_base, output_initial = _output_pointer_base(extraction)
+    if output_base != "output":
+        emitter.environment[output_initial] = "output"
+    _bind_rvv_count_definition(extraction, profile, emitter, active_length)
+    child_controls = [
+        control
+        for control in extraction.controls
+        if control.parent_control == loop.node_id
+    ]
+    if child_controls and not profile.rvv_signed_shift_branch:
+        raise CaseEmissionError(
+            f"{profile.case_id}: nested RVV control needs a reviewed adapter"
+        )
+    if profile.rvv_signed_shift_branch:
+        if len(child_controls) != 1:
+            raise CaseEmissionError(
+                f"{profile.case_id}: expected one signed-shift child branch"
+            )
+        allowed_controls = {loop.node_id, child_controls[0].node_id}
+    else:
+        allowed_controls = {loop.node_id}
+    actual_controls = {control.node_id for control in extraction.controls}
+    if actual_controls != allowed_controls:
+        raise CaseEmissionError(
+            f"{profile.case_id}: RVV control shape changed: "
+            f"{sorted(actual_controls)!r}"
+        )
+    selected_calls = [
+        call for call in extraction.calls if call.parent_control in allowed_controls
+    ]
+    if len(selected_calls) != len(extraction.calls):
+        nested = [
+            call.spelling
+            for call in extraction.calls
+            if call.parent_control != loop.node_id
+        ]
+        raise CaseEmissionError(
+            f"{profile.case_id}: nested or external RVV calls need a reviewed adapter: {nested!r}"
+        )
+
+    saw_schedule = False
+    active_length_dependency: str | None = None
+    output: str | None = None
+    branch_consumed = False
+    loaded_inputs: list[str] = []
+    for call in selected_calls:
+        if child_controls and call.parent_control == child_controls[0].node_id:
+            if branch_consumed:
+                continue
+            branch_calls = [
+                nested
+                for nested in selected_calls
+                if nested.parent_control == child_controls[0].node_id
+            ]
+            _reviewed_signed_shift_branch(emitter, child_controls[0], branch_calls)
+            branch_consumed = True
+            continue
+        spec = emitter._lookup_intrinsic(call.spelling)
+        emitter._validate_immediates(call, spec)
+        if isinstance(spec, ScheduleIntrinsic):
+            if saw_schedule or call.assigned_to is None:
+                raise CaseEmissionError(f"{profile.case_id}: malformed vsetvl binding")
+            schedule_argument = call.arguments[0]
+            if not _is_exact_local_argument(
+                schedule_argument,
+                dependency=f"{profile.rvv_count_variable}@0",
+                source_text=profile.rvv_count_variable,
+                type_spelling="unsigned long",
+            ):
+                raise CaseEmissionError(
+                    f"{profile.case_id}: vsetvl must consume "
+                    f"{profile.rvv_count_variable}"
+                )
+            saw_schedule = True
+            active_length_dependency = call.assigned_to
+            emitter.environment[f"call:{call.node_id}"] = active_length
+            emitter.environment[call.assigned_to] = active_length
+            declaration = next(
+                (
+                    definition
+                    for definition in extraction.definitions
+                    if definition.variable == call.assigned_to.split("@", 1)[0]
+                    and definition.definition_kind == "declaration"
+                    and definition.value_call is None
+                    and not definition.dependencies
+                ),
+                None,
+            )
+            if declaration is not None:
+                emitter.environment[declaration.value] = active_length
+            emitter.consumed.add(call.node_id)
+            continue
+        if not saw_schedule:
+            raise CaseEmissionError(
+                f"{profile.case_id}: RVV data operation precedes vsetvl"
+            )
+        vl_indices = [
+            index
+            for index, parameter in enumerate(spec.signature.parameters)
+            if parameter.name == "vl"
+        ]
+        for index in vl_indices:
+            if not _is_exact_local_argument(
+                call.arguments[index],
+                dependency=active_length_dependency or "",
+                source_text="vl",
+                type_spelling="unsigned long",
+            ):
+                raise CaseEmissionError(
+                    f"{profile.case_id}: {call.spelling} does not consume active vl"
+                )
+        if (
+            isinstance(spec, StructuralIntrinsic)
+            and spec.operation is StructuralOp.LOAD
+        ):
+            base_argument = call.arguments[0]
+            dependency = _single_dependency(base_argument)
+            base = dependency.split("@", 1)[0]
+            if base not in profile.inputs:
+                raise CaseEmissionError(
+                    f"{profile.case_id}: unsupported RVV load base {base!r}"
+                )
+            if dependency != f"{base}@0":
+                raise CaseEmissionError(
+                    f"{profile.case_id}: RVV load does not use the chunk base"
+                )
+            if (
+                base_argument.source_text.strip() != base
+                or base_argument.semantic_operations
+            ):
+                raise CaseEmissionError(
+                    f"{profile.case_id}: unsupported RVV load expression "
+                    f"{base_argument.source_text!r}"
+                )
+            loaded_inputs.append(base)
+            emitter._bind_call(call, base)
+            continue
+        if (
+            isinstance(spec, StructuralIntrinsic)
+            and spec.operation is StructuralOp.STORE
+        ):
+            store_base = call.arguments[0]
+            if (
+                store_base.dependencies != (output_initial,)
+                or store_base.source_text.strip() != output_base
+                or store_base.semantic_operations
+            ):
+                raise CaseEmissionError(
+                    f"{profile.case_id}: RVV store does not use the chunk output base"
+                )
+        result = emitter.emit_registered_call(call)
+        if (
+            isinstance(spec, StructuralIntrinsic)
+            and spec.operation is StructuralOp.STORE
+        ):
+            if output is not None or result is None:
+                raise CaseEmissionError(f"{profile.case_id}: expected one RVV store")
+            output = result
+
+    expected = {call.node_id for call in selected_calls}
+    if emitter.consumed != expected:
+        raise CaseEmissionError(
+            f"{profile.case_id}: RVV selected-call coverage mismatch: "
+            f"missing={sorted(expected - emitter.consumed)!r}, "
+            f"extra={sorted(emitter.consumed - expected)!r}"
+        )
+    if output is None:
+        raise CaseEmissionError(f"{profile.case_id}: RVV block has no store")
+    if loaded_inputs != list(profile.inputs):
+        raise CaseEmissionError(
+            f"{profile.case_id}: RVV load footprint/order changed: {loaded_inputs!r}"
+        )
+    expected_updates = [
+        (f"{input_name}@1", f"{input_name} += vl") for input_name in profile.inputs
+    ]
+    expected_updates.extend(
+        [
+            (f"{output_base}@1", f"{output_base} += vl"),
+            (
+                f"{profile.rvv_count_variable}@1",
+                f"{profile.rvv_count_variable} -= vl",
+            ),
+        ]
+    )
+    actual_updates = [
+        (definition.value, definition.expression_text.strip())
+        for definition in extraction.definitions
+        if definition.parent_control == loop.node_id
+        and definition.definition_kind.startswith("compound-")
+    ]
+    if sorted(actual_updates) != sorted(expected_updates):
+        raise CaseEmissionError(
+            f"{profile.case_id}: RVV pointer/count updates changed: "
+            f"{actual_updates!r}"
+        )
+    translated_controls = {loop.node_id}
+    translated_controls.update(control.node_id for control in child_controls)
+    untranslated = [
+        definition.value
+        for definition in extraction.definitions
+        if definition.parent_control in translated_controls
+        and definition.value_call is None
+        and not definition.definition_kind.startswith("compound-")
+    ]
+    if untranslated:
+        raise CaseEmissionError(
+            f"{profile.case_id}: untranslated RVV block definitions {untranslated!r}"
+        )
+    _validate_external_definitions(extraction, emitter)
+    return emitter.lines, output, tuple(sorted(expected))
+
+
+def _parameter_structure(profile: ModelProfile) -> list[str]:
+    lines = [f"structure {profile.parameter_type} where"]
+    lines.extend(
+        f"  {field.name} : BitVec {field.width}" for field in profile.parameter_fields
+    )
+    lines.append("  deriving Repr, DecidableEq")
+    return lines
+
+
+def _function_header(name: str, profile: ModelProfile) -> list[str]:
+    lines = [f"def {name} (p : {profile.parameter_type})"]
+    lines.extend(
+        f"    ({input_name} : {_input_list_type(profile)})" for input_name in profile.inputs
+    )
+    lines[-1] = f"{lines[-1]} : {_output_list_type(profile)} :="
+    return lines
+
+
+def emit_case_pair(
+    neon: KernelExtraction,
+    rvv: KernelExtraction,
+    *,
+    profile: ModelProfile,
+    neon_registry: Mapping[str, IntrinsicSpec],
+    rvv_registry: Mapping[str, IntrinsicSpec],
+    registry_sha256: str,
+) -> CaseEmission:
+    """Emit reviewed models for one pair, including any validated case adapter."""
+
+    if neon.facade_sha256 != rvv.facade_sha256:
+        raise CaseEmissionError(f"{profile.case_id}: parse facades differ across sides")
+    neon_lines, neon_output, neon_consumed = _emit_neon_case(
+        neon, profile, neon_registry
+    )
+    neon_extra_lines: list[str] = []
+    if profile.multiphase_widths:
+        if any(control.kind == "DoStmt" for control in neon.controls):
+            neon_extra_lines, tail_consumed = _emit_nested_two_phase_tail_value_models(
+                neon, profile, neon_registry, neon_consumed
+            )
+        else:
+            neon_extra_lines, tail_consumed = (
+                _emit_separate_two_phase_tail_value_models(
+                    neon, profile, neon_registry, neon_consumed
+                )
+            )
+        overlap = set(neon_consumed) & set(tail_consumed)
+        if overlap:
+            raise CaseEmissionError(
+                f"multi-phase: duplicate Neon call consumption {sorted(overlap)!r}"
+            )
+        combined = set(neon_consumed) | set(tail_consumed)
+        all_calls = {call.node_id for call in neon.calls}
+        if combined != all_calls:
+            raise CaseEmissionError(
+                "multi-phase: complete Neon value-call coverage mismatch: "
+                f"missing={sorted(all_calls - combined)!r}, "
+                f"extra={sorted(combined - all_calls)!r}"
+            )
+        neon_consumed = tuple(sorted(combined))
+    elif profile.prefix_tail is not None:
+        neon_extra_lines, tail_consumed = _emit_prefix_tail_value_models(
+            neon, profile, neon_registry, neon_consumed
+        )
+        overlap = set(neon_consumed) & set(tail_consumed)
+        if overlap:
+            raise CaseEmissionError(
+                f"{profile.case_id}: duplicate Neon call consumption {sorted(overlap)!r}"
+            )
+        combined = set(neon_consumed) | set(tail_consumed)
+        all_calls = {call.node_id for call in neon.calls}
+        if combined != all_calls:
+            raise CaseEmissionError(
+                f"{profile.case_id}: complete Neon value-call coverage mismatch: "
+                f"missing={sorted(all_calls - combined)!r}, "
+                f"extra={sorted(combined - all_calls)!r}"
+            )
+        neon_consumed = tuple(sorted(combined))
+    rvv_lines, rvv_output, rvv_consumed = _emit_rvv_case(rvv, profile, rvv_registry)
+    rvv_extra_lines: list[str] = []
+    if profile.prefix_tail is not None and not profile.multiphase_widths:
+        if len(profile.inputs) not in {1, 2}:
+            raise CaseEmissionError(
+                f"{profile.case_id}: RVV value loops support one or two inputs"
+            )
+        rvv_extra_lines = [
+            "",
+            "/-- Generated value-only lifting of the validated RVV strip-mined loop.",
+            "",
+            "A positive partition abstracts active lengths; ISA `vsetvl` legality is separate.",
+            "-/",
+            f"def rvvValueLoopFromIntrinsics (p : {profile.parameter_type})",
+        ]
+        if len(profile.inputs) == 1:
+            input_name = profile.inputs[0]
+            rvv_extra_lines.extend(
+                [
+                    f"    ({input_name} : {_input_list_type(profile)})",
+                    "    (schedule : SALT.Kernel.Schedule.PositivePartition "
+                    f"{input_name}.length) :",
+                    f"    {_output_list_type(profile)} :=",
+                    "  SALT.Kernel.Schedule.processBlocks "
+                    f"(rvvChunkFromIntrinsics p) {input_name} schedule",
+                ]
+            )
+        else:
+            input_a, input_b = profile.inputs
+            rvv_extra_lines.extend(
+                [
+                    f"    ({input_a} {input_b} : {_input_list_type(profile)})",
+                    f"    (sameLength : {input_a}.length = {input_b}.length)",
+                    "    (schedule : SALT.Kernel.Schedule.PositivePartition "
+                    f"{input_a}.length) :",
+                    f"    {_output_list_type(profile)} :=",
+                    "  SALT.Kernel.Schedule.processBlocks2 "
+                    f"(rvvChunkFromIntrinsics p) {input_a} {input_b} "
+                    "sameLength schedule",
+                ]
+            )
+    schedule_import = (
+        ["import SALT.Kernel.ElementwiseTwoPhase"]
+        if profile.multiphase_widths
+        else ["import SALT.Kernel.Schedule"] if profile.prefix_tail is not None else []
+    )
+    lines = [
+        "-- This file is generated. Do not edit the models by hand.",
+        "import SALT.Intrinsics.Neon",
+        "import SALT.Intrinsics.RVV",
+        *schedule_import,
+        "",
+        f"namespace {profile.lean_namespace}",
+        "",
+        *_lean_string_definition("neonSourceSha256", neon.source_sha256),
+        *_lean_string_definition("rvvSourceSha256", rvv.source_sha256),
+        *_lean_string_definition("neonPreprocessedSha256", neon.preprocessed_sha256),
+        *_lean_string_definition("rvvPreprocessedSha256", rvv.preprocessed_sha256),
+        *_lean_string_definition("parseFacadeSha256", neon.facade_sha256),
+        *_lean_string_definition("registrySha256", registry_sha256),
+        "",
+        *_parameter_structure(profile),
+        "",
+        *_function_header(profile.neon_function, profile),
+        *neon_lines,
+        f"  {neon_output}",
+        *neon_extra_lines,
+        "",
+        *_function_header(profile.rvv_function, profile),
+        *rvv_lines,
+        f"  {rvv_output}",
+        *rvv_extra_lines,
+        "",
+        f"end {profile.lean_namespace}",
+        "",
+    ]
+    emitted = EmittedPair("\n".join(lines), profile.neon_function, profile.rvv_function)
+    return CaseEmission(emitted, neon_consumed, rvv_consumed)

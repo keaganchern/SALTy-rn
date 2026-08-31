@@ -28,3 +28,6 @@ salty-compile = "workflow.build.compiler:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.pytest.ini_options]
+norecursedirs = ["benchmark/XNNPACK", "third_party"]

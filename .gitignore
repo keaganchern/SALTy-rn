@@ -7,6 +7,7 @@ build/verification/cmake_build/
 logs/
 .venv/
 kernels/status.json
+.intrinsic-dashboard/
 
 
 # LLMs agents
@@ -28,3 +29,66 @@ build/verification/harnesses/verify_*.cpp
 
 # Editor
 .vscode/
+
+# Local research memory and user-facing working notes
+/.local/
+/notes/memory/
+/notes/DRAFT_PR_ELEMENTWISE_COMPILER.md
+/notes/PROJECT_PROGRESS_OVERVIEW.md
+/notes/elementwise-compiler/CLEAN_PR_REPRODUCIBILITY_AUDIT.md
+/figures/saltyrn-project-pipeline.md
+/figures/saltyrn-project-pipeline.mmd
+/figures/saltyrn-project-pipeline.png
+
+# Generated elementwise working tree; curated results remain under verification/
+/build/verification/elementwise-compiler/
+
+# Superseded full working/audit tree; curated results live in elementwise-results
+/verification/elementwise-compiler/
+
+# Dashboard and local approval tooling are intentionally outside this PR
+/src/workflow/verification/intrinsic_dashboard/
+/tests/verification/intrinsic_dashboard/
+/src/workflow/verification/elementwise_compiler/intrinsic_audit.py
+/src/workflow/verification/elementwise_compiler/intrinsic_review_checks.py
+/src/workflow/verification/elementwise_compiler/intrinsic_review_plan.py
+/src/workflow/verification/elementwise_compiler/intrinsic_review_publish.py
+/src/workflow/verification/elementwise_compiler/program_reviews.py
+/src/workflow/verification/elementwise_compiler/reviews.py
+/tests/verification/elementwise_compiler/test_intrinsic_audit.py
+/tests/verification/elementwise_compiler/test_intrinsic_review_checks.py
+/tests/verification/elementwise_compiler/test_intrinsic_review_plan.py
+/tests/verification/elementwise_compiler/test_intrinsic_review_publish.py
+/tests/verification/elementwise_compiler/test_program_reviews.py
+/tests/verification/elementwise_compiler/test_reviews.py
+
+# Differential semantic audit is preserved locally for a separate PR
+/src/workflow/verification/elementwise_compiler/fp_differential_audit.py
+/src/workflow/verification/elementwise_compiler/integer_differential_audit.py
+/src/workflow/verification/elementwise_compiler/plain_integer_differential_audit.py
+/src/workflow/verification/elementwise_compiler/semantic_audit_ledger.py
+/src/workflow/verification/elementwise_compiler/structural_differential_audit.py
+/tests/verification/elementwise_compiler/test_fp_differential_audit.py
+/tests/verification/elementwise_compiler/test_integer_differential_audit.py
+/tests/verification/elementwise_compiler/test_plain_integer_differential_audit.py
+/tests/verification/elementwise_compiler/test_semantic_audit_ledger.py
+/tests/verification/elementwise_compiler/test_structural_differential_audit.py
+/verification/elementwise-compiler/*DifferentialAudit.json
+/verification/elementwise-compiler/*DifferentialAuditLedger.csv
+/verification/elementwise-compiler/SemanticAuditLedger.json
+/verification/elementwise-compiler/IntrinsicAudit.json
+/verification/elementwise-compiler/IntrinsicReviewChecks.json
+/verification/elementwise-compiler/IntrinsicReviewPlan.json
+/verification/elementwise-compiler/ProgramReviewChecks.json
+/verification/elementwise-compiler/ProgramReviewPlan.json
+/verification/elementwise-compiler/schemas/
+/notes/audits/
+/notes/reviews/
+/notes/policies/elementwise-intrinsic-review-v1.md
+/notes/policies/elementwise-intrinsic-review-v2.md
+/notes/policies/elementwise-program-review-v1.md
+/notes/elementwise-compiler/F32_VRNDNE_REPAIR_PLAN.md
+/notes/four-counterexample-semantic-audit.md
+/notes/demos/neon-rvv-semantic-gap-aarch64.c
+/outputs/intrinsic-semantic-audit/
+/examples/s8-vmax-to-lean/*.zh-CN.md

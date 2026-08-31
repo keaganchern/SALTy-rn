@@ -38,8 +38,8 @@ FIELD_EDGES = {
     "a_multiplier":  [1, 3, 127],
     "b_multiplier":  [1, 2, 64],
     "multiplier":    [1, 3, 127],
-    "positive_multiplier": [1, 100],
-    "negative_multiplier": [1, 50],
+    "positive_multiplier": [1, 256, 32768],
+    "negative_multiplier": [-32767, -1, 1, 32768],
 
     # Zero points — 0 is common, test nonzero
     "a_zero_point":      [0, 1, -5],
@@ -110,7 +110,7 @@ PARAM_CONSTRAINTS = {
     ],
     "xnn_qs8_lrelu_params": [
         ("BV_SGT", "positive_multiplier", 0),
-        ("BV_SGT", "negative_multiplier", 0),
+        ("BV_NE", "negative_multiplier", 0),
     ],
     "xnn_qs8_cvt_params": [
         ("BV_SGT", "multiplier", 0),
@@ -128,25 +128,35 @@ PARAM_CONSTRAINTS = {
 # Restricts the solver to the valid domain for kernels proved with symbolic params.
 # ---------------------------------------------------------------------------
 PARAM_RANGES = {
+    # XNNPACK@867d5a3 bounds add multipliers by 2^21. The shift interval is
+    # intentionally the stronger verification domain; XNN constructs [12, 30].
     "qs8-vadd": {"a_zero_point": (-128, 127), "b_zero_point": (-128, 127),
-                 "a_multiplier": (1, 65535), "b_multiplier": (1, 65535), "shift": (0, 31),
+                 "a_multiplier": (1, 2097152), "b_multiplier": (1, 2097152),
+                 "shift": (0, 31),
                  "output_zero_point": (-128, 127), "output_min": (-128, 127), "output_max": (-128, 127)},
     "qs8-vaddc": {"a_zero_point": (-128, 127), "b_zero_point": (-128, 127),
-                  "a_multiplier": (1, 65535), "b_multiplier": (1, 65535), "shift": (0, 31),
+                  "a_multiplier": (1, 2097152), "b_multiplier": (1, 2097152),
+                  "shift": (0, 31),
                   "output_zero_point": (-128, 127), "output_min": (-128, 127), "output_max": (-128, 127)},
     "qs8-vmul": {"a_zero_point": (-128, 127), "b_zero_point": (-128, 127),
                  "output_zero_point": (-128, 127), "output_min": (-128, 127), "output_max": (-128, 127)},
     "qs8-vmulc": {"a_zero_point": (-128, 127), "b_zero_point": (-128, 127),
                   "output_zero_point": (-128, 127), "output_min": (-128, 127), "output_max": (-128, 127)},
+    # XNNPACK@867d5a3 constructs these LReLU multipliers in [1, 32768] and
+    # [-32767, 32768] \ {0}, respectively.
     "qs8-vlrelu": {"input_zero_point": (-128, 127), "output_zero_point": (-128, 127),
-                   "positive_multiplier": (1, 255), "negative_multiplier": (1, 255)},
-    "qs8-vcvt": {"input_zero_point": (-128, 127), "multiplier": (1, 65535),
+                   "positive_multiplier": (1, 32768),
+                   "negative_multiplier": (-32767, 32768)},
+    # XNNPACK@867d5a3 constructs this Q8 multiplier in [1, 32768].
+    "qs8-vcvt": {"input_zero_point": (-128, 127), "multiplier": (1, 32768),
                  "output_zero_point": (-128, 127)},
     "qu8-vadd": {"a_zero_point": (0, 255), "b_zero_point": (0, 255),
-                 "a_multiplier": (1, 65535), "b_multiplier": (1, 65535), "shift": (0, 31),
+                 "a_multiplier": (1, 2097152), "b_multiplier": (1, 2097152),
+                 "shift": (0, 31),
                  "output_zero_point": (0, 255), "output_min": (0, 255), "output_max": (0, 255)},
     "qu8-vaddc": {"a_zero_point": (0, 255), "b_zero_point": (0, 255),
-                  "a_multiplier": (1, 65535), "b_multiplier": (1, 65535), "shift": (0, 31),
+                  "a_multiplier": (1, 2097152), "b_multiplier": (1, 2097152),
+                  "shift": (0, 31),
                   "output_zero_point": (0, 255), "output_min": (0, 255), "output_max": (0, 255)},
     "qu8-vmul": {"a_zero_point": (0, 255), "b_zero_point": (0, 255),
                  "output_zero_point": (0, 255), "output_min": (0, 255), "output_max": (0, 255)},
