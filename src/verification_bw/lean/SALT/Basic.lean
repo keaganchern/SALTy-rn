@@ -1,4 +1,4 @@
-import Mathlib.Tactic.Omega
+import Lean.Elab.Tactic.Omega
 
 namespace SALT
 
@@ -23,6 +23,13 @@ def signedSatAdd {n : Nat} (a b : BitVec n) : BitVec n :=
   let hi := (2 ^ (n - 1) - 1 : Int)
   let clamped := max lo (min sum hi)
   BitVec.ofInt n clamped
+
+/-- Signed saturating subtraction at the destination lane width. -/
+def signedSatSub {n : Nat} (a b : BitVec n) : BitVec n :=
+  let difference := a.toInt - b.toInt
+  let lo := -(2 ^ (n - 1) : Int)
+  let hi := (2 ^ (n - 1) - 1 : Int)
+  BitVec.ofInt n (max lo (min difference hi))
 
 -- ============================================================================
 -- Signed min / max (element-wise)

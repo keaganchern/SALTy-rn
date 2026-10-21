@@ -1,0 +1,83 @@
+{
+  "artifact_kind": "elementwise-external-condition",
+  "candidate_contract": {
+    "clauses": [
+      {
+        "args": [
+          {
+            "args": [],
+            "op": "variable",
+            "type": {
+              "bit_width": 8,
+              "c_spelling": "int8_t",
+              "kind": "integer",
+              "signed": true
+            },
+            "value": "params.min"
+          },
+          {
+            "args": [],
+            "op": "variable",
+            "type": {
+              "bit_width": 8,
+              "c_spelling": "int8_t",
+              "kind": "integer",
+              "signed": true
+            },
+            "value": "params.max"
+          }
+        ],
+        "op": "le",
+        "type": {
+          "bit_width": null,
+          "c_spelling": "_Bool",
+          "kind": "bool",
+          "signed": null
+        },
+        "value": null
+      }
+    ]
+  },
+  "derivation": "ordered-clamp-candidate-with-unresolved-caller-v1",
+  "detail": "initializer applies the same quantizer to clamp.min and clamp.max; caller guarantees for input order and positive scale remain unresolved",
+  "external_condition_sha256": "490a7cade552bd3a2d41e3e0ad1a0c87bac72e4f266d03998c2c973ea3531104",
+  "extractor_sha256": "a47a1ff67f330a0989538f51f450694cf5bd634ceb0f609426ceebc9a195f5e9",
+  "initializer": "xnn_init_qs8_clamp_scalar_params",
+  "local_sources_sha256": "bc23fb1671225c11e10d4c1055f317560a92bc189c2eaf8665aa285436ea2c44",
+  "parameter_type": "struct xnn_s8_minmax_params",
+  "schema_version": 2,
+  "scope": "xnnpack-registered-domain",
+  "sources": [
+    {
+      "path": "benchmark/XNNPACK/src/microparams-init.c",
+      "role": "parameter-initializer",
+      "sha256": "93f954cc8ae1a6a88da26de891e41237b671f67bbce8dfb410f881881d16b5a0",
+      "symbols": [
+        "xnn_init_qs8_clamp_scalar_params"
+      ]
+    },
+    {
+      "path": "benchmark/XNNPACK/src/s8-vclamp/s8-vclamp.inc",
+      "role": "kernel-registration",
+      "sha256": "8c1ebd8606de0d2230400eb2a9c316e5cab081804a799488a22cbcc5dd937db9",
+      "symbols": [
+        "xnn_s8_vclamp_ukernel__neon_u64",
+        "xnn_s8_vclamp_ukernel__rvv_u1v",
+        "xnn_s8_vclamp_ukernel__rvv_u2v",
+        "xnn_s8_vclamp_ukernel__rvv_u4v",
+        "xnn_s8_vclamp_ukernel__rvv_u8v"
+      ]
+    },
+    {
+      "path": "benchmark/XNNPACK/src/xnnpack/requantization.h",
+      "role": "quantization-helper",
+      "sha256": "76f04fba74791f113f66285451aae6a7c2e0c7b8ddbb36b05d6011b60853f475",
+      "symbols": [
+        "xnn_qs8_quantize"
+      ]
+    }
+  ],
+  "status": "required-missing",
+  "upstream_commit": "867d5a344790802ee067be62f572c2e2722bf6fb",
+  "upstream_root": "benchmark/XNNPACK"
+}

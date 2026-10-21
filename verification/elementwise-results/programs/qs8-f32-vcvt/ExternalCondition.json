@@ -1,0 +1,41 @@
+{
+  "artifact_kind": "elementwise-external-condition",
+  "candidate_contract": {
+    "clauses": []
+  },
+  "derivation": "local-kernel-parameter-use-v1",
+  "detail": "initializer transforms or validates semantic parameters, but no complete caller-to-kernel guarantee has been established",
+  "external_condition_sha256": "526562299432b1b907b0aa39cf63eeb09a156e4c1fdee4c72686bee85eb15256",
+  "extractor_sha256": "a47a1ff67f330a0989538f51f450694cf5bd634ceb0f609426ceebc9a195f5e9",
+  "initializer": "xnn_init_qs8_f32_cvt_scalar_params",
+  "local_sources_sha256": "cc7832cefca82a553f0a857435fad4b6057543c25f37ff5a0a653a5453b4d35f",
+  "parameter_type": "struct xnn_qs8_f32_cvt_params",
+  "schema_version": 2,
+  "scope": "xnnpack-registered-domain",
+  "sources": [
+    {
+      "path": "benchmark/XNNPACK/src/microparams-init.c",
+      "role": "parameter-initializer",
+      "sha256": "93f954cc8ae1a6a88da26de891e41237b671f67bbce8dfb410f881881d16b5a0",
+      "symbols": [
+        "xnn_init_qs8_f32_cvt_scalar_params"
+      ]
+    },
+    {
+      "path": "benchmark/XNNPACK/src/qs8-f32-vcvt/qs8-f32-vcvt.inc",
+      "role": "kernel-registration",
+      "sha256": "8c642762bd31a17c47d61d69ce5ed7ac9154bbfd685050a590508849de6edcf9",
+      "symbols": [
+        "xnn_qs8_f32_vcvt_ukernel__neon_u16",
+        "xnn_qs8_f32_vcvt_ukernel__neon_u24",
+        "xnn_qs8_f32_vcvt_ukernel__neon_u32",
+        "xnn_qs8_f32_vcvt_ukernel__neon_u8",
+        "xnn_qs8_f32_vcvt_ukernel__rvv_u1v",
+        "xnn_qs8_f32_vcvt_ukernel__rvv_u2v"
+      ]
+    }
+  ],
+  "status": "required-missing",
+  "upstream_commit": "867d5a344790802ee067be62f572c2e2722bf6fb",
+  "upstream_root": "benchmark/XNNPACK"
+}

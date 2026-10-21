@@ -1,0 +1,62 @@
+{
+  "artifact_index": "programs/f32-vlrelu/ArtifactIndex.json",
+  "counterexample": {
+    "claim": "SALT.Corpus.f32vlrelu.completeValueEquivalenceClaim",
+    "inputs": [
+      2147483648
+    ],
+    "left_output": 2145386497,
+    "parameters": {
+      "slope": 2141192193
+    },
+    "path": "programs/f32-vlrelu/Counterexample.json",
+    "right_output": 2143289344,
+    "sha256": "8257a49aaaa6cf7aab538f8ae6a0b639329d3f1a0a90e62d4ac8ec23ea71ba06"
+  },
+  "cross_phase_status": "not-multi-phase",
+  "detail": "Lean checked a concrete Neon/RVV complete value-claim disagreement",
+  "entry_contract_preflight": "equal",
+  "external_condition_detail": "initializer directly copies an unconstrained unary scalar parameter",
+  "external_condition_sha256": "05b5597d06dd7f4c3aa02e31345003b17824a48d18f9f42b736e2a27c55a3ecd",
+  "external_condition_status": "not-required",
+  "input_streams": [
+    "input"
+  ],
+  "layout_preflight": "scalar-lane",
+  "manifest_sha256": "abd96e6487a02a6ccffd3063e9924e0420c4baab54b7f697f8ea9b561a6b116a",
+  "missing_intrinsics": [],
+  "neon_function": "test_neon",
+  "neon_intrinsics": [
+    "vbslq_f32",
+    "vcltq_s32",
+    "vdupq_n_f32",
+    "vget_high_f32",
+    "vget_low_f32",
+    "vld1q_f32",
+    "vmovq_n_s32",
+    "vmulq_f32",
+    "vreinterpretq_s32_f32",
+    "vst1_f32",
+    "vst1_lane_f32",
+    "vst1q_f32"
+  ],
+  "neon_source": "kernels/source/f32-vlrelu.c",
+  "output_streams": [
+    "output"
+  ],
+  "program_id": "f32-vlrelu",
+  "rvv_function": "test_rvv",
+  "rvv_intrinsics": [
+    "__riscv_vfmul_vf_f32m8",
+    "__riscv_vle32_v_f32m8",
+    "__riscv_vmerge_vvm_f32m8",
+    "__riscv_vmslt_vx_i32m8_b4",
+    "__riscv_vreinterpret_v_f32m8_i32m8",
+    "__riscv_vse32_v_f32m8",
+    "__riscv_vsetvl_e32m8"
+  ],
+  "rvv_source": "kernels/target/f32-vlrelu.c",
+  "schedule_preflight": "fixed-tail",
+  "status": "counterexample",
+  "status_layer": "lean-checked-terminal"
+}

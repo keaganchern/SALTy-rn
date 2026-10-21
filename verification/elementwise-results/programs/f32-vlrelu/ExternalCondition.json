@@ -1,0 +1,41 @@
+{
+  "artifact_kind": "elementwise-external-condition",
+  "candidate_contract": {
+    "clauses": []
+  },
+  "derivation": "direct-unary-parameter-copy-v1",
+  "detail": "initializer directly copies an unconstrained unary scalar parameter",
+  "external_condition_sha256": "05b5597d06dd7f4c3aa02e31345003b17824a48d18f9f42b736e2a27c55a3ecd",
+  "extractor_sha256": "a47a1ff67f330a0989538f51f450694cf5bd634ceb0f609426ceebc9a195f5e9",
+  "initializer": "xnn_init_f32_lrelu_scalar_params",
+  "local_sources_sha256": "22a00f1911ab8ae4aa433ae3450a692d4e2c2117729f827b44295db393f02bb0",
+  "parameter_type": "struct xnn_f32_lrelu_params",
+  "schema_version": 2,
+  "scope": "xnnpack-registered-domain",
+  "sources": [
+    {
+      "path": "benchmark/XNNPACK/src/f32-vlrelu/f32-vlrelu.inc",
+      "role": "kernel-registration",
+      "sha256": "1a195525c73d36d7b1e7c81e69e29c29c950628fd019a0794b3c02f7ce620036",
+      "symbols": [
+        "xnn_f32_vlrelu_ukernel__neon_u4",
+        "xnn_f32_vlrelu_ukernel__neon_u8",
+        "xnn_f32_vlrelu_ukernel__rvv_u1v",
+        "xnn_f32_vlrelu_ukernel__rvv_u2v",
+        "xnn_f32_vlrelu_ukernel__rvv_u4v",
+        "xnn_f32_vlrelu_ukernel__rvv_u8v"
+      ]
+    },
+    {
+      "path": "benchmark/XNNPACK/src/microparams-init.c",
+      "role": "parameter-initializer",
+      "sha256": "93f954cc8ae1a6a88da26de891e41237b671f67bbce8dfb410f881881d16b5a0",
+      "symbols": [
+        "xnn_init_f32_lrelu_scalar_params"
+      ]
+    }
+  ],
+  "status": "not-required",
+  "upstream_commit": "867d5a344790802ee067be62f572c2e2722bf6fb",
+  "upstream_root": "benchmark/XNNPACK"
+}

@@ -1,0 +1,40 @@
+{
+  "artifact_kind": "elementwise-external-condition",
+  "candidate_contract": {
+    "clauses": []
+  },
+  "derivation": "local-kernel-parameter-use-v1",
+  "detail": "initializer transforms or validates semantic parameters, but no complete caller-to-kernel guarantee has been established",
+  "external_condition_sha256": "36aed0967c77eac6869bf2538b73412429a69c0b021134aa03c94703ef038418",
+  "extractor_sha256": "a47a1ff67f330a0989538f51f450694cf5bd634ceb0f609426ceebc9a195f5e9",
+  "initializer": "xnn_init_qs8_lrelu_scalar_params",
+  "local_sources_sha256": "4de166315c92cd832f0140ed003400048ee81f0af3e4cccff03795d85aa0e458",
+  "parameter_type": "struct xnn_qs8_lrelu_params",
+  "schema_version": 2,
+  "scope": "xnnpack-registered-domain",
+  "sources": [
+    {
+      "path": "benchmark/XNNPACK/src/microparams-init.c",
+      "role": "parameter-initializer",
+      "sha256": "93f954cc8ae1a6a88da26de891e41237b671f67bbce8dfb410f881881d16b5a0",
+      "symbols": [
+        "xnn_init_qs8_lrelu_scalar_params"
+      ]
+    },
+    {
+      "path": "benchmark/XNNPACK/src/qs8-vlrelu/qs8-vlrelu.inc",
+      "role": "kernel-registration",
+      "sha256": "db5ca69dce34bb7e3d518e768ded915df37d49a8fcc28a113806b4540a348e97",
+      "symbols": [
+        "xnn_qs8_vlrelu_ukernel__neon_u16",
+        "xnn_qs8_vlrelu_ukernel__neon_u32",
+        "xnn_qs8_vlrelu_ukernel__neon_u8",
+        "xnn_qs8_vlrelu_ukernel__rvv_u1v",
+        "xnn_qs8_vlrelu_ukernel__rvv_u2v"
+      ]
+    }
+  ],
+  "status": "required-missing",
+  "upstream_commit": "867d5a344790802ee067be62f572c2e2722bf6fb",
+  "upstream_root": "benchmark/XNNPACK"
+}

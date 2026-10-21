@@ -2,6 +2,7 @@ import SALT.Basic
 import SALT.Intrinsics.Neon
 import SALT.Intrinsics.RVV
 import SALT.Proof.RoundingEquiv
+import SALT.Proof.QrdmulhEquiv
 import SALT.Kernel.QS8.Params
 import SALT.Kernel.QS8VAddC.Neon
 import SALT.Kernel.QS8VAddC.RVV
@@ -9,3 +10,16 @@ import SALT.Kernel.QS8VAddC.Equivalence
 import SALT.Kernel.QS8VAdd.Neon
 import SALT.Kernel.QS8VAdd.RVV
 import SALT.Kernel.QS8VAdd.Equivalence
+import SALT.Kernel.Schedule
+import SALT.Kernel.ElementwiseLayout
+import SALT.Kernel.ElementwiseFamily
+import SALT.Generated.QS8VAddMinmax.Proof
+import SALT.Generated.S8VClamp.Proof
+import SALT.Generated.S8VClamp.AllLengths
+import SALT.Generated.QS8VCvt.Proof
+import SALT.Generated.QS8VLReLU.CandidateProof
+import SALT.Generated.QU8VAddMinmax.CandidateProof
+import SALT.Example.S8VMax.Audit
+import SALT.Test.QS8VCvt
+import SALT.Test.QS8VLReLU
+import SALT.Test.QU8VAddMinmax

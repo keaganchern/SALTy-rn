@@ -1,0 +1,16 @@
+{
+  "artifact_kind": "elementwise-cross-phase-audit",
+  "checker_sha256": null,
+  "claim": "SALT.Corpus.qs8vaddminmax.neonPhaseFunctionsEqualClaim",
+  "counterexample_sha256": null,
+  "cross_phase_audit_sha256": "bc0fddfe78bb4d2bddec0f78c552e322193f1f4c7c8e6565d239ad473384f63e",
+  "detail": "cross-phase search is blocked by an unresolved parameter domain",
+  "external_condition_sha256": "7f92db0c241827ca875e17e40df9536c52f4853efa17aea3f9d2cb5fd37bec0c",
+  "manifest_sha256": "6ca35dfdb06a8329cb2a1b8985ce9f2ea803787b82ba014631ec621d25925963",
+  "models_sha256": "d3351385ab855dda9de1205b4706df018df2a7a0d9bd8185a76eccbcf610ee33",
+  "schema_version": 1,
+  "spec_sha256": "6032347864118dccd09cbcb3be84c20c188c81884eabb1da38b1b157747b4061",
+  "status": "blocked-external-condition",
+  "toolchain_sha256": null,
+  "trial_count": 0
+}

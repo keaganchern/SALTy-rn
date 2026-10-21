@@ -1,0 +1,35 @@
+{
+  "artifact_kind": "elementwise-external-condition",
+  "candidate_contract": {
+    "clauses": []
+  },
+  "derivation": "local-kernel-parameter-use-v1",
+  "detail": "local kernels do not read semantic parameter fields",
+  "external_condition_sha256": "5c4dbfecbb524d96b7ae9d4a00523e8af4caa41c5e8b146d6962cf4ab83a59a2",
+  "extractor_sha256": "a47a1ff67f330a0989538f51f450694cf5bd634ceb0f609426ceebc9a195f5e9",
+  "initializer": "NULL",
+  "local_sources_sha256": "956d9138b43ef6fa94929c652890e6cfb5d69e32686b3280eb697a17e29afb53",
+  "parameter_type": "struct xnn_f32_default_params",
+  "schema_version": 2,
+  "scope": "xnnpack-registered-domain",
+  "sources": [
+    {
+      "path": "benchmark/XNNPACK/src/f32-vrnd/f32-vrndne.inc",
+      "role": "kernel-registration",
+      "sha256": "2b1cace352988129a2beea5ecefba7efcfdae45676d1e47d949643bf606eb612",
+      "symbols": [
+        "xnn_f32_vrndne_ukernel__neon_u4",
+        "xnn_f32_vrndne_ukernel__neon_u8",
+        "xnn_f32_vrndne_ukernel__neonv8_u4",
+        "xnn_f32_vrndne_ukernel__neonv8_u8",
+        "xnn_f32_vrndne_ukernel__rvv_u1v",
+        "xnn_f32_vrndne_ukernel__rvv_u2v",
+        "xnn_f32_vrndne_ukernel__rvv_u4v",
+        "xnn_f32_vrndne_ukernel__rvv_u8v"
+      ]
+    }
+  ],
+  "status": "not-required",
+  "upstream_commit": "867d5a344790802ee067be62f572c2e2722bf6fb",
+  "upstream_root": "benchmark/XNNPACK"
+}

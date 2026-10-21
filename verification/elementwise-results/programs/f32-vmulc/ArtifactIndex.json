@@ -1,0 +1,122 @@
+{
+  "artifact_kind": "elementwise-generated-stack",
+  "capabilities": [
+    {
+      "capability_id": "intrinsic:neon:vget_high_f32:ce38d747fe1b6927",
+      "sha256": "be171beb0b8f4d045c5b31a6edc0e4231fad76f756494e967fc6228416948868",
+      "version": 1
+    },
+    {
+      "capability_id": "intrinsic:neon:vget_low_f32:8a95cadbc4dbff95",
+      "sha256": "234734d2afb8eae82eba243c2bb878238f4d50bc8914e402bc1d62b878026d61",
+      "version": 1
+    },
+    {
+      "capability_id": "intrinsic:neon:vld1q_dup_f32:6ed02bd5acdc88a3",
+      "sha256": "5ec9c9b7c2e5638efa56d849d400f8c5ff7e066bb82192bdf80c729ff3642046",
+      "version": 1
+    },
+    {
+      "capability_id": "intrinsic:neon:vld1q_f32:2cd0ee0c55f9163a",
+      "sha256": "5615115a2a2d4c7f8cc0d4dd4c63beb1f6b85974525bfc6a2ed40eb11396e757",
+      "version": 1
+    },
+    {
+      "capability_id": "intrinsic:neon:vmulq_f32:dcf54b26c84f1dc6",
+      "sha256": "95eefaa3b15bc7869bde839a4deee18b3330a723e52e7cd693d886c13d0d5a03",
+      "version": 1
+    },
+    {
+      "capability_id": "intrinsic:neon:vst1_f32:ad0241ade4926fdb",
+      "sha256": "1d5f57137494852985bddc7beb5afad0c3e6aba4702d3792259b76b5a243c75c",
+      "version": 1
+    },
+    {
+      "capability_id": "intrinsic:neon:vst1_lane_f32:0d7385dd67f03980",
+      "sha256": "3aac08ab59ffd186c3d46de406ee180297135603aa11c641dfc5cd6fa037ed79",
+      "version": 1
+    },
+    {
+      "capability_id": "intrinsic:neon:vst1q_f32:22522d502967a1ae",
+      "sha256": "611dbcdb0ee0cd616cb21ec5bc15854ff84a0f26bbbf9c470774c87f2755ea8e",
+      "version": 1
+    },
+    {
+      "capability_id": "intrinsic:rvv:__riscv_vfmul_vf_f32m8:ab30ef11484ca4d1",
+      "sha256": "5eba504ed4fbed925e21177fca02fe2a8e7e8623b9f9b9eb3a45cc08f59ec926",
+      "version": 1
+    },
+    {
+      "capability_id": "intrinsic:rvv:__riscv_vle32_v_f32m8:18bc0ec588792246",
+      "sha256": "c0a1bd1573bbab64ab03edb147420fe5c0c42fcc618daf2227c22611a441db1f",
+      "version": 1
+    },
+    {
+      "capability_id": "intrinsic:rvv:__riscv_vse32_v_f32m8:53d23aae8d2de69e",
+      "sha256": "4700304692b3667b2cc7999407c338bb468b661cae3fa18bb7ffe7afc663e622",
+      "version": 1
+    },
+    {
+      "capability_id": "intrinsic:rvv:__riscv_vsetvl_e32m8:8646d4d736c771fa",
+      "sha256": "c26df82df56e388e46aede9f4756f0670322d901e401f5dc2ce36e5e4f8abfea",
+      "version": 1
+    },
+    {
+      "capability_id": "layout:scalar-lane-with-broadcast",
+      "sha256": "db72d2de732b3b55f3449cb0ad0cd2ffe25ff3821e0b5ead70db6ae45600cc19",
+      "version": 1
+    },
+    {
+      "capability_id": "schedule:neon:fixed-tail",
+      "sha256": "25464217082e6764764aa8d6844375610c7e684d00ec9d4b7e77365f67b07ce9",
+      "version": 1
+    },
+    {
+      "capability_id": "schedule:rvv:rvv-strip-mine",
+      "sha256": "3204a831b121445fc9d723863dcef3bbe4bcc311b93d37a1b18903360de65e61",
+      "version": 1
+    }
+  ],
+  "counterexample": {
+    "claim": "SALT.Corpus.f32vmulc.completeValueEquivalenceClaim",
+    "lean_path": "Counterexample.lean",
+    "lean_sha256": "a386ae18ca31e6152a12ab3a5009257c8bb6987bf2ab5bd6c843cc88611f26a0",
+    "path": "Counterexample.json",
+    "sha256": "2492c25ebce6699bf78446babe8a0624723124b088cd99460c4645117036c1d2"
+  },
+  "cross_phase_audit": {
+    "path": "CrossPhaseAudit.json",
+    "sha256": "e192da706db9fa0117a92ab27f9bd8a4b9cfba513687514dfcce3ca1d16abea0",
+    "status": "not-applicable"
+  },
+  "external_condition": {
+    "path": "ExternalCondition.json",
+    "sha256": "4eaecb4fa7df033b16f50b264c1c1f57a830012cf0bfdd93f043662977253f1b",
+    "status": "not-required"
+  },
+  "manifest": {
+    "path": "ProgramManifest.json",
+    "sha256": "761c82374bb32238f882873284917dee09afa2ded65997acdfb1a5dab01fd22e"
+  },
+  "models": {
+    "kind": "models",
+    "parent_sha256": "761c82374bb32238f882873284917dee09afa2ded65997acdfb1a5dab01fd22e",
+    "path": "Models.lean",
+    "sha256": "1a13d538fbcb48d2ad4addfb58a4ac52e7c08ab9ec646e69a3235db70c39843a"
+  },
+  "namespace": "SALT.Corpus.f32vmulc",
+  "result": {
+    "path": "Result.json",
+    "sha256": "b7858ffb49a15feae1aba808691111dbd37484c40b3a5b8562b32936ce46a397",
+    "status": "counterexample"
+  },
+  "schema_version": 2,
+  "spec": {
+    "kind": "spec",
+    "parent_sha256": "1a13d538fbcb48d2ad4addfb58a4ac52e7c08ab9ec646e69a3235db70c39843a",
+    "path": "Spec.lean",
+    "sha256": "65647b7234c8644dbe9a01ab3fa6f7684cf66db8adc4763678d9c3b1eedbd343"
+  },
+  "stack_sha256": "65be8fc1cc7724f1b30d3b1bb0423f740999e31b7c1bd2ed1eb70a0592e30e7f",
+  "target_claim": "completeValueEquivalenceClaim"
+}

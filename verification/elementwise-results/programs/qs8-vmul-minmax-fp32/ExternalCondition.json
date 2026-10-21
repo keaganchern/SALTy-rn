@@ -1,0 +1,43 @@
+{
+  "artifact_kind": "elementwise-external-condition",
+  "candidate_contract": {
+    "clauses": []
+  },
+  "derivation": "local-kernel-parameter-use-v1",
+  "detail": "initializer transforms or validates semantic parameters, but no complete caller-to-kernel guarantee has been established",
+  "external_condition_sha256": "025893cde478c4dcbf2ce3a76473b6e1d3219e6c03daec96f137e70282a569e5",
+  "extractor_sha256": "a47a1ff67f330a0989538f51f450694cf5bd634ceb0f609426ceebc9a195f5e9",
+  "initializer": "xnn_init_qs8_mul_minmax_scalar_params",
+  "local_sources_sha256": "720062be385d4d9e1e917bc396dd883b4a44343d3c99646bbd6cba6edb769fdc",
+  "parameter_type": "union xnn_qs8_mul_minmax_params",
+  "schema_version": 2,
+  "scope": "xnnpack-registered-domain",
+  "sources": [
+    {
+      "path": "benchmark/XNNPACK/src/microparams-init.c",
+      "role": "parameter-initializer",
+      "sha256": "93f954cc8ae1a6a88da26de891e41237b671f67bbce8dfb410f881881d16b5a0",
+      "symbols": [
+        "xnn_init_qs8_mul_minmax_scalar_params"
+      ]
+    },
+    {
+      "path": "benchmark/XNNPACK/src/qs8-vmul/qs8-vmul-minmax-fp32.inc",
+      "role": "kernel-registration",
+      "sha256": "bba29d8c3107bb31389142a7521fb87e1e903f15b2d6c428e31108e924be0867",
+      "symbols": [
+        "xnn_qs8_vmul_minmax_fp32_ukernel__neon_ld128_u16",
+        "xnn_qs8_vmul_minmax_fp32_ukernel__neon_ld64_u16",
+        "xnn_qs8_vmul_minmax_fp32_ukernel__neon_ld64_u8",
+        "xnn_qs8_vmul_minmax_fp32_ukernel__neonv8_ld128_u16",
+        "xnn_qs8_vmul_minmax_fp32_ukernel__neonv8_ld64_u16",
+        "xnn_qs8_vmul_minmax_fp32_ukernel__neonv8_ld64_u8",
+        "xnn_qs8_vmul_minmax_fp32_ukernel__rvv_u1v",
+        "xnn_qs8_vmul_minmax_fp32_ukernel__rvv_u2v"
+      ]
+    }
+  ],
+  "status": "required-missing",
+  "upstream_commit": "867d5a344790802ee067be62f572c2e2722bf6fb",
+  "upstream_root": "benchmark/XNNPACK"
+}

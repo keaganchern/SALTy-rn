@@ -234,6 +234,7 @@ struct VerificationContext {
 
     // Logical / equality
     Term equal(Term a, Term b) { return tm.mkTerm(Kind::EQUAL, {a, b}); }
+    Term bv_ne(Term a, Term b) { return lnot_(equal(a, b)); }
     Term add(Term a, Term b)   { return tm.mkTerm(Kind::BITVECTOR_ADD, {a, b}); }
     Term land_(Term a, Term b) { return tm.mkTerm(Kind::AND,   {a, b}); }
     Term lor_ (Term a, Term b) { return tm.mkTerm(Kind::OR,    {a, b}); }

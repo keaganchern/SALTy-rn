@@ -1,0 +1,85 @@
+{
+  "allowed_axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+  ],
+  "cases": {
+    "qs8-vadd-minmax": {
+      "candidate_proof_path": null,
+      "contract": {
+        "path": "src/verification_bw/lean/SALT/Kernel/QS8/Params.lean",
+        "sha256": "0689e81738b6637c10f39658a6bcb01e46bac06f833d69ac3e334b3e1f0827c9"
+      },
+      "elaborated_type_sha256": "ad55d3e77b4059ce2d3db8fea41ceca7435375f9eef25c4d99c56faea4901deb",
+      "module": "SALT.Generated.QS8VAddMinmax.Proof",
+      "obligation": null,
+      "proof_path": "src/verification_bw/lean/SALT/Generated/QS8VAddMinmax/Proof.lean",
+      "theorem": "SALT.Generated.QS8VAddMinmax.generated_block_equiv"
+    },
+    "qs8-vcvt": {
+      "candidate_proof_path": null,
+      "contract": {
+        "path": "src/verification_bw/lean/SALT/Kernel/QS8VCvt/Contract.lean",
+        "sha256": "bc342d3ab4aad65eb8bb344dad967c40efeaae33529ba48b5e7fe2f77aa489ad"
+      },
+      "elaborated_type_sha256": "4098ebfaa12e79d718f9f7fa8b5c47001245d32bf74c8ec44bf62b03694e4a6f",
+      "module": "SALT.Generated.QS8VCvt.Proof",
+      "obligation": null,
+      "proof_path": "src/verification_bw/lean/SALT/Generated/QS8VCvt/Proof.lean",
+      "theorem": "SALT.Generated.QS8VCvt.allLengthsValueEqualWithOverread"
+    },
+    "qs8-vlrelu": {
+      "candidate_proof_path": "src/verification_bw/lean/SALT/Generated/QS8VLReLU/CandidateProof.lean",
+      "contract": {
+        "path": "src/verification_bw/lean/SALT/Kernel/QS8VLReLU/Contract.lean",
+        "sha256": "7f0b319091d3d32a14e983d243887c8bce13ac0f59c175c1d7ef2a14f10c9b8b"
+      },
+      "elaborated_type_sha256": "d87c7a415182a844c662447b057c4cf1e89de64ebde4eb9f9e2fb63c828890f0",
+      "module": "SALT.Generated.QS8VLReLU.CandidateProof",
+      "obligation": {
+        "path": "src/verification_bw/lean/SALT/Generated/QS8VLReLU/Obligation.lean",
+        "sha256": "a3e6a43ca698fc6e8c0f1638399ce02aca6cb225de7c2b0a321ae7cfa49f0169"
+      },
+      "proof_path": "src/verification_bw/lean/SALT/Generated/QS8VLReLU/CandidateProof.lean",
+      "theorem": "SALT.Generated.QS8VLReLU.allLengthsValueEqualWithOverread"
+    },
+    "qu8-vadd-minmax": {
+      "candidate_proof_path": "src/verification_bw/lean/SALT/Generated/QU8VAddMinmax/CandidateProof.lean",
+      "contract": {
+        "path": "src/verification_bw/lean/SALT/Kernel/QU8VAddMinmax/Contract.lean",
+        "sha256": "973e4033154f72bb4f3aabae701c339131bd5aa19e9c1a30a0686ca0a78eff86"
+      },
+      "elaborated_type_sha256": "52e06179d46b3d88a7b8948239ccd8b8ee6d363bcda5c707908d2904466e5090",
+      "module": "SALT.Generated.QU8VAddMinmax.CandidateProof",
+      "obligation": {
+        "path": "src/verification_bw/lean/SALT/Generated/QU8VAddMinmax/Obligation.lean",
+        "sha256": "7282e11bb820859b011a66976758776506a2a03e190ab5db5414f21469fe74d1"
+      },
+      "proof_path": "src/verification_bw/lean/SALT/Generated/QU8VAddMinmax/CandidateProof.lean",
+      "theorem": "SALT.Generated.QU8VAddMinmax.allLengthsValueEqualWithOverread"
+    },
+    "s8-vclamp": {
+      "candidate_proof_path": null,
+      "contract": {
+        "path": "src/verification_bw/lean/SALT/Kernel/S8VClamp/Contract.lean",
+        "sha256": "af0e54386b40d71ccc85fe58c0ab69354b7893b646560205251acc608dadcaaf"
+      },
+      "elaborated_type_sha256": "8d862a2f8470b51ea3ec71bfd6ec1d093f2b271348f26408fd670c8948c1d4dc",
+      "module": "SALT.Generated.S8VClamp.AllLengths",
+      "obligation": null,
+      "proof_path": "src/verification_bw/lean/SALT/Generated/S8VClamp/AllLengths.lean",
+      "theorem": "SALT.Generated.S8VClamp.allLengthsValueEqualWithOverread"
+    }
+  },
+  "protected_lean_project_sha256": "8a59adfa5e3f79f878b38169991c6c8441e5abb71cff13a92bb0db929cb8d50b",
+  "schema_version": 4,
+  "toolchain": {
+    "lake_sha256": "0e56506385ec20d56bffd7c031c4d48573ab5fdb74e5246ec8c45a220bebc68b",
+    "lake_version": "Lake version 5.0.0-src+98dc76e (Lean version 4.29.0)",
+    "lean_sha256": "2974847fff2e2621502841f4c2dbac4035b4847d6060a4f2087cbc0d04005e37",
+    "lean_version": "Lean (version 4.29.0, arm64-apple-darwin24.6.0, commit 98dc76e3c0a9b856c9b98726b713fb04fab16740, Release)",
+    "runtime_sha256": "12f040a3ae0262a09f4934e02ef7acdcab4c0a69f5ba5838133b9ee0f8e2c255",
+    "selector": "leanprover/lean4:v4.29.0"
+  }
+}

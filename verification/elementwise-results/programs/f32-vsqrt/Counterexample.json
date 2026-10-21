@@ -1,0 +1,21 @@
+{
+  "artifact_kind": "elementwise-counterexample",
+  "checker_sha256": "ecc010ffabdd4da811f2e7aa450bc080683a857fcebe67d11db1a2de0d008a99",
+  "claim": "SALT.Corpus.f32vsqrt.completeValueEquivalenceClaim",
+  "counterexample_sha256": "59c6680fbd2aff4d51a8b93babc05c383fb4e2f9e299a2ed342b644bf89d4a3a",
+  "input_values": [
+    2141192193
+  ],
+  "lean_path": "Counterexample.lean",
+  "lean_sha256": "3e7f3cc2646122462077d43d161963b7d696aa7511abfe9793feba79cb8b8fb3",
+  "left_function": "SALT.Corpus.f32vsqrt.neonValueLoopWithOverreadFromIntrinsics",
+  "left_output": 2145386497,
+  "manifest_sha256": "506ce7b4637f7ca28ad84fea7adfb88522b823ff6844a17fa43c48620c5cb830",
+  "models_sha256": "39414291d3f1234a37f3cf5709b8b976b23aa81db96c0ebd5933c34c5542ea99",
+  "parameter_values": {},
+  "right_function": "SALT.Corpus.f32vsqrt.rvvValueLoopFromIntrinsics",
+  "right_output": 2143289344,
+  "schema_version": 1,
+  "spec_sha256": "25a85421780626d15fcfb5d8bb9befb43203bac7044d93f18bb9357ea0cf1e64",
+  "toolchain_sha256": "1ce7d3879378e751ecae7bb5fd76c57bde9e4957e69b20b4693d759eb34a8c6d"
+}

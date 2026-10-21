@@ -1,0 +1,2815 @@
+{
+  "artifact_kind": "elementwise-corpus-report",
+  "capability_registry": {
+    "path": "CapabilityRegistry.json",
+    "sha256": "92e1b9df6a698a5ec8616439aeb2a2eacc4fcbc4c890050434677442b85ef362"
+  },
+  "counterexample_count": 10,
+  "discovered_elementwise": 20,
+  "discovery_rule": "paired-single-output-vsetvl-vector-load-store-v1",
+  "external_condition_counts": {
+    "not-required": 12,
+    "required-missing": 8
+  },
+  "grouped_layout_deferred": 1,
+  "intrinsic_dependencies": [
+    {
+      "configured": true,
+      "intrinsic": "neon:vabsq_f32",
+      "programs": [
+        "f32-f16-vcvt",
+        "f32-vrndne"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vadd_u16",
+      "programs": [
+        "f32-f16-vcvt"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vaddq_f32",
+      "programs": [
+        "f32-f16-vcvt",
+        "f32-vadd",
+        "f32-vrndne",
+        "qs8-vmul-minmax-fp32"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vaddq_u16",
+      "programs": [
+        "f32-f16-vcvt"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vaddq_u32",
+      "programs": [
+        "f32-f16-vcvt"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vaddw_s8",
+      "programs": [
+        "qs8-f32-vcvt"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vaddw_u8",
+      "programs": [
+        "qu8-f32-vcvt"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vand_u16",
+      "programs": [
+        "f32-f16-vcvt"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vandq_u16",
+      "programs": [
+        "f32-f16-vcvt"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vandq_u32",
+      "programs": [
+        "f32-f16-vcvt"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vbsl_u16",
+      "programs": [
+        "f32-f16-vcvt"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vbslq_f32",
+      "programs": [
+        "f32-vlrelu",
+        "f32-vrndne"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vbslq_s16",
+      "programs": [
+        "qs8-vlrelu"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vbslq_u16",
+      "programs": [
+        "f32-f16-vcvt"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vcaltq_f32",
+      "programs": [
+        "f32-vrndne"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vcgtq_u32",
+      "programs": [
+        "f32-f16-vcvt"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vcltq_s16",
+      "programs": [
+        "qs8-vlrelu"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vcltq_s32",
+      "programs": [
+        "f32-vlrelu"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vcombine_s16",
+      "programs": [
+        "qs8-vadd-minmax",
+        "qs8-vmul-minmax-fp32",
+        "qu8-vadd-minmax"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vcombine_s8",
+      "programs": [
+        "qs8-vadd-minmax"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vcombine_u16",
+      "programs": [
+        "f32-f16-vcvt"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vcvtq_f32_s32",
+      "programs": [
+        "qs8-f32-vcvt",
+        "qs8-vmul-minmax-fp32",
+        "qu8-f32-vcvt"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vdivq_f32",
+      "programs": [
+        "f32-vdiv"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vdup_n_s8",
+      "programs": [
+        "qs8-vadd-minmax",
+        "qs8-vmul-minmax-fp32"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vdup_n_u8",
+      "programs": [
+        "qu8-vadd-minmax"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vdupq_n_f32",
+      "programs": [
+        "f32-f16-vcvt",
+        "f32-vlrelu",
+        "qs8-f32-vcvt",
+        "qs8-vmul-minmax-fp32",
+        "qu8-f32-vcvt"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vdupq_n_s16",
+      "programs": [
+        "qs8-f32-vcvt",
+        "qs8-vadd-minmax",
+        "qs8-vcvt",
+        "qs8-vlrelu",
+        "qu8-f32-vcvt",
+        "qu8-vadd-minmax"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vdupq_n_s32",
+      "programs": [
+        "qs8-vadd-minmax",
+        "qs8-vmul-minmax-fp32",
+        "qu8-vadd-minmax"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vdupq_n_s8",
+      "programs": [
+        "qs8-vadd-minmax",
+        "s8-vclamp"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vdupq_n_u16",
+      "programs": [
+        "f32-f16-vcvt"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vdupq_n_u32",
+      "programs": [
+        "f32-f16-vcvt"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vext_s8",
+      "programs": [
+        "qs8-vadd-minmax",
+        "qs8-vcvt",
+        "qs8-vlrelu",
+        "qs8-vmul-minmax-fp32",
+        "s8-vclamp"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vext_u16",
+      "programs": [
+        "f32-f16-vcvt"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vext_u8",
+      "programs": [
+        "qu8-vadd-minmax"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vget_high_f32",
+      "programs": [
+        "f32-vadd",
+        "f32-vcmul",
+        "f32-vdiv",
+        "f32-vlrelu",
+        "f32-vmax",
+        "f32-vmin",
+        "f32-vmul",
+        "f32-vmulc",
+        "f32-vrndne",
+        "f32-vsqrt",
+        "f32-vsub",
+        "qs8-f32-vcvt",
+        "qu8-f32-vcvt"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vget_high_s16",
+      "programs": [
+        "qs8-f32-vcvt",
+        "qs8-vadd-minmax",
+        "qs8-vmul-minmax-fp32",
+        "qu8-f32-vcvt",
+        "qu8-vadd-minmax"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vget_low_f32",
+      "programs": [
+        "f32-vadd",
+        "f32-vcmul",
+        "f32-vdiv",
+        "f32-vlrelu",
+        "f32-vmax",
+        "f32-vmin",
+        "f32-vmul",
+        "f32-vmulc",
+        "f32-vrndne",
+        "f32-vsqrt",
+        "f32-vsub",
+        "qs8-f32-vcvt",
+        "qu8-f32-vcvt"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vget_low_s16",
+      "programs": [
+        "qs8-f32-vcvt",
+        "qs8-vadd-minmax",
+        "qs8-vmul-minmax-fp32",
+        "qu8-f32-vcvt",
+        "qu8-vadd-minmax"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vget_low_s8",
+      "programs": [
+        "qs8-vadd-minmax",
+        "s8-vclamp"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vget_low_u16",
+      "programs": [
+        "f32-f16-vcvt"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vld1_s8",
+      "programs": [
+        "qs8-f32-vcvt",
+        "qs8-vadd-minmax",
+        "qs8-vcvt",
+        "qs8-vlrelu",
+        "qs8-vmul-minmax-fp32",
+        "s8-vclamp"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vld1_u8",
+      "programs": [
+        "qu8-f32-vcvt",
+        "qu8-vadd-minmax"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vld1q_dup_f32",
+      "programs": [
+        "f32-vmulc"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vld1q_f32",
+      "programs": [
+        "f32-f16-vcvt",
+        "f32-vadd",
+        "f32-vcmul",
+        "f32-vdiv",
+        "f32-vlrelu",
+        "f32-vmax",
+        "f32-vmin",
+        "f32-vmul",
+        "f32-vmulc",
+        "f32-vrndne",
+        "f32-vsqrt",
+        "f32-vsub"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vld1q_s8",
+      "programs": [
+        "s8-vclamp"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vmax_s8",
+      "programs": [
+        "qs8-vadd-minmax",
+        "qs8-vmul-minmax-fp32",
+        "s8-vclamp"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vmax_u8",
+      "programs": [
+        "qu8-vadd-minmax"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vmaxq_f32",
+      "programs": [
+        "f32-vmax"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vmaxq_s8",
+      "programs": [
+        "qs8-vadd-minmax",
+        "s8-vclamp"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vmaxq_u32",
+      "programs": [
+        "f32-f16-vcvt"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vmin_s8",
+      "programs": [
+        "qs8-vadd-minmax",
+        "qs8-vmul-minmax-fp32",
+        "s8-vclamp"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vmin_u8",
+      "programs": [
+        "qu8-vadd-minmax"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vminq_f32",
+      "programs": [
+        "f32-vmin"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vminq_s8",
+      "programs": [
+        "qs8-vadd-minmax",
+        "s8-vclamp"
+      ]
+    },
+    {
+      "configured": false,
+      "intrinsic": "neon:vmlaq_f32",
+      "programs": [
+        "f32-vcmul"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vmlaq_s32",
+      "programs": [
+        "qs8-vadd-minmax",
+        "qu8-vadd-minmax"
+      ]
+    },
+    {
+      "configured": false,
+      "intrinsic": "neon:vmlsq_f32",
+      "programs": [
+        "f32-vcmul"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vmovl_s16",
+      "programs": [
+        "qs8-f32-vcvt",
+        "qs8-vadd-minmax",
+        "qu8-f32-vcvt",
+        "qu8-vadd-minmax"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vmovn_u32",
+      "programs": [
+        "f32-f16-vcvt"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vmovq_n_s16",
+      "programs": [
+        "qs8-vlrelu"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vmovq_n_s32",
+      "programs": [
+        "f32-vlrelu"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vmovq_n_u32",
+      "programs": [
+        "f32-vrndne"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vmull_s16",
+      "programs": [
+        "qs8-vmul-minmax-fp32"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vmulq_f32",
+      "programs": [
+        "f32-f16-vcvt",
+        "f32-vcmul",
+        "f32-vlrelu",
+        "f32-vmul",
+        "f32-vmulc",
+        "qs8-f32-vcvt",
+        "qs8-vmul-minmax-fp32",
+        "qu8-f32-vcvt"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vmulq_s32",
+      "programs": [
+        "qs8-vadd-minmax",
+        "qu8-vadd-minmax"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vorr_u16",
+      "programs": [
+        "f32-f16-vcvt"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vorrq_u16",
+      "programs": [
+        "f32-f16-vcvt"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vorrq_u32",
+      "programs": [
+        "f32-vrndne"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vqaddq_s16",
+      "programs": [
+        "qs8-vadd-minmax",
+        "qs8-vcvt",
+        "qs8-vlrelu",
+        "qu8-vadd-minmax"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vqmovn_high_s32",
+      "programs": [
+        "qs8-vmul-minmax-fp32"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vqmovn_s16",
+      "programs": [
+        "qs8-vadd-minmax",
+        "qs8-vcvt",
+        "qs8-vlrelu",
+        "qs8-vmul-minmax-fp32"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vqmovn_s32",
+      "programs": [
+        "qs8-vadd-minmax",
+        "qs8-vmul-minmax-fp32",
+        "qu8-vadd-minmax"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vqmovun_s16",
+      "programs": [
+        "qu8-vadd-minmax"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vqrdmulhq_s16",
+      "programs": [
+        "qs8-vcvt",
+        "qs8-vlrelu"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vqsubq_s32",
+      "programs": [
+        "qs8-vmul-minmax-fp32"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vreinterpret_u16_s8",
+      "programs": [
+        "qs8-vadd-minmax",
+        "qs8-vcvt",
+        "qs8-vlrelu",
+        "qs8-vmul-minmax-fp32",
+        "s8-vclamp"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vreinterpret_u16_u8",
+      "programs": [
+        "qu8-vadd-minmax"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vreinterpret_u32_s8",
+      "programs": [
+        "qs8-vadd-minmax",
+        "qs8-vcvt",
+        "qs8-vlrelu",
+        "qs8-vmul-minmax-fp32",
+        "s8-vclamp"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vreinterpret_u32_u16",
+      "programs": [
+        "f32-f16-vcvt"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vreinterpret_u32_u8",
+      "programs": [
+        "qu8-vadd-minmax"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vreinterpretq_f32_u32",
+      "programs": [
+        "f32-f16-vcvt",
+        "f32-vrndne"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vreinterpretq_s16_u16",
+      "programs": [
+        "qu8-f32-vcvt",
+        "qu8-vadd-minmax"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vreinterpretq_s32_f32",
+      "programs": [
+        "f32-vlrelu",
+        "qs8-vmul-minmax-fp32"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vreinterpretq_u16_s16",
+      "programs": [
+        "qu8-f32-vcvt"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vreinterpretq_u32_f32",
+      "programs": [
+        "f32-f16-vcvt"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vrshlq_s32",
+      "programs": [
+        "qs8-vadd-minmax",
+        "qu8-vadd-minmax"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vshlq_n_s16",
+      "programs": [
+        "qs8-vcvt",
+        "qs8-vlrelu"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vshrn_n_u32",
+      "programs": [
+        "f32-f16-vcvt"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vsqrtq_f32",
+      "programs": [
+        "f32-vsqrt"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vst1_f32",
+      "programs": [
+        "f32-vadd",
+        "f32-vcmul",
+        "f32-vdiv",
+        "f32-vlrelu",
+        "f32-vmax",
+        "f32-vmin",
+        "f32-vmul",
+        "f32-vmulc",
+        "f32-vrndne",
+        "f32-vsqrt",
+        "f32-vsub",
+        "qs8-f32-vcvt",
+        "qu8-f32-vcvt"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vst1_lane_f32",
+      "programs": [
+        "f32-vadd",
+        "f32-vcmul",
+        "f32-vdiv",
+        "f32-vlrelu",
+        "f32-vmax",
+        "f32-vmin",
+        "f32-vmul",
+        "f32-vmulc",
+        "f32-vrndne",
+        "f32-vsqrt",
+        "f32-vsub",
+        "qs8-f32-vcvt",
+        "qu8-f32-vcvt"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vst1_lane_s8",
+      "programs": [
+        "qs8-vadd-minmax",
+        "qs8-vcvt",
+        "qs8-vlrelu",
+        "qs8-vmul-minmax-fp32",
+        "s8-vclamp"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vst1_lane_u16",
+      "programs": [
+        "f32-f16-vcvt",
+        "qs8-vadd-minmax",
+        "qs8-vcvt",
+        "qs8-vlrelu",
+        "qs8-vmul-minmax-fp32",
+        "qu8-vadd-minmax",
+        "s8-vclamp"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vst1_lane_u32",
+      "programs": [
+        "f32-f16-vcvt",
+        "qs8-vadd-minmax",
+        "qs8-vcvt",
+        "qs8-vlrelu",
+        "qs8-vmul-minmax-fp32",
+        "qu8-vadd-minmax",
+        "s8-vclamp"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vst1_lane_u8",
+      "programs": [
+        "qu8-vadd-minmax"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vst1_s8",
+      "programs": [
+        "qs8-vadd-minmax",
+        "qs8-vcvt",
+        "qs8-vlrelu",
+        "qs8-vmul-minmax-fp32",
+        "s8-vclamp"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vst1_u16",
+      "programs": [
+        "f32-f16-vcvt"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vst1_u8",
+      "programs": [
+        "qu8-vadd-minmax"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vst1q_f32",
+      "programs": [
+        "f32-vadd",
+        "f32-vcmul",
+        "f32-vdiv",
+        "f32-vlrelu",
+        "f32-vmax",
+        "f32-vmin",
+        "f32-vmul",
+        "f32-vmulc",
+        "f32-vrndne",
+        "f32-vsqrt",
+        "f32-vsub",
+        "qs8-f32-vcvt",
+        "qu8-f32-vcvt"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vst1q_s8",
+      "programs": [
+        "qs8-vadd-minmax",
+        "s8-vclamp"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vst1q_u16",
+      "programs": [
+        "f32-f16-vcvt"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vsubl_s8",
+      "programs": [
+        "qs8-vadd-minmax",
+        "qs8-vmul-minmax-fp32"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vsubl_u8",
+      "programs": [
+        "qu8-vadd-minmax"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vsubq_f32",
+      "programs": [
+        "f32-vrndne",
+        "f32-vsub"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "neon:vsubw_s8",
+      "programs": [
+        "qs8-vcvt",
+        "qs8-vlrelu"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vadd_vv_u16m4",
+      "programs": [
+        "f32-f16-vcvt"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vadd_vx_i32m8",
+      "programs": [
+        "qs8-vmul-minmax-fp32"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vadd_vx_u16m4",
+      "programs": [
+        "qu8-f32-vcvt"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vadd_vx_u32m8",
+      "programs": [
+        "f32-f16-vcvt"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vand_vx_u16m4",
+      "programs": [
+        "f32-f16-vcvt"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vand_vx_u32m8",
+      "programs": [
+        "f32-f16-vcvt"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vfabs_v_f32m8",
+      "programs": [
+        "f32-f16-vcvt",
+        "f32-vrndne"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vfadd_vf_f32m8",
+      "programs": [
+        "f32-vrndne"
+      ]
+    },
+    {
+      "configured": false,
+      "intrinsic": "rvv:__riscv_vfadd_vv_f32m4",
+      "programs": [
+        "f32-vcmul"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vfadd_vv_f32m8",
+      "programs": [
+        "f32-f16-vcvt",
+        "f32-vadd"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vfcvt_f_x_v_f32m8",
+      "programs": [
+        "qs8-f32-vcvt",
+        "qs8-vmul-minmax-fp32",
+        "qu8-f32-vcvt"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vfcvt_x_f_v_i32m8",
+      "programs": [
+        "qs8-vmul-minmax-fp32"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vfdiv_vv_f32m8",
+      "programs": [
+        "f32-vdiv"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vfmax_vv_f32m8",
+      "programs": [
+        "f32-vmax"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vfmin_vv_f32m8",
+      "programs": [
+        "f32-vmin"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vfmul_vf_f32m8",
+      "programs": [
+        "f32-f16-vcvt",
+        "f32-vlrelu",
+        "f32-vmulc",
+        "qs8-f32-vcvt",
+        "qs8-vmul-minmax-fp32",
+        "qu8-f32-vcvt"
+      ]
+    },
+    {
+      "configured": false,
+      "intrinsic": "rvv:__riscv_vfmul_vv_f32m4",
+      "programs": [
+        "f32-vcmul"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vfmul_vv_f32m8",
+      "programs": [
+        "f32-vmul"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vfsgnj_vv_f32m8",
+      "programs": [
+        "f32-vrndne"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vfsqrt_v_f32m8",
+      "programs": [
+        "f32-vsqrt"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vfsub_vf_f32m8",
+      "programs": [
+        "f32-vrndne"
+      ]
+    },
+    {
+      "configured": false,
+      "intrinsic": "rvv:__riscv_vfsub_vv_f32m4",
+      "programs": [
+        "f32-vcmul"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vfsub_vv_f32m8",
+      "programs": [
+        "f32-vsub"
+      ]
+    },
+    {
+      "configured": false,
+      "intrinsic": "rvv:__riscv_vle32_v_f32m4",
+      "programs": [
+        "f32-vcmul"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vle32_v_f32m8",
+      "programs": [
+        "f32-f16-vcvt",
+        "f32-vadd",
+        "f32-vdiv",
+        "f32-vlrelu",
+        "f32-vmax",
+        "f32-vmin",
+        "f32-vmul",
+        "f32-vmulc",
+        "f32-vrndne",
+        "f32-vsqrt",
+        "f32-vsub"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vle8_v_i8m2",
+      "programs": [
+        "qs8-f32-vcvt",
+        "qs8-vadd-minmax",
+        "qs8-vcvt",
+        "qs8-vlrelu",
+        "qs8-vmul-minmax-fp32"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vle8_v_i8m8",
+      "programs": [
+        "s8-vclamp"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vle8_v_u8m2",
+      "programs": [
+        "qu8-f32-vcvt",
+        "qu8-vadd-minmax"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vmacc_vx_i32m8",
+      "programs": [
+        "qs8-vadd-minmax",
+        "qu8-vadd-minmax"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vmax_vx_i16m4",
+      "programs": [
+        "qu8-vadd-minmax"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vmax_vx_i8m2",
+      "programs": [
+        "qs8-vadd-minmax",
+        "qs8-vmul-minmax-fp32"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vmax_vx_i8m8",
+      "programs": [
+        "s8-vclamp"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vmaxu_vx_u32m8",
+      "programs": [
+        "f32-f16-vcvt"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vmaxu_vx_u8m2",
+      "programs": [
+        "qu8-vadd-minmax"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vmerge_vvm_f32m8",
+      "programs": [
+        "f32-vlrelu",
+        "f32-vrndne"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vmerge_vxm_i16m4",
+      "programs": [
+        "qs8-vlrelu"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vmerge_vxm_u16m4",
+      "programs": [
+        "f32-f16-vcvt"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vmfgt_vf_f32m8_b4",
+      "programs": [
+        "f32-vrndne"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vmfne_vv_f32m8_b4",
+      "programs": [
+        "f32-vrndne"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vmin_vx_i8m2",
+      "programs": [
+        "qs8-vadd-minmax",
+        "qs8-vmul-minmax-fp32"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vmin_vx_i8m8",
+      "programs": [
+        "s8-vclamp"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vminu_vx_u8m2",
+      "programs": [
+        "qu8-vadd-minmax"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vmsgtu_vx_u32m8_b4",
+      "programs": [
+        "f32-f16-vcvt"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vmslt_vx_i16m4_b4",
+      "programs": [
+        "qs8-vlrelu"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vmslt_vx_i32m8_b4",
+      "programs": [
+        "f32-vlrelu"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vmul_vx_i32m8",
+      "programs": [
+        "qs8-vadd-minmax",
+        "qu8-vadd-minmax"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vmv_v_x_i16m4",
+      "programs": [
+        "qs8-vlrelu"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vnclip_wx_i16m4",
+      "programs": [
+        "qs8-vadd-minmax",
+        "qs8-vcvt",
+        "qs8-vlrelu",
+        "qs8-vmul-minmax-fp32",
+        "qu8-vadd-minmax"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vnclip_wx_i8m2",
+      "programs": [
+        "qs8-vadd-minmax",
+        "qs8-vcvt",
+        "qs8-vlrelu",
+        "qs8-vmul-minmax-fp32"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vnclipu_wx_u8m2",
+      "programs": [
+        "qu8-vadd-minmax"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vnsrl_wx_u16m4",
+      "programs": [
+        "f32-f16-vcvt"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vor_vv_u16m4",
+      "programs": [
+        "f32-f16-vcvt"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vor_vx_u32m8",
+      "programs": [
+        "f32-vrndne"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vreinterpret_v_f32m8_i32m8",
+      "programs": [
+        "f32-vlrelu"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vreinterpret_v_f32m8_u32m8",
+      "programs": [
+        "f32-f16-vcvt",
+        "f32-vrndne"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vreinterpret_v_i16m4_u16m4",
+      "programs": [
+        "qu8-vadd-minmax"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vreinterpret_v_u16m4_i16m4",
+      "programs": [
+        "qu8-f32-vcvt",
+        "qu8-vadd-minmax"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vreinterpret_v_u32m8_f32m8",
+      "programs": [
+        "f32-f16-vcvt",
+        "f32-vrndne"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vrsub_vx_i16m4",
+      "programs": [
+        "qs8-vcvt",
+        "qs8-vlrelu"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vsadd_vx_i16m4",
+      "programs": [
+        "qs8-vadd-minmax",
+        "qs8-vcvt",
+        "qs8-vlrelu",
+        "qu8-vadd-minmax"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vse16_v_u16m4",
+      "programs": [
+        "f32-f16-vcvt"
+      ]
+    },
+    {
+      "configured": false,
+      "intrinsic": "rvv:__riscv_vse32_v_f32m4",
+      "programs": [
+        "f32-vcmul"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vse32_v_f32m8",
+      "programs": [
+        "f32-vadd",
+        "f32-vdiv",
+        "f32-vlrelu",
+        "f32-vmax",
+        "f32-vmin",
+        "f32-vmul",
+        "f32-vmulc",
+        "f32-vrndne",
+        "f32-vsqrt",
+        "f32-vsub",
+        "qs8-f32-vcvt",
+        "qu8-f32-vcvt"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vse8_v_i8m2",
+      "programs": [
+        "qs8-vadd-minmax",
+        "qs8-vcvt",
+        "qs8-vlrelu",
+        "qs8-vmul-minmax-fp32"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vse8_v_i8m8",
+      "programs": [
+        "s8-vclamp"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vse8_v_u8m2",
+      "programs": [
+        "qu8-vadd-minmax"
+      ]
+    },
+    {
+      "configured": false,
+      "intrinsic": "rvv:__riscv_vsetvl_e32m4",
+      "programs": [
+        "f32-vcmul"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vsetvl_e32m8",
+      "programs": [
+        "f32-f16-vcvt",
+        "f32-vadd",
+        "f32-vdiv",
+        "f32-vlrelu",
+        "f32-vmax",
+        "f32-vmin",
+        "f32-vmul",
+        "f32-vmulc",
+        "f32-vrndne",
+        "f32-vsqrt",
+        "f32-vsub"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vsetvl_e8m2",
+      "programs": [
+        "qs8-f32-vcvt",
+        "qs8-vadd-minmax",
+        "qs8-vcvt",
+        "qs8-vlrelu",
+        "qs8-vmul-minmax-fp32",
+        "qu8-f32-vcvt",
+        "qu8-vadd-minmax"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vsetvl_e8m8",
+      "programs": [
+        "s8-vclamp"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vsext_vf2_i16m4",
+      "programs": [
+        "qs8-f32-vcvt",
+        "qs8-vcvt",
+        "qs8-vlrelu",
+        "qs8-vmul-minmax-fp32"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vsext_vf2_i32m8",
+      "programs": [
+        "qs8-f32-vcvt",
+        "qs8-vadd-minmax",
+        "qu8-f32-vcvt",
+        "qu8-vadd-minmax"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vsll_vx_i16m4",
+      "programs": [
+        "qs8-vcvt",
+        "qs8-vlrelu"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vsll_vx_i32m8",
+      "programs": [
+        "qs8-vcvt",
+        "qu8-vadd-minmax"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vssra_vx_i32m8",
+      "programs": [
+        "qs8-vadd-minmax",
+        "qu8-vadd-minmax"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vsub_vx_i16m4",
+      "programs": [
+        "qs8-f32-vcvt",
+        "qs8-vmul-minmax-fp32"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vwmul_vv_i32m8",
+      "programs": [
+        "qs8-vlrelu",
+        "qs8-vmul-minmax-fp32"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vwmul_vx_i32m8",
+      "programs": [
+        "qs8-vcvt"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vwsub_vx_i16m4",
+      "programs": [
+        "qs8-vadd-minmax"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vwsubu_vx_u16m4",
+      "programs": [
+        "qu8-vadd-minmax"
+      ]
+    },
+    {
+      "configured": true,
+      "intrinsic": "rvv:__riscv_vzext_vf2_u16m4",
+      "programs": [
+        "qu8-f32-vcvt"
+      ]
+    }
+  ],
+  "programs": [
+    {
+      "artifact_index": "programs/f32-f16-vcvt/ArtifactIndex.json",
+      "counterexample": null,
+      "cross_phase_status": "no-counterexample-in-bounded-search",
+      "detail": "Lean accepted the frozen value claim and proof policy",
+      "entry_contract_preflight": "equal",
+      "external_condition_detail": "local kernels do not read semantic parameter fields",
+      "external_condition_sha256": "c624f5287400e640868dadfd20c12949be2ee73b5c2bbeb325b8a4138a783593",
+      "external_condition_status": "not-required",
+      "input_streams": [
+        "input"
+      ],
+      "layout_preflight": "scalar-lane",
+      "manifest_sha256": "c1512c08cb2802eb4f0fe12fd4c8d18c8f8f36ec20d35b3f85e78e4de0599a6c",
+      "missing_intrinsics": [],
+      "neon_function": "test_neon",
+      "neon_intrinsics": [
+        "vabsq_f32",
+        "vadd_u16",
+        "vaddq_f32",
+        "vaddq_u16",
+        "vaddq_u32",
+        "vand_u16",
+        "vandq_u16",
+        "vandq_u32",
+        "vbsl_u16",
+        "vbslq_u16",
+        "vcgtq_u32",
+        "vcombine_u16",
+        "vdupq_n_f32",
+        "vdupq_n_u16",
+        "vdupq_n_u32",
+        "vext_u16",
+        "vget_low_u16",
+        "vld1q_f32",
+        "vmaxq_u32",
+        "vmovn_u32",
+        "vmulq_f32",
+        "vorr_u16",
+        "vorrq_u16",
+        "vreinterpret_u32_u16",
+        "vreinterpretq_f32_u32",
+        "vreinterpretq_u32_f32",
+        "vshrn_n_u32",
+        "vst1_lane_u16",
+        "vst1_lane_u32",
+        "vst1_u16",
+        "vst1q_u16"
+      ],
+      "neon_source": "kernels/source/f32-f16-vcvt.c",
+      "output_streams": [
+        "output"
+      ],
+      "program_id": "f32-f16-vcvt",
+      "program_status": "programs/f32-f16-vcvt/ProgramStatus.json",
+      "rvv_function": "test_rvv",
+      "rvv_intrinsics": [
+        "__riscv_vadd_vv_u16m4",
+        "__riscv_vadd_vx_u32m8",
+        "__riscv_vand_vx_u16m4",
+        "__riscv_vand_vx_u32m8",
+        "__riscv_vfabs_v_f32m8",
+        "__riscv_vfadd_vv_f32m8",
+        "__riscv_vfmul_vf_f32m8",
+        "__riscv_vle32_v_f32m8",
+        "__riscv_vmaxu_vx_u32m8",
+        "__riscv_vmerge_vxm_u16m4",
+        "__riscv_vmsgtu_vx_u32m8_b4",
+        "__riscv_vnsrl_wx_u16m4",
+        "__riscv_vor_vv_u16m4",
+        "__riscv_vreinterpret_v_f32m8_u32m8",
+        "__riscv_vreinterpret_v_u32m8_f32m8",
+        "__riscv_vse16_v_u16m4",
+        "__riscv_vsetvl_e32m8"
+      ],
+      "rvv_source": "kernels/target/f32-f16-vcvt.c",
+      "schedule_preflight": "multi-phase",
+      "status": "verified(value)",
+      "status_layer": "lean-checked-terminal"
+    },
+    {
+      "artifact_index": "programs/f32-vadd/ArtifactIndex.json",
+      "counterexample": {
+        "claim": "SALT.Corpus.f32vadd.completeValueEquivalenceClaim",
+        "inputs": [
+          0,
+          2141192193
+        ],
+        "left_output": 2145386497,
+        "parameters": {},
+        "path": "programs/f32-vadd/Counterexample.json",
+        "right_output": 2143289344,
+        "sha256": "0011a622123956648e1ac0989a60eba6947a43f5711474521b2eb82715d49823"
+      },
+      "cross_phase_status": "not-multi-phase",
+      "detail": "Lean checked a concrete Neon/RVV complete value-claim disagreement",
+      "entry_contract_preflight": "equal",
+      "external_condition_detail": "local kernels do not read semantic parameter fields",
+      "external_condition_sha256": "c41993ce9651868c6a65bc64007f3ce351bc12d282dfa84340dddd57a1c3539a",
+      "external_condition_status": "not-required",
+      "input_streams": [
+        "input_a",
+        "input_b"
+      ],
+      "layout_preflight": "scalar-lane",
+      "manifest_sha256": "8ac0738f06bb1e2938d9327a216821b2c757aa89cd904a23befc19ab4f0a3d38",
+      "missing_intrinsics": [],
+      "neon_function": "test_neon",
+      "neon_intrinsics": [
+        "vaddq_f32",
+        "vget_high_f32",
+        "vget_low_f32",
+        "vld1q_f32",
+        "vst1_f32",
+        "vst1_lane_f32",
+        "vst1q_f32"
+      ],
+      "neon_source": "kernels/source/f32-vadd.c",
+      "output_streams": [
+        "output"
+      ],
+      "program_id": "f32-vadd",
+      "program_status": "programs/f32-vadd/ProgramStatus.json",
+      "rvv_function": "test_rvv",
+      "rvv_intrinsics": [
+        "__riscv_vfadd_vv_f32m8",
+        "__riscv_vle32_v_f32m8",
+        "__riscv_vse32_v_f32m8",
+        "__riscv_vsetvl_e32m8"
+      ],
+      "rvv_source": "kernels/target/f32-vadd.c",
+      "schedule_preflight": "fixed-tail",
+      "status": "counterexample",
+      "status_layer": "lean-checked-terminal"
+    },
+    {
+      "artifact_index": null,
+      "counterexample": null,
+      "cross_phase_status": "not-typed",
+      "detail": "planar grouping needs a reusable grouped layout capability",
+      "entry_contract_preflight": "equal",
+      "external_condition_detail": "local kernels do not read semantic parameter fields",
+      "external_condition_sha256": "de22bb58e9ef27a4027f6260485a399b3b1b71f34ea72a388089b5de3b8a6c9e",
+      "external_condition_status": "not-required",
+      "input_streams": [
+        "input_a",
+        "input_b"
+      ],
+      "layout_preflight": "grouped-planar",
+      "manifest_sha256": null,
+      "missing_intrinsics": [
+        "neon:vmlaq_f32",
+        "neon:vmlsq_f32",
+        "rvv:__riscv_vfadd_vv_f32m4",
+        "rvv:__riscv_vfmul_vv_f32m4",
+        "rvv:__riscv_vfsub_vv_f32m4",
+        "rvv:__riscv_vle32_v_f32m4",
+        "rvv:__riscv_vse32_v_f32m4",
+        "rvv:__riscv_vsetvl_e32m4"
+      ],
+      "neon_function": "test_neon",
+      "neon_intrinsics": [
+        "vget_high_f32",
+        "vget_low_f32",
+        "vld1q_f32",
+        "vmlaq_f32",
+        "vmlsq_f32",
+        "vmulq_f32",
+        "vst1_f32",
+        "vst1_lane_f32",
+        "vst1q_f32"
+      ],
+      "neon_source": "kernels/source/f32-vcmul.c",
+      "output_streams": [
+        "output"
+      ],
+      "program_id": "f32-vcmul",
+      "program_status": "programs/f32-vcmul/ProgramStatus.json",
+      "rvv_function": "test_rvv",
+      "rvv_intrinsics": [
+        "__riscv_vfadd_vv_f32m4",
+        "__riscv_vfmul_vv_f32m4",
+        "__riscv_vfsub_vv_f32m4",
+        "__riscv_vle32_v_f32m4",
+        "__riscv_vse32_v_f32m4",
+        "__riscv_vsetvl_e32m4"
+      ],
+      "rvv_source": "kernels/target/f32-vcmul.c",
+      "schedule_preflight": "fixed-tail",
+      "status": "layout-unrecognized",
+      "status_layer": "lexical-preflight"
+    },
+    {
+      "artifact_index": "programs/f32-vdiv/ArtifactIndex.json",
+      "counterexample": {
+        "claim": "SALT.Corpus.f32vdiv.completeValueEquivalenceClaim",
+        "inputs": [
+          0,
+          2141192193
+        ],
+        "left_output": 2145386497,
+        "parameters": {},
+        "path": "programs/f32-vdiv/Counterexample.json",
+        "right_output": 2143289344,
+        "sha256": "2c6889edc81f1079a53bf23552754972078cde97fd5cb224e71a35296e2c10f8"
+      },
+      "cross_phase_status": "not-multi-phase",
+      "detail": "Lean checked a concrete Neon/RVV complete value-claim disagreement",
+      "entry_contract_preflight": "equal",
+      "external_condition_detail": "local kernels do not read semantic parameter fields",
+      "external_condition_sha256": "13d80166539646531d2a3898a426b7b85c1ce509cec0fa07cb5a204972aeded5",
+      "external_condition_status": "not-required",
+      "input_streams": [
+        "input_a",
+        "input_b"
+      ],
+      "layout_preflight": "scalar-lane",
+      "manifest_sha256": "294bfa78bbf0569c2b05ac71d0bef075d0ab516af0de143ee6592fc9edda1cbe",
+      "missing_intrinsics": [],
+      "neon_function": "test_neon",
+      "neon_intrinsics": [
+        "vdivq_f32",
+        "vget_high_f32",
+        "vget_low_f32",
+        "vld1q_f32",
+        "vst1_f32",
+        "vst1_lane_f32",
+        "vst1q_f32"
+      ],
+      "neon_source": "kernels/source/f32-vdiv.c",
+      "output_streams": [
+        "output"
+      ],
+      "program_id": "f32-vdiv",
+      "program_status": "programs/f32-vdiv/ProgramStatus.json",
+      "rvv_function": "test_rvv",
+      "rvv_intrinsics": [
+        "__riscv_vfdiv_vv_f32m8",
+        "__riscv_vle32_v_f32m8",
+        "__riscv_vse32_v_f32m8",
+        "__riscv_vsetvl_e32m8"
+      ],
+      "rvv_source": "kernels/target/f32-vdiv.c",
+      "schedule_preflight": "fixed-tail",
+      "status": "counterexample",
+      "status_layer": "lean-checked-terminal"
+    },
+    {
+      "artifact_index": "programs/f32-vlrelu/ArtifactIndex.json",
+      "counterexample": {
+        "claim": "SALT.Corpus.f32vlrelu.completeValueEquivalenceClaim",
+        "inputs": [
+          2147483648
+        ],
+        "left_output": 2145386497,
+        "parameters": {
+          "slope": 2141192193
+        },
+        "path": "programs/f32-vlrelu/Counterexample.json",
+        "right_output": 2143289344,
+        "sha256": "8257a49aaaa6cf7aab538f8ae6a0b639329d3f1a0a90e62d4ac8ec23ea71ba06"
+      },
+      "cross_phase_status": "not-multi-phase",
+      "detail": "Lean checked a concrete Neon/RVV complete value-claim disagreement",
+      "entry_contract_preflight": "equal",
+      "external_condition_detail": "initializer directly copies an unconstrained unary scalar parameter",
+      "external_condition_sha256": "05b5597d06dd7f4c3aa02e31345003b17824a48d18f9f42b736e2a27c55a3ecd",
+      "external_condition_status": "not-required",
+      "input_streams": [
+        "input"
+      ],
+      "layout_preflight": "scalar-lane",
+      "manifest_sha256": "abd96e6487a02a6ccffd3063e9924e0420c4baab54b7f697f8ea9b561a6b116a",
+      "missing_intrinsics": [],
+      "neon_function": "test_neon",
+      "neon_intrinsics": [
+        "vbslq_f32",
+        "vcltq_s32",
+        "vdupq_n_f32",
+        "vget_high_f32",
+        "vget_low_f32",
+        "vld1q_f32",
+        "vmovq_n_s32",
+        "vmulq_f32",
+        "vreinterpretq_s32_f32",
+        "vst1_f32",
+        "vst1_lane_f32",
+        "vst1q_f32"
+      ],
+      "neon_source": "kernels/source/f32-vlrelu.c",
+      "output_streams": [
+        "output"
+      ],
+      "program_id": "f32-vlrelu",
+      "program_status": "programs/f32-vlrelu/ProgramStatus.json",
+      "rvv_function": "test_rvv",
+      "rvv_intrinsics": [
+        "__riscv_vfmul_vf_f32m8",
+        "__riscv_vle32_v_f32m8",
+        "__riscv_vmerge_vvm_f32m8",
+        "__riscv_vmslt_vx_i32m8_b4",
+        "__riscv_vreinterpret_v_f32m8_i32m8",
+        "__riscv_vse32_v_f32m8",
+        "__riscv_vsetvl_e32m8"
+      ],
+      "rvv_source": "kernels/target/f32-vlrelu.c",
+      "schedule_preflight": "fixed-tail",
+      "status": "counterexample",
+      "status_layer": "lean-checked-terminal"
+    },
+    {
+      "artifact_index": "programs/f32-vmax/ArtifactIndex.json",
+      "counterexample": {
+        "claim": "SALT.Corpus.f32vmax.completeValueEquivalenceClaim",
+        "inputs": [
+          0,
+          2143289344
+        ],
+        "left_output": 2143289344,
+        "parameters": {},
+        "path": "programs/f32-vmax/Counterexample.json",
+        "right_output": 0,
+        "sha256": "04490498b5989970cb7478284ad2be795bd41de01467b49f7f4421781dace4b7"
+      },
+      "cross_phase_status": "not-multi-phase",
+      "detail": "Lean checked a concrete Neon/RVV complete value-claim disagreement",
+      "entry_contract_preflight": "equal",
+      "external_condition_detail": "local kernels do not read semantic parameter fields",
+      "external_condition_sha256": "7a94df02cf2bd7546e8068c30af8cc02fe86e091bd6bb126b116744216975f78",
+      "external_condition_status": "not-required",
+      "input_streams": [
+        "input_a",
+        "input_b"
+      ],
+      "layout_preflight": "scalar-lane",
+      "manifest_sha256": "d61afc01a052de9bedf4527db3e062b9451eba9c5d3e57e8e823390acdd04875",
+      "missing_intrinsics": [],
+      "neon_function": "test_neon",
+      "neon_intrinsics": [
+        "vget_high_f32",
+        "vget_low_f32",
+        "vld1q_f32",
+        "vmaxq_f32",
+        "vst1_f32",
+        "vst1_lane_f32",
+        "vst1q_f32"
+      ],
+      "neon_source": "kernels/source/f32-vmax.c",
+      "output_streams": [
+        "output"
+      ],
+      "program_id": "f32-vmax",
+      "program_status": "programs/f32-vmax/ProgramStatus.json",
+      "rvv_function": "test_rvv",
+      "rvv_intrinsics": [
+        "__riscv_vfmax_vv_f32m8",
+        "__riscv_vle32_v_f32m8",
+        "__riscv_vse32_v_f32m8",
+        "__riscv_vsetvl_e32m8"
+      ],
+      "rvv_source": "kernels/target/f32-vmax.c",
+      "schedule_preflight": "fixed-tail",
+      "status": "counterexample",
+      "status_layer": "lean-checked-terminal"
+    },
+    {
+      "artifact_index": "programs/f32-vmin/ArtifactIndex.json",
+      "counterexample": {
+        "claim": "SALT.Corpus.f32vmin.completeValueEquivalenceClaim",
+        "inputs": [
+          0,
+          2143289344
+        ],
+        "left_output": 2143289344,
+        "parameters": {},
+        "path": "programs/f32-vmin/Counterexample.json",
+        "right_output": 0,
+        "sha256": "eee343b3fd74492db6a85ea4e20a93c0bd88dd6ce92ed5051580e223a8c88603"
+      },
+      "cross_phase_status": "not-multi-phase",
+      "detail": "Lean checked a concrete Neon/RVV complete value-claim disagreement",
+      "entry_contract_preflight": "equal",
+      "external_condition_detail": "local kernels do not read semantic parameter fields",
+      "external_condition_sha256": "1bbf5b20a53ddfc9d7284353899c9c6a92b8407e558453dabad7d7622068629a",
+      "external_condition_status": "not-required",
+      "input_streams": [
+        "input_a",
+        "input_b"
+      ],
+      "layout_preflight": "scalar-lane",
+      "manifest_sha256": "53c27966733f9683c8f7299d68652b41a60ba6aac7e81bc5faa42946bcf747a2",
+      "missing_intrinsics": [],
+      "neon_function": "test_neon",
+      "neon_intrinsics": [
+        "vget_high_f32",
+        "vget_low_f32",
+        "vld1q_f32",
+        "vminq_f32",
+        "vst1_f32",
+        "vst1_lane_f32",
+        "vst1q_f32"
+      ],
+      "neon_source": "kernels/source/f32-vmin.c",
+      "output_streams": [
+        "output"
+      ],
+      "program_id": "f32-vmin",
+      "program_status": "programs/f32-vmin/ProgramStatus.json",
+      "rvv_function": "test_rvv",
+      "rvv_intrinsics": [
+        "__riscv_vfmin_vv_f32m8",
+        "__riscv_vle32_v_f32m8",
+        "__riscv_vse32_v_f32m8",
+        "__riscv_vsetvl_e32m8"
+      ],
+      "rvv_source": "kernels/target/f32-vmin.c",
+      "schedule_preflight": "fixed-tail",
+      "status": "counterexample",
+      "status_layer": "lean-checked-terminal"
+    },
+    {
+      "artifact_index": "programs/f32-vmul/ArtifactIndex.json",
+      "counterexample": {
+        "claim": "SALT.Corpus.f32vmul.completeValueEquivalenceClaim",
+        "inputs": [
+          0,
+          2141192193
+        ],
+        "left_output": 2145386497,
+        "parameters": {},
+        "path": "programs/f32-vmul/Counterexample.json",
+        "right_output": 2143289344,
+        "sha256": "39e08d68bcf6bbc0542be761629f964ad40914e0542c220e8f1198ed6560140c"
+      },
+      "cross_phase_status": "not-multi-phase",
+      "detail": "Lean checked a concrete Neon/RVV complete value-claim disagreement",
+      "entry_contract_preflight": "equal",
+      "external_condition_detail": "local kernels do not read semantic parameter fields",
+      "external_condition_sha256": "b5d444ae7c71dcf10e2c40680ad8b71390074f1e89017d9d4fa4ecc151110633",
+      "external_condition_status": "not-required",
+      "input_streams": [
+        "input_a",
+        "input_b"
+      ],
+      "layout_preflight": "scalar-lane",
+      "manifest_sha256": "c7defdc07c7d2040ca232e4e456a531668575d004091ba8b209b7e07deaeeeaf",
+      "missing_intrinsics": [],
+      "neon_function": "test_neon",
+      "neon_intrinsics": [
+        "vget_high_f32",
+        "vget_low_f32",
+        "vld1q_f32",
+        "vmulq_f32",
+        "vst1_f32",
+        "vst1_lane_f32",
+        "vst1q_f32"
+      ],
+      "neon_source": "kernels/source/f32-vmul.c",
+      "output_streams": [
+        "output"
+      ],
+      "program_id": "f32-vmul",
+      "program_status": "programs/f32-vmul/ProgramStatus.json",
+      "rvv_function": "test_rvv",
+      "rvv_intrinsics": [
+        "__riscv_vfmul_vv_f32m8",
+        "__riscv_vle32_v_f32m8",
+        "__riscv_vse32_v_f32m8",
+        "__riscv_vsetvl_e32m8"
+      ],
+      "rvv_source": "kernels/target/f32-vmul.c",
+      "schedule_preflight": "fixed-tail",
+      "status": "counterexample",
+      "status_layer": "lean-checked-terminal"
+    },
+    {
+      "artifact_index": "programs/f32-vmulc/ArtifactIndex.json",
+      "counterexample": {
+        "claim": "SALT.Corpus.f32vmulc.completeValueEquivalenceClaim",
+        "inputs": [
+          2141192193
+        ],
+        "left_output": 2145386497,
+        "parameters": {
+          "broadcast_input_b": 0
+        },
+        "path": "programs/f32-vmulc/Counterexample.json",
+        "right_output": 2143289344,
+        "sha256": "2492c25ebce6699bf78446babe8a0624723124b088cd99460c4645117036c1d2"
+      },
+      "cross_phase_status": "not-multi-phase",
+      "detail": "Lean checked a concrete Neon/RVV complete value-claim disagreement",
+      "entry_contract_preflight": "equal",
+      "external_condition_detail": "local kernels do not read semantic parameter fields",
+      "external_condition_sha256": "4eaecb4fa7df033b16f50b264c1c1f57a830012cf0bfdd93f043662977253f1b",
+      "external_condition_status": "not-required",
+      "input_streams": [
+        "input_a",
+        "input_b"
+      ],
+      "layout_preflight": "scalar-lane",
+      "manifest_sha256": "761c82374bb32238f882873284917dee09afa2ded65997acdfb1a5dab01fd22e",
+      "missing_intrinsics": [],
+      "neon_function": "test_neon",
+      "neon_intrinsics": [
+        "vget_high_f32",
+        "vget_low_f32",
+        "vld1q_dup_f32",
+        "vld1q_f32",
+        "vmulq_f32",
+        "vst1_f32",
+        "vst1_lane_f32",
+        "vst1q_f32"
+      ],
+      "neon_source": "kernels/source/f32-vmulc.c",
+      "output_streams": [
+        "output"
+      ],
+      "program_id": "f32-vmulc",
+      "program_status": "programs/f32-vmulc/ProgramStatus.json",
+      "rvv_function": "test_rvv",
+      "rvv_intrinsics": [
+        "__riscv_vfmul_vf_f32m8",
+        "__riscv_vle32_v_f32m8",
+        "__riscv_vse32_v_f32m8",
+        "__riscv_vsetvl_e32m8"
+      ],
+      "rvv_source": "kernels/target/f32-vmulc.c",
+      "schedule_preflight": "fixed-tail",
+      "status": "counterexample",
+      "status_layer": "lean-checked-terminal"
+    },
+    {
+      "artifact_index": "programs/f32-vrndne/ArtifactIndex.json",
+      "counterexample": null,
+      "cross_phase_status": "not-multi-phase",
+      "detail": "Lean accepted the frozen value claim and proof policy",
+      "entry_contract_preflight": "equal",
+      "external_condition_detail": "local kernels do not read semantic parameter fields",
+      "external_condition_sha256": "5c4dbfecbb524d96b7ae9d4a00523e8af4caa41c5e8b146d6962cf4ab83a59a2",
+      "external_condition_status": "not-required",
+      "input_streams": [
+        "input"
+      ],
+      "layout_preflight": "scalar-lane",
+      "manifest_sha256": "2c33b8521de83e8c732a4b39165bc657a2295431fe098fc8d1005ff249d1ee8d",
+      "missing_intrinsics": [],
+      "neon_function": "test_neon",
+      "neon_intrinsics": [
+        "vabsq_f32",
+        "vaddq_f32",
+        "vbslq_f32",
+        "vcaltq_f32",
+        "vget_high_f32",
+        "vget_low_f32",
+        "vld1q_f32",
+        "vmovq_n_u32",
+        "vorrq_u32",
+        "vreinterpretq_f32_u32",
+        "vst1_f32",
+        "vst1_lane_f32",
+        "vst1q_f32",
+        "vsubq_f32"
+      ],
+      "neon_source": "kernels/source/f32-vrndne.c",
+      "output_streams": [
+        "output"
+      ],
+      "program_id": "f32-vrndne",
+      "program_status": "programs/f32-vrndne/ProgramStatus.json",
+      "rvv_function": "test_rvv",
+      "rvv_intrinsics": [
+        "__riscv_vfabs_v_f32m8",
+        "__riscv_vfadd_vf_f32m8",
+        "__riscv_vfsgnj_vv_f32m8",
+        "__riscv_vfsub_vf_f32m8",
+        "__riscv_vle32_v_f32m8",
+        "__riscv_vmerge_vvm_f32m8",
+        "__riscv_vmfgt_vf_f32m8_b4",
+        "__riscv_vmfne_vv_f32m8_b4",
+        "__riscv_vor_vx_u32m8",
+        "__riscv_vreinterpret_v_f32m8_u32m8",
+        "__riscv_vreinterpret_v_u32m8_f32m8",
+        "__riscv_vse32_v_f32m8",
+        "__riscv_vsetvl_e32m8"
+      ],
+      "rvv_source": "kernels/target/f32-vrndne.c",
+      "schedule_preflight": "fixed-tail",
+      "status": "verified(value)",
+      "status_layer": "lean-checked-terminal"
+    },
+    {
+      "artifact_index": "programs/f32-vsqrt/ArtifactIndex.json",
+      "counterexample": {
+        "claim": "SALT.Corpus.f32vsqrt.completeValueEquivalenceClaim",
+        "inputs": [
+          2141192193
+        ],
+        "left_output": 2145386497,
+        "parameters": {},
+        "path": "programs/f32-vsqrt/Counterexample.json",
+        "right_output": 2143289344,
+        "sha256": "59c6680fbd2aff4d51a8b93babc05c383fb4e2f9e299a2ed342b644bf89d4a3a"
+      },
+      "cross_phase_status": "not-multi-phase",
+      "detail": "Lean checked a concrete Neon/RVV complete value-claim disagreement",
+      "entry_contract_preflight": "equal",
+      "external_condition_detail": "local kernels do not read semantic parameter fields",
+      "external_condition_sha256": "8eb36f4e679c4874c297c3aee3c0ed97c3d0a5e0a1eaf3d1069140afa7f55813",
+      "external_condition_status": "not-required",
+      "input_streams": [
+        "input",
+        "unused_params"
+      ],
+      "layout_preflight": "scalar-lane",
+      "manifest_sha256": "506ce7b4637f7ca28ad84fea7adfb88522b823ff6844a17fa43c48620c5cb830",
+      "missing_intrinsics": [],
+      "neon_function": "test_neon",
+      "neon_intrinsics": [
+        "vget_high_f32",
+        "vget_low_f32",
+        "vld1q_f32",
+        "vsqrtq_f32",
+        "vst1_f32",
+        "vst1_lane_f32",
+        "vst1q_f32"
+      ],
+      "neon_source": "kernels/source/f32-vsqrt.c",
+      "output_streams": [
+        "output"
+      ],
+      "program_id": "f32-vsqrt",
+      "program_status": "programs/f32-vsqrt/ProgramStatus.json",
+      "rvv_function": "test_rvv",
+      "rvv_intrinsics": [
+        "__riscv_vfsqrt_v_f32m8",
+        "__riscv_vle32_v_f32m8",
+        "__riscv_vse32_v_f32m8",
+        "__riscv_vsetvl_e32m8"
+      ],
+      "rvv_source": "kernels/target/f32-vsqrt.c",
+      "schedule_preflight": "fixed-tail",
+      "status": "counterexample",
+      "status_layer": "lean-checked-terminal"
+    },
+    {
+      "artifact_index": "programs/f32-vsub/ArtifactIndex.json",
+      "counterexample": {
+        "claim": "SALT.Corpus.f32vsub.completeValueEquivalenceClaim",
+        "inputs": [
+          0,
+          2141192193
+        ],
+        "left_output": 2145386497,
+        "parameters": {},
+        "path": "programs/f32-vsub/Counterexample.json",
+        "right_output": 2143289344,
+        "sha256": "d1de1f02ac52e8a7ebc92dae6084fbdf14277a543e736bb27942ae3cb3599268"
+      },
+      "cross_phase_status": "not-multi-phase",
+      "detail": "Lean checked a concrete Neon/RVV complete value-claim disagreement",
+      "entry_contract_preflight": "equal",
+      "external_condition_detail": "local kernels do not read semantic parameter fields",
+      "external_condition_sha256": "1d4b9a4e8820327c5bdf5ba16a54841b457791947cde34e54d2a8c20b473dd09",
+      "external_condition_status": "not-required",
+      "input_streams": [
+        "input_a",
+        "input_b"
+      ],
+      "layout_preflight": "scalar-lane",
+      "manifest_sha256": "e8d57f3f0d65672e71efa05a43fd824690b205be51a0d8dbd0ea3502a8be073e",
+      "missing_intrinsics": [],
+      "neon_function": "test_neon",
+      "neon_intrinsics": [
+        "vget_high_f32",
+        "vget_low_f32",
+        "vld1q_f32",
+        "vst1_f32",
+        "vst1_lane_f32",
+        "vst1q_f32",
+        "vsubq_f32"
+      ],
+      "neon_source": "kernels/source/f32-vsub.c",
+      "output_streams": [
+        "output"
+      ],
+      "program_id": "f32-vsub",
+      "program_status": "programs/f32-vsub/ProgramStatus.json",
+      "rvv_function": "test_rvv",
+      "rvv_intrinsics": [
+        "__riscv_vfsub_vv_f32m8",
+        "__riscv_vle32_v_f32m8",
+        "__riscv_vse32_v_f32m8",
+        "__riscv_vsetvl_e32m8"
+      ],
+      "rvv_source": "kernels/target/f32-vsub.c",
+      "schedule_preflight": "fixed-tail",
+      "status": "counterexample",
+      "status_layer": "lean-checked-terminal"
+    },
+    {
+      "artifact_index": "programs/qs8-f32-vcvt/ArtifactIndex.json",
+      "counterexample": null,
+      "cross_phase_status": "not-multi-phase",
+      "detail": "initializer transforms or validates semantic parameters, but no complete caller-to-kernel guarantee has been established",
+      "entry_contract_preflight": "equal",
+      "external_condition_detail": "initializer transforms or validates semantic parameters, but no complete caller-to-kernel guarantee has been established",
+      "external_condition_sha256": "526562299432b1b907b0aa39cf63eeb09a156e4c1fdee4c72686bee85eb15256",
+      "external_condition_status": "required-missing",
+      "input_streams": [
+        "input"
+      ],
+      "layout_preflight": "scalar-lane",
+      "manifest_sha256": "2ac3c160b9e294dbc642ff502c5114134768e23be42f7bd5512c5d48652288ee",
+      "missing_intrinsics": [],
+      "neon_function": "test_neon",
+      "neon_intrinsics": [
+        "vaddw_s8",
+        "vcvtq_f32_s32",
+        "vdupq_n_f32",
+        "vdupq_n_s16",
+        "vget_high_f32",
+        "vget_high_s16",
+        "vget_low_f32",
+        "vget_low_s16",
+        "vld1_s8",
+        "vmovl_s16",
+        "vmulq_f32",
+        "vst1_f32",
+        "vst1_lane_f32",
+        "vst1q_f32"
+      ],
+      "neon_source": "kernels/source/qs8-f32-vcvt.c",
+      "output_streams": [
+        "output"
+      ],
+      "program_id": "qs8-f32-vcvt",
+      "program_status": "programs/qs8-f32-vcvt/ProgramStatus.json",
+      "rvv_function": "test_rvv",
+      "rvv_intrinsics": [
+        "__riscv_vfcvt_f_x_v_f32m8",
+        "__riscv_vfmul_vf_f32m8",
+        "__riscv_vle8_v_i8m2",
+        "__riscv_vse32_v_f32m8",
+        "__riscv_vsetvl_e8m2",
+        "__riscv_vsext_vf2_i16m4",
+        "__riscv_vsext_vf2_i32m8",
+        "__riscv_vsub_vx_i16m4"
+      ],
+      "rvv_source": "kernels/target/qs8-f32-vcvt.c",
+      "schedule_preflight": "fixed-tail",
+      "status": "external-condition-missing",
+      "status_layer": "typed-generated"
+    },
+    {
+      "artifact_index": "programs/qs8-vadd-minmax/ArtifactIndex.json",
+      "counterexample": null,
+      "cross_phase_status": "blocked-by-missing-external-condition",
+      "detail": "initializer transforms or validates semantic parameters, but no complete caller-to-kernel guarantee has been established",
+      "entry_contract_preflight": "equal",
+      "external_condition_detail": "initializer transforms or validates semantic parameters, but no complete caller-to-kernel guarantee has been established",
+      "external_condition_sha256": "7f92db0c241827ca875e17e40df9536c52f4853efa17aea3f9d2cb5fd37bec0c",
+      "external_condition_status": "required-missing",
+      "input_streams": [
+        "input_a",
+        "input_b"
+      ],
+      "layout_preflight": "scalar-lane",
+      "manifest_sha256": "6ca35dfdb06a8329cb2a1b8985ce9f2ea803787b82ba014631ec621d25925963",
+      "missing_intrinsics": [],
+      "neon_function": "test_neon",
+      "neon_intrinsics": [
+        "vcombine_s16",
+        "vcombine_s8",
+        "vdup_n_s8",
+        "vdupq_n_s16",
+        "vdupq_n_s32",
+        "vdupq_n_s8",
+        "vext_s8",
+        "vget_high_s16",
+        "vget_low_s16",
+        "vget_low_s8",
+        "vld1_s8",
+        "vmax_s8",
+        "vmaxq_s8",
+        "vmin_s8",
+        "vminq_s8",
+        "vmlaq_s32",
+        "vmovl_s16",
+        "vmulq_s32",
+        "vqaddq_s16",
+        "vqmovn_s16",
+        "vqmovn_s32",
+        "vreinterpret_u16_s8",
+        "vreinterpret_u32_s8",
+        "vrshlq_s32",
+        "vst1_lane_s8",
+        "vst1_lane_u16",
+        "vst1_lane_u32",
+        "vst1_s8",
+        "vst1q_s8",
+        "vsubl_s8"
+      ],
+      "neon_source": "kernels/source/qs8-vadd-minmax.c",
+      "output_streams": [
+        "output"
+      ],
+      "program_id": "qs8-vadd-minmax",
+      "program_status": "programs/qs8-vadd-minmax/ProgramStatus.json",
+      "rvv_function": "test_rvv",
+      "rvv_intrinsics": [
+        "__riscv_vle8_v_i8m2",
+        "__riscv_vmacc_vx_i32m8",
+        "__riscv_vmax_vx_i8m2",
+        "__riscv_vmin_vx_i8m2",
+        "__riscv_vmul_vx_i32m8",
+        "__riscv_vnclip_wx_i16m4",
+        "__riscv_vnclip_wx_i8m2",
+        "__riscv_vsadd_vx_i16m4",
+        "__riscv_vse8_v_i8m2",
+        "__riscv_vsetvl_e8m2",
+        "__riscv_vsext_vf2_i32m8",
+        "__riscv_vssra_vx_i32m8",
+        "__riscv_vwsub_vx_i16m4"
+      ],
+      "rvv_source": "kernels/target/qs8-vadd-minmax.c",
+      "schedule_preflight": "multi-phase",
+      "status": "external-condition-missing",
+      "status_layer": "typed-generated"
+    },
+    {
+      "artifact_index": "programs/qs8-vcvt/ArtifactIndex.json",
+      "counterexample": null,
+      "cross_phase_status": "not-multi-phase",
+      "detail": "initializer transforms or validates semantic parameters, but no complete caller-to-kernel guarantee has been established",
+      "entry_contract_preflight": "equal",
+      "external_condition_detail": "initializer transforms or validates semantic parameters, but no complete caller-to-kernel guarantee has been established",
+      "external_condition_sha256": "ffad28fbbbfae73f6a4d116d4175a9909ee0a6d0c55ccb2531b35907bfcc1750",
+      "external_condition_status": "required-missing",
+      "input_streams": [
+        "input"
+      ],
+      "layout_preflight": "scalar-lane",
+      "manifest_sha256": "6b6a3f45ee1b4159043d59c7935b8fe529669482336fb5346845c4a84742425f",
+      "missing_intrinsics": [],
+      "neon_function": "test_neon",
+      "neon_intrinsics": [
+        "vdupq_n_s16",
+        "vext_s8",
+        "vld1_s8",
+        "vqaddq_s16",
+        "vqmovn_s16",
+        "vqrdmulhq_s16",
+        "vreinterpret_u16_s8",
+        "vreinterpret_u32_s8",
+        "vshlq_n_s16",
+        "vst1_lane_s8",
+        "vst1_lane_u16",
+        "vst1_lane_u32",
+        "vst1_s8",
+        "vsubw_s8"
+      ],
+      "neon_source": "kernels/source/qs8-vcvt.c",
+      "output_streams": [
+        "output"
+      ],
+      "program_id": "qs8-vcvt",
+      "program_status": "programs/qs8-vcvt/ProgramStatus.json",
+      "rvv_function": "test_rvv",
+      "rvv_intrinsics": [
+        "__riscv_vle8_v_i8m2",
+        "__riscv_vnclip_wx_i16m4",
+        "__riscv_vnclip_wx_i8m2",
+        "__riscv_vrsub_vx_i16m4",
+        "__riscv_vsadd_vx_i16m4",
+        "__riscv_vse8_v_i8m2",
+        "__riscv_vsetvl_e8m2",
+        "__riscv_vsext_vf2_i16m4",
+        "__riscv_vsll_vx_i16m4",
+        "__riscv_vsll_vx_i32m8",
+        "__riscv_vwmul_vx_i32m8"
+      ],
+      "rvv_source": "kernels/target/qs8-vcvt.c",
+      "schedule_preflight": "fixed-tail",
+      "status": "external-condition-missing",
+      "status_layer": "typed-generated"
+    },
+    {
+      "artifact_index": "programs/qs8-vlrelu/ArtifactIndex.json",
+      "counterexample": null,
+      "cross_phase_status": "not-multi-phase",
+      "detail": "initializer transforms or validates semantic parameters, but no complete caller-to-kernel guarantee has been established",
+      "entry_contract_preflight": "equal",
+      "external_condition_detail": "initializer transforms or validates semantic parameters, but no complete caller-to-kernel guarantee has been established",
+      "external_condition_sha256": "36aed0967c77eac6869bf2538b73412429a69c0b021134aa03c94703ef038418",
+      "external_condition_status": "required-missing",
+      "input_streams": [
+        "input"
+      ],
+      "layout_preflight": "scalar-lane",
+      "manifest_sha256": "290191f4919e6ffb2a8ce0b5e93d2365c03d4452ad7d99e1f46b8c9884fe8c21",
+      "missing_intrinsics": [],
+      "neon_function": "test_neon",
+      "neon_intrinsics": [
+        "vbslq_s16",
+        "vcltq_s16",
+        "vdupq_n_s16",
+        "vext_s8",
+        "vld1_s8",
+        "vmovq_n_s16",
+        "vqaddq_s16",
+        "vqmovn_s16",
+        "vqrdmulhq_s16",
+        "vreinterpret_u16_s8",
+        "vreinterpret_u32_s8",
+        "vshlq_n_s16",
+        "vst1_lane_s8",
+        "vst1_lane_u16",
+        "vst1_lane_u32",
+        "vst1_s8",
+        "vsubw_s8"
+      ],
+      "neon_source": "kernels/source/qs8-vlrelu.c",
+      "output_streams": [
+        "output"
+      ],
+      "program_id": "qs8-vlrelu",
+      "program_status": "programs/qs8-vlrelu/ProgramStatus.json",
+      "rvv_function": "test_rvv",
+      "rvv_intrinsics": [
+        "__riscv_vle8_v_i8m2",
+        "__riscv_vmerge_vxm_i16m4",
+        "__riscv_vmslt_vx_i16m4_b4",
+        "__riscv_vmv_v_x_i16m4",
+        "__riscv_vnclip_wx_i16m4",
+        "__riscv_vnclip_wx_i8m2",
+        "__riscv_vrsub_vx_i16m4",
+        "__riscv_vsadd_vx_i16m4",
+        "__riscv_vse8_v_i8m2",
+        "__riscv_vsetvl_e8m2",
+        "__riscv_vsext_vf2_i16m4",
+        "__riscv_vsll_vx_i16m4",
+        "__riscv_vwmul_vv_i32m8"
+      ],
+      "rvv_source": "kernels/target/qs8-vlrelu.c",
+      "schedule_preflight": "fixed-tail",
+      "status": "external-condition-missing",
+      "status_layer": "typed-generated"
+    },
+    {
+      "artifact_index": "programs/qs8-vmul-minmax-fp32/ArtifactIndex.json",
+      "counterexample": null,
+      "cross_phase_status": "not-multi-phase",
+      "detail": "initializer transforms or validates semantic parameters, but no complete caller-to-kernel guarantee has been established",
+      "entry_contract_preflight": "equal",
+      "external_condition_detail": "initializer transforms or validates semantic parameters, but no complete caller-to-kernel guarantee has been established",
+      "external_condition_sha256": "025893cde478c4dcbf2ce3a76473b6e1d3219e6c03daec96f137e70282a569e5",
+      "external_condition_status": "required-missing",
+      "input_streams": [
+        "input_a",
+        "input_b"
+      ],
+      "layout_preflight": "scalar-lane",
+      "manifest_sha256": "dc9c4d91da6cce46a3d1a1652d6cb9631b2ed1d6c58f0c94443f0c10164c187c",
+      "missing_intrinsics": [],
+      "neon_function": "test_neon",
+      "neon_intrinsics": [
+        "vaddq_f32",
+        "vcombine_s16",
+        "vcvtq_f32_s32",
+        "vdup_n_s8",
+        "vdupq_n_f32",
+        "vdupq_n_s32",
+        "vext_s8",
+        "vget_high_s16",
+        "vget_low_s16",
+        "vld1_s8",
+        "vmax_s8",
+        "vmin_s8",
+        "vmull_s16",
+        "vmulq_f32",
+        "vqmovn_high_s32",
+        "vqmovn_s16",
+        "vqmovn_s32",
+        "vqsubq_s32",
+        "vreinterpret_u16_s8",
+        "vreinterpret_u32_s8",
+        "vreinterpretq_s32_f32",
+        "vst1_lane_s8",
+        "vst1_lane_u16",
+        "vst1_lane_u32",
+        "vst1_s8",
+        "vsubl_s8"
+      ],
+      "neon_source": "kernels/source/qs8-vmul-minmax-fp32.c",
+      "output_streams": [
+        "output"
+      ],
+      "program_id": "qs8-vmul-minmax-fp32",
+      "program_status": "programs/qs8-vmul-minmax-fp32/ProgramStatus.json",
+      "rvv_function": "test_rvv",
+      "rvv_intrinsics": [
+        "__riscv_vadd_vx_i32m8",
+        "__riscv_vfcvt_f_x_v_f32m8",
+        "__riscv_vfcvt_x_f_v_i32m8",
+        "__riscv_vfmul_vf_f32m8",
+        "__riscv_vle8_v_i8m2",
+        "__riscv_vmax_vx_i8m2",
+        "__riscv_vmin_vx_i8m2",
+        "__riscv_vnclip_wx_i16m4",
+        "__riscv_vnclip_wx_i8m2",
+        "__riscv_vse8_v_i8m2",
+        "__riscv_vsetvl_e8m2",
+        "__riscv_vsext_vf2_i16m4",
+        "__riscv_vsub_vx_i16m4",
+        "__riscv_vwmul_vv_i32m8"
+      ],
+      "rvv_source": "kernels/target/qs8-vmul-minmax-fp32.c",
+      "schedule_preflight": "fixed-tail",
+      "status": "external-condition-missing",
+      "status_layer": "typed-generated"
+    },
+    {
+      "artifact_index": "programs/qu8-f32-vcvt/ArtifactIndex.json",
+      "counterexample": null,
+      "cross_phase_status": "not-multi-phase",
+      "detail": "initializer transforms or validates semantic parameters, but no complete caller-to-kernel guarantee has been established",
+      "entry_contract_preflight": "equal",
+      "external_condition_detail": "initializer transforms or validates semantic parameters, but no complete caller-to-kernel guarantee has been established",
+      "external_condition_sha256": "ed5d99f300adb6673aae1fb1b4f295347847ea22e9d9edb3ca7a9997a6fb2357",
+      "external_condition_status": "required-missing",
+      "input_streams": [
+        "input"
+      ],
+      "layout_preflight": "scalar-lane",
+      "manifest_sha256": "0f6bee399ba4096f338305997faf543b55e5e4f35bab449c60938b925889cc8d",
+      "missing_intrinsics": [],
+      "neon_function": "test_neon",
+      "neon_intrinsics": [
+        "vaddw_u8",
+        "vcvtq_f32_s32",
+        "vdupq_n_f32",
+        "vdupq_n_s16",
+        "vget_high_f32",
+        "vget_high_s16",
+        "vget_low_f32",
+        "vget_low_s16",
+        "vld1_u8",
+        "vmovl_s16",
+        "vmulq_f32",
+        "vreinterpretq_s16_u16",
+        "vreinterpretq_u16_s16",
+        "vst1_f32",
+        "vst1_lane_f32",
+        "vst1q_f32"
+      ],
+      "neon_source": "kernels/source/qu8-f32-vcvt.c",
+      "output_streams": [
+        "output"
+      ],
+      "program_id": "qu8-f32-vcvt",
+      "program_status": "programs/qu8-f32-vcvt/ProgramStatus.json",
+      "rvv_function": "test_rvv",
+      "rvv_intrinsics": [
+        "__riscv_vadd_vx_u16m4",
+        "__riscv_vfcvt_f_x_v_f32m8",
+        "__riscv_vfmul_vf_f32m8",
+        "__riscv_vle8_v_u8m2",
+        "__riscv_vreinterpret_v_u16m4_i16m4",
+        "__riscv_vse32_v_f32m8",
+        "__riscv_vsetvl_e8m2",
+        "__riscv_vsext_vf2_i32m8",
+        "__riscv_vzext_vf2_u16m4"
+      ],
+      "rvv_source": "kernels/target/qu8-f32-vcvt.c",
+      "schedule_preflight": "fixed-tail",
+      "status": "external-condition-missing",
+      "status_layer": "typed-generated"
+    },
+    {
+      "artifact_index": "programs/qu8-vadd-minmax/ArtifactIndex.json",
+      "counterexample": null,
+      "cross_phase_status": "not-multi-phase",
+      "detail": "initializer transforms or validates semantic parameters, but no complete caller-to-kernel guarantee has been established",
+      "entry_contract_preflight": "equal",
+      "external_condition_detail": "initializer transforms or validates semantic parameters, but no complete caller-to-kernel guarantee has been established",
+      "external_condition_sha256": "bba97c61130d4545b42cc3f9ace21051f0487de6af3315d91c29140f5f0e3d44",
+      "external_condition_status": "required-missing",
+      "input_streams": [
+        "input_a",
+        "input_b"
+      ],
+      "layout_preflight": "scalar-lane",
+      "manifest_sha256": "143d659f668038749082b63244ffe62e69593bbad98e563bc841f03501fd6b47",
+      "missing_intrinsics": [],
+      "neon_function": "test_neon",
+      "neon_intrinsics": [
+        "vcombine_s16",
+        "vdup_n_u8",
+        "vdupq_n_s16",
+        "vdupq_n_s32",
+        "vext_u8",
+        "vget_high_s16",
+        "vget_low_s16",
+        "vld1_u8",
+        "vmax_u8",
+        "vmin_u8",
+        "vmlaq_s32",
+        "vmovl_s16",
+        "vmulq_s32",
+        "vqaddq_s16",
+        "vqmovn_s32",
+        "vqmovun_s16",
+        "vreinterpret_u16_u8",
+        "vreinterpret_u32_u8",
+        "vreinterpretq_s16_u16",
+        "vrshlq_s32",
+        "vst1_lane_u16",
+        "vst1_lane_u32",
+        "vst1_lane_u8",
+        "vst1_u8",
+        "vsubl_u8"
+      ],
+      "neon_source": "kernels/source/qu8-vadd-minmax.c",
+      "output_streams": [
+        "output"
+      ],
+      "program_id": "qu8-vadd-minmax",
+      "program_status": "programs/qu8-vadd-minmax/ProgramStatus.json",
+      "rvv_function": "test_rvv",
+      "rvv_intrinsics": [
+        "__riscv_vle8_v_u8m2",
+        "__riscv_vmacc_vx_i32m8",
+        "__riscv_vmax_vx_i16m4",
+        "__riscv_vmaxu_vx_u8m2",
+        "__riscv_vminu_vx_u8m2",
+        "__riscv_vmul_vx_i32m8",
+        "__riscv_vnclip_wx_i16m4",
+        "__riscv_vnclipu_wx_u8m2",
+        "__riscv_vreinterpret_v_i16m4_u16m4",
+        "__riscv_vreinterpret_v_u16m4_i16m4",
+        "__riscv_vsadd_vx_i16m4",
+        "__riscv_vse8_v_u8m2",
+        "__riscv_vsetvl_e8m2",
+        "__riscv_vsext_vf2_i32m8",
+        "__riscv_vsll_vx_i32m8",
+        "__riscv_vssra_vx_i32m8",
+        "__riscv_vwsubu_vx_u16m4"
+      ],
+      "rvv_source": "kernels/target/qu8-vadd-minmax.c",
+      "schedule_preflight": "fixed-tail",
+      "status": "external-condition-missing",
+      "status_layer": "typed-generated"
+    },
+    {
+      "artifact_index": "programs/s8-vclamp/ArtifactIndex.json",
+      "counterexample": {
+        "claim": "SALT.Corpus.s8vclamp.neonPhaseFunctionsEqualClaim",
+        "inputs": [
+          0
+        ],
+        "left_output": 0,
+        "parameters": {
+          "max": 0,
+          "min": 5
+        },
+        "path": "programs/s8-vclamp/Counterexample.json",
+        "right_output": 5,
+        "sha256": "83f53ef823bb3be1f579a07c3d13ce37b9441619d1e8172ee5f5d3787b8b9fde"
+      },
+      "cross_phase_status": "lean-checked-counterexample",
+      "detail": "Lean checked a concrete disagreement between generated Neon phase functions",
+      "entry_contract_preflight": "equal",
+      "external_condition_detail": "initializer applies the same quantizer to clamp.min and clamp.max; caller guarantees for input order and positive scale remain unresolved",
+      "external_condition_sha256": "490a7cade552bd3a2d41e3e0ad1a0c87bac72e4f266d03998c2c973ea3531104",
+      "external_condition_status": "required-missing",
+      "input_streams": [
+        "input"
+      ],
+      "layout_preflight": "scalar-lane",
+      "manifest_sha256": "85a4ec4fe0a7acc5d45c40f3fe3df4105102b47dd811e1722488a2caaaadb053",
+      "missing_intrinsics": [],
+      "neon_function": "test_neon",
+      "neon_intrinsics": [
+        "vdupq_n_s8",
+        "vext_s8",
+        "vget_low_s8",
+        "vld1_s8",
+        "vld1q_s8",
+        "vmax_s8",
+        "vmaxq_s8",
+        "vmin_s8",
+        "vminq_s8",
+        "vreinterpret_u16_s8",
+        "vreinterpret_u32_s8",
+        "vst1_lane_s8",
+        "vst1_lane_u16",
+        "vst1_lane_u32",
+        "vst1_s8",
+        "vst1q_s8"
+      ],
+      "neon_source": "kernels/source/s8-vclamp.c",
+      "output_streams": [
+        "output"
+      ],
+      "program_id": "s8-vclamp",
+      "program_status": "programs/s8-vclamp/ProgramStatus.json",
+      "rvv_function": "test_rvv",
+      "rvv_intrinsics": [
+        "__riscv_vle8_v_i8m8",
+        "__riscv_vmax_vx_i8m8",
+        "__riscv_vmin_vx_i8m8",
+        "__riscv_vse8_v_i8m8",
+        "__riscv_vsetvl_e8m8"
+      ],
+      "rvv_source": "kernels/target/s8-vclamp.c",
+      "schedule_preflight": "multi-phase",
+      "status": "counterexample",
+      "status_layer": "lean-checked-terminal"
+    }
+  ],
+  "report_sha256": "976d12085dfa3a02096df697253f83b004657b1dafb34a59988b40ae7e9d06e2",
+  "scalar_layout_scope": 19,
+  "scalar_outcome_counts": {
+    "counterexample": 10,
+    "external-condition-missing": 7,
+    "verified(value)": 2
+  },
+  "schema_version": 2,
+  "status_counts": {
+    "counterexample": 10,
+    "external-condition-missing": 7,
+    "layout-unrecognized": 1,
+    "verified(value)": 2
+  }
+}

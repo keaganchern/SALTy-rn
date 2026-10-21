@@ -1,0 +1,37 @@
+{
+  "artifact_kind": "elementwise-external-condition",
+  "candidate_contract": {
+    "clauses": []
+  },
+  "derivation": "local-kernel-parameter-use-v1",
+  "detail": "local kernels do not read semantic parameter fields",
+  "external_condition_sha256": "c624f5287400e640868dadfd20c12949be2ee73b5c2bbeb325b8a4138a783593",
+  "extractor_sha256": "a47a1ff67f330a0989538f51f450694cf5bd634ceb0f609426ceebc9a195f5e9",
+  "initializer": "NULL",
+  "local_sources_sha256": "e94242e021988a65638ac356b812e31ea88107fea361e9ac2f4f3f8bea46133c",
+  "parameter_type": "void",
+  "schema_version": 2,
+  "scope": "xnnpack-registered-domain",
+  "sources": [
+    {
+      "path": "benchmark/XNNPACK/src/f32-f16-vcvt/f32-f16-vcvt.inc",
+      "role": "kernel-registration",
+      "sha256": "c7219c84a0d90eb2ecf79ba74c13f16e7518238e06de5d0f72f02bcc68b303c7",
+      "symbols": [
+        "xnn_f32_f16_vcvt_ukernel__neon_u16",
+        "xnn_f32_f16_vcvt_ukernel__neon_u24",
+        "xnn_f32_f16_vcvt_ukernel__neon_u32",
+        "xnn_f32_f16_vcvt_ukernel__neon_u8",
+        "xnn_f32_f16_vcvt_ukernel__neonfp16_u16",
+        "xnn_f32_f16_vcvt_ukernel__neonfp16_u8",
+        "xnn_f32_f16_vcvt_ukernel__rvvfp16arith_u1v",
+        "xnn_f32_f16_vcvt_ukernel__rvvfp16arith_u2v",
+        "xnn_f32_f16_vcvt_ukernel__rvvfp16arith_u4v",
+        "xnn_f32_f16_vcvt_ukernel__rvvfp16arith_u8v"
+      ]
+    }
+  ],
+  "status": "not-required",
+  "upstream_commit": "867d5a344790802ee067be62f572c2e2722bf6fb",
+  "upstream_root": "benchmark/XNNPACK"
+}

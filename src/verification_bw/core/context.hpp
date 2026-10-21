@@ -202,6 +202,7 @@ struct VerificationContext {
 
     // Logical / equality
     Term equal(Term a, Term b)  { return tm.mk_term(Kind::EQUAL, {a, b}); }
+    Term bv_ne(Term a, Term b)  { return lnot_(equal(a, b)); }
     Term land_(Term a, Term b)  { return tm.mk_term(Kind::AND,   {a, b}); }
     Term lor_ (Term a, Term b)  { return tm.mk_term(Kind::OR,    {a, b}); }
     Term lnot_(Term t)          { return tm.mk_term(Kind::NOT,   {t});    }

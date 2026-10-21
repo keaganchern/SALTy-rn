@@ -1,0 +1,24 @@
+{
+  "artifact_kind": "elementwise-counterexample",
+  "checker_sha256": "e5471bdc5c4a2c700dbc31e4bf37c53873e96a6979895768d6295490d98f10f2",
+  "claim": "SALT.Corpus.s8vclamp.neonPhaseFunctionsEqualClaim",
+  "counterexample_sha256": "83f53ef823bb3be1f579a07c3d13ce37b9441619d1e8172ee5f5d3787b8b9fde",
+  "input_values": [
+    0
+  ],
+  "lean_path": "Counterexample.lean",
+  "lean_sha256": "da103d8f21deff0f4cb61ddc555dc01b6cbb60ebf124c164c1443a3917f9d4af",
+  "left_function": "SALT.Corpus.s8vclamp.fNeon",
+  "left_output": 0,
+  "manifest_sha256": "85a4ec4fe0a7acc5d45c40f3fe3df4105102b47dd811e1722488a2caaaadb053",
+  "models_sha256": "5d5a2159388e9232c40de15c1fdf20d5f11032fdc2a34141937a029e9bf557a6",
+  "parameter_values": {
+    "max": 0,
+    "min": 5
+  },
+  "right_function": "SALT.Corpus.s8vclamp.fNeonSecondary",
+  "right_output": 5,
+  "schema_version": 1,
+  "spec_sha256": "22cfdac4d57eeef64caa350fda3dceac44d0303e9d9773687849a3454701d9ff",
+  "toolchain_sha256": "1ce7d3879378e751ecae7bb5fd76c57bde9e4957e69b20b4693d759eb34a8c6d"
+}

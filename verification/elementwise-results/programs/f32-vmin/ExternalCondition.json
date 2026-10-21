@@ -1,0 +1,31 @@
+{
+  "artifact_kind": "elementwise-external-condition",
+  "candidate_contract": {
+    "clauses": []
+  },
+  "derivation": "local-kernel-parameter-use-v1",
+  "detail": "local kernels do not read semantic parameter fields",
+  "external_condition_sha256": "1bbf5b20a53ddfc9d7284353899c9c6a92b8407e558453dabad7d7622068629a",
+  "extractor_sha256": "a47a1ff67f330a0989538f51f450694cf5bd634ceb0f609426ceebc9a195f5e9",
+  "initializer": "((xnn_init_f32_default_params_fn) NULL)",
+  "local_sources_sha256": "0473bf9dce27ac8abb76baaf7ca673f9c70957d9445118581b7e67e3163dfa01",
+  "parameter_type": "struct xnn_f32_default_params",
+  "schema_version": 2,
+  "scope": "xnnpack-registered-domain",
+  "sources": [
+    {
+      "path": "benchmark/XNNPACK/src/f32-vbinary/f32-vmin.inc",
+      "role": "kernel-registration",
+      "sha256": "1a22f711952e3fd358b1abed36b065a63d874f2394f278d8723f7ffe33ae9a2f",
+      "symbols": [
+        "xnn_f32_vmin_ukernel__neon_u4",
+        "xnn_f32_vmin_ukernel__neon_u8",
+        "xnn_f32_vmin_ukernel__rvv_u4v",
+        "xnn_f32_vmin_ukernel__rvv_u8v"
+      ]
+    }
+  ],
+  "status": "not-required",
+  "upstream_commit": "867d5a344790802ee067be62f572c2e2722bf6fb",
+  "upstream_root": "benchmark/XNNPACK"
+}
