@@ -1,0 +1,5 @@
+//@isla-config: traces/configs/neon-aligned.toml
+//@constraint: bvuge R2 0x0000000080000000
+//@constraint: bvule R2 0x0000000083fffffc
+//@constraint: = (bvand R2 0x0000000000000003) 0x0000000000000000
+80001040: b9400048  ldr	w8, [x2]

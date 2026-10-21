@@ -1,0 +1,5 @@
+//@isla-config: traces/configs/rvv-loop.toml
+//@constraint: bvule vl 0x0000000000000008
+//@constraint: bvuge x11 0x0000000080000000
+//@constraint: bvule x11 0x0000000083fffff8
+800001ca: 02058107  vle8.v	v2,(a1)

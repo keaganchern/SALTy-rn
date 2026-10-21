@@ -1,0 +1,2 @@
+//@isla-config: traces/configs/rvv-scalar.toml
+800001ce: 8d1d  sub	a0,a0,a5

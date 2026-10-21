@@ -1,0 +1,122 @@
+# This is a config for Sail RISC-V in 64-bit mode
+
+pc = "PC"
+
+comment_prefixes = ["#", "//"]
+
+zero_announce_exit = true
+
+default_sizeof = 4
+
+in_program_order = []
+
+[[toolchain]]
+name = "macos-riscv64"
+os = "macos"
+arch = "aarch64"
+assembler = "riscv64-elf-as"
+objdump = "riscv64-elf-objdump"
+nm = "riscv64-elf-nm"
+linker = "riscv64-elf-ld"
+
+[[toolchain]]
+name = "default"
+assembler = "/srv/home/yuechunsun/tools/lean/research/sail-binary-reduction/vendor/xpack-riscv-none-elf-gcc-15.2.0-1/bin/riscv-none-elf-as -march=rv64imac"
+objdump = "/srv/home/yuechunsun/tools/lean/research/sail-binary-reduction/vendor/xpack-riscv-none-elf-gcc-15.2.0-1/bin/riscv-none-elf-objdump"
+linker = "/srv/home/yuechunsun/tools/lean/research/sail-binary-reduction/vendor/xpack-riscv-none-elf-gcc-15.2.0-1/bin/riscv-none-elf-ld"
+nm = "/srv/home/yuechunsun/tools/lean/research/sail-binary-reduction/vendor/xpack-riscv-none-elf-gcc-15.2.0-1/bin/riscv-none-elf-nm"
+
+# Currently not used for RISC-V
+[mmu]
+page_table_base = "0x300000"
+page_size = "4096"
+s2_page_table_base = "0x300000"
+s2_page_size = "4096"
+
+[threads]
+base = "0x80100000"
+top = "0x80300000"
+stride = "0x10000"
+
+[symbolic_addrs]
+base = "0x80310000"
+top = "0x80410000"
+stride = "0x10"
+
+[registers.defaults]
+rv_enable_rvc = true
+
+rv_pmp_count = "0 : %i64"
+rv_ram_base = "0x0000000080000000"
+rv_ram_size = "0x0000000004000000"
+rv_rom_base = "0x0000000000001000"
+rv_rom_size = "0x0000000000000100"
+rv_clint_base = "0x0000000002000000"
+rv_clint_size = "0x00000000000c0000"
+rv_htif_tohost = "0x0000000040001000"
+rv_enable_misaligned_access = false
+rv_enable_dirty_update = false
+
+vlen = "0x3"
+elen = "0b1"
+vlenb = "0x0000000000000020"
+vstart = "0x0000"
+cur_privilege = "Machine"
+rv_enable_vext = true
+rv_enable_zfinx = false
+satp = "0x0000000000000000"
+misa = "{ bits = 0x8000000000200104 }"
+mstatus = "{ bits = 0x8000000000000600 }"
+mcountinhibit = " { bits = 0x00000000 }"
+mcyclecfg = "{ bits = 0x0000000000000000 }"
+minstretcfg = "{ bits = 0x0000000000000000 }"
+mtimecmp = "0x0000000000000000"
+stimecmp = "0x0000000000000000"
+__isla_always_aligned = "true"
+
+[const_primops]
+platform_write_mem_ea = "()"
+get_config_print_reg = false
+get_config_print_instr = false
+get_config_print_platform = false
+get_config_print_mem = false
+sys_enable_fdext = false
+sys_enable_zfinx = false
+sys_enable_rvc = true
+sys_enable_next = false
+sys_enable_vext = true
+sys_enable_writable_fiom = true
+sys_enable_writable_misa = true
+sys_enable_bext = false
+sys_pmp_count = "0 : %i64"
+plat_enable_pmp = false
+plat_enable_dirty_update = false
+plat_enable_misaligned_access = false
+plat_mtval_has_illegal_inst_bits = false
+plat_insns_per_tick = 10
+plat_ram_base = "0x0000000080000000"
+plat_ram_size = "0x0000000004000000"
+plat_rom_base = "0x0000000000001000"
+plat_rom_size = "0x0000000000000100"
+plat_clint_base = "0x0000000002000000"
+plat_clint_size = "0x00000000000c0000"
+plat_htif_tohost = "0x0000000040001000"
+plat_get_16_random_bits = "undefined : %bv16"
+plat_term_write = "()"
+print_reg = "()"
+print_platform = "()"
+print_instr = "()"
+print_mem_access = "()"
+speculate_conditional = "undefined : %bool"
+match_reservation = "true"
+cancel_reservation = "()"
+load_reservation = "()"
+csr_full_write_callback = "()"
+mem_read_callback = "()"
+xreg_full_write_callback = "()"
+mem_write_callback = "()"
+mem_exception_callback = "()"
+pc_write_callback = "()"
+get_config_rvfi = "false"
+plat_enable_htif = "false"
+get_config_use_abi_names = "false"

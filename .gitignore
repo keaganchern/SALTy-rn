@@ -28,3 +28,4 @@ build/verification/harnesses/verify_*.cpp
 
 # Editor
 .vscode/
+.DS_Store

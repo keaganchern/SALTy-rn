@@ -1,0 +1,2 @@
+//@isla-config: traces/configs/rvv-scalar.toml
+800001da: f575  bnez	a0,800001c6 <sum_u8+0xa>

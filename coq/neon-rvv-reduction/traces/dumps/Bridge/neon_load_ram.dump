@@ -1,0 +1,5 @@
+//@isla-config: traces/configs/arm.toml
+//@constraint: bvuge R1 0x0000000080000000
+//@constraint: bvule R1 0x0000000083fffff0
+//@constraint: = (bvand R1 0x000000000000000f) 0x0000000000000000
+210604: 3cc10422  ldr q2, [x1], #16

@@ -1,0 +1,4 @@
+//@isla-config: traces/configs/neon-aligned.toml
+//@constraint: bvuge R1 0x0000000080000000
+//@constraint: bvule R1 0x0000000083ffffff
+80001030: 38401428  ldrb	w8, [x1], #1

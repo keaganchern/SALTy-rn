@@ -1,0 +1,19 @@
+#!/usr/bin/env python3
+"""Select the pinned Sail model without modifying its register initialization."""
+import hashlib
+import json
+import os
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+manifest = json.loads((ROOT / 'traces/manifest.json').read_text())
+names = {'aarch64.ir': 'aarch64', 'riscv64.ir': 'riscv64'}
+if len(sys.argv) < 2 or sys.argv[1] not in names:
+    raise SystemExit('Expected aarch64.ir or riscv64.ir as first argument')
+arch = names[sys.argv[1]]
+model = Path(os.environ.get('SAIL_MODELS', str(ROOT / 'deps/models'))) / manifest['models'][arch]['snapshot_file']
+if hashlib.sha256(model.read_bytes()).hexdigest() != manifest['models'][arch]['sha256']:
+    raise SystemExit(f'Sail model hash mismatch: {model}')
+binary = os.environ.get('ISLA_FOOTPRINT', str(ROOT / 'deps/isla/target/release/isla-footprint'))
+os.execv(binary, [binary, '-A', str(model), *manifest['isla_args'], *sys.argv[2:]])

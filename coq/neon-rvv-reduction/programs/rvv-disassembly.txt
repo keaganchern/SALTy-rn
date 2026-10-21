@@ -1,0 +1,26 @@
+
+/srv/home/yuechunsun/tools/lean/research/sail-tooling-gap/kernel-e2e/rvv-simple.elf:     file format elf64-littleriscv
+
+
+Disassembly of section .text:
+
+00000000800001bc <sum_u8>:
+    800001bc:	0d007757          	vsetvli	a4,zero,e32,m1,ta,ma
+    800001c0:	5e003457          	vmv.v.i	v8,0
+    800001c4:	cd01                	beqz	a0,800001dc <sum_u8+0x20>
+    800001c6:	090577d7          	vsetvli	a5,a0,e32,m1,tu,ma
+    800001ca:	02058107          	vle8.v	v2,(a1)
+    800001ce:	8d1d                	sub	a0,a0,a5
+    800001d0:	95be                	add	a1,a1,a5
+    800001d2:	4a222857          	vzext.vf4	v16,v2
+    800001d6:	02880457          	vadd.vv	v8,v8,v16
+    800001da:	f575                	bnez	a0,800001c6 <sum_u8+0xa>
+    800001dc:	0d0077d7          	vsetvli	a5,zero,e32,m1,ta,ma
+    800001e0:	5e0030d7          	vmv.v.i	v1,0
+    800001e4:	0d007757          	vsetvli	a4,zero,e32,m1,ta,ma
+    800001e8:	4214                	lw	a3,0(a2)
+    800001ea:	0280a457          	vredsum.vs	v8,v8,v1
+    800001ee:	428027d7          	vmv.x.s	a5,v8
+    800001f2:	9fb5                	addw	a5,a5,a3
+    800001f4:	c21c                	sw	a5,0(a2)
+    800001f6:	8082                	ret

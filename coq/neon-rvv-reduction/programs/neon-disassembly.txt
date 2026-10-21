@@ -1,0 +1,26 @@
+
+/srv/home/yuechunsun/tools/lean/research/sail-tooling-gap/kernel-e2e/neon-simple.elf:	file format elf64-littleaarch64
+
+Disassembly of section .text:
+
+0000000080001000 <sum_u8>:
+80001000: 00 e4 00 6f  	movi	v0.2d, #0000000000000000
+80001004: 1f 40 00 f1  	cmp	x0, #16
+80001008: e3 00 00 54  	b.lo	0x80001024 <sum_u8+0x24>
+8000100c: 22 04 c1 3c  	ldr	q2, [x1], #16
+80001010: 01 e4 00 6f  	movi	v1.2d, #0000000000000000
+80001014: 41 68 20 6e  	uadalp	v1.8h, v2.16b
+80001018: 20 68 60 6e  	uadalp	v0.4s, v1.8h
+8000101c: 00 40 00 d1  	sub	x0, x0, #16
+80001020: f9 ff ff 17  	b	0x80001004 <sum_u8+0x4>
+80001024: 00 b8 b1 4e  	addv	s0, v0.4s
+80001028: 09 00 26 1e  	fmov	w9, s0
+8000102c: a0 00 00 b4  	cbz	x0, 0x80001040 <sum_u8+0x40>
+80001030: 28 14 40 38  	ldrb	w8, [x1], #1
+80001034: 29 01 08 0b  	add	w9, w9, w8
+80001038: 00 04 00 f1  	subs	x0, x0, #1
+8000103c: a1 ff ff 54  	b.ne	0x80001030 <sum_u8+0x30>
+80001040: 48 00 40 b9  	ldr	w8, [x2]
+80001044: 08 01 09 0b  	add	w8, w8, w9
+80001048: 48 00 00 b9  	str	w8, [x2]
+8000104c: c0 03 5f d6  	ret

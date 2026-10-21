@@ -1,0 +1,37 @@
+{
+  "status": "passed",
+  "checked_at_utc": "2026-10-02T01:48:59.982571+00:00",
+  "elapsed_seconds": 2133.6,
+  "coq_version": "The Coq Proof Assistant, version 8.19.0\ncompiled with OCaml 4.14.2",
+  "project_modules": 131,
+  "assumption_reports_closed": 35,
+  "recursive_external_dependency_check": true,
+  "coqchk_bytecode_compiler": true,
+  "manifest_sha256": "bd3e977208ccee09094026c51c8f579214a25dac13b64d7359f802f4bb79a436",
+  "fresh_project_compilation": true,
+  "fresh_external_dependency_installation": false,
+  "reassembled_instruction_counts": {
+    "NEON": 20,
+    "RVV": 19
+  },
+  "trace_regeneration_samples": [
+    {
+      "comparison": "Bridge/neon_addv/a2105dc-comparison.json",
+      "address": "0x2105dc",
+      "trace_sha256": "61a20ccb56d6c96f5eecbea4b57835f3334dac0dd5c56540ca7efe93caa0e99e",
+      "coq_sha256": "59405ad5265f6f870956cd8f2ea88212e68bf136ca08c78505bbfe204121ab6a"
+    },
+    {
+      "comparison": "NEON/a80001000-comparison.json",
+      "address": "0x80001000",
+      "trace_sha256": "472932e1515c1fa6823df84e43130a4933466b1815a5a1298c388508cbbde25a",
+      "coq_sha256": "135e4650f57b9209bd47bccfe903678dbe10820a61e0b4165b3b1e4cc21cb79d"
+    },
+    {
+      "comparison": "RVV/a800001bc-comparison.json",
+      "address": "0x800001bc",
+      "trace_sha256": "925332709e38acb1c8c9bf0793f1eb8eb92820cb7fa707006c132013a9c09d51",
+      "coq_sha256": "8b57fb28b7fce5ef95d748451aaa8f48d5f82c638ce11151ff33e6ce02d1a3b5"
+    }
+  ]
+}

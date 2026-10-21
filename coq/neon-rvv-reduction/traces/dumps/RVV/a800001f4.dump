@@ -1,0 +1,5 @@
+//@isla-config: traces/configs/rvv-scalar.toml
+//@constraint: bvuge x12 0x0000000080000000
+//@constraint: bvule x12 0x0000000083fffffc
+//@constraint: = (bvand x12 0x0000000000000003) 0x0000000000000000
+800001f4: c21c  sw	a5,0(a2)

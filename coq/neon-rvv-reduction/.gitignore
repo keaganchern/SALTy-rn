@@ -1,0 +1,17 @@
+deps/
+_opam/
+_build/
+*.vo
+*.vos
+*.vok
+*.glob
+.*.aux
+Makefile.coq
+Makefile.coq.conf
+.Makefile.coq.d
+.lia.cache
+.nia.cache
+.nra.cache
+.coq-native/
+__pycache__/
+*.pyc

@@ -1,0 +1,2 @@
+//@isla-config: traces/configs/neon-aligned.toml
+80001028: 1e260009  fmov	w9, s0

@@ -1,0 +1,2 @@
+//@isla-config: traces/configs/neon-aligned.toml
+80001044: 0b090108  add	w8, w8, w9

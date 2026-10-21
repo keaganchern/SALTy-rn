@@ -1,0 +1,3 @@
+//@isla-config: traces/configs/rvv-loop.toml
+//@constraint: bvule vl 0x0000000000000008
+800001d6: 02880457  vadd.vv	v8,v8,v16

@@ -1,0 +1,2 @@
+//@isla-config: traces/configs/rvv-scalar.toml
+800001d0: 95be  add	a1,a1,a5

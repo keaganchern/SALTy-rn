@@ -1,0 +1,2 @@
+//@isla-config: traces/configs/neon-aligned.toml
+80001038: f1000400  subs	x0, x0, #1

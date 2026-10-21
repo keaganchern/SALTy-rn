@@ -1,0 +1,2 @@
+//@isla-config: traces/configs/rvv-scalar.toml
+800001c4: cd01  beqz	a0,800001dc <sum_u8+0x20>

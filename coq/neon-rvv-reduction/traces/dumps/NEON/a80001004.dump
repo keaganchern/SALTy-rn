@@ -1,0 +1,2 @@
+//@isla-config: traces/configs/neon-aligned.toml
+80001004: f100401f  cmp	x0, #16

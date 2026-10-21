@@ -1,0 +1,141 @@
+{
+  "elf_sha256": "ae9e6708c1120b06bf0223c4bc3c21b610c8a74c3e0138556d32c902b4e7ec8a",
+  "assembly_sha256": "42a6cc534cae848206bf3346ccacfb26880295c7845ef086ef044bff308b4f46",
+  "instructions": [
+    {
+      "isa": "rvv",
+      "address": "0x800001bc",
+      "bytes": "5777000d",
+      "opcode": "0xd007757",
+      "asm": "vsetvli\ta4,zero,e32,m1,ta,ma"
+    },
+    {
+      "isa": "rvv",
+      "address": "0x800001c0",
+      "bytes": "5734005e",
+      "opcode": "0x5e003457",
+      "asm": "vmv.v.i\tv8,0"
+    },
+    {
+      "isa": "rvv",
+      "address": "0x800001c4",
+      "bytes": "01cd",
+      "opcode": "0xcd01",
+      "asm": "beqz\ta0,800001dc <sum_u8+0x20>"
+    },
+    {
+      "isa": "rvv",
+      "address": "0x800001c6",
+      "bytes": "d7770509",
+      "opcode": "0x90577d7",
+      "asm": "vsetvli\ta5,a0,e32,m1,tu,ma"
+    },
+    {
+      "isa": "rvv",
+      "address": "0x800001ca",
+      "bytes": "07810502",
+      "opcode": "0x2058107",
+      "asm": "vle8.v\tv2,(a1)"
+    },
+    {
+      "isa": "rvv",
+      "address": "0x800001ce",
+      "bytes": "1d8d",
+      "opcode": "0x8d1d",
+      "asm": "sub\ta0,a0,a5"
+    },
+    {
+      "isa": "rvv",
+      "address": "0x800001d0",
+      "bytes": "be95",
+      "opcode": "0x95be",
+      "asm": "add\ta1,a1,a5"
+    },
+    {
+      "isa": "rvv",
+      "address": "0x800001d2",
+      "bytes": "5728224a",
+      "opcode": "0x4a222857",
+      "asm": "vzext.vf4\tv16,v2"
+    },
+    {
+      "isa": "rvv",
+      "address": "0x800001d6",
+      "bytes": "57048802",
+      "opcode": "0x2880457",
+      "asm": "vadd.vv\tv8,v8,v16"
+    },
+    {
+      "isa": "rvv",
+      "address": "0x800001da",
+      "bytes": "75f5",
+      "opcode": "0xf575",
+      "asm": "bnez\ta0,800001c6 <sum_u8+0xa>"
+    },
+    {
+      "isa": "rvv",
+      "address": "0x800001dc",
+      "bytes": "d777000d",
+      "opcode": "0xd0077d7",
+      "asm": "vsetvli\ta5,zero,e32,m1,ta,ma"
+    },
+    {
+      "isa": "rvv",
+      "address": "0x800001e0",
+      "bytes": "d730005e",
+      "opcode": "0x5e0030d7",
+      "asm": "vmv.v.i\tv1,0"
+    },
+    {
+      "isa": "rvv",
+      "address": "0x800001e4",
+      "bytes": "5777000d",
+      "opcode": "0xd007757",
+      "asm": "vsetvli\ta4,zero,e32,m1,ta,ma"
+    },
+    {
+      "isa": "rvv",
+      "address": "0x800001e8",
+      "bytes": "1442",
+      "opcode": "0x4214",
+      "asm": "lw\ta3,0(a2)"
+    },
+    {
+      "isa": "rvv",
+      "address": "0x800001ea",
+      "bytes": "57a48002",
+      "opcode": "0x280a457",
+      "asm": "vredsum.vs\tv8,v8,v1"
+    },
+    {
+      "isa": "rvv",
+      "address": "0x800001ee",
+      "bytes": "d7278042",
+      "opcode": "0x428027d7",
+      "asm": "vmv.x.s\ta5,v8"
+    },
+    {
+      "isa": "rvv",
+      "address": "0x800001f2",
+      "bytes": "b59f",
+      "opcode": "0x9fb5",
+      "asm": "addw\ta5,a5,a3"
+    },
+    {
+      "isa": "rvv",
+      "address": "0x800001f4",
+      "bytes": "1cc2",
+      "opcode": "0xc21c",
+      "asm": "sw\ta5,0(a2)"
+    },
+    {
+      "isa": "rvv",
+      "address": "0x800001f6",
+      "bytes": "8280",
+      "opcode": "0x8082",
+      "asm": "ret"
+    }
+  ],
+  "assembly_path": "programs/rvv-simple.S",
+  "disassembly_path": "programs/rvv-disassembly.txt"
+}

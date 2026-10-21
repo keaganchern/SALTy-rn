@@ -1,0 +1,2 @@
+//@isla-config: traces/configs/neon-aligned.toml
+80001024: 4eb1b800  addv	s0, v0.4s

@@ -9,6 +9,15 @@ NEON source with an SMT solver (cvc5). For a guided, end-to-end tour of how all 
 pieces fit together — using `qs8-vadd-minmax` as a live example — see
 [`PIPELINE_WALKTHROUGH.md`](PIPELINE_WALKTHROUGH.md).
 
+## Coq reduction proofs
+
+[`coq/neon-rvv-reduction`](coq/neon-rvv-reduction/README.md) contains the simplified
+NEON byte-sum program's partial-correctness proof and completed RVV instruction
+contracts, including byte loads for `vl=0/1`. It includes every program instruction's
+generated Coq semantics and original Isla trace, pinned dependencies, build
+instructions and recursive proof checks. See its README for the exact coverage
+and extraction trust boundary.
+
 ## Requirements
 
 - **Python ≥ 3.11**

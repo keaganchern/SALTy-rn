@@ -1,0 +1,2 @@
+//@isla-config: traces/configs/neon-aligned.toml
+80001008: 540000e3  b.lo	0x80001024 <sum_u8+0x24>

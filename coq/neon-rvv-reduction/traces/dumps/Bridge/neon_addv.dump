@@ -1,0 +1,2 @@
+//@isla-config: traces/configs/arm.toml
+2105dc: 4eb1b800  addv s0, v0.4s

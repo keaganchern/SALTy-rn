@@ -1,0 +1,2 @@
+//@isla-config: traces/configs/neon-aligned.toml
+80001010: 6f00e401  movi	v1.2d, #0000000000000000

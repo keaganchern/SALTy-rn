@@ -1,0 +1,2675 @@
+{
+  "artifact_kind": "saltyrn.s8-clamp16.semantic-ir",
+  "clang": {
+    "language_standard": "c11",
+    "name": "clang",
+    "target_triple": "host-parse-facade-only",
+    "version": "Apple clang version 17.0.0 (clang-1700.0.13.3)"
+  },
+  "extractor": {
+    "byte_length": 25275,
+    "path": "prototype/neon2lean/tools/extract_s8_clamp16.py",
+    "sha256": "28211c292c23504e8e9993ffd23b661b2cbcdf81b428e2a9b21dba379bc52a8d"
+  },
+  "facade": {
+    "byte_length": 848,
+    "path": "prototype/neon2lean/cases/s8-clamp16/intrinsics_facade.h",
+    "sha256": "e9dbc6937389a9b4401c43faeeecd81e93b3e3094ab51817b4f7f45401330e8b"
+  },
+  "operation_registry_id": "saltyrn.s8-clamp16.integer.v1",
+  "schema_version": 1,
+  "trust_boundary": "A fail-closed Clang AST frontend emitted typed IR data for a restricted C subset. Lean rechecks registry, reference order, coverage, and execution. Clang/C and intrinsic-to-ISA adequacy remain external bridges.",
+  "units": {
+    "neon": {
+      "artifact": {
+        "byte_length": 349,
+        "path": "prototype/neon2lean/cases/s8-clamp16/neon.c",
+        "preprocessed_byte_length": 1064,
+        "preprocessed_path": "<generated:s8_clamp16_neon.i>",
+        "preprocessed_sha256": "df7ca122e8b064b0a97426d288e4925ad993e0eb0aa6604f1476123957a4ba0a",
+        "sha256": "5d318164e5aecb0791cecc5ac445e7cecf102606f237d86ca4815ea6b8ba51a2"
+      },
+      "control": {
+        "kind": "fixed",
+        "total": 16
+      },
+      "coverage": {
+        "entries": [
+          {
+            "ast_node_id": 0,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "block",
+                  "node_id": 100
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "CompoundStmt",
+            "source": {
+              "begin_offset": 129,
+              "end_offset": 348,
+              "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+            }
+          },
+          {
+            "ast_node_id": 1,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 10
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "DeclStmt",
+            "source": {
+              "begin_offset": 133,
+              "end_offset": 172,
+              "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+            }
+          },
+          {
+            "ast_node_id": 2,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 10
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "VarDecl",
+            "source": {
+              "begin_offset": 133,
+              "end_offset": 171,
+              "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+            }
+          },
+          {
+            "ast_node_id": 3,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 10
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "CallExpr",
+            "source": {
+              "begin_offset": 157,
+              "end_offset": 171,
+              "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+            }
+          },
+          {
+            "ast_node_id": 4,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 10
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "ImplicitCastExpr",
+            "source": {
+              "begin_offset": 157,
+              "end_offset": 167,
+              "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+            }
+          },
+          {
+            "ast_node_id": 5,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 10
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "DeclRefExpr",
+            "source": {
+              "begin_offset": 157,
+              "end_offset": 167,
+              "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+            }
+          },
+          {
+            "ast_node_id": 6,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 10
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "ImplicitCastExpr",
+            "source": {
+              "begin_offset": 168,
+              "end_offset": 170,
+              "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+            }
+          },
+          {
+            "ast_node_id": 7,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 10
+                },
+                {
+                  "kind": "parameter",
+                  "node_id": 3
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "DeclRefExpr",
+            "source": {
+              "begin_offset": 168,
+              "end_offset": 170,
+              "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+            }
+          },
+          {
+            "ast_node_id": 8,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 11
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "DeclStmt",
+            "source": {
+              "begin_offset": 175,
+              "end_offset": 214,
+              "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+            }
+          },
+          {
+            "ast_node_id": 9,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 11
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "VarDecl",
+            "source": {
+              "begin_offset": 175,
+              "end_offset": 213,
+              "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+            }
+          },
+          {
+            "ast_node_id": 10,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 11
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "CallExpr",
+            "source": {
+              "begin_offset": 199,
+              "end_offset": 213,
+              "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+            }
+          },
+          {
+            "ast_node_id": 11,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 11
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "ImplicitCastExpr",
+            "source": {
+              "begin_offset": 199,
+              "end_offset": 209,
+              "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+            }
+          },
+          {
+            "ast_node_id": 12,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 11
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "DeclRefExpr",
+            "source": {
+              "begin_offset": 199,
+              "end_offset": 209,
+              "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+            }
+          },
+          {
+            "ast_node_id": 13,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 11
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "ImplicitCastExpr",
+            "source": {
+              "begin_offset": 210,
+              "end_offset": 212,
+              "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+            }
+          },
+          {
+            "ast_node_id": 14,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 11
+                },
+                {
+                  "kind": "parameter",
+                  "node_id": 4
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "DeclRefExpr",
+            "source": {
+              "begin_offset": 210,
+              "end_offset": 212,
+              "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+            }
+          },
+          {
+            "ast_node_id": 15,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 12
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "DeclStmt",
+            "source": {
+              "begin_offset": 217,
+              "end_offset": 251,
+              "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+            }
+          },
+          {
+            "ast_node_id": 16,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 12
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "VarDecl",
+            "source": {
+              "begin_offset": 217,
+              "end_offset": 250,
+              "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+            }
+          },
+          {
+            "ast_node_id": 17,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 12
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "CallExpr",
+            "source": {
+              "begin_offset": 235,
+              "end_offset": 250,
+              "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+            }
+          },
+          {
+            "ast_node_id": 18,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 12
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "ImplicitCastExpr",
+            "source": {
+              "begin_offset": 235,
+              "end_offset": 243,
+              "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+            }
+          },
+          {
+            "ast_node_id": 19,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 12
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "DeclRefExpr",
+            "source": {
+              "begin_offset": 235,
+              "end_offset": 243,
+              "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+            }
+          },
+          {
+            "ast_node_id": 20,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 12
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "ImplicitCastExpr",
+            "source": {
+              "begin_offset": 244,
+              "end_offset": 249,
+              "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+            }
+          },
+          {
+            "ast_node_id": 21,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 12
+                },
+                {
+                  "kind": "parameter",
+                  "node_id": 1
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "DeclRefExpr",
+            "source": {
+              "begin_offset": 244,
+              "end_offset": 249,
+              "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+            }
+          },
+          {
+            "ast_node_id": 22,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 13
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "BinaryOperator",
+            "source": {
+              "begin_offset": 254,
+              "end_offset": 284,
+              "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+            }
+          },
+          {
+            "ast_node_id": 23,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 13
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "DeclRefExpr",
+            "source": {
+              "begin_offset": 254,
+              "end_offset": 259,
+              "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+            }
+          },
+          {
+            "ast_node_id": 24,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 13
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "CallExpr",
+            "source": {
+              "begin_offset": 262,
+              "end_offset": 284,
+              "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+            }
+          },
+          {
+            "ast_node_id": 25,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 13
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "ImplicitCastExpr",
+            "source": {
+              "begin_offset": 262,
+              "end_offset": 270,
+              "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+            }
+          },
+          {
+            "ast_node_id": 26,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 13
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "DeclRefExpr",
+            "source": {
+              "begin_offset": 262,
+              "end_offset": 270,
+              "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+            }
+          },
+          {
+            "ast_node_id": 27,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 13
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "ImplicitCastExpr",
+            "source": {
+              "begin_offset": 271,
+              "end_offset": 276,
+              "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+            }
+          },
+          {
+            "ast_node_id": 28,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 13
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "DeclRefExpr",
+            "source": {
+              "begin_offset": 271,
+              "end_offset": 276,
+              "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+            }
+          },
+          {
+            "ast_node_id": 29,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 13
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "ImplicitCastExpr",
+            "source": {
+              "begin_offset": 278,
+              "end_offset": 283,
+              "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+            }
+          },
+          {
+            "ast_node_id": 30,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 13
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "DeclRefExpr",
+            "source": {
+              "begin_offset": 278,
+              "end_offset": 283,
+              "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+            }
+          },
+          {
+            "ast_node_id": 31,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 14
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "BinaryOperator",
+            "source": {
+              "begin_offset": 288,
+              "end_offset": 318,
+              "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+            }
+          },
+          {
+            "ast_node_id": 32,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 14
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "DeclRefExpr",
+            "source": {
+              "begin_offset": 288,
+              "end_offset": 293,
+              "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+            }
+          },
+          {
+            "ast_node_id": 33,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 14
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "CallExpr",
+            "source": {
+              "begin_offset": 296,
+              "end_offset": 318,
+              "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+            }
+          },
+          {
+            "ast_node_id": 34,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 14
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "ImplicitCastExpr",
+            "source": {
+              "begin_offset": 296,
+              "end_offset": 304,
+              "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+            }
+          },
+          {
+            "ast_node_id": 35,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 14
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "DeclRefExpr",
+            "source": {
+              "begin_offset": 296,
+              "end_offset": 304,
+              "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+            }
+          },
+          {
+            "ast_node_id": 36,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 14
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "ImplicitCastExpr",
+            "source": {
+              "begin_offset": 305,
+              "end_offset": 310,
+              "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+            }
+          },
+          {
+            "ast_node_id": 37,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 14
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "DeclRefExpr",
+            "source": {
+              "begin_offset": 305,
+              "end_offset": 310,
+              "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+            }
+          },
+          {
+            "ast_node_id": 38,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 14
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "ImplicitCastExpr",
+            "source": {
+              "begin_offset": 312,
+              "end_offset": 317,
+              "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+            }
+          },
+          {
+            "ast_node_id": 39,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 14
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "DeclRefExpr",
+            "source": {
+              "begin_offset": 312,
+              "end_offset": 317,
+              "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+            }
+          },
+          {
+            "ast_node_id": 40,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 15
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "CallExpr",
+            "source": {
+              "begin_offset": 322,
+              "end_offset": 345,
+              "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+            }
+          },
+          {
+            "ast_node_id": 41,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 15
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "ImplicitCastExpr",
+            "source": {
+              "begin_offset": 322,
+              "end_offset": 330,
+              "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+            }
+          },
+          {
+            "ast_node_id": 42,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 15
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "DeclRefExpr",
+            "source": {
+              "begin_offset": 322,
+              "end_offset": 330,
+              "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+            }
+          },
+          {
+            "ast_node_id": 43,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 15
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "ImplicitCastExpr",
+            "source": {
+              "begin_offset": 331,
+              "end_offset": 337,
+              "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+            }
+          },
+          {
+            "ast_node_id": 44,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 15
+                },
+                {
+                  "kind": "parameter",
+                  "node_id": 2
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "DeclRefExpr",
+            "source": {
+              "begin_offset": 331,
+              "end_offset": 337,
+              "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+            }
+          },
+          {
+            "ast_node_id": 45,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 15
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "ImplicitCastExpr",
+            "source": {
+              "begin_offset": 339,
+              "end_offset": 344,
+              "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+            }
+          },
+          {
+            "ast_node_id": 46,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 15
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "DeclRefExpr",
+            "source": {
+              "begin_offset": 339,
+              "end_offset": 344,
+              "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+            }
+          }
+        ],
+        "expected_node_count": 47,
+        "kind_counts": {
+          "BinaryOperator": 2,
+          "CallExpr": 6,
+          "CompoundStmt": 1,
+          "DeclRefExpr": 17,
+          "DeclStmt": 3,
+          "ImplicitCastExpr": 15,
+          "VarDecl": 3
+        }
+      },
+      "function": {
+        "name": "s8_clamp16_neon",
+        "qual_type": "void (const int8_t *, int8_t *, int8_t, int8_t)",
+        "source": {
+          "begin_offset": 129,
+          "end_offset": 348,
+          "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+        }
+      },
+      "ir": {
+        "blocks": [
+          {
+            "block_id": 100,
+            "operations": [
+              {
+                "architecture": "neon",
+                "family": "integer",
+                "node_id": 10,
+                "operand_nodes": [
+                  3
+                ],
+                "operand_types": [
+                  "i8"
+                ],
+                "result_type": "fixed16",
+                "rvv_config": null,
+                "source": {
+                  "begin_offset": 157,
+                  "end_offset": 171,
+                  "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+                },
+                "spelling": "vdupq_n_s8"
+              },
+              {
+                "architecture": "neon",
+                "family": "integer",
+                "node_id": 11,
+                "operand_nodes": [
+                  4
+                ],
+                "operand_types": [
+                  "i8"
+                ],
+                "result_type": "fixed16",
+                "rvv_config": null,
+                "source": {
+                  "begin_offset": 199,
+                  "end_offset": 213,
+                  "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+                },
+                "spelling": "vdupq_n_s8"
+              },
+              {
+                "architecture": "neon",
+                "family": "memory",
+                "node_id": 12,
+                "operand_nodes": [
+                  1
+                ],
+                "operand_types": [
+                  "pointer"
+                ],
+                "result_type": "fixed16",
+                "rvv_config": null,
+                "source": {
+                  "begin_offset": 235,
+                  "end_offset": 250,
+                  "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+                },
+                "spelling": "vld1q_s8"
+              },
+              {
+                "architecture": "neon",
+                "family": "integer",
+                "node_id": 13,
+                "operand_nodes": [
+                  12,
+                  10
+                ],
+                "operand_types": [
+                  "fixed16",
+                  "fixed16"
+                ],
+                "result_type": "fixed16",
+                "rvv_config": null,
+                "source": {
+                  "begin_offset": 262,
+                  "end_offset": 284,
+                  "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+                },
+                "spelling": "vmaxq_s8"
+              },
+              {
+                "architecture": "neon",
+                "family": "integer",
+                "node_id": 14,
+                "operand_nodes": [
+                  13,
+                  11
+                ],
+                "operand_types": [
+                  "fixed16",
+                  "fixed16"
+                ],
+                "result_type": "fixed16",
+                "rvv_config": null,
+                "source": {
+                  "begin_offset": 296,
+                  "end_offset": 318,
+                  "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+                },
+                "spelling": "vminq_s8"
+              },
+              {
+                "architecture": "neon",
+                "family": "memory",
+                "node_id": 15,
+                "operand_nodes": [
+                  2,
+                  14
+                ],
+                "operand_types": [
+                  "pointer",
+                  "fixed16"
+                ],
+                "result_type": null,
+                "rvv_config": null,
+                "source": {
+                  "begin_offset": 322,
+                  "end_offset": 345,
+                  "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+                },
+                "spelling": "vst1q_s8"
+              }
+            ],
+            "source": {
+              "begin_offset": 129,
+              "end_offset": 348,
+              "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+            },
+            "successors": []
+          }
+        ],
+        "entry_block": 100,
+        "function_source": {
+          "begin_offset": 129,
+          "end_offset": 348,
+          "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+        },
+        "name": "s8_clamp16_neon",
+        "parameters": [
+          {
+            "name": "input",
+            "node_id": 1,
+            "origin": "function",
+            "source": {
+              "begin_offset": 58,
+              "end_offset": 77,
+              "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+            },
+            "value_type": "pointer"
+          },
+          {
+            "name": "output",
+            "node_id": 2,
+            "origin": "function",
+            "source": {
+              "begin_offset": 83,
+              "end_offset": 97,
+              "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+            },
+            "value_type": "pointer"
+          },
+          {
+            "name": "lo",
+            "node_id": 3,
+            "origin": "function",
+            "source": {
+              "begin_offset": 103,
+              "end_offset": 112,
+              "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+            },
+            "value_type": "i8"
+          },
+          {
+            "name": "hi",
+            "node_id": 4,
+            "origin": "function",
+            "source": {
+              "begin_offset": 118,
+              "end_offset": 127,
+              "path": "prototype/neon2lean/cases/s8-clamp16/neon.c"
+            },
+            "value_type": "i8"
+          }
+        ],
+        "translation_unit_sha256": "5d318164e5aecb0791cecc5ac445e7cecf102606f237d86ca4815ea6b8ba51a2"
+      }
+    },
+    "rvv": {
+      "artifact": {
+        "byte_length": 494,
+        "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c",
+        "preprocessed_byte_length": 1209,
+        "preprocessed_path": "<generated:s8_clamp16_rvv.i>",
+        "preprocessed_sha256": "065831d51ef6c37e11df61129ff4bca37a4744080ca54759f1e70767e998a16e",
+        "sha256": "a928f87b00757a508249de130a1366a2abfd6c0dec5c4840d91d1ac1d88f56b0"
+      },
+      "control": {
+        "kind": "positive_strip_mine",
+        "loop_range": {
+          "begin_offset": 157,
+          "end_offset": 491
+        },
+        "total": 16
+      },
+      "coverage": {
+        "entries": [
+          {
+            "ast_node_id": 0,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "block",
+                  "node_id": 100
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "CompoundStmt",
+            "source": {
+              "begin_offset": 128,
+              "end_offset": 493,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 1,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "parameter",
+                  "node_id": 5
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "DeclStmt",
+            "source": {
+              "begin_offset": 132,
+              "end_offset": 154,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 2,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "parameter",
+                  "node_id": 5
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "VarDecl",
+            "source": {
+              "begin_offset": 132,
+              "end_offset": 153,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 3,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "parameter",
+                  "node_id": 5
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "ImplicitCastExpr",
+            "source": {
+              "begin_offset": 151,
+              "end_offset": 153,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 4,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "parameter",
+                  "node_id": 5
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "IntegerLiteral",
+            "source": {
+              "begin_offset": 151,
+              "end_offset": 153,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 5,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "block",
+                  "node_id": 100
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "WhileStmt",
+            "source": {
+              "begin_offset": 157,
+              "end_offset": 491,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 6,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "block",
+                  "node_id": 100
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "BinaryOperator",
+            "source": {
+              "begin_offset": 164,
+              "end_offset": 178,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 7,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "block",
+                  "node_id": 100
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "ImplicitCastExpr",
+            "source": {
+              "begin_offset": 164,
+              "end_offset": 173,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 8,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "block",
+                  "node_id": 100
+                },
+                {
+                  "kind": "parameter",
+                  "node_id": 5
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "DeclRefExpr",
+            "source": {
+              "begin_offset": 164,
+              "end_offset": 173,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 9,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "block",
+                  "node_id": 100
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "ImplicitCastExpr",
+            "source": {
+              "begin_offset": 177,
+              "end_offset": 178,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 10,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "block",
+                  "node_id": 100
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "IntegerLiteral",
+            "source": {
+              "begin_offset": 177,
+              "end_offset": 178,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 11,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "block",
+                  "node_id": 100
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "CompoundStmt",
+            "source": {
+              "begin_offset": 180,
+              "end_offset": 491,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 12,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 10
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "DeclStmt",
+            "source": {
+              "begin_offset": 186,
+              "end_offset": 235,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 13,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 10
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "VarDecl",
+            "source": {
+              "begin_offset": 186,
+              "end_offset": 234,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 14,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 10
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "CallExpr",
+            "source": {
+              "begin_offset": 204,
+              "end_offset": 234,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 15,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 10
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "ImplicitCastExpr",
+            "source": {
+              "begin_offset": 204,
+              "end_offset": 223,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 16,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 10
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "DeclRefExpr",
+            "source": {
+              "begin_offset": 204,
+              "end_offset": 223,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 17,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 10
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "ImplicitCastExpr",
+            "source": {
+              "begin_offset": 224,
+              "end_offset": 233,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 18,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 10
+                },
+                {
+                  "kind": "parameter",
+                  "node_id": 5
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "DeclRefExpr",
+            "source": {
+              "begin_offset": 224,
+              "end_offset": 233,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 19,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 11
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "DeclStmt",
+            "source": {
+              "begin_offset": 240,
+              "end_offset": 289,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 20,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 11
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "VarDecl",
+            "source": {
+              "begin_offset": 240,
+              "end_offset": 288,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 21,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 11
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "CallExpr",
+            "source": {
+              "begin_offset": 258,
+              "end_offset": 288,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 22,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 11
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "ImplicitCastExpr",
+            "source": {
+              "begin_offset": 258,
+              "end_offset": 277,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 23,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 11
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "DeclRefExpr",
+            "source": {
+              "begin_offset": 258,
+              "end_offset": 277,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 24,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 11
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "ImplicitCastExpr",
+            "source": {
+              "begin_offset": 278,
+              "end_offset": 283,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 25,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 11
+                },
+                {
+                  "kind": "parameter",
+                  "node_id": 1
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "DeclRefExpr",
+            "source": {
+              "begin_offset": 278,
+              "end_offset": 283,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 26,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 11
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "ImplicitCastExpr",
+            "source": {
+              "begin_offset": 285,
+              "end_offset": 287,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 27,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 11
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "DeclRefExpr",
+            "source": {
+              "begin_offset": 285,
+              "end_offset": 287,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 28,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 12
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "BinaryOperator",
+            "source": {
+              "begin_offset": 294,
+              "end_offset": 337,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 29,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 12
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "DeclRefExpr",
+            "source": {
+              "begin_offset": 294,
+              "end_offset": 299,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 30,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 12
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "CallExpr",
+            "source": {
+              "begin_offset": 302,
+              "end_offset": 337,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 31,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 12
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "ImplicitCastExpr",
+            "source": {
+              "begin_offset": 302,
+              "end_offset": 322,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 32,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 12
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "DeclRefExpr",
+            "source": {
+              "begin_offset": 302,
+              "end_offset": 322,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 33,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 12
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "ImplicitCastExpr",
+            "source": {
+              "begin_offset": 323,
+              "end_offset": 328,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 34,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 12
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "DeclRefExpr",
+            "source": {
+              "begin_offset": 323,
+              "end_offset": 328,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 35,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 12
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "ImplicitCastExpr",
+            "source": {
+              "begin_offset": 330,
+              "end_offset": 332,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 36,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 12
+                },
+                {
+                  "kind": "parameter",
+                  "node_id": 3
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "DeclRefExpr",
+            "source": {
+              "begin_offset": 330,
+              "end_offset": 332,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 37,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 12
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "ImplicitCastExpr",
+            "source": {
+              "begin_offset": 334,
+              "end_offset": 336,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 38,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 12
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "DeclRefExpr",
+            "source": {
+              "begin_offset": 334,
+              "end_offset": 336,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 39,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 13
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "BinaryOperator",
+            "source": {
+              "begin_offset": 343,
+              "end_offset": 386,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 40,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 13
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "DeclRefExpr",
+            "source": {
+              "begin_offset": 343,
+              "end_offset": 348,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 41,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 13
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "CallExpr",
+            "source": {
+              "begin_offset": 351,
+              "end_offset": 386,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 42,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 13
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "ImplicitCastExpr",
+            "source": {
+              "begin_offset": 351,
+              "end_offset": 371,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 43,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 13
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "DeclRefExpr",
+            "source": {
+              "begin_offset": 351,
+              "end_offset": 371,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 44,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 13
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "ImplicitCastExpr",
+            "source": {
+              "begin_offset": 372,
+              "end_offset": 377,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 45,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 13
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "DeclRefExpr",
+            "source": {
+              "begin_offset": 372,
+              "end_offset": 377,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 46,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 13
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "ImplicitCastExpr",
+            "source": {
+              "begin_offset": 379,
+              "end_offset": 381,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 47,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 13
+                },
+                {
+                  "kind": "parameter",
+                  "node_id": 4
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "DeclRefExpr",
+            "source": {
+              "begin_offset": 379,
+              "end_offset": 381,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 48,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 13
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "ImplicitCastExpr",
+            "source": {
+              "begin_offset": 383,
+              "end_offset": 385,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 49,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 13
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "DeclRefExpr",
+            "source": {
+              "begin_offset": 383,
+              "end_offset": 385,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 50,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 14
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "CallExpr",
+            "source": {
+              "begin_offset": 392,
+              "end_offset": 430,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 51,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 14
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "ImplicitCastExpr",
+            "source": {
+              "begin_offset": 392,
+              "end_offset": 411,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 52,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 14
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "DeclRefExpr",
+            "source": {
+              "begin_offset": 392,
+              "end_offset": 411,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 53,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 14
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "ImplicitCastExpr",
+            "source": {
+              "begin_offset": 412,
+              "end_offset": 418,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 54,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 14
+                },
+                {
+                  "kind": "parameter",
+                  "node_id": 2
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "DeclRefExpr",
+            "source": {
+              "begin_offset": 412,
+              "end_offset": 418,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 55,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 14
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "ImplicitCastExpr",
+            "source": {
+              "begin_offset": 420,
+              "end_offset": 425,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 56,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 14
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "DeclRefExpr",
+            "source": {
+              "begin_offset": 420,
+              "end_offset": 425,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 57,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 14
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "ImplicitCastExpr",
+            "source": {
+              "begin_offset": 427,
+              "end_offset": 429,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 58,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "operation",
+                  "node_id": 14
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "DeclRefExpr",
+            "source": {
+              "begin_offset": 427,
+              "end_offset": 429,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 59,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "block",
+                  "node_id": 100
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "CompoundAssignOperator",
+            "source": {
+              "begin_offset": 436,
+              "end_offset": 447,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 60,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "block",
+                  "node_id": 100
+                },
+                {
+                  "kind": "parameter",
+                  "node_id": 1
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "DeclRefExpr",
+            "source": {
+              "begin_offset": 436,
+              "end_offset": 441,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 61,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "block",
+                  "node_id": 100
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "ImplicitCastExpr",
+            "source": {
+              "begin_offset": 445,
+              "end_offset": 447,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 62,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "block",
+                  "node_id": 100
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "DeclRefExpr",
+            "source": {
+              "begin_offset": 445,
+              "end_offset": 447,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 63,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "block",
+                  "node_id": 100
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "CompoundAssignOperator",
+            "source": {
+              "begin_offset": 453,
+              "end_offset": 465,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 64,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "block",
+                  "node_id": 100
+                },
+                {
+                  "kind": "parameter",
+                  "node_id": 2
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "DeclRefExpr",
+            "source": {
+              "begin_offset": 453,
+              "end_offset": 459,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 65,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "block",
+                  "node_id": 100
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "ImplicitCastExpr",
+            "source": {
+              "begin_offset": 463,
+              "end_offset": 465,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 66,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "block",
+                  "node_id": 100
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "DeclRefExpr",
+            "source": {
+              "begin_offset": 463,
+              "end_offset": 465,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 67,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "block",
+                  "node_id": 100
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "CompoundAssignOperator",
+            "source": {
+              "begin_offset": 471,
+              "end_offset": 486,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 68,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "block",
+                  "node_id": 100
+                },
+                {
+                  "kind": "parameter",
+                  "node_id": 5
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "DeclRefExpr",
+            "source": {
+              "begin_offset": 471,
+              "end_offset": 480,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 69,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "block",
+                  "node_id": 100
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "ImplicitCastExpr",
+            "source": {
+              "begin_offset": 484,
+              "end_offset": 486,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          },
+          {
+            "ast_node_id": 70,
+            "disposition": {
+              "ir_nodes": [
+                {
+                  "kind": "block",
+                  "node_id": 100
+                }
+              ],
+              "kind": "translated"
+            },
+            "kind": "DeclRefExpr",
+            "source": {
+              "begin_offset": 484,
+              "end_offset": 486,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            }
+          }
+        ],
+        "expected_node_count": 71,
+        "kind_counts": {
+          "BinaryOperator": 3,
+          "CallExpr": 5,
+          "CompoundAssignOperator": 3,
+          "CompoundStmt": 2,
+          "DeclRefExpr": 26,
+          "DeclStmt": 3,
+          "ImplicitCastExpr": 23,
+          "IntegerLiteral": 2,
+          "VarDecl": 3,
+          "WhileStmt": 1
+        }
+      },
+      "function": {
+        "name": "s8_clamp16_rvv",
+        "qual_type": "void (const int8_t *, int8_t *, int8_t, int8_t)",
+        "source": {
+          "begin_offset": 128,
+          "end_offset": 493,
+          "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+        }
+      },
+      "ir": {
+        "blocks": [
+          {
+            "block_id": 100,
+            "operations": [
+              {
+                "architecture": "rvv",
+                "family": "control",
+                "node_id": 10,
+                "operand_nodes": [
+                  5
+                ],
+                "operand_types": [
+                  "u64"
+                ],
+                "result_type": "u64",
+                "rvv_config": null,
+                "source": {
+                  "begin_offset": 204,
+                  "end_offset": 234,
+                  "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+                },
+                "spelling": "__riscv_vsetvl_e8m1"
+              },
+              {
+                "architecture": "rvv",
+                "family": "memory",
+                "node_id": 11,
+                "operand_nodes": [
+                  1,
+                  10
+                ],
+                "operand_types": [
+                  "pointer",
+                  "u64"
+                ],
+                "result_type": "scalable_m1",
+                "rvv_config": {
+                  "active_vl_node": 10,
+                  "lmul": "m1",
+                  "sew": 8
+                },
+                "source": {
+                  "begin_offset": 258,
+                  "end_offset": 288,
+                  "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+                },
+                "spelling": "__riscv_vle8_v_i8m1"
+              },
+              {
+                "architecture": "rvv",
+                "family": "integer",
+                "node_id": 12,
+                "operand_nodes": [
+                  11,
+                  3,
+                  10
+                ],
+                "operand_types": [
+                  "scalable_m1",
+                  "i8",
+                  "u64"
+                ],
+                "result_type": "scalable_m1",
+                "rvv_config": {
+                  "active_vl_node": 10,
+                  "lmul": "m1",
+                  "sew": 8
+                },
+                "source": {
+                  "begin_offset": 302,
+                  "end_offset": 337,
+                  "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+                },
+                "spelling": "__riscv_vmax_vx_i8m1"
+              },
+              {
+                "architecture": "rvv",
+                "family": "integer",
+                "node_id": 13,
+                "operand_nodes": [
+                  12,
+                  4,
+                  10
+                ],
+                "operand_types": [
+                  "scalable_m1",
+                  "i8",
+                  "u64"
+                ],
+                "result_type": "scalable_m1",
+                "rvv_config": {
+                  "active_vl_node": 10,
+                  "lmul": "m1",
+                  "sew": 8
+                },
+                "source": {
+                  "begin_offset": 351,
+                  "end_offset": 386,
+                  "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+                },
+                "spelling": "__riscv_vmin_vx_i8m1"
+              },
+              {
+                "architecture": "rvv",
+                "family": "memory",
+                "node_id": 14,
+                "operand_nodes": [
+                  2,
+                  13,
+                  10
+                ],
+                "operand_types": [
+                  "pointer",
+                  "scalable_m1",
+                  "u64"
+                ],
+                "result_type": null,
+                "rvv_config": {
+                  "active_vl_node": 10,
+                  "lmul": "m1",
+                  "sew": 8
+                },
+                "source": {
+                  "begin_offset": 392,
+                  "end_offset": 430,
+                  "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+                },
+                "spelling": "__riscv_vse8_v_i8m1"
+              }
+            ],
+            "source": {
+              "begin_offset": 128,
+              "end_offset": 493,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            },
+            "successors": []
+          }
+        ],
+        "entry_block": 100,
+        "function_source": {
+          "begin_offset": 128,
+          "end_offset": 493,
+          "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+        },
+        "name": "s8_clamp16_rvv",
+        "parameters": [
+          {
+            "name": "input",
+            "node_id": 1,
+            "origin": "function",
+            "source": {
+              "begin_offset": 57,
+              "end_offset": 76,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            },
+            "value_type": "pointer"
+          },
+          {
+            "name": "output",
+            "node_id": 2,
+            "origin": "function",
+            "source": {
+              "begin_offset": 82,
+              "end_offset": 96,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            },
+            "value_type": "pointer"
+          },
+          {
+            "name": "lo",
+            "node_id": 3,
+            "origin": "function",
+            "source": {
+              "begin_offset": 102,
+              "end_offset": 111,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            },
+            "value_type": "i8"
+          },
+          {
+            "name": "hi",
+            "node_id": 4,
+            "origin": "function",
+            "source": {
+              "begin_offset": 117,
+              "end_offset": 126,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            },
+            "value_type": "i8"
+          },
+          {
+            "name": "remaining",
+            "node_id": 5,
+            "origin": "structured_control_input",
+            "source": {
+              "begin_offset": 132,
+              "end_offset": 153,
+              "path": "prototype/neon2lean/cases/s8-clamp16/rvv.c"
+            },
+            "value_type": "u64"
+          }
+        ],
+        "translation_unit_sha256": "a928f87b00757a508249de130a1366a2abfd6c0dec5c4840d91d1ac1d88f56b0"
+      }
+    }
+  }
+}

@@ -1,0 +1,2 @@
+//@isla-config: traces/configs/rvv-init.toml
+800001c0: 5e003457  vmv.v.i	v8,0

@@ -1,0 +1,149 @@
+{
+  "elf_sha256": "200729039248b38c90191dc096c9338e9a917b26613c039ff740c100203f0b41",
+  "assembly_sha256": "98bf52b0b88fa1e88b77c8ddc36cfbac5c6b36d69df7a6dd89715568811a8a8b",
+  "instructions": [
+    {
+      "isa": "neon",
+      "address": "0x80001000",
+      "bytes": "00e4006f",
+      "opcode": "0x6f00e400",
+      "asm": "movi\tv0.2d, #0000000000000000"
+    },
+    {
+      "isa": "neon",
+      "address": "0x80001004",
+      "bytes": "1f4000f1",
+      "opcode": "0xf100401f",
+      "asm": "cmp\tx0, #16"
+    },
+    {
+      "isa": "neon",
+      "address": "0x80001008",
+      "bytes": "e3000054",
+      "opcode": "0x540000e3",
+      "asm": "b.lo\t0x80001024 <sum_u8+0x24>"
+    },
+    {
+      "isa": "neon",
+      "address": "0x8000100c",
+      "bytes": "2204c13c",
+      "opcode": "0x3cc10422",
+      "asm": "ldr\tq2, [x1], #16"
+    },
+    {
+      "isa": "neon",
+      "address": "0x80001010",
+      "bytes": "01e4006f",
+      "opcode": "0x6f00e401",
+      "asm": "movi\tv1.2d, #0000000000000000"
+    },
+    {
+      "isa": "neon",
+      "address": "0x80001014",
+      "bytes": "4168206e",
+      "opcode": "0x6e206841",
+      "asm": "uadalp\tv1.8h, v2.16b"
+    },
+    {
+      "isa": "neon",
+      "address": "0x80001018",
+      "bytes": "2068606e",
+      "opcode": "0x6e606820",
+      "asm": "uadalp\tv0.4s, v1.8h"
+    },
+    {
+      "isa": "neon",
+      "address": "0x8000101c",
+      "bytes": "004000d1",
+      "opcode": "0xd1004000",
+      "asm": "sub\tx0, x0, #16"
+    },
+    {
+      "isa": "neon",
+      "address": "0x80001020",
+      "bytes": "f9ffff17",
+      "opcode": "0x17fffff9",
+      "asm": "b\t0x80001004 <sum_u8+0x4>"
+    },
+    {
+      "isa": "neon",
+      "address": "0x80001024",
+      "bytes": "00b8b14e",
+      "opcode": "0x4eb1b800",
+      "asm": "addv\ts0, v0.4s"
+    },
+    {
+      "isa": "neon",
+      "address": "0x80001028",
+      "bytes": "0900261e",
+      "opcode": "0x1e260009",
+      "asm": "fmov\tw9, s0"
+    },
+    {
+      "isa": "neon",
+      "address": "0x8000102c",
+      "bytes": "a00000b4",
+      "opcode": "0xb40000a0",
+      "asm": "cbz\tx0, 0x80001040 <sum_u8+0x40>"
+    },
+    {
+      "isa": "neon",
+      "address": "0x80001030",
+      "bytes": "28144038",
+      "opcode": "0x38401428",
+      "asm": "ldrb\tw8, [x1], #1"
+    },
+    {
+      "isa": "neon",
+      "address": "0x80001034",
+      "bytes": "2901080b",
+      "opcode": "0xb080129",
+      "asm": "add\tw9, w9, w8"
+    },
+    {
+      "isa": "neon",
+      "address": "0x80001038",
+      "bytes": "000400f1",
+      "opcode": "0xf1000400",
+      "asm": "subs\tx0, x0, #1"
+    },
+    {
+      "isa": "neon",
+      "address": "0x8000103c",
+      "bytes": "a1ffff54",
+      "opcode": "0x54ffffa1",
+      "asm": "b.ne\t0x80001030 <sum_u8+0x30>"
+    },
+    {
+      "isa": "neon",
+      "address": "0x80001040",
+      "bytes": "480040b9",
+      "opcode": "0xb9400048",
+      "asm": "ldr\tw8, [x2]"
+    },
+    {
+      "isa": "neon",
+      "address": "0x80001044",
+      "bytes": "0801090b",
+      "opcode": "0xb090108",
+      "asm": "add\tw8, w8, w9"
+    },
+    {
+      "isa": "neon",
+      "address": "0x80001048",
+      "bytes": "480000b9",
+      "opcode": "0xb9000048",
+      "asm": "str\tw8, [x2]"
+    },
+    {
+      "isa": "neon",
+      "address": "0x8000104c",
+      "bytes": "c0035fd6",
+      "opcode": "0xd65f03c0",
+      "asm": "ret"
+    }
+  ],
+  "source_comment_update": "Clarified that the halfword accumulator is temporary; rebuilt ELF byte-identical.",
+  "assembly_path": "programs/neon-simple.S",
+  "disassembly_path": "programs/neon-disassembly.txt"
+}
