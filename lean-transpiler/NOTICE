@@ -1,0 +1,17 @@
+SALTy Lean transpiler
+
+Reference projects inspected:
+
+1. neon2rvv, commit 2abbe36cc3c52d4616f854f88894e5be11b96580
+   https://github.com/howjmay/neon2rvv
+   Transpiler/Rules.lean contains selected, modified implementations from
+   neon2rvv.h. That header carries the MIT license and attribution reproduced
+   in LICENSE.neon2rvv and emitted into generated C. The repository-level
+   Apache-2.0 LICENSE is additionally retained as LICENSE.neon2rvv-repository.
+   The local changes are documented in README.md and scripts/import_rules.py.
+
+2. C-parsing-for-Lean4, commit 889dd2eacaa172cd2de0c8d0ef3b8938354f7ba3
+   https://github.com/opencompl/C-parsing-for-Lean4
+   Consulted for C grammar/AST organization and parser architecture. No source
+   files from that repository are vendored or required. The parser here is an
+   independent implementation for SALTy's restricted subset on Lean 4.27.

@@ -1,0 +1,14 @@
+name = "salty_transpiler"
+version = "0.1.0"
+defaultTargets = ["neon2rvv", "transpiler-tests"]
+
+[[lean_lib]]
+name = "Transpiler"
+
+[[lean_exe]]
+name = "neon2rvv"
+root = "Main"
+
+[[lean_exe]]
+name = "transpiler-tests"
+root = "Tests"
