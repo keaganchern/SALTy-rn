@@ -3322,6 +3322,26 @@ inline vuint32m1_t __riscv_vmerge_vvm_u32m1(const vuint32m1_t& merge, const vuin
     return rvv_vmerge_vvm_impl(merge, src, mask, vl, 32);
 }
 
+// Tail-undisturbed (_tu) result: lanes < vl come from `body`, lanes in
+// [vl, dst.VL) keep `dst`.  Lanes < vl are computed even if dst is shorter.
+inline RVVVector rvv_tu_impl(const RVVVector& dst, const RVVVector& body, size_t vl, size_t bits) {
+    size_t n = dst.getVL() > vl ? dst.getVL() : vl;
+    std::vector<Term> r; r.reserve(n);
+    for (size_t i = 0; i < n; i++) r.push_back(i < vl ? body.getElement(i) : dst.getElement(i));
+    return RVVVector(g_ctx->tm, bits, r);
+}
+
+// vfmul.vf (f32m8) — masked-undisturbed: where mask==1 multiply, else pass merge.
+// Used by the Phase-2 f32-vlrelu kernel.
+inline vfloat32m8_t __riscv_vfmul_vf_f32m8_mu(const vbool4_t& mask, const vfloat32m8_t& merge,
+                                               const vfloat32m8_t& a, float b, size_t vl) {
+    return rvv_vmerge_vvm_impl(merge, __riscv_vfmul_vf_f32m8(a, b, vl), mask, vl, 32);
+}
+inline vfloat32m8_t __riscv_vfmul_vf_f32m8_mu(const vbool4_t& mask, const vfloat32m8_t& merge,
+                                               const vfloat32m8_t& a, SymbolicScalar<float> b, size_t vl) {
+    return rvv_vmerge_vvm_impl(merge, __riscv_vfmul_vf_f32m8(a, b, vl), mask, vl, 32);
+}
+
 // vrgather.vv (f32m2): result[i] = src[idx[i]] (or 0 if idx[i] >= src.VL).
 inline vfloat32m2_t __riscv_vrgather_vv_f32m2(const vfloat32m2_t& s,
                                                 const vuint32m2_t& idx, size_t vl) {

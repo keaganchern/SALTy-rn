@@ -9,6 +9,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <map>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -17,6 +18,7 @@ namespace salt_cvc5 {
 
 class SymbolicBuffer {
     mutable std::vector<Term> bytes_;  // lazily minted on first touch; empty when concrete_ptr_
+    mutable std::map<size_t, Term> pre_bytes_;  // bytes just before the buffer, by distance (see getByte)
     size_t num_bytes_;
     uintptr_t base_addr_ = 0;
     TermManager* tm_;
@@ -25,6 +27,10 @@ class SymbolicBuffer {
     uint8_t buffer_id_ = 0;         // unique [1..31] for scalar-ref sentinel decoding
     static inline thread_local uint8_t s_next_id_ = 1;
 public:
+    // How far before a symbolic buffer a load may start (e.g. a masked left-padding
+    // pixel at row - 12 bytes) and still resolve to that buffer.
+    static constexpr size_t kPreBytes = 256;
+
     const std::string& name() const { return name_; }
     uint8_t bufferId() const { return buffer_id_; }
     SymbolicBuffer(TermManager& tm, size_t num_bytes, const std::string& name)
@@ -71,6 +77,11 @@ public:
         uintptr_t addr = reinterpret_cast<uintptr_t>(ptr);
         return addr >= base_addr_ && addr < base_addr_ + num_bytes_;
     }
+    // Bytes from `ptr` up to the buffer start, or 0 if `ptr` is not before it.
+    size_t bytesBefore(const void* ptr) const {
+        uintptr_t addr = reinterpret_cast<uintptr_t>(ptr);
+        return addr < base_addr_ ? static_cast<size_t>(base_addr_ - addr) : 0;
+    }
 
     void _oob(size_t offset, const char* op) const {
         throw std::runtime_error("buffer '" + name_ + "' OOB " + op + " at " +
@@ -79,7 +90,17 @@ public:
     }
     Term getByte(size_t offset) const {
         if (concrete_ptr_) return tm_->mkBitVector(8, (uint64_t)concrete_ptr_[offset]);
-        if (offset >= num_bytes_) _oob(offset, "read");
+        if (offset >= num_bytes_) {
+            // A load that starts shortly before the buffer wraps to a "negative"
+            // offset. XNN_OOB_READS lets kernels over-read but not depend on those
+            // bytes, so they are fixed, unconstrained values shared by both kernels.
+            size_t before = static_cast<size_t>(0) - offset;
+            if (before > kPreBytes) _oob(offset, "read");
+            Term& t = pre_bytes_[before];
+            if (t.isNull())
+                t = tm_->mkConst(tm_->mkBitVectorSort(8), name_ + "_pre" + std::to_string(before));
+            return t;
+        }
         if (bytes_[offset].isNull())  // lazily mint the symbolic byte on first touch
             bytes_[offset] = tm_->mkConst(tm_->mkBitVectorSort(8),
                                           name_ + "_b" + std::to_string(offset));
@@ -202,6 +223,18 @@ inline SymbolicBuffer& VerificationContext::findBuffer(const void* ptr) {
     for (auto* buf : registered_buffers) {
         if (buf->contains(ptr)) return *buf;
     }
+    // A load starting shortly before a symbolic buffer (a masked padding lane)
+    // belongs to that buffer; its getByte models the leading bytes. Without this,
+    // the concrete fallback below would read the buffer's backing C array, i.e.
+    // scalar-ref NaN sentinels or zeros instead of the symbolic values.
+    SymbolicBuffer* nearest = nullptr;
+    for (auto* buf : registered_buffers) {
+        size_t gap = buf->bytesBefore(ptr);
+        if (!buf->isConcrete() && gap > 0 && gap <= SymbolicBuffer::kPreBytes &&
+            (!nearest || gap < nearest->bytesBefore(ptr)))
+            nearest = buf;
+    }
+    if (nearest) return *nearest;
     // Concrete-memory fallback: a miss means `ptr` is not a registered symbolic
     // buffer — it's real concrete memory the kernel reads directly, i.e. a
     // `static const` lookup table (e.g. rsum's onemask_table). Symbolic

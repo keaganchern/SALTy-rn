@@ -78,6 +78,17 @@ FIELD_EDGES = {
     "padding": [0],
 }
 
+# Integer clamp bounds, by signedness of the field. FIELD_EDGES' min/max
+# (-128/127) give only the identity clamp, and on uint8_t fields they become
+# [128, 127], which forces every output to 127. The first (base) value is the
+# full range; the rest bind one side, or both (min == max). One-at-a-time
+# variation around the base keeps min <= max.
+INT_CLAMP_EDGES = {
+    "signed":   {"min": [-128, -50, 0, 127], "max": [127, 60, 0, -128]},
+    "unsigned": {"min": [0, 16, 128, 255],   "max": [255, 240, 128, 0]},
+}
+CLAMP_FIELD_SIDE = {"output_min": "min", "output_max": "max", "min": "min", "max": "max"}
+
 # Struct-specific pairs override ambiguous field names such as "min"/"max".
 # u8 bounds are stored in uint32_t fields but consumed as unsigned bytes.
 CONCRETE_PARAM_CONFIGS = {

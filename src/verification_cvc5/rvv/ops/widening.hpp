@@ -106,6 +106,7 @@ inline RVVVector __riscv_vwadd_vx_i64m4(const RVVVector& a, int32_t b, size_t vl
 inline RVVVector __riscv_vwadd_vx_i64m8(const RVVVector& a, int32_t b, size_t vl){ return _gw_bin_vx(a,(int64_t)b,64,true,false,vl); }
 inline RVVVector __riscv_vwadd_wv_i16m1(const RVVVector& a, const RVVVector& b, size_t vl){ return _gw_bin_wv(a,b,16,true,false,vl); }
 inline RVVVector __riscv_vwadd_wv_i16m4(const RVVVector& a, const RVVVector& b, size_t vl){ return _gw_bin_wv(a,b,16,true,false,vl); }
+inline RVVVector __riscv_vwadd_wv_i16m4_tu(const RVVVector& dst, const RVVVector& a, const RVVVector& b, size_t vl){ return rvv_tu_impl(dst,_gw_bin_wv(a,b,16,true,false,vl),vl,16); }
 inline RVVVector __riscv_vwadd_wv_i16m8(const RVVVector& a, const RVVVector& b, size_t vl){ return _gw_bin_wv(a,b,16,true,false,vl); }
 inline RVVVector __riscv_vwadd_wv_i16mf2(const RVVVector& a, const RVVVector& b, size_t vl){ return _gw_bin_wv(a,b,16,true,false,vl); }
 inline RVVVector __riscv_vwadd_wv_i16mf4(const RVVVector& a, const RVVVector& b, size_t vl){ return _gw_bin_wv(a,b,16,true,false,vl); }

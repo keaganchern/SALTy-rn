@@ -268,6 +268,7 @@ inline RVVVector __riscv_vfsgnj_vv_f32m1(const RVVVector& a, const RVVVector& b,
 inline RVVVector __riscv_vfsgnj_vv_f32m2(const RVVVector& a, const RVVVector& b, size_t vl){ return _gfa_vv(a,b,32,G_SGNJ,vl); }
 inline RVVVector __riscv_vfsgnj_vv_f32m4(const RVVVector& a, const RVVVector& b, size_t vl){ return _gfa_vv(a,b,32,G_SGNJ,vl); }
 inline RVVVector __riscv_vfsgnj_vv_f32m8(const RVVVector& a, const RVVVector& b, size_t vl){ return _gfa_vv(a,b,32,G_SGNJ,vl); }
+inline RVVVector __riscv_vfsgnj_vv_f32m8_mu(const MaskVector& mask, const RVVVector& merge, const RVVVector& a, const RVVVector& b, size_t vl){ return rvv_vmerge_vvm_impl(merge,_gfa_vv(a,b,32,G_SGNJ,vl),mask,vl,32); }
 inline RVVVector __riscv_vfsgnj_vv_f32mf2(const RVVVector& a, const RVVVector& b, size_t vl){ return _gfa_vv(a,b,32,G_SGNJ,vl); }
 inline RVVVector __riscv_vfsgnj_vv_f64m1(const RVVVector& a, const RVVVector& b, size_t vl){ return _gfa_vv(a,b,64,G_SGNJ,vl); }
 inline RVVVector __riscv_vfsgnj_vv_f64m2(const RVVVector& a, const RVVVector& b, size_t vl){ return _gfa_vv(a,b,64,G_SGNJ,vl); }

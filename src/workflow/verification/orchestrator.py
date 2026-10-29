@@ -55,6 +55,7 @@ class BatchResult:
     status: str        # "VERIFIED", "COUNTEREXAMPLE", "TIMEOUT", "CRASH"
     elapsed: float = 0.0
     details: str = ""
+    config: str = ""
 
 
 @dataclass
@@ -71,6 +72,8 @@ class VerificationResult:
     configs_tested: int = 0
     config_results: dict = field(default_factory=dict)  # config_name → max_verified_batch
     failed_config: str = ""
+    timeouts: list[dict] = field(default_factory=list)   # where each config's coverage stopped
+    elapsed: float = 0.0                                  # total solver-process wall time (s)
 
     def to_json(self) -> str:
         d = {
@@ -90,7 +93,37 @@ class VerificationResult:
             d["counterexample"] = self.counterexample
         if self.compile_error:
             d["compile_error"] = self.compile_error[:500]
+        d.update(self.coverage())
         return json.dumps(d, indent=2)
+
+    def coverage(self) -> dict:
+        """What was actually proved: shapes (multi-dim fixtures), timeouts, solve times."""
+        ok = [b for b in self.verified_batches if b.status == "VERIFIED"]
+        cov = {}
+        shapes = sorted({json.loads(b.details)["dims"] for b in ok if b.details and '"dims"' in b.details},
+                        key=lambda s: [int(x) for x in s.split(",") if x.lstrip("-").isdigit()])
+        if shapes:
+            dims = [[int(x) for x in s.split(",")] for s in shapes]
+            cov["verified_shapes"] = len(shapes)
+            cov["shape_dim_max"] = [max(col) for col in zip(*dims)]
+            cov["largest_shape"] = max(shapes, key=lambda s: (eval_product(s), s))
+            if len(shapes) <= 64:
+                cov["shapes"] = shapes
+        if self.timeouts:
+            cov["timeouts"] = self.timeouts[:16]
+        times = [b.elapsed for b in ok if b.elapsed > 0]
+        if times:
+            cov["query_s_max"] = round(max(times), 2)
+        if self.elapsed:
+            cov["elapsed_s"] = round(self.elapsed, 1)
+        return cov
+
+
+def eval_product(shape: str) -> int:
+    prod = 1
+    for x in shape.split(","):
+        prod *= max(int(x), 1)
+    return prod
 
 
 def compile_harness(harness_source: str, kernel_name: str,
@@ -233,6 +266,7 @@ def run_verification(bin_path: Path, kernel_name: str,
     last_logged_batch = 0
     current_config = ""
     stderr_buf = []
+    solve_started = {}   # (config, label) → time of its SOLVING event
 
     # Stream stdout line-by-line for real-time progress
     try:
@@ -288,6 +322,7 @@ def run_verification(bin_path: Path, kernel_name: str,
                 last_logged_batch = 0
 
             if status == "SOLVING":
+                solve_started[(config, label)] = time.perf_counter()
                 # Visibility ping from verify() before check_sat() runs.
                 # Prevents silence when a single batch takes a long time.
                 elapsed_so_far = time.perf_counter() - t0
@@ -295,9 +330,11 @@ def run_verification(bin_path: Path, kernel_name: str,
 
             elif status == "VERIFIED":
                 result.max_verified_batch = max(result.max_verified_batch, batch)
+                started = solve_started.pop((config, label), None)
                 result.verified_batches.append(BatchResult(
                     batch=batch, status="VERIFIED",
-                    details=json.dumps(data) if "dims" in data else ""))
+                    elapsed=(time.perf_counter() - started) if started else 0.0,
+                    details=json.dumps(data) if "dims" in data else "", config=config))
                 result.config_results[config] = max(
                     result.config_results.get(config, 0), batch)
                 # Log every batch
@@ -320,6 +357,7 @@ def run_verification(bin_path: Path, kernel_name: str,
 
             elif status == "TIMEOUT":
                 result.verdict = "PARTIAL"
+                result.timeouts.append({"config": config, "at": label})
                 log.info("  config=%s — %ds budget spent at %s; verified up to batch=%d",
                          config, time_budget, label,
                          result.config_results.get(config, 0))
@@ -358,6 +396,7 @@ def run_verification(bin_path: Path, kernel_name: str,
             result.compile_error = stderr_text[:1000]
 
     total_elapsed = time.perf_counter() - t0
+    result.elapsed = total_elapsed
     num_verified = len([b for b in result.verified_batches if b.status == "VERIFIED"])
     num_configs = len(result.config_results)
 

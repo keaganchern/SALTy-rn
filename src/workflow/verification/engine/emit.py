@@ -12,7 +12,8 @@ from .frontend import (parse_signature, resolve_roles, parse_struct_leaves,
                        classify_param_struct, Signature, Roles)
 # Curated valid param values / ranges / constraints (the merged param data module).
 from ..param_configs import (FIELD_EDGES, EDGE_VALUES, PARAM_CONSTRAINTS,
-                            CONCRETE_PARAM_CONFIGS, get_param_ranges)
+                            CONCRETE_PARAM_CONFIGS, INT_CLAMP_EDGES, CLAMP_FIELD_SIDE,
+                            get_param_ranges)
 
 _FP_CTYPES = ("float", "double", "_Float16", "xnn_float16")
 
@@ -77,6 +78,10 @@ def _field_values(path: str, ctype: str):
     """Valid concrete edge values for a struct leaf — by field name first (the
     semantic table), then by type. Returns C literals."""
     fname = path.split(".")[-1]
+    side = CLAMP_FIELD_SIDE.get(fname)
+    if side and re.fullmatch(r"(u?int(8|16|32|64)_t|(unsigned |signed )?(char|short|int))", ctype):
+        sign = "unsigned" if ctype.startswith("u") else "signed"
+        return [str(v) for v in INT_CLAMP_EDGES[sign][side]]
     raw = FIELD_EDGES.get(fname)
     if raw is None:
         raw = EDGE_VALUES.get(ctype)
@@ -131,6 +136,16 @@ def _strip_simd_includes(src: str) -> str:
     supplies the symbolic shims, and the real headers aren't on the include path."""
     return re.sub(r'^[ \t]*#[ \t]*include[ \t]*<(arm_neon|riscv_vector)\.h>[ \t]*$',
                   '', src, flags=re.M)
+
+
+def _strip_kernel_redeclarations(src: str) -> str:
+    """Remove what the harness already provides to the RVV kernel: file-scope
+    `struct xnn_*` declarations/definitions (inside the RVV namespace they declare
+    a distinct type, so `&params` no longer converts) and `#include "xnnpack/…"`
+    lines (xnn_minimal.h supplies the helpers; the real headers aren't on the path)."""
+    src = re.sub(r'^struct[ \t]+xnn_\w+[ \t]*\{.*?^\};[ \t]*\n', '', src, flags=re.M | re.S)
+    src = re.sub(r'^struct[ \t]+xnn_\w+[ \t]*;[ \t]*\n', '', src, flags=re.M)
+    return re.sub(r'^[ \t]*#[ \t]*include[ \t]*"xnnpack/[\w/]+\.h"[^\n]*$', '', src, flags=re.M)
 
 
 def _neon_void_load_adapters(src: str) -> str:
@@ -586,13 +601,26 @@ def _gemm_fixture() -> "FixtureSpec":
 
 
 # Per-element-type minmax params for the pool family: (struct, {field: concrete}).
-# Wide ranges → the clamp is identity, so the result is the pure max-reduction;
-# both sides apply the same clamp regardless, so equivalence is unaffected.
+# The clamp must bind for some inputs, or a translation that drops or misapplies
+# it still verifies. Integer bounds bind inside the full domain; the wide float
+# bounds bind for full-domain inputs and are narrowed for finite input bands
+# (see _binding_clamp).
 _MINMAX_PARAMS = {
     "float":   ("xnn_f32_minmax_params", {"scalar.min": "-1e30f", "scalar.max": "1e30f"}),
-    "int8_t":  ("xnn_s8_minmax_params",  {"scalar.min": "-128",   "scalar.max": "127"}),
-    "uint8_t": ("xnn_u8_minmax_params",  {"scalar.min": "0",      "scalar.max": "255"}),
+    "int8_t":  ("xnn_s8_minmax_params",  {"scalar.min": "-50",    "scalar.max": "60"}),
+    "uint8_t": ("xnn_u8_minmax_params",  {"scalar.min": "16",     "scalar.max": "240"}),
 }
+
+
+def _binding_clamp(fields: dict, input_range) -> dict:
+    """With a finite input band, outputs never approach the fixtures' wide
+    ±1e30 float clamp, so the clamp is never exercised. Bound it at half the
+    band instead: the solver can then produce both clamped and unclamped outputs."""
+    if not input_range:
+        return fields
+    lo, hi = input_range
+    narrowed = {"-1e30f": f"{lo / 2}f", "1e30f": f"{hi / 2}f"}
+    return {f: narrowed.get(v, v) for f, v in fields.items()}
 
 
 def _maxpool_fixture(elem: str) -> "FixtureSpec":
@@ -955,6 +983,10 @@ def generate_multidim(neon_path, rvv_path, name, neon, rvv, spec, input_range=No
             decls.append(
                 f'    for (size_t _i = 0; _i < ({ext}); _i++) '
                 f'_b_{b}_rvv.setByte(_i, _b_{b}_neon.getByte(_i));  // shared init (in-out)')
+        if b in spec.shared_out:        # remember the shared image: holes the reference leaves are don't-care
+            decls.append(
+                f'    std::vector<Term> _{b}_init; _{b}_init.reserve({ext}); '
+                f'for (size_t _i = 0; _i < ({ext}); _i++) _{b}_init.push_back(_b_{b}_neon.getByte(_i));')
     for b, (ext, fill) in spec.weights.items():   # concrete uniform weights (layout-invariant)
         decls += [f"    std::vector<{elem}> {b}_arr({nelem(ext)}, {fill});",
                   f'    ctx.registerConcreteBuffer("{b}", {b}_arr.data(), ({ext}));']
@@ -1010,6 +1042,7 @@ def generate_multidim(neon_path, rvv_path, name, neon, rvv, spec, input_range=No
             ]
     if spec.params:                     # concrete params struct (plain-C field reads)
         st, fields = spec.params
+        fields = _binding_clamp(fields, input_range)
         decls.append(f"    {st} params{{}};")
         decls += [f"    params.{f} = {v};" for f, v in fields.items()]
         decls.append(f'    ctx.registerConcreteBuffer("params", &params, sizeof({st}));')
@@ -1048,9 +1081,15 @@ def generate_multidim(neon_path, rvv_path, name, neon, rvv, spec, input_range=No
                 out.append(p.name)
         return ", ".join(out)
 
+    def contiguous_cmp(ob, count, celem, ckind):
+        if ob in spec.shared_out:       # compare only what the reference wrote
+            return (f"buffers_equal_written(ctx.tm, _b_{ob}_neon, _b_{ob}_rvv, {count}, "
+                    f"sizeof({celem}), ElementKind::{ckind}, {ulp_tol}, _{ob}_init)")
+        return (f"buffers_equal(ctx.tm, _b_{ob}_neon, _b_{ob}_rvv, {count}, "
+                f"sizeof({celem}), ElementKind::{ckind}, {ulp_tol})")
+
     if spec.out_extents:                # multi-output: AND a contiguous compare per output
-        terms = [f"buffers_equal(ctx.tm, _b_{ob}_neon, _b_{ob}_rvv, {ext}, "
-                 f"sizeof({spec.out_elems.get(ob, oelem)}), ElementKind::{_kind(spec.out_elems.get(ob, oelem))}, {ulp_tol})"
+        terms = [contiguous_cmp(ob, ext, spec.out_elems.get(ob, oelem), _kind(spec.out_elems.get(ob, oelem)))
                  for ob, ext in spec.out_extents.items()]
         cmp_expr = terms[0]
         for t in terms[1:]:
@@ -1063,8 +1102,7 @@ def generate_multidim(neon_path, rvv_path, name, neon, rvv, spec, input_range=No
                         f"{r['rows']}, {r['cols']}, {r['row_stride']}, {r['col_stride']}, "
                         f"sizeof({oelem}), ElementKind::{okind}, {ulp_tol})")
         else:
-            cmp_expr = (f"buffers_equal(ctx.tm, _b_{ob}_neon, _b_{ob}_rvv, "
-                        f"{spec.out_extent}, sizeof({oelem}), ElementKind::{okind}, {ulp_tol})")
+            cmp_expr = contiguous_cmp(ob, spec.out_extent, oelem, okind)
     # Counterexample witness: on SAT, scan the (first) output buffer for the first
     # differing element and extract both models, so the repair LLM gets an actionable
     # "channel C: NEON=x RVV=y" instead of an empty shape. Strided/multi-output regions
@@ -1098,10 +1136,13 @@ def generate_multidim(neon_path, rvv_path, name, neon, rvv, spec, input_range=No
             f"        if (_ud > {ulp_tol}LL) {{ {_store} }}\n")
     else:
         _wit_cmp = f"        if (_nu != _vu) {{ {_store} }}\n"
+    _wskip = (f"        if (ref_element_untouched(_b_{_wob}_neon, _{_wob}_init, _off, {obits // 8})) continue;\n"
+              if _wob in spec.shared_out else "")   # holes are don't-care, never the witness
     cex_witness = (
         f"    size_t fi = 0; long long _nv = 0, _vv = 0;\n"
         f"    for (size_t e = 0; e < ({_wcount}); e++) {{\n"
         f"        size_t _off = {_woff};\n"
+        + _wskip +
         f"        Term _n = ctx.solver->getValue(_b_{_wob}_neon.loadScalar(_off, {obits}));\n"
         f"        Term _v = ctx.solver->getValue(_b_{_wob}_rvv.loadScalar(_off, {obits}));\n"
         f"        unsigned long long _nu = strtoull(_n.getBitVectorValue(10).c_str(), nullptr, 10);\n"
@@ -1183,7 +1224,7 @@ def generate_multidim(neon_path, rvv_path, name, neon, rvv, spec, input_range=No
 
     decls_str = "\n".join(decls)
     neon_body = _strip_simd_includes(neon_src)
-    rvv_body = _strip_simd_includes(rvv_src)
+    rvv_body = _strip_kernel_redeclarations(_strip_simd_includes(rvv_src))
     if spec.scalar_movs:
         neon_body = _rewrite_scalar_movs(neon_body)
         rvv_body = _rewrite_scalar_movs(rvv_body)
@@ -1634,7 +1675,7 @@ def generate_harness(neon_path: str, rvv_path: str, name: str,
 
     decls_str = "\n".join(decls)
     neon_body = _strip_simd_includes(neon_src)
-    rvv_body = _strip_simd_includes(rvv_src)
+    rvv_body = _strip_kernel_redeclarations(_strip_simd_includes(rvv_src))
     # Scalar-broadcast inputs (`*input_b`) → symbolic accessor, so the broadcast
     # constant is symbolic rather than the concrete backing (which would be 0).
     scalar_bcast = (_scalar_broadcast_inputs(neon_src, input_names) |

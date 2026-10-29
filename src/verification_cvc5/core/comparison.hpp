@@ -104,6 +104,39 @@ inline Term buffers_equal(TermManager& tm,
     return result;
 }
 
+// True if the reference never wrote the element at byte `offset`: every byte is
+// still the term from `ref_init`, the shared initial image of both outputs.
+inline bool ref_element_untouched(const SymbolicBuffer& ref, const std::vector<Term>& ref_init,
+                                  size_t offset, size_t elem_bytes) {
+    for (size_t j = 0; j < elem_bytes; j++) {
+        if (offset + j >= ref_init.size() || ref.getByte(offset + j) != ref_init[offset + j]) return false;
+    }
+    return true;
+}
+
+// buffers_equal over the elements the reference wrote. Elements it left
+// untouched are holes in its output (packw padding slots): the candidate may
+// leave them or write them, as callers never read them.
+inline Term buffers_equal_written(TermManager& tm,
+                                  const SymbolicBuffer& ref,
+                                  const SymbolicBuffer& cand,
+                                  size_t num_elements,
+                                  size_t elem_bytes,
+                                  ElementKind kind,
+                                  uint64_t ulp_tol,
+                                  const std::vector<Term>& ref_init) {
+    size_t elem_bits = elem_bytes * 8;
+    Term result = tm.mkTrue();
+    for (size_t i = 0; i < num_elements; i++) {
+        size_t offset = i * elem_bytes;
+        if (ref_element_untouched(ref, ref_init, offset, elem_bytes)) continue;
+        Term eq = element_equal(tm, ref.loadScalar(offset, elem_bits), cand.loadScalar(offset, elem_bits),
+                                kind, ulp_tol);
+        result = tm.mkTerm(Kind::AND, {result, eq});
+    }
+    return result;
+}
+
 // Strided 2D logical output region: compares rows×cols elements at affine
 // offsets r*row_stride + c*col_stride (bytes), ignoring everything in between
 // (e.g. row padding). Used for non-contiguous outputs (transpose, GEMM).

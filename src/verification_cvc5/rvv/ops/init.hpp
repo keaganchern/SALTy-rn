@@ -239,7 +239,8 @@ inline RVVVector __riscv_vundefined_f32m1x2(){ return _gini_undef(32); }
 inline RVVVector __riscv_vundefined_f32m1x3(){ return _gini_undef(32); }
 inline RVVVector __riscv_vundefined_f32m1x4(){ return _gini_undef(32); }
 inline RVVVector __riscv_vundefined_f32m1x5(){ return _gini_undef(32); }
-inline RVVVector __riscv_vundefined_f32m1x6(){ return _gini_undef(32); }
+// Tuple types aliased to VectorTuple (intrinsics.hpp) return a tuple of zero vectors.
+inline VectorTuple<RVVVector,6> __riscv_vundefined_f32m1x6(){ RVVVector u=_gini_undef(32); return VectorTuple<RVVVector,6>{{u,u,u,u,u,u}}; }
 inline RVVVector __riscv_vundefined_f32m1x7(){ return _gini_undef(32); }
 inline RVVVector __riscv_vundefined_f32m1x8(){ return _gini_undef(32); }
 inline RVVVector __riscv_vundefined_f32m2(){ return _gini_undef(32); }
@@ -412,7 +413,7 @@ inline RVVVector __riscv_vundefined_u16mf4x6(){ return _gini_undef(16); }
 inline RVVVector __riscv_vundefined_u16mf4x7(){ return _gini_undef(16); }
 inline RVVVector __riscv_vundefined_u16mf4x8(){ return _gini_undef(16); }
 inline RVVVector __riscv_vundefined_u32m1(){ return _gini_undef(32); }
-inline RVVVector __riscv_vundefined_u32m1x2(){ return _gini_undef(32); }
+inline VectorTuple<RVVVector,2> __riscv_vundefined_u32m1x2(){ RVVVector u=_gini_undef(32); return VectorTuple<RVVVector,2>{{u,u}}; }
 inline RVVVector __riscv_vundefined_u32m1x3(){ return _gini_undef(32); }
 inline RVVVector __riscv_vundefined_u32m1x4(){ return _gini_undef(32); }
 inline RVVVector __riscv_vundefined_u32m1x5(){ return _gini_undef(32); }
@@ -420,14 +421,14 @@ inline RVVVector __riscv_vundefined_u32m1x6(){ return _gini_undef(32); }
 inline RVVVector __riscv_vundefined_u32m1x7(){ return _gini_undef(32); }
 inline RVVVector __riscv_vundefined_u32m1x8(){ return _gini_undef(32); }
 inline RVVVector __riscv_vundefined_u32m2(){ return _gini_undef(32); }
-inline RVVVector __riscv_vundefined_u32m2x2(){ return _gini_undef(32); }
-inline RVVVector __riscv_vundefined_u32m2x3(){ return _gini_undef(32); }
-inline RVVVector __riscv_vundefined_u32m2x4(){ return _gini_undef(32); }
+inline VectorTuple<RVVVector,2> __riscv_vundefined_u32m2x2(){ RVVVector u=_gini_undef(32); return VectorTuple<RVVVector,2>{{u,u}}; }
+inline VectorTuple<RVVVector,3> __riscv_vundefined_u32m2x3(){ RVVVector u=_gini_undef(32); return VectorTuple<RVVVector,3>{{u,u,u}}; }
+inline VectorTuple<RVVVector,4> __riscv_vundefined_u32m2x4(){ RVVVector u=_gini_undef(32); return VectorTuple<RVVVector,4>{{u,u,u,u}}; }
 inline RVVVector __riscv_vundefined_u32m4(){ return _gini_undef(32); }
-inline RVVVector __riscv_vundefined_u32m4x2(){ return _gini_undef(32); }
+inline VectorTuple<RVVVector,2> __riscv_vundefined_u32m4x2(){ RVVVector u=_gini_undef(32); return VectorTuple<RVVVector,2>{{u,u}}; }
 inline RVVVector __riscv_vundefined_u32m8(){ return _gini_undef(32); }
 inline RVVVector __riscv_vundefined_u32mf2(){ return _gini_undef(32); }
-inline RVVVector __riscv_vundefined_u32mf2x2(){ return _gini_undef(32); }
+inline VectorTuple<RVVVector,2> __riscv_vundefined_u32mf2x2(){ RVVVector u=_gini_undef(32); return VectorTuple<RVVVector,2>{{u,u}}; }
 inline RVVVector __riscv_vundefined_u32mf2x3(){ return _gini_undef(32); }
 inline RVVVector __riscv_vundefined_u32mf2x4(){ return _gini_undef(32); }
 inline RVVVector __riscv_vundefined_u32mf2x5(){ return _gini_undef(32); }
