@@ -5,7 +5,8 @@ Flow per kernel:
        (rename entry function to `test`)
     2. Run autocomp's beam search on prob_type="salty-rvv", prob_id=<id>.
     3. Pick the global best correct candidate from the run's output dir.
-    4. Write back to kernels/target_optimized/<name>.c (rename `test` → original symbol).
+    4. Symbolically verify against the staged RVV baseline at the workload size.
+    5. Only on a complete proof, write back to kernels/target_optimized/<name>.c (rename `test` → original symbol).
 
 The autocomp harness at third_party/autocomp/harnesses/salty-rvv/test<id>.c is
 maintained by the user; this bridge only checks that it exists.
@@ -43,6 +44,7 @@ class OptimizeResult:
     cycles: Optional[int] = None
     output_dir: Optional[Path] = None
     error: str = ""
+    verification: Optional[dict] = None
 
 
 # ---------------------------------------------------------------------------
@@ -51,7 +53,9 @@ class OptimizeResult:
 
 def _entry_function_name(rvv_source: str) -> str:
     """Extract the entry function name — the unique `void <name>(` definition."""
-    m = re.search(r'\bvoid\s+(\w+)\s*\(', rvv_source)
+    m = re.search(r'\bvoid\s+(test_rvv)\s*\(', rvv_source)
+    if m is None:
+        m = re.search(r'\bvoid\s+(\w+)\s*\(', rvv_source)
     if m is None:
         raise ValueError("Could not parse RVV function signature")
     return m.group(1)
@@ -85,12 +89,12 @@ def _assert_harness_exists(prob_id: int) -> Path:
     return p
 
 
-def _stage_baseline(kernel_name: str, prob_id: int) -> tuple[Path, str]:
+def _stage_baseline(kernel_name: str, prob_id: int, target: Path = None) -> tuple[Path, str]:
     """Read kernels/target/<name>.c, rename entry to `test`, write to sols/.
 
     Returns (staged_file_path, original_entry_symbol).
     """
-    target = PROJECT_ROOT / "kernels" / "target" / f"{kernel_name}.c"
+    target = target or PROJECT_ROOT / "kernels" / "target" / f"{kernel_name}.c"
     if not target.exists():
         raise FileNotFoundError(f"No verified RVV kernel at {target}")
 
@@ -227,10 +231,10 @@ def _pick_best(output_dir: Path) -> tuple[str, Optional[int]]:
     return code, best_cycles
 
 
-def _write_optimized(kernel_name: str, code: str, orig_symbol: str) -> Path:
+def _write_optimized(kernel_name: str, code: str, orig_symbol: str, kernels_dir: Path = None) -> Path:
     """Rename `test` → original symbol; write kernels/target_optimized/<name>.c."""
     renamed = code if orig_symbol == "test" else _rename_void_function(code, "test", orig_symbol)
-    out_dir = PROJECT_ROOT / "kernels" / "target_optimized"
+    out_dir = (kernels_dir or PROJECT_ROOT / "kernels") / "target_optimized"
     out_dir.mkdir(parents=True, exist_ok=True)
     out = out_dir / f"{kernel_name}.c"
     out.write_text(renamed)
@@ -243,25 +247,60 @@ def _write_optimized(kernel_name: str, code: str, orig_symbol: str) -> Path:
 # ---------------------------------------------------------------------------
 
 def optimize_kernel(kernel_name: str, prob_id: int, cfg) -> OptimizeResult:
-    """Stage baseline → run autocomp → pick best → write optimized."""
+    """Stage → search → verify RVV/RVV → publish only a proven candidate."""
     log.info("═══════════════════════════════════════════════════════════")
     log.info("Optimization: %s (prob_id=%d)", kernel_name, prob_id)
 
+    output_dir = None
     try:
-        _, orig_symbol = _stage_baseline(kernel_name, prob_id)
+        batch = cfg.verification_batch
+        if batch <= 0:
+            raise ValueError("Post-AutoComp verification requires --verify-batch matching "
+                             "the benchmark workload (element count)")
+        if cfg.autocomp_vlen <= 0 or cfg.autocomp_vlen % 8:
+            raise ValueError("AutoComp VLEN must be positive and byte-aligned")
+        if cfg.verification_timeout < 0:
+            raise ValueError("Verification timeout must be nonnegative")
+        suffix = "" if cfg.vlen == 256 else f"-{cfg.vlen}"
+        target = cfg.target_dir / f"{kernel_name}{suffix}.c"
+        staged, orig_symbol = _stage_baseline(kernel_name, prob_id, target)
+        # Snapshot the exact baseline used by the search; subsequent verification
+        # must not accidentally read a changed target file.
+        baseline_code = _rename_void_function(staged.read_text(), "test", "test_rvv")
         output_dir = _run_autocomp(prob_id, cfg)
         code, cycles = _pick_best(output_dir)
-        optimized_path = _write_optimized(kernel_name, code, orig_symbol)
-        log.info("Optimization succeeded: %s (cycles=%s)", optimized_path, cycles)
-        return OptimizeResult(
-            success=True,
-            optimized_path=optimized_path,
-            cycles=cycles,
-            output_dir=output_dir,
+        reference = output_dir / "verification_reference.c"
+        candidate = output_dir / "verification_candidate.c"
+        reference.write_text(baseline_code)
+        candidate.write_text(_rename_void_function(code, "test", "test_rvv"))
+        from ..verification.orchestrator import verify_rvv_pair
+        result = verify_rvv_pair(
+            str(reference), str(candidate), kernel_name=kernel_name,
+            batch=batch, vlen=cfg.autocomp_vlen,
+            time_budget=cfg.verification_timeout,
+            symbolic_params=cfg.verification_symbolic_params,
+            input_range=cfg.verification_input_range,
+            backend=cfg.verification_backend,
+            build_dir=output_dir / "verification_build",
         )
+        report = json.loads(result.to_json())
+        report.update(reference_isa="rvv", candidate_isa="rvv", batch=batch,
+                      vlen=cfg.autocomp_vlen, comparison="output-bits",
+                      reference=str(reference), candidate=str(candidate),
+                      symbolic_params=cfg.verification_symbolic_params,
+                      input_range=cfg.verification_input_range)
+        (output_dir / "verification.json").write_text(json.dumps(report, indent=2))
+        if result.verdict != "ALL_PASSED" or result.max_verified_batch != batch:
+            return OptimizeResult(False, output_dir=output_dir, verification=report,
+                                  error=f"RVV-to-RVV verification: {result.verdict}")
+        optimized_path = _write_optimized(kernel_name + suffix, code, orig_symbol,
+                                          cfg.kernels_dir)
+        log.info("Optimization verified: %s (cycles=%s)", optimized_path, cycles)
+        return OptimizeResult(True, optimized_path=optimized_path, cycles=cycles,
+                              output_dir=output_dir, verification=report)
     except Exception as e:
         log.exception("Optimization failed for %s", kernel_name)
-        return OptimizeResult(success=False, error=str(e))
+        return OptimizeResult(success=False, output_dir=output_dir, error=str(e))
 
 
 # ---------------------------------------------------------------------------
@@ -272,6 +311,9 @@ def _build_cli_config(args: argparse.Namespace):
     """Return a Config-shaped object with autocomp_* fields set from CLI."""
     from ..config import Config
     cfg = Config()
+    cfg.verification_batch = args.verify_batch
+    cfg.verification_timeout = args.verification_timeout
+    cfg.vlen = args.baseline_vlen
     cfg.autocomp_iterations = args.iterations
     cfg.autocomp_beam_size = args.beam_size
     cfg.autocomp_num_plan_candidates = args.plan_candidates
@@ -294,6 +336,10 @@ def main():
                    help="Kernel name (matches kernels/target/<name>.c)")
     p.add_argument("--prob-id", type=int, required=True,
                    help="Autocomp prob_id (matches harnesses/salty-rvv/test<id>.c)")
+    p.add_argument("--verify-batch", type=int, required=True,
+                   help="Optimization workload element count for the symbolic proof")
+    p.add_argument("--verification-timeout", type=int, default=600)
+    p.add_argument("--baseline-vlen", type=int, default=256)
     p.add_argument("--iterations", type=int, default=8)
     p.add_argument("--beam-size", type=int, default=4)
     p.add_argument("--plan-candidates", type=int, default=4)

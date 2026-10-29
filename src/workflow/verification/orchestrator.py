@@ -36,6 +36,8 @@ VERIFICATION_BUILD_SUBDIRS = {
 # pure-BV → bitwuzla (it wins the hard symbolic-int BV cases), FP → cvc5 — via
 # the SALT_BACKEND=auto / SALT_BITWUZLA env hooks in core/context.hpp.
 BITWUZLA_BIN = PROJECT_ROOT / "third_party" / "bitwuzla" / "install" / "bin" / "bitwuzla"
+if not BITWUZLA_BIN.is_file():
+    BITWUZLA_BIN = Path(shutil.which("bitwuzla") or BITWUZLA_BIN)
 BITWUZLA_LIB = PROJECT_ROOT / "third_party" / "bitwuzla" / "install" / "lib64"
 
 # Serializes libclang harness generation when many kernels verify in one process
@@ -293,7 +295,9 @@ def run_verification(bin_path: Path, kernel_name: str,
 
             elif status == "VERIFIED":
                 result.max_verified_batch = max(result.max_verified_batch, batch)
-                result.verified_batches.append(BatchResult(batch=batch, status="VERIFIED"))
+                result.verified_batches.append(BatchResult(
+                    batch=batch, status="VERIFIED",
+                    details=json.dumps(data) if "dims" in data else ""))
                 result.config_results[config] = max(
                     result.config_results.get(config, 0), batch)
                 # Log every batch
@@ -396,7 +400,8 @@ def verify_kernel(neon_path: str, rvv_path: str,
                    backend: str = "auto",
                    input_range: tuple = None,
                    build_dir: Path = None,
-                   llm_client=None) -> VerificationResult:
+                   llm_client=None,
+                   reference_isa: str = "neon") -> VerificationResult:
     """Full pipeline: generate (v2 engine) → compile → run.
 
     The generator (src/workflow/verification/engine) is the sole engine: a libclang
@@ -427,7 +432,7 @@ def verify_kernel(neon_path: str, rvv_path: str,
 
     log.info("═══════════════════════════════════════════════════════════")
     log.info("Verification: %s", kernel_name)
-    log.info("  NEON source: %s", neon_path)
+    log.info("  %s reference: %s", reference_isa.upper(), neon_path)
     log.info("  RVV source:  %s", rvv_path)
     log.info("  Backend: %s", backend)
     log.info("  VLEN=%d  max_batch=%s  time_budget=%ds",
@@ -446,6 +451,7 @@ def verify_kernel(neon_path: str, rvv_path: str,
                 neon_path, rvv_path, kernel_name,
                 params_mode=params_mode,
                 input_range=input_range,
+                reference_isa=reference_isa,
             )
     except NotImplementedError as e:
         log.warning("Kernel not yet supported by v2 engine: %s", e)
@@ -482,6 +488,19 @@ def verify_kernel(neon_path: str, rvv_path: str,
                              min_batch=min_batch,
                              vlen=vlen,
                              route=route)
+
+
+def verify_rvv_pair(reference_path: str, candidate_path: str, *, batch: int,
+                    vlen: int, **kwargs) -> VerificationResult:
+    """Prove RVV output bits equal at one explicit workload element count/VLEN.
+
+    Both files must expose test_rvv. Unsupported output/shape models fail closed.
+    A timeout or partial result is never sufficient for optimized acceptance.
+    """
+    if batch <= 0 or vlen <= 0 or vlen % 8:
+        raise ValueError("RVV verification requires batch > 0 and positive byte-aligned VLEN")
+    return verify_kernel(reference_path, candidate_path, reference_isa="rvv",
+                         min_batch=batch, max_batch=batch, vlen=vlen, **kwargs)
 
 
 # ---------------------------------------------------------------------------
@@ -533,7 +552,9 @@ def main():
                         datefmt="%H:%M:%S")
 
     p = argparse.ArgumentParser(description="SALTy-RN Bounded Verification")
-    p.add_argument("--neon", required=True, help="Path to NEON kernel source")
+    reference = p.add_mutually_exclusive_group(required=True)
+    reference.add_argument("--neon", help="Path to NEON kernel source")
+    reference.add_argument("--reference-rvv", help="Verified RVV baseline (requires --batch)")
     p.add_argument("--rvv", required=True, help="Path to RVV kernel source")
     p.add_argument("--params-init", default="", help="C++ params initialization code")
     p.add_argument("--params-file", default="", help="File containing params init code")
@@ -561,6 +582,11 @@ def main():
                         "Use '=' to avoid argparse eating a leading '-': --input-range=-1,1")
     args = p.parse_args()
 
+    if args.reference_rvv and args.batch <= 0:
+        p.error("--reference-rvv requires a positive --batch workload element count")
+    if args.reference_rvv and (args.vlen <= 0 or args.vlen % 8 or args.timeout < 0):
+        p.error("RVV verification requires positive byte-aligned VLEN and nonnegative timeout")
+
     params_init = args.params_init
     if args.params_file:
         params_init = Path(args.params_file).read_text()
@@ -573,7 +599,8 @@ def main():
     min_batch = args.batch if args.batch > 0 else 1
     max_batch = args.batch if args.batch > 0 else args.max_batch
     result = verify_kernel(
-        args.neon, args.rvv,
+        args.reference_rvv or args.neon, args.rvv,
+        reference_isa="rvv" if args.reference_rvv else "neon",
         params_init=params_init,
         symbolic_params=args.symbolic_params,
         vlen=args.vlen,
@@ -585,6 +612,9 @@ def main():
     )
 
     print(result.to_json())
+    if args.reference_rvv and (result.verdict != "ALL_PASSED" or
+                               result.max_verified_batch != args.batch):
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":

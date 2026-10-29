@@ -229,6 +229,13 @@ inline RVVVector __riscv_vwmacc_vx_i16m8(const RVVVector& vd, int8_t x, const RV
 inline RVVVector __riscv_vwmacc_vx_i16mf2(const RVVVector& vd, int8_t x, const RVVVector& y, size_t vl){ return _gw_macc_vx(vd,(int64_t)x,y,16,true,vl); }
 inline RVVVector __riscv_vwmacc_vx_i16mf4(const RVVVector& vd, int8_t x, const RVVVector& y, size_t vl){ return _gw_macc_vx(vd,(int64_t)x,y,16,true,vl); }
 inline RVVVector __riscv_vwmacc_vx_i32m2(const RVVVector& vd, int16_t x, const RVVVector& y, size_t vl){ return _gw_macc_vx(vd,(int64_t)x,y,32,true,vl); }
+// Scalar activation loads must retain their symbolic value through widening.
+// Replicating the 16-bit scalar uses the same signed 16x16 -> 32 MAC semantics.
+inline RVVVector __riscv_vwmacc_vx_i32m2(const RVVVector& vd, SymbolicScalar<int16_t> x,
+                                       const RVVVector& y, size_t vl) {
+  RVVVector broadcast(g_ctx->tm, 16, std::vector<Term>(vl, x.term()));
+  return _gw_macc_vv(vd, broadcast, y, 32, true, true, vl);
+}
 inline RVVVector __riscv_vwmacc_vx_i32mf2(const RVVVector& vd, int16_t x, const RVVVector& y, size_t vl){ return _gw_macc_vx(vd,(int64_t)x,y,32,true,vl); }
 inline RVVVector __riscv_vwmacc_vx_i64m1(const RVVVector& vd, int32_t x, const RVVVector& y, size_t vl){ return _gw_macc_vx(vd,(int64_t)x,y,64,true,vl); }
 inline RVVVector __riscv_vwmacc_vx_i64m2(const RVVVector& vd, int32_t x, const RVVVector& y, size_t vl){ return _gw_macc_vx(vd,(int64_t)x,y,64,true,vl); }

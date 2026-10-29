@@ -1212,9 +1212,20 @@ inline NeonVector<32, N> fp32_binop(const NeonVector<32, N>& a, const NeonVector
     for (size_t i = 0; i < N; i++) {
         Term a_fp = load_as_fp32(tm, a.getLane(i));
         Term b_fp = load_as_fp32(tm, b.getLane(i));
-        Term res_fp = (op == Kind::FLOATINGPOINT_MAX || op == Kind::FLOATINGPOINT_MIN)
-                       ? tm.mkTerm(op, {a_fp, b_fp})
-                       : tm.mkTerm(op, {rm, a_fp, b_fp});
+        Term res_fp;
+        if (op == Kind::FLOATINGPOINT_MAX || op == Kind::FLOATINGPOINT_MIN) {
+            // ARM FMAX/FMIN propagate NaNs, unlike SMT fp.max/fp.min and
+            // RVV vfmax/vfmin. Payloads and exception flags are outside the
+            // verifier's NaN-equivalent output contract.
+            Term any_nan = tm.mkTerm(Kind::OR, {
+                tm.mkTerm(Kind::FLOATINGPOINT_IS_NAN, {a_fp}),
+                tm.mkTerm(Kind::FLOATINGPOINT_IS_NAN, {b_fp})});
+            res_fp = tm.mkTerm(Kind::ITE, {
+                any_nan, tm.mkFloatingPointNaN(8, 24),
+                tm.mkTerm(op, {a_fp, b_fp})});
+        } else {
+            res_fp = tm.mkTerm(op, {rm, a_fp, b_fp});
+        }
         lanes[i] = store_fp32_as_bv(tm, res_fp);
     }
     return NeonVector<32, N>(tm, lanes);

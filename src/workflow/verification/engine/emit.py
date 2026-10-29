@@ -11,7 +11,8 @@ import re
 from .frontend import (parse_signature, resolve_roles, parse_struct_leaves,
                        classify_param_struct, Signature, Roles)
 # Curated valid param values / ranges / constraints (the merged param data module).
-from ..param_configs import FIELD_EDGES, EDGE_VALUES, PARAM_CONSTRAINTS, get_param_ranges
+from ..param_configs import (FIELD_EDGES, EDGE_VALUES, PARAM_CONSTRAINTS,
+                            CONCRETE_PARAM_CONFIGS, get_param_ranges)
 
 _FP_CTYPES = ("float", "double", "_Float16", "xnn_float16")
 
@@ -88,10 +89,13 @@ def _field_values(path: str, ctype: str):
     return [str(int(v)) for v in raw]          # integer fields
 
 
-def _gen_configs(leaves, cap: int = 24):
+def _gen_configs(leaves, cap: int = 24, struct_name: str = ""):
     """One-at-a-time configs around a base (each field's first value), so every
     field's values are exercised without a combinatorial blow-up. Cross-field
     validity holds by construction (output_min/max are fixed, multiplier≥1, …)."""
+    if struct_name in CONCRETE_PARAM_CONFIGS:
+        paths, combos = CONCRETE_PARAM_CONFIGS[struct_name]
+        return paths, combos[:cap]
     fields = [(p, _field_values(p, t)) for p, t, _ in leaves if p != "_"]
     fields = [(p, vs) for p, vs in fields if vs]
     if not fields:
@@ -127,6 +131,17 @@ def _strip_simd_includes(src: str) -> str:
     supplies the symbolic shims, and the real headers aren't on the include path."""
     return re.sub(r'^[ \t]*#[ \t]*include[ \t]*<(arm_neon|riscv_vector)\.h>[ \t]*$',
                   '', src, flags=re.M)
+
+
+def _neon_void_load_adapters(src: str) -> str:
+    """Accept C void-pointer loads while retaining the typed symbolic shims."""
+    loads = (("vld1q_s32", "int32x4_t", "int32_t"),
+             ("vld1_s8", "int8x8_t", "int8_t"),
+             ("vld1q_f32", "float32x4_t", "float"))
+    return "\n".join(
+        f"using salt::{fn};\ninline {ret} {fn}(const void* p) "
+        f"{{ return salt::{fn}(static_cast<const {elem}*>(p)); }}"
+        for fn, ret, elem in loads if re.search(rf"\b{fn}\s*\(", src))
 
 
 def _split_body(src: str):
@@ -182,12 +197,22 @@ def _rewrite_scalar_broadcast(src: str, names) -> str:
     if not body:
         return src
     for n in names:
-        body = re.sub(rf'\(\s*(\w+)\s*\)\s*\*\s*{re.escape(n)}\b',
-                      rf'salt_scalar({n}).cast<\1>()', body)
-        body = re.sub(rf'\*\s*{re.escape(n)}\b', rf'salt_scalar({n})', body)
-        if re.search(rf'\*\s*{re.escape(n)}\b', body):  # missed read → fail loudly, not silent 0
-            raise NotImplementedError(f"unrewritten scalar read of {n} remains "
-                                      "(unhandled access pattern)")
+        # Local pointer declarations contain '*name' too; retain those verbatim.
+        parts = re.split(
+            rf'(\b(?:const\s+)?\w+\s*\*\s*(?:restrict\s+)?{re.escape(n)}\b(?=\s*[=;]))',
+            body)
+        # Preserve the increment on the pointer, not on the loaded scalar.
+        ptr = rf'{re.escape(n)}\b(\s*\+\+)?'
+        for i in range(0, len(parts), 2):
+            part = re.sub(rf'\(\s*(\w+)\s*\)\s*\*\s*{ptr}',
+                          lambda m: f'salt_scalar({n}{m[2] or ""}).cast<{m[1]}>()', parts[i])
+            part = re.sub(rf'\*\s*{ptr}',
+                          lambda m: f'salt_scalar({n}{m[1] or ""})', part)
+            if re.search(rf'\*\s*{re.escape(n)}\b', part):
+                raise NotImplementedError(f"unrewritten scalar read of {n} remains "
+                                          "(unhandled access pattern)")
+            parts[i] = part
+        body = "".join(parts)
     body = _rebind_tainted_locals(body)  # propagate symbolic taint to dependent scalar locals
     return head + body
 
@@ -329,7 +354,8 @@ class FixtureSpec:
                  out_extents=None, dual_weights=None, out_elem=None, out_kind=None,
                  probes=None, odd_tail_dim=None, grow_dim=None, grow_cross=None,
                  out_elems=None, shared_out=None, scalar_movs=False,
-                 extra_params=None, raw_decls=None, index_reads=None, pre_defines=None):
+                 extra_params=None, raw_decls=None, index_reads=None, pre_defines=None,
+                 scalar_reads=None, config_tag=None):
         self.dims = dims              # dim_name -> [values]
         self.strides = strides        # stride_name -> C++ expr (over dims)
         self.extents = extents        # buffer_name -> byte-count expr
@@ -356,6 +382,8 @@ class FixtureSpec:
         self.raw_decls = raw_decls or []  # raw C++ lines appended after buffer decls (extra constraints; cvc5 API)
         self.index_reads = index_reads or []  # local ptr names whose `p[i]` reads become salt_scalar (int scalars, no sentinel)
         self.pre_defines = pre_defines or []  # #define lines before kernel bodies (e.g. force XNN_ARCH_ARM64=0)
+        self.scalar_reads = scalar_reads or []  # local input pointers dereferenced as *p / *p++
+        self.config_tag = config_tag
 
 
 def _transpose_fixture(elem: str) -> "FixtureSpec":
@@ -418,6 +446,103 @@ def _qd8_qc4w_gemm_fixture() -> "FixtureSpec":
             "        } }",
         ],
         elem="int8_t", kind="SINT", out_elem="float", out_kind="F32")
+
+
+def _qc8w_fixture(*, dynamic: bool, indirect: bool = False) -> "FixtureSpec":
+    """NR=8, KR=1 byte layout shared by these three one-row NEON/RVV pairs.
+
+    Each tile is [8*i32 correction/bias][ks_count*kc*8*i8][8*f32 scale],
+    followed by [8*f32 bias] for qd8. No qc4w ksum/nibble constraints apply.
+    Integers have their full bit-vector domain; packed FP planes are finite
+    (scale nonnegative). Params are three concrete profiles, not symbolic.
+    """
+    depth = "(ks_count * kc)" if indirect else "kc"
+    tile = f"(8 * sizeof(int32_t) + {depth} * 8 + {2 if dynamic else 1} * 8 * sizeof(float))"
+    output = "float" if dynamic else "int8_t"
+    dims = {"param_case": [0, 1, 2], "mr": [1],
+            "nc": [1, 2, 3, 4, 5, 6, 7, 8, 9, 16, 17],
+            "kc": [1, 2, 3, 4, 5, 6, 7, 8, 9, 16, 17]}
+    strides = {"cm_stride": f"nc * sizeof({output})",
+               "cn_stride": f"8 * sizeof({output})"}
+    extents = {"w": f"((nc + 7) / 8) * {tile} + 64",
+               "c": f"nc * sizeof({output}) + 64"}
+    if dynamic:
+        params = ("xnn_f32_minmax_params", {
+            "scalar.min": "param_case == 0 ? -1e30f : (param_case == 1 ? -1.0f : -32.0f)",
+            "scalar.max": "param_case == 0 ? 1e30f : (param_case == 1 ? 1.0f : 64.0f)",
+        })
+        extra_params = {"quantization_params": ("xnn_qd8_quantization_params", {
+            "zero_point": "param_case == 0 ? 5 : (param_case == 1 ? 0 : -7)",
+            "inv_scale": "param_case == 0 ? 0.5f : (param_case == 1 ? 1.0f : 2.0f)",
+        })}
+    else:
+        params = ("xnn_qs8_qc8w_conv_minmax_params", {
+            "fp32_neon.magic_bias": "12582912.0f",
+            "fp32_neon.magic_bias_less_output_zero_point":
+                "0x4B400000 - (param_case == 0 ? 0 : (param_case == 1 ? 5 : -7))",
+            "fp32_neon.output_min": "param_case == 0 ? -128 : -64",
+            "fp32_neon.output_max": "param_case == 0 ? 127 : 63",
+        })
+        extra_params = {}
+    raw = [
+        "    {",
+        f"      const size_t _tile = {tile};",
+        f"      const size_t _fp_off = 8 * sizeof(int32_t) + {depth} * 8;",
+        "      Term _flo = mk_fp32_from_float(ctx.tm, -0x1.fffffep127f);",
+        "      Term _fhi = mk_fp32_from_float(ctx.tm, 0x1.fffffep127f);",
+        "      Term _zero = mk_fp32_from_float(ctx.tm, 0.0f);",
+        "      for (size_t _t = 0; _t < (nc + 7) / 8; ++_t)",
+        f"        for (size_t _p = 0; _p < {2 if dynamic else 1}; ++_p)",
+        "          for (size_t _i = 0; _i < 8; ++_i) {",
+        "            Term _fp = load_as_fp32(ctx.tm, _b_w.loadScalar(",
+        "                _t * _tile + _fp_off + (_p * 8 + _i) * sizeof(float), 32));",
+        "            ctx.assert_(ctx.land_(ctx.fp32_geq(_fp, _p == 0 ? _zero : _flo),",
+        "                                  ctx.fp32_leq(_fp, _fhi)));",
+        "          }",
+        "    }",
+    ]
+    indirect_spec = {}
+    weights = {}
+    if indirect:
+        # ks is a byte count of pointers; a_offset is bytes (int8 elements).
+        # zero_mode covers no sentinel, all sentinel, and mixed pointer tables.
+        dims["nc"] = [1, 4, 7, 8, 9, 17]
+        dims["kc"] = [1, 7, 8, 9]
+        dims.update(ks_count=[1, 3], a_offset=[0, 3], zero_mode=[0, 1, 2])
+        strides["ks"] = "ks_count * sizeof(void*)"
+        indirect_spec = {"a": {"count": "ks_count", "row": "a_offset + kc + 8"}}
+        # A distinct sentinel address and replacement buffer. Symbolic zero_data
+        # is stronger than assuming a particular quantized padding value.
+        weights["zero"] = ("16", "0")
+        extents["zero_data"] = "kc + 8"
+        raw += [
+            "    for (size_t _i = 0; _i < _a_rows; ++_i)",
+            "      if (zero_mode == 1 || (zero_mode == 2 && _i % 2 == 0))",
+            "        a_tbl[_i] = zero_arr.data();",
+        ]
+    else:
+        strides["a_stride"] = "kc + 8"
+        extents["a"] = "kc + 8"  # NEON loads 8 bytes even in the K tail.
+    return FixtureSpec(
+        dims=dims, strides=strides, extents=extents,
+        out_buffers=["c"], out_extent="nc",
+        elem="int8_t", kind="SINT", out_elem=output, out_kind=_kind(output),
+        params=params, extra_params=extra_params, indirect=indirect_spec,
+        weights=weights, raw_decls=raw, scalar_reads=["a0"], index_reads=["a0"],
+        config_tag="qc8w_finite_fp_concrete_params_arm64",
+        pre_defines=["#undef XNN_ARCH_ARM64", "#define XNN_ARCH_ARM64 1"])
+
+
+def _qd8_qc8w_gemm_fixture() -> "FixtureSpec":
+    return _qc8w_fixture(dynamic=True)
+
+
+def _qd8_qc8w_igemm_fixture() -> "FixtureSpec":
+    return _qc8w_fixture(dynamic=True, indirect=True)
+
+
+def _qs8_qc8w_gemm_fixture() -> "FixtureSpec":
+    return _qc8w_fixture(dynamic=False)
 
 
 def _packw_fixture() -> "FixtureSpec":
@@ -702,6 +827,21 @@ def _match_fixture(sig, src=""):
     # `src` lets us read a size constant the signature can't reveal (igemm/igemm-ks3
     # and dwconv/dwconv-9p share identical signatures — only `ks`/tap-count differ).
     names = {p.name for p in sig.params}
+    structs = {p.struct_name for p in sig.params if p.is_struct_ptr}
+    if {"mr", "nc", "kc", "w", "c"} <= names:
+        # Quantization and pointer-table arguments alone do not determine the
+        # weight layout. Dispatch quantized families before generic f32 GEMM.
+        if "xnn_qs8_qc8w_conv_minmax_params" in structs:
+            return _qs8_qc8w_gemm_fixture()
+        if "quantization_params" in names:
+            if "xnn_f32_qc4w_minmax_params" in structs:
+                return _qd8_qc4w_gemm_fixture()
+            if "xnn_f32_minmax_params" in structs:
+                if {"ks", "zero", "zero_data", "a_offset"} <= names:
+                    return _qd8_qc8w_igemm_fixture()
+                if "a_stride" in names:
+                    return _qd8_qc8w_gemm_fixture()
+            raise NotImplementedError("quantized GEMM signature needs an explicit weight-layout fixture")
     if {"input_height", "input_width", "padding_top"} <= names:
         return _dwconv2d_chw_fixture()    # 3x3 s1 p1 depthwise on a CHW plane (direct 2D)
     if {"input_height", "input_width", "output_y_start", "output_channels"} <= names:
@@ -739,8 +879,6 @@ def _match_fixture(sig, src=""):
         return _concat2_fixture()         # pure concatenation (2 in → 1 out)
     if {"na", "nb", "x", "a", "b"} <= names and len(sig.params) == 5:
         return _split2_fixture()          # pure split (1 in → 2 out, multi-output compare)
-    if "quantization_params" in names and {"mr", "nc", "kc"} <= names:
-        return _qd8_qc4w_gemm_fixture()   # before f32-gemm: qd8 names are a superset
     if {"mr", "nc", "kc", "a_stride", "cm_stride", "cn_stride"} <= names:
         return _gemm_fixture()
     if {"g", "nc", "kc", "nr", "kr", "sr", "extra_bytes"} <= names:
@@ -874,9 +1012,11 @@ def generate_multidim(neon_path, rvv_path, name, neon, rvv, spec, input_range=No
         st, fields = spec.params
         decls.append(f"    {st} params{{}};")
         decls += [f"    params.{f} = {v};" for f, v in fields.items()]
+        decls.append(f'    ctx.registerConcreteBuffer("params", &params, sizeof({st}));')
     for pname, (st, fields) in spec.extra_params.items():  # extra concrete param structs (qd8)
         decls.append(f"    {st} {pname}_v{{}};")
         decls += [f"    {pname}_v.{f} = {v};" for f, v in fields.items()]
+        decls.append(f'    ctx.registerConcreteBuffer("{pname}", &{pname}_v, sizeof({st}));')
     if input_range and elem == "float":  # optional: restrict F32 inputs to finite [lo,hi]
         lo, hi = input_range
         for b in inputs:                  # element count within capacity (floor, no +1)
@@ -886,7 +1026,7 @@ def generate_multidim(neon_path, rvv_path, name, neon, rvv, spec, input_range=No
         for nm in spec.dual_weights:       # logical weights (shared by both packings)
             decls += _emit_input_range(f"_wlog_{nm}", f"_{nm}_P * _{nm}_N", lo, hi)
     decls += spec.raw_decls             # raw constraint lines (e.g. qd8 ksum ≡ 0 mod 16)
-    cfg_tag = "finite" if input_range else "symbolic"
+    cfg_tag = spec.config_tag or ("finite" if input_range else "symbolic")
 
     def call_args(side):
         out = []
@@ -1050,6 +1190,10 @@ def generate_multidim(neon_path, rvv_path, name, neon, rvv, spec, input_range=No
     if spec.index_reads:
         neon_body = _rewrite_index_reads(neon_body, spec.index_reads)
         rvv_body = _rewrite_index_reads(rvv_body, spec.index_reads)
+    if spec.scalar_reads:
+        neon_body = _rewrite_scalar_broadcast(neon_body, spec.scalar_reads)
+        rvv_body = _rewrite_scalar_broadcast(rvv_body, spec.scalar_reads)
+    neon_adapters = _neon_void_load_adapters(neon_body)
     pre_defines_str = ("\n".join(spec.pre_defines) + "\n") if spec.pre_defines else ""
     if gcross:
         d0, d1 = gcross
@@ -1163,6 +1307,7 @@ static inline SaltDeref<T> salt_deref(T* p) {{
 }}
 
 {pre_defines_str}namespace neon_kernel {{
+{neon_adapters}
 {neon_body}
 }} // namespace neon_kernel
 
@@ -1214,16 +1359,42 @@ int main(int argc, char** argv) {{
 
 
 def generate_harness(neon_path: str, rvv_path: str, name: str,
-                     params_mode: str = "symbolic", input_range=None) -> str:
-    neon = parse_signature(neon_path, "test_neon")
+                     params_mode: str = "symbolic", input_range=None,
+                     reference_isa: str = "neon") -> str:
+    if reference_isa not in ("neon", "rvv"):
+        raise ValueError("reference_isa must be neon or rvv")
+    neon = parse_signature(neon_path, "test_rvv" if reference_isa == "rvv" else "test_neon")
     rvv = parse_signature(rvv_path, "test_rvv")
     if len(neon.params) != len(rvv.params):
         raise ValueError(f"signature arity mismatch: {len(neon.params)} vs {len(rvv.params)}")
+    if reference_isa == "rvv":
+        for a, b in zip(neon.params, rvv.params):
+            # Current scalar rewrites use argument names from the reference.
+            if a.name != b.name:
+                raise NotImplementedError("RVV argument names must match for scalar rewrites")
+            if (a.type_spelling, a.pointee, a.is_pointer, a.points_to_const, a.is_ptr_to_ptr,
+                a.is_struct_ptr, a.is_int_scalar) != (
+                b.type_spelling, b.pointee, b.is_pointer, b.points_to_const, b.is_ptr_to_ptr,
+                b.is_struct_ptr, b.is_int_scalar):
+                raise ValueError(f"RVV signature mismatch: {a.name} vs {b.name}")
     _fx = _match_fixture(neon, open(neon_path).read())   # multi-dim fixture family?
     if _fx is not None:
+        if reference_isa == "rvv":
+            raise NotImplementedError(
+                "RVV-to-RVV multidimensional workloads need an explicit shape fixture; "
+                "the NEON/RVV fixture sweep is not an optimization workload proof")
+        if _fx.config_tag and _fx.config_tag.startswith("qc8w_"):
+            if params_mode == "symbolic":
+                raise NotImplementedError(
+                    "qc8w fixtures use three concrete parameter profiles; "
+                    "symbolic-params verification is not implemented")
+            if input_range is not None:
+                raise NotImplementedError(
+                    "qc8w fixtures constrain packed FP planes explicitly; "
+                    "input-range applies to homogeneous FP inputs only")
         return generate_multidim(neon_path, rvv_path, name, neon, rvv, _fx, input_range)
     roles = resolve_roles(neon)
-    ulp_tol = _ulp_tol_for(name)   # 0 = bit-exact; >0 relaxes FP outputs to a ULP bound
+    ulp_tol = 0 if reference_isa == "rvv" else _ulp_tol_for(name)   # 0 = bit-exact; >0 relaxes FP outputs to a ULP bound
 
     # `const void* params` (e.g. f32-f16-vcvt) is parsed as a const pointer and
     # lands in roles.inputs with pointee "void" — but it's an opaque, unused
@@ -1256,7 +1427,7 @@ def generate_harness(neon_path: str, rvv_path: str, name: str,
             params_setup.append(f"    {st} params{{}};")
             config_str = '"no-params"'
         elif params_mode == "concrete":    # float OR int → concrete edge configs
-            paths, combos = _gen_configs(leaves)
+            paths, combos = _gen_configs(leaves, struct_name=st)
             if not combos:
                 raise NotImplementedError(f"no concrete configs for {st}")
             config_pre = _emit_config_table(st, paths, combos)
@@ -1303,6 +1474,9 @@ def generate_harness(neon_path: str, rvv_path: str, name: str,
     # Term — and order-sensitive — so verify the exp output[] now, leave the sum for later.
     _red_outs = {p.name for p in roles.outputs
                  if re.search(r'\*\s*' + re.escape(p.name) + r'\s*[-+*/|&^]?=', neon_src + rvv_src)}
+    if reference_isa == "rvv" and _red_outs:
+        raise NotImplementedError(
+            "RVV scalar reduction stores are not fully modeled; refusing a partial output proof")
     arr_outs = [p for p in roles.outputs if p.name not in _red_outs]
     byte_unit, unit_type = _detect_byte_unit(neon_src, bound)
     unit_bytes = 1
@@ -1391,8 +1565,10 @@ def generate_harness(neon_path: str, rvv_path: str, name: str,
     cmps = []
     for p in arr_outs:
         cmps.append(f'        buffers_equal(ctx.tm, _b_{p.name}_neon, _b_{p.name}_rvv, '
-                    f'{cmp_count}, sizeof({p.pointee}), ElementKind::{_kind(p.pointee)}, {ulp_tol})')
-    cmp_expr = "\n      , ".join(cmps)
+                    f'{cmp_count}, sizeof({p.pointee}), ElementKind::{"UINT" if reference_isa == "rvv" else _kind(p.pointee)}, {ulp_tol})')
+    cmp_expr = cmps[0] if cmps else ""
+    for term in cmps[1:]:
+        cmp_expr = f"ctx.land_({cmp_expr}, {term})"
 
     # counterexample scan: first differing element of the first array output
     first_out = arr_outs[0] if arr_outs else roles.outputs[0]

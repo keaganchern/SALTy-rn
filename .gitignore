@@ -28,3 +28,6 @@ build/verification/harnesses/verify_*.cpp
 
 # Editor
 .vscode/
+
+# Locally extracted solver distributions
+third_party/cvc5/install/

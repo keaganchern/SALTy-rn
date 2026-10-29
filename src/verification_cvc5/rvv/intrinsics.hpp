@@ -29,6 +29,7 @@ namespace salt_cvc5 {
 // hood — adding `using X = RVVVector` here is harmless (and would also be
 // harmless if `X` were already aliased elsewhere — same target).
 // ===========================================================================
+using vint8mf2_t   = RVVVector;
 using vint8m1_t    = RVVVector;
 using vint8m2_t    = RVVVector;
 using vint8m4_t    = RVVVector;

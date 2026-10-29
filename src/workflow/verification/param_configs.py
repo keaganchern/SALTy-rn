@@ -78,6 +78,16 @@ FIELD_EDGES = {
     "padding": [0],
 }
 
+# Struct-specific pairs override ambiguous field names such as "min"/"max".
+# u8 bounds are stored in uint32_t fields but consumed as unsigned bytes.
+CONCRETE_PARAM_CONFIGS = {
+    "xnn_u8_minmax_params": (
+        ["scalar.min", "scalar.max"],
+        [(str(lo), str(hi)) for lo, hi in
+         [(0, 255), (0, 0), (255, 255), (1, 254), (64, 192), (127, 128), (128, 128)]],
+    ),
+}
+
 # ---------------------------------------------------------------------------
 # Validity constraints for symbolic params (op, field_name, field_name|const)
 # ---------------------------------------------------------------------------

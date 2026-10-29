@@ -225,29 +225,14 @@ def _optimize_and_reverify(kernel_path: Path, kernel_name: str,
     from .optimize.bridge import optimize_kernel
     opt = optimize_kernel(kernel_name, prob_id, cfg)
     if not opt.success:
-        tracker.update(kernel_name, optimized=False, error=f"optimize_failed: {opt.error}")
+        tracker.update(kernel_name, optimized=False, optimized_verified=False,
+                       optimized_cycles=None, optimized_max_batch=0,
+                       error=f"optimize_failed: {opt.error}")
         return
 
-    tracker.update(kernel_name, optimized=True, optimized_cycles=opt.cycles)
-
-    # Re-verify the optimized RVV against the original NEON
-    log.info("Re-verifying optimized kernel against NEON baseline...")
-    verify_result = _run_formal_verification(
-        kernel_path, opt.optimized_path, kernel_name, cfg, build_dir)
-    if verify_result is None:
-        log.warning("Re-verification unavailable for optimized %s", kernel_name)
-        return
-
-    verdict = verify_result.get("verdict", "")
-    max_batch = verify_result.get("max_verified_batch", 0)
-    log.info("Re-verification: %s (max_batch=%d)", verdict, max_batch)
-    optimized_verified = verdict in ("ALL_PASSED", "PARTIAL") and max_batch > 0
-    tracker.update(kernel_name,
-                   optimized_verified=optimized_verified,
-                   optimized_max_batch=max_batch)
-    if not optimized_verified:
-        log.error("Optimized %s FAILED re-verification (verdict=%s); baseline at kernels/target/ is unchanged",
-                  kernel_name, verdict)
+    tracker.update(kernel_name, optimized=True, optimized_cycles=opt.cycles,
+                   optimized_verified=True,
+                   optimized_max_batch=opt.verification["max_verified_batch"])
 
 
 def _run_formal_verification(kernel_path, output_path, kernel_name, cfg, build_dir=None) -> dict | None:
@@ -747,6 +732,9 @@ def build_parser() -> argparse.ArgumentParser:
                     help="Autocomp prob_id (single-kernel mode). Required with --optimize unless --optimize-map is provided.")
     p.add_argument("--optimize-map", dest="optimize_map", type=str, default="",
                     help="Path to JSON {kernel_name: prob_id} for batch --optimize")
+    p.add_argument("--autocomp-vlen", type=int, default=512,
+                   help="Optimization hardware and RVV/RVV proof VLEN")
+    p.add_argument("--autocomp-dlen", type=int, default=256)
     p.add_argument("--autocomp-iterations", dest="autocomp_iterations", type=int, default=None,
                     help="Autocomp beam-search iterations (default: 8)")
     p.add_argument("--autocomp-beam-size", dest="autocomp_beam_size", type=int, default=None,
@@ -765,6 +753,8 @@ def main():
         args.thinking = None
 
     cfg = Config.from_env_and_args(args)
+    if cfg.optimize and cfg.verification_batch <= 0:
+        parser.error("--optimize requires --verify-batch matching the benchmark element count")
     run_dir = _setup_run_logging()
 
     log.info("Pipeline config: source=%s target=%s model=%s", cfg.source, cfg.target, cfg.model)

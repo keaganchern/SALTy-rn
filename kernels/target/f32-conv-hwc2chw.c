@@ -95,7 +95,9 @@ void test_rvv(
       float* current_o1c3 = o1c3;
 
       while (ow > 0) {
-        size_t vl = __riscv_vsetvl_e32m1(ow);
+        // Isolate the final odd-width pixel: NEON omits its right-column FMAs.
+        size_t chunk_width = ((input_width & 1) && ow > 1) ? ow - 1 : ow;
+        size_t vl = __riscv_vsetvl_e32m1(chunk_width);
         vfloat32m1_t v_zero = __riscv_vfmv_v_f_f32m1(0.0f, vl);
 
         vuint32m1_t vj = __riscv_vid_v_u32m1(vl);
@@ -120,6 +122,9 @@ void test_rvv(
         vfloat32m1_t v_o1c3 = __riscv_vfmv_v_f_f32m1(w[3], vl);
 
         for (int dx = 0; dx < 3; dx++) {
+          // The NEON odd-width tail omits right-column arithmetic entirely.
+          // Zero padding alone would still evaluate 0 * Inf (or NaN).
+          if ((input_width & 1) && ow == 1 && dx == 2) continue;
           vint32m1_t v_idx = __riscv_vadd_vx_i32m1(v_idx_base, dx, vl);
           vbool32_t mask = __riscv_vmand_mm_b32(
               __riscv_vmsge_vx_i32m1_b32(v_idx, 0, vl),
@@ -178,6 +183,11 @@ void test_rvv(
         v_o0c1 = __riscv_vfmin_vf_f32m1(v_o0c1, params->scalar.max, vl);
         v_o0c2 = __riscv_vfmin_vf_f32m1(v_o0c2, params->scalar.max, vl);
         v_o0c3 = __riscv_vfmin_vf_f32m1(v_o0c3, params->scalar.max, vl);
+
+        v_o1c0 = __riscv_vfmin_vf_f32m1(v_o1c0, params->scalar.max, vl);
+        v_o1c1 = __riscv_vfmin_vf_f32m1(v_o1c1, params->scalar.max, vl);
+        v_o1c2 = __riscv_vfmin_vf_f32m1(v_o1c2, params->scalar.max, vl);
+        v_o1c3 = __riscv_vfmin_vf_f32m1(v_o1c3, params->scalar.max, vl);
 
         // Store row 1 BEFORE row 0: when there is a single output row the caller
         // aliases output1==output0, so the LAST store must be the valid row 0

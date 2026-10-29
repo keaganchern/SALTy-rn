@@ -112,6 +112,8 @@ class Config:
         cfg.skip_translation = args.skip_translation
         cfg.skip_spike = args.skip_spike
         # Autocomp opt-in
+        cfg.autocomp_vlen = getattr(args, "autocomp_vlen", 512)
+        cfg.autocomp_dlen = getattr(args, "autocomp_dlen", 256)
         cfg.optimize = getattr(args, "optimize", False)
         cfg.optimize_prob_id = getattr(args, "prob_id", -1)
         if getattr(args, "optimize_map", None):

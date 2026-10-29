@@ -22,7 +22,7 @@ class StatusTracker:
     Autocomp post-verify optimization fields (populated only when --optimize):
         optimized:           bool  - autocomp produced an optimized variant
         optimized_cycles:    int   - measured cycle count for the best candidate
-        optimized_verified:  bool  - re-verified against the original NEON
+        optimized_verified:  bool  - re-verified against the Phase 1 RVV baseline
         optimized_max_batch: int   - max batch verified for the optimized variant
     """
 
